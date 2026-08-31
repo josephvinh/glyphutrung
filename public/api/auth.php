@@ -10,6 +10,7 @@
 
 require __DIR__ . '/_bootstrap.php';
 require dirname(__DIR__, 2) . '/config/push.php';
+require dirname(__DIR__, 2) . '/config/password.php';
 
 $action = $_GET['action'] ?? 'me';
 $in     = json_input();
@@ -64,7 +65,7 @@ switch ($action) {
 
         // Cùng một thông điệp cho cả hai trường hợp — không tiết lộ
         // số điện thoại nào có tài khoản.
-        if (!$m || !password_verify($pass, $m['password_hash'])) {
+        if (!$m || !password_verify_upgrade($pass, $m['password_hash'], $m['id'])) {
             login_failed($phone);
             json_fail('Số điện thoại hoặc mật khẩu không đúng.', 401);
         }
@@ -107,13 +108,13 @@ switch ($action) {
         $new     = (string) ($in['new'] ?? '');
 
         if (strlen($new) < 6) json_fail('Mật khẩu mới phải từ 6 ký tự trở lên.');
-        if (!password_verify($current, $me['password_hash'])) {
+        if (!password_verify_upgrade($current, $me['password_hash'], $me['id'])) {
             json_fail('Mật khẩu hiện tại không đúng.');
         }
         if ($current === $new) json_fail('Mật khẩu mới phải khác mật khẩu cũ.');
 
         db_run('UPDATE members SET password_hash = ?, must_change_pw = 0 WHERE id = ?',
-               [password_hash($new, PASSWORD_DEFAULT), $me['id']]);
+               [password_hash_upgrade($new), $me['id']]);
         log_action('sua', 'auth', 'Đổi mật khẩu', '');
 
         json_out(['ok' => true]);
@@ -161,7 +162,7 @@ switch ($action) {
                                         role_code, title_id, status, must_change_pw,
                                         register_note, registered_at)
                    VALUES (?,?,?,?,?,?,?,?,?,0,?,NOW())',
-            [$code, $holy, $name, $phone, $birth, password_hash($pass, PASSWORD_DEFAULT),
+            [$code, $holy, $name, $phone, $birth, password_hash_upgrade($pass),
              'glv', $titleId, 'chờ duyệt', $note !== '' ? $note : null]);
 
         // Báo cho Ban Điều Hành có hồ sơ mới chờ duyệt. Người vừa đăng ký
