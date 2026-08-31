@@ -1,0 +1,473 @@
+/* ==========================================================
+   ORG — Khối lớp và nhân sự
+   Một mảnh của component tnttApp. app.js gộp tất cả các mảnh lại.
+   ========================================================== */
+window.TNTT = window.TNTT || {};
+window.TNTT.org = {
+    // ==========================================
+    // 9. DATA: KHỐI LỚP & NHÂN SỰ
+    //
+    // Phân biệt rõ hai khái niệm:
+    //   ROLE  = quyền trong hệ thống, quyết định thấy gì làm gì
+    //   TITLE = chức danh hiển thị, thuần tổ chức, không đẻ ra quyền
+    // Ví dụ: Đoàn Phó và Thư Ký cùng role 'bdh' nhưng title khác nhau.
+    // ==========================================
+    roleDefs: [
+        { value: 'admin',         label: 'Quản Trị Hệ Thống', level: 5, scope: 'toàn đoàn', desc: 'Toàn quyền, kể cả cấu hình hệ thống' },
+        { value: 'bdh',           label: 'Ban Điều Hành',     level: 4, scope: 'toàn đoàn', desc: 'Quản lý toàn đoàn: khối lớp, nhân sự, chương trình' },
+        { value: 'truong_khoi',   label: 'Trưởng Khối',       level: 3, scope: 'khối',      desc: 'Quản lý các lớp trong khối mình' },
+        { value: 'glv_chu_nhiem', label: 'GLV Chủ Nhiệm',     level: 2, scope: 'lớp',       desc: 'Phụ trách một lớp, được duyệt đơn của lớp' },
+        { value: 'glv',           label: 'Giáo Lý Viên',      level: 1, scope: 'lớp',       desc: 'Dạy và điểm danh lớp được phân công' }
+    ],
+
+    titleDefs: {
+        admin:          ['Quản trị viên'],
+        bdh:            ['Đoàn Trưởng', 'Đoàn Phó', 'Thư Ký', 'Thủ Quỹ', 'Ủy Viên'],
+        truong_khoi:    ['Trưởng Khối', 'Phó Khối'],
+        glv_chu_nhiem:  ['GLV Chủ Nhiệm'],
+        glv:            ['GLV Phụ Tá', 'Huynh Trưởng', 'Dự Trưởng']
+    },
+
+    members: [],   // máy chủ nạp qua loadData()
+
+    expandedBlock: '',
+    memberSearch: '',
+    memberRoleFilter: '',
+    showMemberModal: false,
+    isEditingMember: false,
+    memberForm: {},
+    showBlockModal: false,
+    blockForm: { original: '', name: '' },
+    showClassModal: false,
+    classForm: { original: '', name: '', block: '' },
+
+    openOrg() {
+        this.changeModule('org');
+    },
+
+    // Nhân sự tách khỏi Khối & Lớp thành module riêng.
+    openStaff() {
+        this.memberSearch = '';
+        this.memberRoleFilter = '';
+        this.changeModule('staff');
+    },
+
+    // Chỉ Ban Điều Hành trở lên mới sửa được. Cấp dưới chỉ xem.
+    // Dùng chung cho cả Khối & Lớp lẫn Nhân sự: đang ở màn nào thì
+    // hỏi quyền của đúng màn đó.
+    get canManageOrg() {
+        return this.canEditModule(this.currentModule === 'staff' ? 'staff' : 'org');
+    },
+
+    // Role của Ban Điều Hành và Admin không được đụng vào từ màn này
+    isProtectedMember(m) {
+        return ['admin', 'bdh'].includes(m.role);
+    },
+
+    canEditMemberRole(m) {
+        return this.canManageOrg && !this.isProtectedMember(m);
+    },
+
+    // ---- Tra cứu ----
+    roleLabel(role) {
+        const r = this.roleDefs.find(x => x.value === role);
+        return r ? r.label : role;
+    },
+
+    /**
+     * NHÃN VAI TRÒ HIỆN TRONG DANH SÁCH NGƯỜI KHÁC
+     *
+     * Quản Trị Hệ Thống là vai trò KỸ THUẬT, không phải chức vụ trong
+     * đoàn. Người khác không cần biết ai giữ nó — biết chỉ tạo ra một
+     * mục tiêu để nhờ vả hoặc gây sức ép. Nên với người xem không phải
+     * Quản Trị, tài khoản admin hiện như một thành viên bình thường.
+     *
+     * Chính Quản Trị vẫn thấy vai trò của mình, để biết đang ở quyền nào.
+     */
+    roleLabelFor(m) {
+        if (m.role === 'admin' && !this.isAdmin) return '';
+        return this.roleLabel(m.role);
+    },
+
+    /** Chức danh hiện ra — cũng phải giấu, vì "Quản trị viên" lộ y hệt */
+    titleFor(m) {
+        if (m.role === 'admin' && !this.isAdmin) return '';
+        return m.title || '';
+    },
+
+    roleLevel(role) {
+        const r = this.roleDefs.find(x => x.value === role);
+        return r ? r.level : 0;
+    },
+
+    roleScope(role) {
+        const r = this.roleDefs.find(x => x.value === role);
+        return r ? r.scope : '';
+    },
+
+    titleOptionsFor(role) {
+        return this.titleDefs[role] || [];
+    },
+
+    roleChipClass(role) {
+        if (role === 'admin')         return 'bg-slate-800 text-white border-slate-800';
+        if (role === 'bdh')           return 'bg-blue-600 text-white border-blue-600';
+        if (role === 'truong_khoi')   return 'bg-amber-50 text-amber-600 border-amber-200';
+        if (role === 'glv_chu_nhiem') return 'bg-emerald-50 text-emerald-600 border-emerald-200';
+        return 'bg-slate-50 text-slate-500 border-slate-200';
+    },
+
+    classesInBlock(block) {
+        return this.classes.filter(c => c.block === block);
+    },
+
+    // Sĩ số lấy từ máy chủ (classCounts), KHÔNG tự đếm từ this.students.
+    // Danh sách thiếu nhi nay chỉ gồm phạm vi mình được xem, nên tự đếm
+    // sẽ ra 0 cho mọi lớp ngoài phạm vi — trong khi màn Khối & Lớp vẫn
+    // hiện sĩ số mọi lớp cho ai cũng xem được.
+    classSize(className) {
+        return this.classCounts[className] || 0;
+    },
+
+    blockSize(block) {
+        return this.classesInBlock(block)
+            .reduce((tong, c) => tong + (this.classCounts[c.name] || 0), 0);
+    },
+
+    membersInClass(className) {
+        return this.members.filter(m => m.className === className)
+            .sort((a, b) => this.roleLevel(b.role) - this.roleLevel(a.role));
+    },
+
+    membersInBlock(block) {
+        return this.members.filter(m => m.block === block && !m.className);
+    },
+
+    get bdhMembers() {
+        return this.members.filter(m => ['admin', 'bdh'].includes(m.role))
+            .sort((a, b) => this.roleLevel(b.role) - this.roleLevel(a.role));
+    },
+
+    headOfBlock(block) {
+        return this.members.find(m => m.role === 'truong_khoi' && m.block === block && !m.className) || null;
+    },
+
+    headOfClass(className) {
+        return this.members.find(m => m.role === 'glv_chu_nhiem' && m.className === className) || null;
+    },
+
+    memberFullName(m) {
+        return m ? (m.holyName + ' ' + m.fullName) : '';
+    },
+
+    // ---- Chọn chủ nhiệm / trưởng khối ----
+    // Nhấc người này lên thì người đang giữ chức phải hạ xuống, để không
+    // bao giờ có hai chủ nhiệm cùng một lớp.
+    setClassHead(className, memberId) {
+        const current = this.headOfClass(className);
+        if (current && current.id !== Number(memberId)) {
+            current.role = 'glv';
+            current.title = 'GLV Phụ Tá';
+        }
+        if (!memberId) return;
+        const m = this.members.find(x => x.id === Number(memberId));
+        if (!m) return;
+        if (this.isProtectedMember(m)) {
+            alert('Không thể đổi vai trò của thành viên Ban Điều Hành hoặc Quản trị.');
+            return;
+        }
+        const cls = this.classes.find(c => c.name === className);
+        m.role = 'glv_chu_nhiem';
+        m.title = 'GLV Chủ Nhiệm';
+        m.className = className;
+        m.block = cls ? cls.block : m.block;
+        this.save('org', 'setClassHead', { className: className, memberId: Number(memberId) });
+    },
+
+    setBlockHead(block, memberId) {
+        const current = this.headOfBlock(block);
+        if (current && current.id !== Number(memberId)) {
+            current.role = 'glv';
+            current.title = 'GLV Phụ Tá';
+        }
+        if (!memberId) return;
+        const m = this.members.find(x => x.id === Number(memberId));
+        if (!m) return;
+        if (this.isProtectedMember(m)) {
+            alert('Không thể đổi vai trò của thành viên Ban Điều Hành hoặc Quản trị.');
+            return;
+        }
+        m.role = 'truong_khoi';
+        m.title = 'Trưởng Khối';
+        m.block = block;
+        m.className = '';   // trưởng khối quản cả khối, không gắn vào lớp nào
+        this.save('org', 'setBlockHead', { block: block, memberId: Number(memberId) });
+    },
+
+    // Ai cũng có thể được nhấc lên, kể cả người đang ở khối/lớp khác —
+    // nhấc lên thì phân công của họ chuyển theo. Chỉ loại BĐH/Admin và
+    // người đang tạm nghỉ.
+    get assignableMembers() {
+        return this.members.filter(m => !this.isProtectedMember(m) && m.status === 'đang phục vụ');
+    },
+
+    candidatesForClass() {
+        return this.assignableMembers;
+    },
+
+    candidatesForBlock() {
+        return this.assignableMembers;
+    },
+
+    // Ghi kèm phân công hiện tại để không nhấc nhầm người đang giữ lớp khác
+    memberOptionLabel(m) {
+        const at = m.className || m.block;
+        return this.memberFullName(m) + (at ? ' — ' + at : '');
+    },
+
+    // ---- CRUD KHỐI ----
+    openCreateBlock() {
+        this.blockForm = { original: '', name: '' };
+        this.showBlockModal = true;
+    },
+
+    openEditBlock(name) {
+        this.blockForm = { original: name, name: name };
+        this.showBlockModal = true;
+    },
+
+    saveBlock() {
+        const name = this.blockForm.name.trim();
+        const old = this.blockForm.original;
+        if (!name) { alert('Vui lòng nhập tên khối!'); return; }
+        if (this.blocks.some(b => b === name && b !== old)) { alert('Tên khối này đã tồn tại!'); return; }
+
+        if (!old) {
+            this.blocks.push(name);
+            this.logAction('tao', 'org', 'Thêm khối ' + name, '');
+        } else if (old !== name) {
+            this.logAction('sua', 'org', 'Đổi tên khối ' + old + ' thành ' + name, 'cập nhật lan sang lớp, thiếu nhi, GLV');
+            // Đổi tên khối phải lan sang mọi nơi đang lưu tên khối dạng chuỗi,
+            // nếu không dữ liệu sẽ mồ côi.
+            this.blocks = this.blocks.map(b => b === old ? name : b);
+            this.classes.forEach(c => { if (c.block === old) c.block = name; });
+            this.students.forEach(s => { if (s.block === old) s.block = name; });
+            this.members.forEach(m => { if (m.block === old) m.block = name; });
+            this.announcements.forEach(a => { if (a.audienceType === 'khối' && a.audienceValue === old) a.audienceValue = name; });
+            if (this.user.managedBlock === old) this.user.managedBlock = name;
+            if (this.filterBlock === old) this.filterBlock = name;
+        }
+        this.showBlockModal = false;
+        this.save('org', 'saveBlock', { original: old, name: name });
+    },
+
+    deleteBlock(name) {
+        const classCount = this.classesInBlock(name).length;
+        if (classCount > 0) {
+            alert('Khối "' + name + '" còn ' + classCount + ' lớp.\nHãy chuyển hoặc xóa hết lớp trước khi xóa khối.');
+            return;
+        }
+        if (confirm('Xóa khối "' + name + '"?')) {
+            this.blocks = this.blocks.filter(b => b !== name);
+            this.logAction('xoa', 'org', 'Xóa khối ' + name, '');
+            this.members.forEach(m => { if (m.block === name) m.block = ''; });
+            this.save('org', 'deleteBlock', { name: name });
+        }
+    },
+
+    // ---- CRUD LỚP ----
+    openCreateClass(block) {
+        this.classForm = { original: '', name: '', block: block || (this.blocks[0] || '') };
+        this.showClassModal = true;
+    },
+
+    openEditClass(cls) {
+        this.classForm = { original: cls.name, name: cls.name, block: cls.block };
+        this.showClassModal = true;
+    },
+
+    saveClass() {
+        const name = this.classForm.name.trim();
+        const old = this.classForm.original;
+        if (!name) { alert('Vui lòng nhập tên lớp!'); return; }
+        if (!this.classForm.block) { alert('Vui lòng chọn khối cho lớp!'); return; }
+        if (this.classes.some(c => c.name === name && c.name !== old)) { alert('Tên lớp này đã tồn tại!'); return; }
+
+        if (!old) {
+            this.classes.push({ name: name, block: this.classForm.block, nextClass: '' });
+            this.logAction('tao', 'org', 'Thêm lớp ' + name, 'khối ' + this.classForm.block);
+        } else {
+            this.logAction('sua', 'org', 'Sửa lớp ' + old, 'thành ' + name + ' · khối ' + this.classForm.block);
+            const cls = this.classes.find(c => c.name === old);
+            if (cls) { cls.name = name; cls.block = this.classForm.block; }
+            this.students.forEach(s => {
+                if (s.className === old) { s.className = name; s.block = this.classForm.block; }
+            });
+            this.members.forEach(m => {
+                if (m.className === old) { m.className = name; m.block = this.classForm.block; }
+            });
+            this.announcements.forEach(a => { if (a.audienceType === 'lớp' && a.audienceValue === old) a.audienceValue = name; });
+            if (this.user.assignedClass === old) this.user.assignedClass = name;
+            if (this.filterClass === old) this.filterClass = name;
+            if (this.attendanceClass === old) this.attendanceClass = name;
+        }
+        this.showClassModal = false;
+        this.save('org', 'saveClass', { original: old, name: name, block: this.classForm.block });
+    },
+
+    deleteClass(cls) {
+        const n = this.classSize(cls.name);
+        if (n > 0) {
+            alert('Lớp "' + cls.name + '" còn ' + n + ' em trong danh sách.\nHãy chuyển các em sang lớp khác trước khi xóa.');
+            return;
+        }
+        const glvCount = this.membersInClass(cls.name).length;
+        if (glvCount > 0) {
+            alert('Lớp "' + cls.name + '" còn ' + glvCount + ' GLV đang phụ trách.\nHãy chuyển họ sang lớp khác trước khi xóa.');
+            return;
+        }
+        if (confirm('Xóa lớp "' + cls.name + '"?')) {
+            this.classes = this.classes.filter(c => c.name !== cls.name);
+            this.logAction('xoa', 'org', 'Xóa lớp ' + cls.name, '');
+            this.save('org', 'deleteClass', { name: cls.name });
+        }
+    },
+
+    // ---- CRUD NHÂN SỰ ----
+    // ---- HÀNG CHỜ DUYỆT (tài khoản tự đăng ký) ----
+    showApproveModal: false,
+    approveForm: { id: null, name: '', phone: '', note: '', role: 'glv', className: '', block: '' },
+
+    get pendingMembers() {
+        return this.members.filter(m => m.status === 'chờ duyệt');
+    },
+
+    openApproveForm(m) {
+        this.approveForm = {
+            id: m.id, name: this.memberFullName(m), phone: m.phone,
+            note: m.registerNote || '', role: 'glv',
+            className: this.availableClasses[0] || '', block: this.availableBlocks[0] || ''
+        };
+        this.showApproveModal = true;
+    },
+
+    async confirmApprove() {
+        const f = this.approveForm;
+        const scope = this.roleScope(f.role);
+        if (scope === 'lớp' && !f.className) { alert('Vui lòng chọn lớp phụ trách.'); return; }
+        if (scope === 'khối' && !f.block)    { alert('Vui lòng chọn khối phụ trách.'); return; }
+
+        const r = await this.save('org', 'approveMember', {
+            id: f.id, role: f.role, className: f.className, block: f.block
+        });
+        if (!r.ok) return;
+        this.showApproveModal = false;
+        await this.loadData();
+    },
+
+    async rejectMember(m) {
+        if (!confirm('Từ chối đăng ký của "' + this.memberFullName(m) + '"?\n\nTài khoản sẽ bị xóa hẳn.')) return;
+        const r = await this.save('org', 'rejectMember', { id: m.id });
+        if (!r.ok) return;
+        await this.loadData();
+    },
+
+    // ---- CẤP LẠI MẬT KHẨU ----
+    async resetMemberPassword(m) {
+        if (!confirm('Cấp lại mật khẩu cho "' + this.memberFullName(m) + '"?\n\n'
+                   + 'Mật khẩu cũ sẽ hết hiệu lực ngay.')) return;
+
+        const r = await this.save('org', 'resetPassword', { id: m.id });
+        if (!r.ok) return;
+
+        // Hiện một lần duy nhất để BĐH đọc cho GLV — máy chủ chỉ lưu bản băm,
+        // đóng hộp này là không xem lại được nữa.
+        alert('Đã cấp lại mật khẩu cho ' + r.name + '\n\n'
+            + 'Số điện thoại: ' + r.phone + '\n'
+            + 'Mật khẩu tạm:  ' + r.password + '\n\n'
+            + 'Đọc cho GLV ghi lại. Lần đăng nhập tới hệ thống sẽ buộc họ đổi mật khẩu.\n'
+            + 'Đóng hộp này là không xem lại được nữa.');
+    },
+
+    get filteredMembers() {
+        const q = this.normalizeText(this.memberSearch);
+        return this.members
+            .filter(m => this.memberRoleFilter === '' || m.role === this.memberRoleFilter)
+            .filter(m => q === ''
+                || this.normalizeText(m.fullName).includes(q)
+                || this.normalizeText(m.holyName).includes(q)
+                || this.normalizeText(m.className).includes(q))
+            .sort((a, b) => this.roleLevel(b.role) - this.roleLevel(a.role));
+    },
+
+    openCreateMember() {
+        this.memberForm = { id: null, holyName: '', fullName: '', phone: '', birthDate: '', role: 'glv', title: 'GLV Phụ Tá', block: '', className: '', status: 'đang phục vụ' };
+        this.isEditingMember = false;
+        this.showMemberModal = true;
+    },
+
+    openEditMember(m) {
+        this.memberForm = JSON.parse(JSON.stringify(m));
+        this.isEditingMember = true;
+        this.showMemberModal = true;
+    },
+
+    // Đổi role thì title và phạm vi phân công phải chỉnh theo cho khớp
+    onMemberRoleChange() {
+        const f = this.memberForm;
+        const opts = this.titleOptionsFor(f.role);
+        if (!opts.includes(f.title)) f.title = opts[0] || '';
+        if (this.roleScope(f.role) === 'toàn đoàn') { f.block = ''; f.className = ''; }
+        if (this.roleScope(f.role) === 'khối') f.className = '';
+    },
+
+    saveMember() {
+        const f = this.memberForm;
+        if (!f.fullName.trim()) { alert('Vui lòng nhập họ và tên!'); return; }
+        const scope = this.roleScope(f.role);
+        if (scope === 'khối' && !f.block) { alert('Vai trò Trưởng Khối cần chọn khối phụ trách!'); return; }
+        if (scope === 'lớp' && !f.className) { alert('Vai trò này cần chọn lớp phụ trách!'); return; }
+
+        f.holyName = f.holyName.trim();
+        f.fullName = f.fullName.trim();
+        if (scope === 'lớp') {
+            const cls = this.classes.find(c => c.name === f.className);
+            if (cls) f.block = cls.block;
+        }
+
+        // Mỗi lớp chỉ một chủ nhiệm, mỗi khối chỉ một trưởng khối
+        if (f.role === 'glv_chu_nhiem') {
+            const cur = this.headOfClass(f.className);
+            if (cur && cur.id !== f.id) { cur.role = 'glv'; cur.title = 'GLV Phụ Tá'; }
+        }
+        if (f.role === 'truong_khoi') {
+            const cur = this.headOfBlock(f.block);
+            if (cur && cur.id !== f.id) { cur.role = 'glv'; cur.title = 'GLV Phụ Tá'; }
+        }
+
+        if (this.isEditingMember) {
+            const i = this.members.findIndex(x => x.id === f.id);
+            if (i !== -1) this.members[i] = f;
+        } else {
+            f.id = Date.now();
+            this.members.push(f);
+        }
+        this.logAction(this.isEditingMember ? 'sua' : 'tao', 'org',
+                       (this.isEditingMember ? 'Sửa' : 'Thêm') + ' thành viên ' + f.fullName,
+                       this.roleLabel(f.role) + ' · ' + (f.className || f.block || 'toàn đoàn'));
+        this.showMemberModal = false;
+        this.save('org', 'saveMember', f).then(r => { if (r.ok && r.id) f.id = r.id; });
+    },
+
+    deleteMember(m) {
+        if (this.isProtectedMember(m)) {
+            alert('Không thể xóa thành viên Ban Điều Hành hoặc Quản trị từ màn này.');
+            return;
+        }
+        if (confirm('Xóa thành viên "' + this.memberFullName(m) + '"?')) {
+            this.members = this.members.filter(x => x.id !== m.id);
+            this.logAction('xoa', 'org', 'Xóa thành viên ' + m.fullName, this.roleLabel(m.role));
+            this.save('org', 'deleteMember', { id: m.id });
+        }
+    },
+};

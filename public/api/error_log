@@ -1,0 +1,13 @@
+[25-Aug-2026 22:38:35 Asia/Ho_Chi_Minh] PHP Fatal error:  Uncaught Error: Failed opening required '/home/ylcqukhi/tntt/config/config.php' (include_path='.:/opt/alt/php82/usr/share/pear:/opt/alt/php82/usr/share/php:/usr/share/pear:/usr/share/php') in /home/ylcqukhi/tntt/config/db.php:13
+Stack trace:
+#0 /home/ylcqukhi/tntt/config/db.php(25): app_config()
+#1 /home/ylcqukhi/tntt/config/db.php(60): db()
+#2 /home/ylcqukhi/tntt/public/api/auth.php(49): db_one()
+#3 {main}
+  thrown in /home/ylcqukhi/tntt/config/db.php on line 13
+[25-Aug-2026 23:51:05 Asia/Ho_Chi_Minh] PHP Fatal error:  Uncaught PDOException: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'ylcqukhi_glyphutrung.members' doesn't exist in /home/ylcqukhi/tntt/config/db.php:60
+Stack trace:
+#0 /home/ylcqukhi/tntt/config/db.php(60): PDO->prepare()
+#1 /home/ylcqukhi/tntt/public/api/auth.php(49): db_one()
+#2 {main}
+  thrown in /home/ylcqukhi/tntt/config/db.php on line 60

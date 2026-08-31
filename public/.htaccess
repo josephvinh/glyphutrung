@@ -1,0 +1,109 @@
+# ============================================================
+#  TNTT Super App — chốt bảo vệ tầng máy chủ
+#
+#  MỌI chỉ thị ở đây đều bọc trong <IfModule>, và những chỉ thị
+#  mà hosting hay cấm thì bọc thêm <IfModule mod_authz_core.c>.
+#  Lý do: trên hosting dùng chung, một chỉ thị không được phép sẽ
+#  làm Apache trả HTTP 500 cho TOÀN BỘ trang, chứ không phải chỉ
+#  bỏ qua dòng đó. Thà mất một lớp phòng còn hơn sập cả web.
+#
+#  Mọi thứ ở đây chỉ là lớp phòng THÊM. Lớp chính là:
+#    - config/ và views/ nằm NGOÀI thư mục web
+#    - chốt kiểm quyền trong từng tệp PHP của api/
+# ============================================================
+
+# --- Không cho liệt kê thư mục ---
+# Bọc IfModule vì có hosting cấm chỉ thị Options trong .htaccess
+<IfModule mod_autoindex.c>
+    Options -Indexes
+</IfModule>
+
+# --- Cấm tải các loại tệp dữ liệu / cấu hình / sao lưu ---
+# Apache 2.4 trở lên
+<IfModule mod_authz_core.c>
+    <FilesMatch "\.(sql|gz|tar|tgz|zip|bak|log|ini|env|md)$">
+        Require all denied
+    </FilesMatch>
+    <FilesMatch "^\.">
+        Require all denied
+    </FilesMatch>
+</IfModule>
+
+# Apache 2.2 (cú pháp cũ) — chỉ chạy khi KHÔNG có mod_authz_core
+<IfModule !mod_authz_core.c>
+    <IfModule mod_authz_host.c>
+        <FilesMatch "\.(sql|gz|tar|tgz|zip|bak|log|ini|env|md)$">
+            Order allow,deny
+            Deny from all
+        </FilesMatch>
+        <FilesMatch "^\.">
+            Order allow,deny
+            Deny from all
+        </FilesMatch>
+    </IfModule>
+</IfModule>
+
+# --- Cấm đi thẳng vào thư mục nội bộ ---
+# Bình thường không cần, vì chúng nằm ngoài thư mục web. Chỉ có tác
+# dụng khi buộc phải đặt cả dự án trong public_html.
+<IfModule mod_alias.c>
+    RedirectMatch 404 ^/(config|backup|views)(/|$)
+</IfModule>
+
+# ============================================================
+#  Tiêu đề bảo mật
+#  (cũng đặt song song ở tầng PHP trong api/_common.php, nên
+#   thiếu mod_headers cũng không mất lớp bảo vệ nào)
+# ============================================================
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "geolocation=(), microphone=(), payment=()"
+
+    # Service worker phải luôn lấy bản mới. Nếu trình duyệt giữ bản cũ
+    # trong bộ nhớ đệm thì cập nhật app xong thông báo vẫn chạy mã cũ,
+    # và không có cách nào bảo nó tải lại ngoài xoá dữ liệu trang.
+    <FilesMatch "^sw\.js$">
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+    </FilesMatch>
+</IfModule>
+
+# ============================================================
+#  GIỮ TỆP TĨNH TRONG MÁY NGƯỜI DÙNG
+#
+#  Máy chủ AZDIGI mặc định có đặt hạn cho .css và ảnh, nhưng KHÔNG đặt
+#  cho .js. Hậu quả: mỗi lần mở app từ màn hình chính, điện thoại phải
+#  hỏi lại máy chủ 18 lần "tệp JS này có mới không" trước khi chạy được
+#  dòng mã đầu tiên. Sóng yếu thì đó chính là mấy giây màn hình trắng.
+#
+#  Giữ một năm là an toàn vì mọi thẻ <script> đều kèm ?v=<thời điểm sửa
+#  tệp>: sửa tệp là đường dẫn đổi, trình duyệt tự coi như tệp mới.
+# ============================================================
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType application/javascript "access plus 1 year"
+    ExpiresByType text/javascript        "access plus 1 year"
+    ExpiresByType text/css               "access plus 1 year"
+    ExpiresByType image/png              "access plus 1 year"
+    ExpiresByType image/svg+xml          "access plus 1 year"
+    ExpiresByType font/woff2             "access plus 1 year"
+</IfModule>
+
+<IfModule mod_headers.c>
+    <FilesMatch "\.(js|css|png|svg|woff2)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+
+    # manifest.json thì KHÔNG giữ lâu: đổi tên app hay đổi icon mà máy
+    # còn giữ bản cũ thì biểu tượng trên màn hình chính không cập nhật.
+    <FilesMatch "^manifest\.json$">
+        Header set Cache-Control "public, max-age=3600"
+    </FilesMatch>
+
+    # sw.js phải đứng SAU khối trên, nếu không nó bị luật .js ở trên
+    # đè mất và service worker sẽ kẹt ở bản cũ.
+    <FilesMatch "^sw\.js$">
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+    </FilesMatch>
+</IfModule>

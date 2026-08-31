@@ -1,0 +1,188 @@
+/* ==========================================================
+   ANNOUNCEMENTS — Thông báo
+   Một mảnh của component tnttApp. app.js gộp tất cả các mảnh lại.
+   ========================================================== */
+window.TNTT = window.TNTT || {};
+window.TNTT.announcements = {
+    // ==========================================
+    // 7. DATA: THÔNG BÁO
+    // ==========================================
+    announcements: [],   // máy chủ nạp qua loadData()
+
+    readAnnouncements: [],   // sau này lưu theo từng tài khoản dưới DB
+    showAnnouncementModal: false,
+    isEditingAnnouncement: false,
+    announcementForm: { id: null, title: '', body: '', level: 'thường', audienceType: 'toàn đoàn', audienceValue: '', status: 'đã phát', publishedAt: '', expiresAt: '', createdBy: '' },
+    announcementLevels: ['thường', 'quan trọng', 'khẩn'],
+
+    get canManageAnnouncements() {
+        return this.canEditModule('announcements');
+    },
+
+    // Trưởng khối chỉ sửa/xóa được thông báo của chính khối mình,
+    // thông báo toàn đoàn của BĐH thì chỉ được đọc.
+    canEditAnnouncement(a) {
+        if (['admin', 'bdh'].includes(this.user.role)) return true;
+        if (this.user.role !== 'truong_khoi') return false;
+        return a.audienceType === 'khối' && a.audienceValue === this.user.managedBlock;
+    },
+
+    // Khối mà người đăng nhập thuộc về
+    get myBlock() {
+        if (this.user.role === 'truong_khoi') return this.user.managedBlock;
+        const c = this.classes.find(x => x.name === this.user.assignedClass);
+        return c ? c.block : '';
+    },
+
+    isAnnouncementExpired(a) {
+        if (!a.expiresAt) return false;
+        return a.expiresAt < this.toDateInput(new Date());
+    },
+
+    matchesAudience(a) {
+        if (['admin', 'bdh'].includes(this.user.role)) return true;
+        if (a.audienceType === 'toàn đoàn') return true;
+        if (a.audienceType === 'khối') return a.audienceValue === this.myBlock;
+        if (a.audienceType === 'lớp')  return a.audienceValue === this.user.assignedClass;
+        return false;
+    },
+
+    // Thông báo mà người đăng nhập được đọc: đã phát, chưa hết hạn, đúng đối tượng
+    get visibleAnnouncements() {
+        return this.announcements
+            .filter(a => a.status === 'đã phát' && !this.isAnnouncementExpired(a) && this.matchesAudience(a))
+            .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
+    },
+
+    // BĐH thấy hết kể cả bản nháp và bản đã hết hạn.
+    // Trưởng khối chỉ thấy thông báo khối mình + thông báo toàn đoàn.
+    get manageableAnnouncements() {
+        const list = ['admin', 'bdh'].includes(this.user.role)
+            ? this.announcements
+            : this.announcements.filter(a => this.canEditAnnouncement(a)
+                || (a.status === 'đã phát' && !this.isAnnouncementExpired(a) && this.matchesAudience(a)));
+        return [...list].sort((a, b) => {
+            if (a.status !== b.status) return a.status === 'nháp' ? -1 : 1;
+            return (b.publishedAt || '').localeCompare(a.publishedAt || '');
+        });
+    },
+
+    get unreadAnnouncementCount() {
+        return this.visibleAnnouncements.filter(a => !this.readAnnouncements.includes(a.id)).length;
+    },
+
+    get latestAnnouncement() {
+        return this.visibleAnnouncements.length ? this.visibleAnnouncements[0] : null;
+    },
+
+    openAnnouncements() {
+        this.changeModule('announcements');
+    },
+
+    markAnnouncementRead(a) {
+        if (this.readAnnouncements.includes(a.id)) return;
+        this.readAnnouncements.push(a.id);
+        this.save('announcements', 'read', { id: a.id });
+    },
+
+    markAllAnnouncementsRead() {
+        this.visibleAnnouncements.forEach(a => {
+            if (!this.readAnnouncements.includes(a.id)) this.readAnnouncements.push(a.id);
+        });
+        this.save('announcements', 'readall', {});
+    },
+
+    openCreateAnnouncement() {
+        // Trưởng khối bị khóa cứng vào khối mình, không chọn đối tượng khác được
+        const locked = this.user.role === 'truong_khoi';
+        this.announcementForm = {
+            id: null, title: '', body: '', level: 'thường',
+            audienceType: locked ? 'khối' : 'toàn đoàn',
+            audienceValue: locked ? this.user.managedBlock : '',
+            status: 'đã phát', publishedAt: '', expiresAt: '', createdBy: this.user.fullName
+        };
+        this.isEditingAnnouncement = false;
+        this.showAnnouncementModal = true;
+    },
+
+    get audienceLocked() {
+        return this.user.role === 'truong_khoi';
+    },
+
+    openEditAnnouncement(a) {
+        this.announcementForm = JSON.parse(JSON.stringify(a));
+        this.isEditingAnnouncement = true;
+        this.showAnnouncementModal = true;
+    },
+
+    saveAnnouncement() {
+        const f = this.announcementForm;
+        if (!f.title.trim() || !f.body.trim()) {
+            alert('Vui lòng nhập tiêu đề và nội dung thông báo!');
+            return;
+        }
+        if (f.audienceType !== 'toàn đoàn' && !f.audienceValue) {
+            alert('Vui lòng chọn ' + (f.audienceType === 'khối' ? 'khối' : 'lớp') + ' nhận thông báo!');
+            return;
+        }
+        f.title = f.title.trim();
+        f.body = f.body.trim();
+        if (f.audienceType === 'toàn đoàn') f.audienceValue = '';
+        // Chuyển từ nháp sang phát thì mới đóng dấu thời gian
+        if (f.status === 'đã phát' && !f.publishedAt) f.publishedAt = this.timestamp();
+        if (f.status === 'nháp') f.publishedAt = '';
+
+        if (this.isEditingAnnouncement) {
+            const i = this.announcements.findIndex(x => x.id === f.id);
+            if (i !== -1) this.announcements[i] = f;
+        } else {
+            f.id = Date.now();
+            this.announcements.push(f);
+        }
+        this.logAction(this.isEditingAnnouncement ? 'sua' : 'tao', 'announcements',
+                       (this.isEditingAnnouncement ? 'Sửa' : 'Phát') + ' thông báo "' + f.title + '"',
+                       this.audienceLabel(f) + ' · ' + f.status);
+        this.showAnnouncementModal = false;
+        this.save('announcements', 'save', {
+            id: this.isEditingAnnouncement ? f.id : 0,
+            title: f.title, body: f.body, level: f.level,
+            audienceType: f.audienceType, audienceValue: f.audienceValue,
+            status: f.status, expiresAt: f.expiresAt
+        }).then(r => { if (r.ok && r.id) f.id = r.id; });
+    },
+
+    deleteAnnouncement(id) {
+        const a = this.announcements.find(x => x.id === id);
+        if (!a) return;
+        if (confirm('Xóa thông báo "' + a.title + '"?')) {
+            this.announcements = this.announcements.filter(x => x.id !== id);
+            this.logAction('xoa', 'announcements', 'Xóa thông báo "' + a.title + '"', '');
+            this.save('announcements', 'delete', { id: id });
+        }
+    },
+
+    // Thu hồi = đưa về nháp, ai đã đọc rồi thì cũng không thấy nữa
+    toggleAnnouncementStatus(a) {
+        this.save('announcements', 'toggle', { id: a.id });
+        if (a.status === 'đã phát') {
+            a.status = 'nháp';
+            a.publishedAt = '';
+            this.logAction('sua', 'announcements', 'Thu hồi thông báo "' + a.title + '"', 'về bản nháp');
+        } else {
+            a.status = 'đã phát';
+            a.publishedAt = this.timestamp();
+            this.logAction('tao', 'announcements', 'Phát thông báo "' + a.title + '"', this.audienceLabel(a));
+        }
+    },
+
+    announcementLevelClass(level) {
+        if (level === 'khẩn')       return 'bg-rose-50 text-rose-600 border-rose-100';
+        if (level === 'quan trọng') return 'bg-amber-50 text-amber-600 border-amber-100';
+        return 'bg-blue-50 text-blue-600 border-blue-100';
+    },
+
+    audienceLabel(a) {
+        if (a.audienceType === 'toàn đoàn') return 'Toàn đoàn';
+        return (a.audienceType === 'khối' ? 'Khối ' : 'Lớp ') + a.audienceValue;
+    },
+};
