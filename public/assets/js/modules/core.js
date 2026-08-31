@@ -456,6 +456,7 @@ window.TNTT.core = {
         { key: 'scores',        label: 'Điểm số',      icon: 'graduation-cap',  color: 'text-violet-600', area: 'glv' },
         { key: 'promotion',     label: 'Lên lớp',      icon: 'trending-up',     color: 'text-white',      area: 'bdh' },
         { key: 'programs',      label: 'Chương trình', icon: 'calendar-plus',   color: 'text-white',      area: 'bdh' },
+        { key: 'calendar',      label: 'Lịch trình',   icon: 'calendar-days',   color: 'text-white',      area: 'bdh' },
         { key: 'announcements', label: 'Thông báo',    icon: 'megaphone',       color: 'text-white',      area: 'bdh' }
     ],
 
@@ -464,7 +465,7 @@ window.TNTT.core = {
     moduleEnabled: {
         students: true, attendance: true, leave: true, birthdays: true,
         stats: true, org: true, reports: true, programs: true, announcements: true,
-        scores: true, promotion: true
+        scores: true, promotion: true, calendar: true
     },
 
     // ==========================================
@@ -488,7 +489,8 @@ window.TNTT.core = {
         programs:      { admin: 'edit', bdh: 'edit', truong_khoi: 'none', glv_chu_nhiem: 'none', glv: 'none' },
         announcements: { admin: 'edit', bdh: 'edit', truong_khoi: 'edit', glv_chu_nhiem: 'view', glv: 'view' },
         scores:        { admin: 'edit', bdh: 'edit', truong_khoi: 'edit', glv_chu_nhiem: 'edit', glv: 'edit' },
-        promotion:     { admin: 'edit', bdh: 'edit', truong_khoi: 'view', glv_chu_nhiem: 'none', glv: 'none' }
+        promotion:     { admin: 'edit', bdh: 'edit', truong_khoi: 'view', glv_chu_nhiem: 'none', glv: 'none' },
+        calendar:       { admin: 'view', bdh: 'view', truong_khoi: 'view', glv_chu_nhiem: 'view', glv: 'view' }
     },
 
     permOf(key) {
@@ -540,6 +542,7 @@ window.TNTT.core = {
         if (key === 'announcements') return this.openAnnouncements();
         if (key === 'scores')        return this.openScores();
         if (key === 'promotion')     return this.openPromotion();
+        if (key === 'calendar')      return this.changeModule('calendar');
         this.changeModule(key);
     },
 

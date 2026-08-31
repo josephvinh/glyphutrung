@@ -112,6 +112,7 @@ $bootData = page_bootstrap($me);
             <?php include __DIR__ . '/../views/module_scores.php'; ?>
             <?php include __DIR__ . '/../views/module_promotion.php'; ?>
             <?php include __DIR__ . '/../views/module_programs.php'; ?>
+            <?php include __DIR__ . '/../views/module_calendar.php'; ?>
 
         </main>
 
@@ -127,7 +128,7 @@ $bootData = page_bootstrap($me);
     <script>window.TNTT_BOOT = <?php echo json_encode($bootData, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP); ?>;</script>
     <!-- Các mảnh của component tnttApp. Phải nạp TRƯỚC app.js vì
          app.js chỉ làm nhiệm vụ gộp chúng lại. -->
-    <?php foreach (['core', 'programs', 'students', 'attendance', 'qrscan', 'qrcard', 'leave', 'birthdays', 'announcements', 'stats', 'scores', 'reports', 'promotion', 'org', 'push', 'access', 'shell'] as $m): ?>
+    <?php foreach (['core', 'programs', 'students', 'attendance', 'qrscan', 'qrcard', 'leave', 'birthdays', 'announcements', 'stats', 'scores', 'reports', 'promotion', 'org', 'push', 'access', 'dashboard', 'shell', 'calendar'] as $m): ?>
     <script src="assets/js/modules/<?= $m ?>.js?v=<?php echo @filemtime(__DIR__ . '/assets/js/modules/' . $m . '.js') ?: 0; ?>"></script>
     <?php endforeach; ?>
 

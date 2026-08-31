@@ -10,8 +10,8 @@
 - [x] Task 5: Performance - Caching Layer
 - [x] Task 6: UX - Dark Mode
 - [x] Task 7: UX - Skeleton Loading States
-- [ ] Task 8: Feature - Enhanced Dashboard
-- [ ] Task 9: Feature - Calendar View
+- [x] Task 8: Feature - Enhanced Dashboard
+- [x] Task 9: Feature - Calendar View
 - [ ] Task 10: Code Quality - CI/CD Pipeline
 
 ## Phase 1: Security (Tasks 1-4)
@@ -28,8 +28,8 @@
 ### Task 7: Skeleton Loading ✅ DONE
 
 ## Phase 4: Features (Tasks 8-9)
-### Task 8: Enhanced Dashboard
-### Task 9: Calendar View
+### Task 8: Enhanced Dashboard ✅ DONE
+### Task 9: Calendar View ✅ DONE
 
 ## Phase 5: Code Quality (Task 10)
 ### Task 10: CI/CD Pipeline
@@ -65,9 +65,11 @@ Check: plan explicitly mandates vs review rubric treats as defect
 (No deferred issues yet)
 
 ## Current Status
-Phase 1: Bảo Mật - ✅ COMPLETE
+Phase 1: Security - ✅ COMPLETE
 Phase 2: Performance - ✅ COMPLETE
 Phase 3: UX - ✅ COMPLETE
+Phase 4: Features - ✅ COMPLETE
+Phase 5: Code Quality - In Progress
 
 ## Task 1 Progress
 - Agent dispatched: a9faee09d7de69d06
