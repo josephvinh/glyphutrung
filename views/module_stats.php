@@ -44,7 +44,32 @@
     </div>
 
     <!-- 3. BỐN Ô TỔNG QUAN -->
-    <div class="grid grid-cols-2 gap-3 mb-5">
+    <!-- Skeleton loading state -->
+    <div x-show="syncing" style="display: none;" class="grid grid-cols-2 gap-3 mb-5">
+        <div class="bg-white rounded-field p-4 shadow-sm border border-slate-100">
+            <div class="w-9 h-9 rounded-xl bg-slate-100 mb-2"></div>
+            <div class="skeleton h-8 w-16 mb-2"></div>
+            <div class="skeleton h-4 w-24"></div>
+        </div>
+        <div class="bg-white rounded-field p-4 shadow-sm border border-slate-100">
+            <div class="w-9 h-9 rounded-xl bg-slate-100 mb-2"></div>
+            <div class="skeleton h-8 w-16 mb-2"></div>
+            <div class="skeleton h-4 w-24"></div>
+        </div>
+        <div class="bg-white rounded-field p-4 shadow-sm border border-slate-100">
+            <div class="w-9 h-9 rounded-xl bg-slate-100 mb-2"></div>
+            <div class="skeleton h-8 w-16 mb-2"></div>
+            <div class="skeleton h-4 w-24"></div>
+        </div>
+        <div class="bg-white rounded-field p-4 shadow-sm border border-slate-100">
+            <div class="w-9 h-9 rounded-xl bg-slate-100 mb-2"></div>
+            <div class="skeleton h-8 w-16 mb-2"></div>
+            <div class="skeleton h-4 w-24"></div>
+        </div>
+    </div>
+
+    <!-- Actual stat cards -->
+    <div x-show="!syncing" style="display: none;" class="grid grid-cols-2 gap-3 mb-5">
         <div class="bg-white rounded-field p-4 shadow-sm border border-slate-100">
             <div class="tap-safe w-9 h-9 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center mb-2">
                 <i data-lucide="users" class="w-4 h-4"></i>

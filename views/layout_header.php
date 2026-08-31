@@ -21,15 +21,23 @@
             </div>
         </div>
 
-        <!-- ĐĂNG XUẤT
-             Trước đây chỗ này là menu thả xuống, nhưng mục "Hồ sơ cá nhân"
-             không dẫn đi đâu và mục "Đăng xuất" chỉ đóng menu chứ không gọi
-             máy chủ — bấm vào vẫn còn nguyên phiên. Nay là nút đăng xuất
-             thật, một chạm, có hỏi xác nhận trong logout(). -->
-        <button @click="logout()" type="button" aria-label="Đăng xuất khỏi hệ thống"
-                class="w-12 h-12 shrink-0 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center border-2 border-white/40 shadow-sm active:scale-90 transition-all">
-            <i data-lucide="log-out" class="text-white w-5 h-5 pointer-events-none"></i>
-        </button>
+        <!-- Dark mode toggle + Đăng xuất -->
+        <div class="flex items-center gap-2">
+            <!-- Dark mode toggle -->
+            <button @click="toggleDark()" type="button" :aria-label="dark ? 'Chuyển sang chế độ sáng' : 'Chuyển sang chế độ tối'"
+                    class="w-12 h-12 shrink-0 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center border-2 border-white/40 shadow-sm active:scale-90 transition-all">
+                <!-- Sun icon (shown in dark mode) -->
+                <i x-show="dark" data-lucide="sun" class="text-white w-5 h-5 pointer-events-none"></i>
+                <!-- Moon icon (shown in light mode) -->
+                <i x-show="!dark" data-lucide="moon" class="text-white w-5 h-5 pointer-events-none"></i>
+            </button>
+
+            <!-- Đăng xuất -->
+            <button @click="logout()" type="button" aria-label="Đăng xuất khỏi hệ thống"
+                    class="w-12 h-12 shrink-0 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center border-2 border-white/40 shadow-sm active:scale-90 transition-all">
+                <i data-lucide="log-out" class="text-white w-5 h-5 pointer-events-none"></i>
+            </button>
+        </div>
 
     </div>
 </header>

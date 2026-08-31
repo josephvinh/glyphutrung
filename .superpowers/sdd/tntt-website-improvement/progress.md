@@ -8,8 +8,8 @@
 - [x] Task 3: Security - Security Headers
 - [x] Task 4: Performance - Database Index Optimization
 - [x] Task 5: Performance - Caching Layer
-- [ ] Task 6: UX - Dark Mode
-- [ ] Task 7: UX - Skeleton Loading States
+- [x] Task 6: UX - Dark Mode
+- [x] Task 7: UX - Skeleton Loading States
 - [ ] Task 8: Feature - Enhanced Dashboard
 - [ ] Task 9: Feature - Calendar View
 - [ ] Task 10: Code Quality - CI/CD Pipeline
@@ -24,8 +24,8 @@
 ### Task 5: Caching Layer ✅ DONE
 
 ## Phase 3: UX (Tasks 6-7)
-### Task 6: Dark Mode
-### Task 7: Skeleton Loading
+### Task 6: Dark Mode ✅ DONE
+### Task 7: Skeleton Loading ✅ DONE
 
 ## Phase 4: Features (Tasks 8-9)
 ### Task 8: Enhanced Dashboard
@@ -67,6 +67,7 @@ Check: plan explicitly mandates vs review rubric treats as defect
 ## Current Status
 Phase 1: Bảo Mật - ✅ COMPLETE
 Phase 2: Performance - ✅ COMPLETE
+Phase 3: UX - ✅ COMPLETE
 
 ## Task 1 Progress
 - Agent dispatched: a9faee09d7de69d06

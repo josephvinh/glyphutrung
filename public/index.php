@@ -65,6 +65,8 @@ $bootData = page_bootstrap($me);
          Dựng lại bằng:  node build/tao_font.cjs -->
     <link rel="stylesheet" href="assets/css/font.css?v=<?php echo @filemtime(__DIR__ . '/assets/css/font.css') ?: 0; ?>">
     <link rel="stylesheet" href="assets/css/app.css?v=<?php echo @filemtime(__DIR__ . '/assets/css/app.css') ?: 0; ?>">
+    <link rel="stylesheet" href="assets/css/dark.css?v=<?php echo @filemtime(__DIR__ . '/assets/css/dark.css') ?: 0; ?>">
+    <link rel="stylesheet" href="assets/css/skeleton.css?v=<?php echo @filemtime(__DIR__ . '/assets/css/skeleton.css') ?: 0; ?>">
 </head>
 <body class="text-slate-800 antialiased overflow-x-hidden">
 

@@ -38,6 +38,31 @@ window.TNTT.core = {
         assignedClass: 'Khai Tâm 1A'
     },
 
+    // Dark mode support
+    dark: localStorage.getItem('darkMode') === 'true'
+        || (localStorage.getItem('darkMode') === null
+            && window.matchMedia('(prefers-color-scheme: dark)').matches),
+
+    init() {
+        // Apply saved dark mode state
+        this.applyDarkMode();
+    },
+
+    applyDarkMode() {
+        document.documentElement.classList.toggle('dark', this.dark);
+    },
+
+    toggleDark() {
+        this.dark = !this.dark;
+    },
+
+    $watch: {
+        dark(val) {
+            this.applyDarkMode();
+            localStorage.setItem('darkMode', val);
+        }
+    },
+
     // ==========================================
     // 0. CÁ NHÂN
     // ==========================================

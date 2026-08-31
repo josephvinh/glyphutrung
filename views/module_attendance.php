@@ -29,7 +29,49 @@
         </div>
 
         <!-- DANH SÁCH BUỔI TRONG NGÀY -->
-        <div class="space-y-4">
+        <!-- Skeleton loading state -->
+        <div x-show="syncing && programs.length === 0" style="display: none;" class="space-y-4">
+            <template x-for="i in 3" :key="'sk-' + i">
+                <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100">
+                    <div class="flex items-center gap-2 mb-3">
+                        <div class="skeleton skeleton-badge"></div>
+                        <div class="skeleton skeleton-badge"></div>
+                    </div>
+                    <div class="skeleton skeleton-title w-2/3 mb-4"></div>
+                    <div class="bg-slate-50 rounded-2xl p-3.5 mb-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <div class="skeleton w-4 h-4 rounded"></div>
+                                <div>
+                                    <div class="skeleton skeleton-text-sm w-16 mb-1"></div>
+                                    <div class="skeleton skeleton-text w-12"></div>
+                                </div>
+                            </div>
+                            <div class="skeleton w-px h-8"></div>
+                            <div class="flex items-center gap-2">
+                                <div class="skeleton w-4 h-4 rounded"></div>
+                                <div>
+                                    <div class="skeleton skeleton-text-sm w-16 mb-1"></div>
+                                    <div class="skeleton skeleton-text w-12"></div>
+                                </div>
+                            </div>
+                            <div class="skeleton w-px h-8"></div>
+                            <div class="flex items-center gap-2">
+                                <div class="skeleton w-4 h-4 rounded"></div>
+                                <div>
+                                    <div class="skeleton skeleton-text-sm w-16 mb-1"></div>
+                                    <div class="skeleton skeleton-text w-8"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="skeleton skeleton-button"></div>
+                </div>
+            </template>
+        </div>
+
+        <!-- Actual program list -->
+        <div x-show="!syncing || programs.length > 0" style="display: none;" class="space-y-4">
             <template x-for="prog in programsOnDate" :key="prog.id">
                 <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100">
 
@@ -76,8 +118,9 @@
                     </button>
                 </div>
             </template>
+        </div>
 
-            <!-- KHÔNG CÓ BUỔI NÀO -->
+        <!-- KHÔNG CÓ BUỔI NÀO -->
             <div x-show="programsOnDate.length === 0" style="display: none;" class="text-center py-12 px-6 bg-white rounded-card border border-slate-100 border-dashed">
                 <i data-lucide="calendar-off" class="w-10 h-10 mx-auto text-slate-300 mb-3"></i>
                 <p class="text-slate-500 font-medium text-sm mb-1">Ngày này không có chương trình nào.</p>
@@ -157,7 +200,22 @@
         </div>
 
         <!-- DANH SÁCH ĐIỂM DANH: chạm 1 phát là đổi trạng thái -->
-        <div class="space-y-2.5">
+        <!-- Skeleton loading state -->
+        <div x-show="syncing && accessibleStudents.length === 0" style="display: none;" class="space-y-2.5">
+            <template x-for="i in 5" :key="'sk-' + i">
+                <div class="bg-white rounded-field p-3.5 shadow-sm border border-slate-100 flex items-center gap-3">
+                    <div class="skeleton w-11 h-11 rounded-2xl shrink-0"></div>
+                    <div class="flex-1 min-w-0">
+                        <div class="skeleton skeleton-text-sm w-24 mb-1"></div>
+                        <div class="skeleton skeleton-text w-32"></div>
+                    </div>
+                    <div class="skeleton skeleton-badge shrink-0"></div>
+                </div>
+            </template>
+        </div>
+
+        <!-- Actual student list -->
+        <div x-show="!syncing || accessibleStudents.length > 0" style="display: none;" class="space-y-2.5">
             <template x-for="student in sessionStudents" :key="student.id">
                 <button @click="toggleAttendance(student)" type="button"
                         style="content-visibility: auto; contain-intrinsic-size: auto 84px;"
@@ -193,6 +251,7 @@
                     </div>
                 </button>
             </template>
+        </div>
 
             <div x-show="sessionStudents.length === 0" style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
                 <i data-lucide="search-x" class="w-10 h-10 mx-auto text-slate-300 mb-3"></i>

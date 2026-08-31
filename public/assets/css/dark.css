@@ -1,0 +1,182 @@
+/* ==========================================================
+   DARK MODE — CSS Variables & Overrides
+   ========================================================== */
+
+/* ---------- System preference (fallback) ---------- */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg-primary: #0f172a;
+        --bg-secondary: #1e293b;
+        --bg-card: #1e293b;
+        --text-primary: #f8fafc;
+        --text-secondary: #94a3b8;
+        --border-color: #334155;
+        --shadow-color: rgba(0, 0, 0, 0.3);
+    }
+}
+
+/* ---------- Manual dark mode toggle ---------- */
+.dark {
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --bg-card: #1e293b;
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --border-color: #334155;
+    --shadow-color: rgba(0, 0, 0, 0.4);
+}
+
+/* ---------- Smooth theme transitions ---------- */
+html {
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+body {
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.dark body {
+    background-color: var(--bg-primary);
+}
+
+/* App shell */
+.dark .app-shell {
+    background-color: var(--bg-primary);
+}
+
+/* Content area */
+.dark .app-content {
+    background-color: var(--bg-primary);
+}
+
+/* Bottom navigation */
+.dark .app-bottomnav .nav-inner {
+    background-color: rgb(15 23 42 / 0.85);
+    border-color: var(--border-color);
+}
+
+/* Cards and surfaces */
+.dark .bg-white,
+.dark .bg-slate-50,
+.dark .bg-blue-50,
+.dark .bg-emerald-50,
+.dark .bg-amber-50,
+.dark .bg-rose-50 {
+    background-color: var(--bg-card) !important;
+}
+
+.dark .bg-slate-100 {
+    background-color: var(--bg-secondary) !important;
+}
+
+/* Text colors */
+.dark .text-slate-800,
+.dark .text-slate-700,
+.dark .text-slate-600 {
+    color: var(--text-primary) !important;
+}
+
+.dark .text-slate-500,
+.dark .text-slate-400 {
+    color: var(--text-secondary) !important;
+}
+
+/* Borders */
+.dark .border-slate-100,
+.dark .border-slate-200,
+.dark .border-slate-300 {
+    border-color: var(--border-color) !important;
+}
+
+/* Input fields */
+.dark input,
+.dark select,
+.dark textarea {
+    background-color: var(--bg-secondary);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+    color: var(--text-secondary);
+}
+
+/* Navigation items */
+.dark .nav-item {
+    color: var(--text-secondary);
+}
+
+.dark .nav-item:hover {
+    background-color: var(--bg-secondary);
+}
+
+/* Sidebar */
+.dark .app-sidebar button:not(:hover) {
+    background-color: var(--bg-card);
+}
+
+.dark .nav-item-on {
+    background-color: rgb(30 58 138 / 0.5);
+    color: #93c5fd;
+}
+
+.dark .nav-ico {
+    background-color: var(--bg-secondary);
+    border-color: var(--border-color);
+}
+
+/* Modal / sheet backgrounds */
+.dark .modal-sheet > div,
+.dark [x-data] > .bg-white {
+    background-color: var(--bg-card) !important;
+}
+
+/* Header gradient adaptation */
+.dark .app-header {
+    background: linear-gradient(135deg, #1e3a5f 0%, #1e293b 100%);
+}
+
+/* Table backgrounds */
+.dark table {
+    background-color: var(--bg-card);
+}
+
+/* Shadows */
+.dark .shadow-sm,
+.dark .shadow-md,
+.dark .shadow-lg {
+    --tw-shadow-color: var(--shadow-color);
+}
+
+/* Focus states */
+.dark :focus-visible {
+    outline-color: #60a5fa;
+}
+
+/* Scrollbar styling for dark mode */
+.dark ::-webkit-scrollbar {
+    background-color: var(--bg-secondary);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+    background-color: var(--border-color);
+}
+
+/* App center grid cards */
+.dark .bg-gradient-to-br,
+.dark .bg-gradient-to-r {
+    filter: brightness(0.9);
+}
+
+/* Buttons */
+.dark button.bg-white {
+    background-color: var(--bg-card) !important;
+}
+
+/* Status badges */
+.dark .bg-emerald-500,
+.dark .bg-rose-500,
+.dark .bg-amber-500 {
+    filter: brightness(0.85);
+}
