@@ -191,6 +191,23 @@ function build_report_card_html(array $student, array $term, ?array $report): st
     $remark = htmlspecialchars($report['remark'] ?? '');
     $status = $report['status'] ?? 'chưa lập';
 
+    // Pre-compute display values to avoid ternary expressions inside heredoc
+    $scoreDisplay = ($score !== '' && $score !== null) ? $score : '–';
+    $conductDisplay = ($conduct !== '' && $conduct !== null) ? ucfirst($conduct) : '–';
+    $rankDisplay = ($rank !== '' && $rank !== null) ? $rank : '–';
+    $remarkDisplay = ($remark !== '' && $remark !== null) ? $remark : '(chưa có nhận xét)';
+    $createdBy = $report['created_by'] ?? '';
+    $totalLabel = $attendance['total'] ?? 0;
+    $attTotal = $attendance['total'];
+    $attPresent = $attendance['present'];
+    $attLate = $attendance['late'];
+    $attExcused = $attendance['excused'];
+    $attUnexcused = $attendance['unexcused'];
+    $attRate = $attendance['rate'];
+    $termName = $term['name'] ?? '';
+    $termFrom = $term['from'] ?? '';
+    $termTo = $term['to'] ?? '';
+
     return <<<HTML
 <!DOCTYPE html>
 <html>
@@ -231,7 +248,7 @@ body { font-family: 'Times New Roman', serif; padding: 20px; max-width: 800px; m
     <div class="header">
         <p class="org">ĐOÀN THIẾU NHI THÁNH THỂ</p>
         <h1>PHIẾU LIÊN LẠC</h1>
-        <p class="term">{$term['name']} ({$term['from']} – {$term['to']})</p>
+        <p class="term">{$termName} ({$termFrom} – {$termTo})</p>
     </div>
 
     <div class="info">
@@ -244,28 +261,28 @@ body { font-family: 'Times New Roman', serif; padding: 20px; max-width: 800px; m
     <div class="section">
         <h3>CHUYÊN CẦN</h3>
         <div class="stats">
-            <div><div class="val">{$attendance['total']}</div><div class="lbl">Tổng số buổi</div></div>
-            <div><div class="val" style="color:#2e7d32">{$attendance['present']}</div><div class="lbl">Có mặt</div></div>
-            <div><div class="val" style="color:#f57c00">{$attendance['late']}</div><div class="lbl">Đi trễ</div></div>
-            <div><div class="val" style="color:#1976d2">{$attendance['excused']}</div><div class="lbl">Có phép</div></div>
-            <div><div class="val" style="color:#c62828">{$attendance['unexcused']}</div><div class="lbl">Không phép</div></div>
+            <div><div class="val">{$attTotal}</div><div class="lbl">Tổng số buổi</div></div>
+            <div><div class="val" style="color:#2e7d32">{$attPresent}</div><div class="lbl">Có mặt</div></div>
+            <div><div class="val" style="color:#f57c00">{$attLate}</div><div class="lbl">Đi trễ</div></div>
+            <div><div class="val" style="color:#1976d2">{$attExcused}</div><div class="lbl">Có phép</div></div>
+            <div><div class="val" style="color:#c62828">{$attUnexcused}</div><div class="lbl">Không phép</div></div>
         </div>
-        <div style="text-align:center; font-weight:bold;">Tỷ lệ có mặt: <span style="font-size:18px">{$attendance['rate']}%</span></div>
+        <div style="text-align:center; font-weight:bold;">Tỷ lệ có mặt: <span style="font-size:18px">{$attRate}%</span></div>
     </div>
 
     <div class="section">
         <h3>HỌC TẬP & HẠNH KIỂM</h3>
         <div class="grades">
             <div>
-                <div class="val">{$score !== '' ? $score : '–'}</div>
+                <div class="val">{$scoreDisplay}</div>
                 <div class="lbl">Điểm học lực</div>
             </div>
             <div>
-                <div class="val" style="font-size:14px; text-transform:capitalize">{$conduct !== '' ? $conduct : '–'}</div>
+                <div class="val" style="font-size:14px; text-transform:capitalize">{$conductDisplay}</div>
                 <div class="lbl">Hạnh kiểm</div>
             </div>
             <div class="rank">
-                <div class="val">{$rank !== '' ? $rank : '–'}</div>
+                <div class="val">{$rankDisplay}</div>
                 <div class="lbl">Xếp loại</div>
             </div>
         </div>
@@ -273,13 +290,13 @@ body { font-family: 'Times New Roman', serif; padding: 20px; max-width: 800px; m
 
     <div class="section">
         <h3>NHẬN XÉT CỦA GIÁO LÝ VIÊN</h3>
-        <div class="remark">{$remark !== '' ? $remark : '(chưa có nhận xét)'}</div>
+        <div class="remark">{$remarkDisplay}</div>
     </div>
 
     <div class="signatures">
         <div>
             <p>GLV CHỦ NHIỆM</p>
-            <p>{$report['created_by'] ?? ''}</p>
+            <p>{$createdBy}</p>
         </div>
         <div>
             <p>PHỤ HUYNH KÝ TÊN</p>
