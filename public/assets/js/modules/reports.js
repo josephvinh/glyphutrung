@@ -245,4 +245,37 @@ window.TNTT.reports = {
         link.click();
         URL.revokeObjectURL(url);
     },
+
+    /**
+     * Export report cards for current class using the export API
+     * @param {string} format - 'pdf', 'excel', or 'csv'
+     */
+    async exportReport(format = 'csv') {
+        const students = this.reportStudents;
+        if (students.length === 0) {
+            alert('Lớp này chưa có em nào để xuất!');
+            return;
+        }
+
+        const termId = Number(this.reportTermId);
+        let successCount = 0;
+        let errorCount = 0;
+
+        for (const student of students) {
+            const r = await window.TNTT.export.report(termId, student.id, format);
+            if (r.ok && r.url) {
+                successCount++;
+                // Small delay between downloads to prevent browser issues
+                await new Promise(resolve => setTimeout(resolve, 300));
+            } else {
+                errorCount++;
+            }
+        }
+
+        if (errorCount > 0) {
+            alert('Đã xuất ' + successCount + ' phiếu, ' + errorCount + ' phiếu thất bại.');
+        } else if (successCount === 0) {
+            alert('Không có phiếu nào để xuất.');
+        }
+    },
 };

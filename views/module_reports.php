@@ -9,9 +9,17 @@
             </button>
             <h2 class="text-xl font-black text-slate-800 tracking-tight">Sổ Liên Lạc</h2>
         </div>
-        <button @click="exportReportsCSV()" class="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-blue-50 text-blue-600 rounded-xl font-bold text-xs active:scale-95 transition-transform border border-blue-100 shadow-sm">
-            <i data-lucide="file-up" class="w-4 h-4"></i> Xuất
-        </button>
+        <div class="flex items-center gap-2">
+            <button @click="exportReport('csv')" class="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-slate-50 text-slate-600 rounded-xl font-bold text-xs active:scale-95 transition-transform border border-slate-200 hover:bg-slate-100">
+                <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> CSV
+            </button>
+            <button @click="exportReport('excel')" class="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-emerald-50 text-emerald-600 rounded-xl font-bold text-xs active:scale-95 transition-transform border border-emerald-100 hover:bg-emerald-100">
+                <i data-lucide="table" class="w-4 h-4"></i> Excel
+            </button>
+            <button @click="exportReport('pdf')" class="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-blue-50 text-blue-600 rounded-xl font-bold text-xs active:scale-95 transition-transform border border-blue-100 hover:bg-blue-100">
+                <i data-lucide="file-text" class="w-4 h-4"></i> PDF
+            </button>
+        </div>
     </div>
 
     <!-- GLV phụ tá chỉ được xem -->

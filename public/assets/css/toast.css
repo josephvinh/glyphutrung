@@ -1,0 +1,128 @@
+/* ==========================================================
+   TOAST NOTIFICATIONS
+   Modern toast notifications replacing alert() dialogs
+   ========================================================== */
+
+/* Container - fixed position bottom-right */
+.toast-container {
+    position: fixed;
+    bottom: 1rem;
+    right: 1rem;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    pointer-events: none;
+}
+
+/* Individual toast */
+.toast {
+    padding: 0.875rem 1.25rem;
+    border-radius: 0.5rem;
+    background: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    max-width: 350px;
+    min-width: 280px;
+    pointer-events: auto;
+    font-size: 0.9375rem;
+    line-height: 1.4;
+    animation: toastSlideIn 0.3s ease forwards;
+}
+
+/* Toast types - left border color */
+.toast.success {
+    border-left: 4px solid #10b981;
+    color: #065f46;
+    background: #ecfdf5;
+}
+
+.toast.error {
+    border-left: 4px solid #ef4444;
+    color: #991b1b;
+    background: #fef2f2;
+}
+
+.toast.warning {
+    border-left: 4px solid #f59e0b;
+    color: #92400e;
+    background: #fffbeb;
+}
+
+.toast.info {
+    border-left: 4px solid #3b82f6;
+    color: #1e40af;
+    background: #eff6ff;
+}
+
+/* Slide in animation */
+@keyframes toastSlideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Slide out animation */
+.toast.fade-out {
+    animation: toastSlideOut 0.3s ease forwards;
+}
+
+@keyframes toastSlideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+/* Dark mode support */
+.dark .toast {
+    background: #1e293b;
+    color: #f1f5f9;
+}
+
+.dark .toast.success {
+    background: #064e3b;
+    color: #d1fae5;
+    border-left-color: #34d399;
+}
+
+.dark .toast.error {
+    background: #450a0a;
+    color: #fecaca;
+    border-left-color: #f87171;
+}
+
+.dark .toast.warning {
+    background: #451a03;
+    color: #fef3c7;
+    border-left-color: #fbbf24;
+}
+
+.dark .toast.info {
+    background: #1e3a5f;
+    color: #dbeafe;
+    border-left-color: #60a5fa;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 480px) {
+    .toast-container {
+        left: 0.5rem;
+        right: 0.5rem;
+        bottom: 0.5rem;
+    }
+
+    .toast {
+        max-width: none;
+        min-width: auto;
+        width: 100%;
+    }
+}

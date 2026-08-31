@@ -102,7 +102,7 @@ window.TNTT.core = {
     async save(file, action, body) {
         const r = await this.api(file, action, body);
         if (!r.ok) {
-            alert((r.error || 'Có lỗi xảy ra.') + '\n\nTrang sẽ tải lại để đồng bộ dữ liệu.');
+            window.TNTT.toast.error(r.error || 'Có lỗi xảy ra. Trang sẽ tải lại để đồng bộ dữ liệu.');
             location.reload();
         }
         return r;
@@ -134,13 +134,10 @@ window.TNTT.core = {
 
         await this.loadData();
         // Nêu rõ phạm vi ghi: chủ nhiệm cần thấy danh sách vừa vào lớp nào
-        let msg = 'Đã nạp file: ' + fileName + '\n'
-                + (r.scope ? 'Phạm vi ghi của bạn: ' + r.scope + '\n' : '')
-                + '\n• Thêm mới: ' + r.added + ' em\n'
-                + '• Cập nhật: ' + r.updated + ' em\n'
-                + '• Bỏ qua: ' + r.skipped + ' dòng';
-        if (r.errors && r.errors.length) msg += '\n\n' + r.errors.join('\n');
-        alert(msg);
+        let msg = 'Đã nạp file: ' + fileName + ' - Thêm mới: ' + r.added + ' em, Cập nhật: ' + r.updated + ' em, Bỏ qua: ' + r.skipped + ' dòng';
+        if (r.scope) msg += ' - Phạm vi: ' + r.scope;
+        if (r.errors && r.errors.length) msg += '. ' + r.errors.length + ' lỗi';
+        window.TNTT.toast.success(msg);
     },
 
     // Nạp toàn bộ dữ liệu nghiệp vụ của niên khoá đang mở
@@ -149,7 +146,7 @@ window.TNTT.core = {
         try {
             const res = await fetch('api/data.php');
             const d = await res.json();
-            if (!d.ok) { alert(d.error || 'Không nạp được dữ liệu.'); return; }
+            if (!d.ok) { window.TNTT.toast.error(d.error || 'Không nạp được dữ liệu.'); return; }
 
             this.students          = d.students;
             // Sĩ số mọi lớp, đếm ở máy chủ. Cần vì this.students nay chỉ
@@ -165,7 +162,7 @@ window.TNTT.core = {
             this.members           = d.members;
             this.logs              = d.logs;
         } catch (e) {
-            alert('Không nạp được dữ liệu từ máy chủ.');
+            window.TNTT.toast.error('Không nạp được dữ liệu từ máy chủ.');
         } finally {
             this.syncing = false;
             this.$nextTick(() => lucide.createIcons());
@@ -214,19 +211,19 @@ window.TNTT.core = {
 
     async submitChangePassword() {
         const f = this.pwForm;
-        if (!f.current)                 return alert('Vui lòng nhập mật khẩu hiện tại.');
-        if (f.next.length < 6)          return alert('Mật khẩu mới phải từ 6 ký tự trở lên.');
-        if (f.next === f.current)       return alert('Mật khẩu mới phải khác mật khẩu cũ.');
-        if (f.next !== f.confirm)       return alert('Hai ô mật khẩu mới chưa khớp nhau.');
+        if (!f.current)                 return window.TNTT.toast.warning('Vui lòng nhập mật khẩu hiện tại.');
+        if (f.next.length < 6)          return window.TNTT.toast.warning('Mật khẩu mới phải từ 6 ký tự trở lên.');
+        if (f.next === f.current)       return window.TNTT.toast.warning('Mật khẩu mới phải khác mật khẩu cũ.');
+        if (f.next !== f.confirm)       return window.TNTT.toast.warning('Hai ô mật khẩu mới chưa khớp nhau.');
 
         this.pwBusy = true;
         try {
             const r = await this.api('auth', 'password', { current: f.current, new: f.next });
-            if (!r.ok) { alert(r.error || 'Không đổi được mật khẩu.'); return; }
+            if (!r.ok) { window.TNTT.toast.error(r.error || 'Không đổi được mật khẩu.'); return; }
             this.showChangePw = false;
             this.pwForm = { current: '', next: '', confirm: '' };
             this.logAction('sua', 'profile', 'Đổi mật khẩu', '');
-            alert('Đã đổi mật khẩu. Lần đăng nhập sau hãy dùng mật khẩu mới.');
+            window.TNTT.toast.success('Đã đổi mật khẩu. Lần đăng nhập sau hãy dùng mật khẩu mới.');
         } finally {
             this.pwBusy = false;
         }
@@ -244,7 +241,7 @@ window.TNTT.core = {
 
     saveProfile() {
         const f = this.profileForm;
-        if (!f.fullName.trim()) { alert('Vui lòng nhập họ và tên!'); return; }
+        if (!f.fullName.trim()) { window.TNTT.toast.warning('Vui lòng nhập họ và tên!'); return; }
 
         this.user.holyName = f.holyName.trim();
         this.user.fullName = f.fullName.trim();
@@ -449,6 +446,7 @@ window.TNTT.core = {
         { key: 'leave',         label: 'Xin phép',     icon: 'file-text',       color: 'text-blue-600',   area: 'glv', badge: 'leave' },
         { key: 'birthdays',     label: 'Sinh nhật',    icon: 'cake',            color: 'text-rose-500',   area: 'glv', badge: 'birthday' },
         { key: 'stats',         label: 'Thống kê',     icon: 'bar-chart-3',     color: 'text-emerald-600', area: 'glv' },
+        { key: 'analytics',     label: 'Phân tích',    icon: 'bar-chart-2',     color: 'text-purple-600', area: 'glv' },
         { key: 'org',           label: 'Khối lớp',     icon: 'layers',          color: 'text-indigo-600', area: 'glv' },
         { key: 'staff',         label: 'Nhân sự',      icon: 'user-cog',        color: 'text-cyan-600',   area: 'glv', badge: 'staff' },
         { key: 'years',         label: 'Niên khoá',    icon: 'calendar-range',  color: 'text-teal-600',   area: 'glv' },
@@ -464,7 +462,7 @@ window.TNTT.core = {
     // riêng Quản trị vẫn vào được để kiểm tra trước khi mở lại.
     moduleEnabled: {
         students: true, attendance: true, leave: true, birthdays: true,
-        stats: true, org: true, reports: true, programs: true, announcements: true,
+        stats: true, analytics: true, org: true, reports: true, programs: true, announcements: true,
         scores: true, promotion: true, calendar: true
     },
 
@@ -484,6 +482,7 @@ window.TNTT.core = {
         leave:         { admin: 'edit', bdh: 'edit', truong_khoi: 'edit', glv_chu_nhiem: 'edit', glv: 'view' },
         birthdays:     { admin: 'view', bdh: 'view', truong_khoi: 'view', glv_chu_nhiem: 'view', glv: 'view' },
         stats:         { admin: 'view', bdh: 'view', truong_khoi: 'view', glv_chu_nhiem: 'view', glv: 'view' },
+        analytics:     { admin: 'view', bdh: 'view', truong_khoi: 'view', glv_chu_nhiem: 'view', glv: 'view' },
         org:           { admin: 'edit', bdh: 'edit', truong_khoi: 'view', glv_chu_nhiem: 'view', glv: 'view' },
         reports:       { admin: 'edit', bdh: 'edit', truong_khoi: 'edit', glv_chu_nhiem: 'edit', glv: 'view' },
         programs:      { admin: 'edit', bdh: 'edit', truong_khoi: 'none', glv_chu_nhiem: 'none', glv: 'none' },
@@ -528,7 +527,7 @@ window.TNTT.core = {
     openModule(key) {
         if (!this.canAccess(key)) return;
         if (this.isUnderMaintenance(key)) {
-            alert('Chức năng "' + this.moduleLabel(key) + '" đang tạm bảo trì.\nVui lòng quay lại sau.');
+            window.TNTT.toast.warning('Chức năng "' + this.moduleLabel(key) + '" đang tạm bảo trì. Vui lòng quay lại sau.');
             return;
         }
         if (key === 'attendance')    return this.openAttendance();
@@ -537,6 +536,7 @@ window.TNTT.core = {
         if (key === 'staff')         return this.openStaff();
         if (key === 'years')         return this.openYears();
         if (key === 'stats')         return this.openStats();
+        if (key === 'analytics')     return this.openAnalytics();
         if (key === 'org')           return this.openOrg();
         if (key === 'reports')       return this.openReports();
         if (key === 'announcements') return this.openAnnouncements();
@@ -589,7 +589,7 @@ window.TNTT.core = {
     // khai giảng. Chỉ niên khoá đã khoá sổ mới không sửa.
     openEditYear(y) {
         if (y.status === 'đã khóa') {
-            alert('Niên khoá "' + y.name + '" đã khoá sổ.\n' + 'Hãy mở lại trước khi sửa.');
+            window.TNTT.toast.warning('Niên khoá "' + y.name + '" đã khoá sổ. Hãy mở lại trước khi sửa.');
             return;
         }
         this.yearForm = { id: y.id, name: y.name, startDate: y.startDate, endDate: y.endDate };
@@ -603,11 +603,11 @@ window.TNTT.core = {
     async saveYear() {
         const f = this.yearForm;
         if (!f.name.trim() || !f.startDate || !f.endDate) {
-            alert('Vui lòng nhập đủ tên niên khoá và hai mốc ngày.');
+            window.TNTT.toast.warning('Vui lòng nhập đủ tên niên khoá và hai mốc ngày.');
             return;
         }
         if (f.endDate <= f.startDate) {
-            alert('Ngày kết thúc phải sau ngày bắt đầu.');
+            window.TNTT.toast.warning('Ngày kết thúc phải sau ngày bắt đầu.');
             return;
         }
 
@@ -615,15 +615,14 @@ window.TNTT.core = {
         if (f.id) body.id = f.id;
 
         const r = await this.apiYear(f.id ? 'update' : 'create', body);
-        if (!r.ok) { alert(r.error); return; }
+        if (!r.ok) { window.TNTT.toast.error(r.error); return; }
 
         this.showYearModal = false;
         await this.loadYears();
 
         // Học kỳ bị co lại cho vừa khoảng mới thì phải nói rõ, đừng đổi ngầm
         if (r.termsAdjusted && r.termsAdjusted.length) {
-            alert('Đã sửa niên khoá.\n\nHọc kỳ được chỉnh cho vừa khoảng mới:\n• '
-                + r.termsAdjusted.join('\n• '));
+            window.TNTT.toast.info('Đã sửa niên khoá. Học kỳ được chỉnh cho vừa khoảng mới: ' + r.termsAdjusted.join(', '));
         }
 
         // Sửa chính niên khoá đang dùng thì mọi số liệu trên màn hình
@@ -639,7 +638,7 @@ window.TNTT.core = {
     async activateYear(y) {
         if (!confirm('Chuyển sang niên khoá ' + y.name + '?\n\nToàn bộ dữ liệu hiển thị sẽ đổi theo năm này.')) return;
         const r = await this.apiYear('activate', { id: y.id });
-        if (!r.ok) { alert(r.error); return; }
+        if (!r.ok) { window.TNTT.toast.error(r.error); return; }
         location.reload();
     },
 
@@ -650,7 +649,7 @@ window.TNTT.core = {
             : 'Mở lại niên khoá ' + y.name + '?';
         if (!confirm(msg)) return;
         const r = await this.apiYear(locking ? 'lock' : 'unlock', { id: y.id });
-        if (!r.ok) { alert(r.error); return; }
+        if (!r.ok) { window.TNTT.toast.error(r.error); return; }
         await this.loadYears();
     },
 
@@ -693,7 +692,7 @@ window.TNTT.core = {
     setPermission(key, role, level) {
         // Chặn tự khoá chính mình ra khỏi màn Cài đặt
         if (role === 'admin' && level !== 'edit') {
-            alert('Không thể hạ quyền của Quản Trị Hệ Thống — bạn sẽ tự khoá mình ra ngoài.');
+            window.TNTT.toast.warning('Không thể hạ quyền của Quản Trị Hệ Thống — bạn sẽ tự khoá mình ra ngoài.');
             return;
         }
         const old = this.permissions[key][role];
