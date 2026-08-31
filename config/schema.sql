@@ -132,6 +132,38 @@ CREATE TABLE IF NOT EXISTS members (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================================================
+--  4a. PHÂN CÔNG KIÊM NHIỆM  (added 2026-08-31 — member-assignments plan, Task 1)
+--  Một thành viên có thể giữ nhiều vai trò và phụ trách nhiều lớp/khối
+--  cùng lúc. Bảng này lưu từng (member, role, scope) như một dòng độc
+--  lập với from_date/to_date. is_primary = vai trò mặc định khi đăng nhập.
+-- =====================================================================
+CREATE TABLE IF NOT EXISTS member_assignments (
+    id           INT AUTO_INCREMENT PRIMARY KEY,
+    member_id    INT NOT NULL,
+    role_code    VARCHAR(24) NOT NULL,
+    block_id     INT NULL,
+    class_id     INT NULL,
+    is_primary   TINYINT(1) NOT NULL DEFAULT 0
+                 COMMENT 'phân công chính = vai trò mặc định khi đăng nhập',
+    from_date    DATE NOT NULL,
+    to_date      DATE NULL COMMENT 'null = đang hiệu lực',
+    assigned_by  INT NOT NULL COMMENT 'BĐH phân công',
+    note         VARCHAR(255) NULL,
+    created_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_assign_member   FOREIGN KEY (member_id)  REFERENCES members(id)  ON DELETE CASCADE,
+    CONSTRAINT fk_assign_role     FOREIGN KEY (role_code)  REFERENCES roles(code),
+    CONSTRAINT fk_assign_block    FOREIGN KEY (block_id)   REFERENCES blocks(id)   ON DELETE SET NULL,
+    CONSTRAINT fk_assign_class    FOREIGN KEY (class_id)   REFERENCES classes(id)  ON DELETE SET NULL,
+    CONSTRAINT fk_assign_by       FOREIGN KEY (assigned_by) REFERENCES members(id),
+
+    INDEX idx_assign_member (member_id, to_date),
+    INDEX idx_assign_class  (class_id, to_date),
+    INDEX idx_assign_block  (block_id, to_date),
+    INDEX idx_assign_role   (role_code, to_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =====================================================================
 --  5. THIẾU NHI & GHI DANH
 --  students giữ thông tin bền của em (không đổi theo năm).
 --  enrollments giữ chuyện năm nào học lớp nào, kết quả ra sao.
