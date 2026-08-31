@@ -237,6 +237,7 @@
             </div>
 
             <div class="p-5 space-y-4">
+                <input type="hidden" name="_csrf" :value="window.TNTT.csrfToken">
                 <div class="grid grid-cols-3 gap-3">
                     <div class="col-span-1">
                         <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Tên Thánh</label>

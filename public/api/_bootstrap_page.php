@@ -8,6 +8,7 @@
  */
 
 require_once __DIR__ . '/_common.php';
+require_once __DIR__ . '/csrf.php';
 
 /**
  * Gói dữ liệu khởi động.
@@ -16,6 +17,9 @@ require_once __DIR__ . '/_common.php';
  */
 function page_bootstrap(array $me): array
 {
+    // Generate CSRF token for the session
+    $csrfToken = csrf_token();
+
     $year  = db_one('SELECT * FROM school_years WHERE is_current = 1 LIMIT 1');
     $terms = $year ? db_all('SELECT id, name, start_date, end_date FROM terms
                               WHERE year_id = ? ORDER BY sort_order', [$year['id']]) : [];
@@ -74,6 +78,7 @@ function page_bootstrap(array $me): array
                LEFT JOIN classes n ON n.id = c.next_class_id
               ORDER BY b.sort_order, c.sort_order')),
         'permissions'   => $perms,
+        'csrfToken'     => $csrfToken,
         'modules'       => array_map(fn($m) => [
             'key'   => $m['module_key'], 'label' => $m['label'], 'icon' => $m['icon'],
             'color' => $m['color'],      'area'  => $m['area'],

@@ -148,6 +148,7 @@
             </div>
 
             <div class="flex-1 overflow-y-auto p-5 space-y-4">
+                <input type="hidden" name="_csrf" :value="window.TNTT.csrfToken">
                 <div>
                     <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Tiêu đề</label>
                     <input x-model="announcementForm.title" type="text" placeholder="VD: Họp GLV toàn đoàn..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">

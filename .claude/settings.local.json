@@ -3,7 +3,13 @@
     "allow": [
       "Bash(git init *)",
       "Bash(git add *)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(php vendor/bin/phpunit --testdox)",
+      "Bash(php phpunit.phar --testdox)",
+      "Bash(phpunit --testdox)",
+      "Bash(curl -sL https://phar.phpunit.de/phpunit-10.phar -o phpunit10.phar)",
+      "Bash(php phpunit10.phar --version)",
+      "Bash(php phpunit10.phar --testdox --bootstrap tests/bootstrap.php tests/unit/CSRFTest.php)"
     ]
   }
 }

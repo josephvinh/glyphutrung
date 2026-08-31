@@ -7,6 +7,7 @@
  */
 
 require_once __DIR__ . '/_common.php';
+require_once __DIR__ . '/csrf.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -167,6 +168,19 @@ function safe_error(Throwable $e, string $chung): string
         return $chung;
     }
     return $chung . ' ' . $e->getMessage();
+}
+
+/* ================================================================
+   CSRF PROTECTION
+   ================================================================ */
+
+/** Bắt buộc CSRF token cho mọi POST request */
+function require_csrf(): void {
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
+    $token = $_POST['_csrf'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
+    if (!verify_csrf($token)) {
+        json_fail('Invalid CSRF token.', 403);
+    }
 }
 
 /* ================================================================

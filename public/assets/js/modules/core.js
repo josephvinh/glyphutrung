@@ -3,6 +3,25 @@
    Một mảnh của component tnttApp. app.js gộp tất cả các mảnh lại.
    ========================================================== */
 window.TNTT = window.TNTT || {};
+
+// CSRF token from server boot data
+window.TNTT.csrfToken = window.TNTT_BOOT?.csrfToken || '';
+
+/**
+ * Fetch wrapper that automatically includes CSRF token in headers.
+ * Use this for all POST/PUT/DELETE requests.
+ */
+window.TNTT.csrfFetch = async (url, options = {}) => {
+    return fetch(url, {
+        ...options,
+        method: options.method || 'GET',
+        headers: {
+            ...options.headers,
+            'X-CSRF-TOKEN': window.TNTT.csrfToken,
+            'Content-Type': 'application/json',
+        },
+    });
+};
 window.TNTT.core = {
     currentModule: 'dashboard',
 

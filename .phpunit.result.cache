@@ -1,0 +1,1 @@
+{"version":2,"defects":[],"times":{"CSRFTest::test_csrf_token_generates_64_hex_chars":0,"CSRFTest::test_verify_csrf_returns_true_for_valid_token":0,"CSRFTest::test_verify_csrf_returns_false_for_invalid_token":0,"CSRFTest::test_verify_csrf_handles_empty_session":0}}
