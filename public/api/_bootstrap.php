@@ -8,6 +8,7 @@
 
 require_once __DIR__ . '/_common.php';
 require_once __DIR__ . '/csrf.php';
+require_once __DIR__ . '/cache.php';
 
 header('Content-Type: application/json; charset=utf-8');
 

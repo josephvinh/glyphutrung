@@ -7,7 +7,7 @@
 - [x] Task 2: Security - Password Hashing Upgrade (bcrypt → argon2id)
 - [x] Task 3: Security - Security Headers
 - [x] Task 4: Performance - Database Index Optimization
-- [ ] Task 5: Performance - Caching Layer
+- [x] Task 5: Performance - Caching Layer
 - [ ] Task 6: UX - Dark Mode
 - [ ] Task 7: UX - Skeleton Loading States
 - [ ] Task 8: Feature - Enhanced Dashboard
@@ -21,7 +21,7 @@
 ### Task 4: Database Indexes ✅ DONE
 
 ## Phase 2: Performance (Tasks 5)
-### Task 5: Caching Layer
+### Task 5: Caching Layer ✅ DONE
 
 ## Phase 3: UX (Tasks 6-7)
 ### Task 6: Dark Mode
@@ -65,7 +65,8 @@ Check: plan explicitly mandates vs review rubric treats as defect
 (No deferred issues yet)
 
 ## Current Status
-Phase 1: Bảo Mật - In Progress
+Phase 1: Bảo Mật - ✅ COMPLETE
+Phase 2: Performance - ✅ COMPLETE
 
 ## Task 1 Progress
 - Agent dispatched: a9faee09d7de69d06

@@ -21,6 +21,12 @@ if (!$year) json_fail('Chưa có niên khoá nào đang mở.', 409);
 
 $yid = (int) $year['id'];
 
+// Check cache first
+$cacheKey = "data_{$yid}_{$me['id']}";
+if ($cached = Cache::get($cacheKey)) {
+    json_out($cached);
+}
+
 // ---------------------------------------------------------------
 // Thiếu nhi — gộp thông tin bền với ghi danh của năm nay
 // ---------------------------------------------------------------
@@ -250,7 +256,7 @@ $logs = array_map(fn($l) => [
     'detail' => $l['detail'] ?? '',
 ], db_all('SELECT * FROM activity_logs ORDER BY id DESC LIMIT 300'));
 
-json_out([
+$result = [
     'ok' => true,
     'students'      => $students,
     'classCounts'   => $classCounts,
@@ -263,4 +269,8 @@ json_out([
     'readAnnouncements' => $readIds,
     'members'       => $members,
     'logs'          => $logs,
-]);
+];
+
+// Cache result
+Cache::set($cacheKey, $result, 300); // 5 minutes
+json_out($result);
