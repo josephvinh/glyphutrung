@@ -4,7 +4,7 @@
 
 ### Task Checklist
 - [x] Task 1: Security - CSRF Protection
-- [ ] Task 2: Security - Password Hashing Upgrade (bcrypt → argon2id)
+- [x] Task 2: Security - Password Hashing Upgrade (bcrypt → argon2id)
 - [ ] Task 3: Security - Security Headers
 - [ ] Task 4: Performance - Database Index Optimization
 - [ ] Task 5: Performance - Caching Layer
@@ -16,7 +16,7 @@
 
 ## Phase 1: Security (Tasks 1-4)
 ### Task 1: CSRF Protection ✅ DONE
-### Task 2: Password Hashing
+### Task 2: Password Hashing ✅ DONE
 ### Task 3: Security Headers
 ### Task 4: Database Indexes
 
@@ -80,4 +80,5 @@ Phase 1: Bảo Mật - In Progress
 | Task | Status | Agent | BASE | HEAD | Review |
 |------|--------|-------|------|------|--------|
 | Task 1 | ✅ Complete | a9faee09d7de69d06 | 4fbc0ae | 61495a3 | Approved |
-| Task 2 | 🔄 Implementing | a5ad719472a708738 | 61495a3 | - | Pending |
+| Task 2 | ✅ Complete | a5ad719472a708738 | 61495a3 | f93a5ec | Approved |
+| Task 3 | 🔄 Implementing | a3244a607069d4f3c | f93a5ec | - | Pending |

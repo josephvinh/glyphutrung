@@ -1,0 +1,336 @@
+diff --git a/.phpunit.result.cache b/.phpunit.result.cache
+index 4db9fad..b88d65e 100644
+--- a/.phpunit.result.cache
++++ b/.phpunit.result.cache
+@@ -1 +1 @@
+-{"version":2,"defects":[],"times":{"CSRFTest::test_csrf_token_generates_64_hex_chars":0,"CSRFTest::test_verify_csrf_returns_true_for_valid_token":0,"CSRFTest::test_verify_csrf_returns_false_for_invalid_token":0,"CSRFTest::test_verify_csrf_handles_empty_session":0}}
+\ No newline at end of file
++{"version":2,"defects":{"PasswordTest::test_is_bcrypt_hash_returns_false_for_argon2id":7,"PasswordTest::test_argon2id_hash_parameters_are_correct":7},"times":{"CSRFTest::test_csrf_token_generates_64_hex_chars":0,"CSRFTest::test_verify_csrf_returns_true_for_valid_token":0,"CSRFTest::test_verify_csrf_returns_false_for_invalid_token":0,"CSRFTest::test_verify_csrf_handles_empty_session":0,"PasswordTest::test_password_hash_upgrade_generates_valid_argon2id_hash":0.082,"PasswordTest::test_password_verify_upgrade_returns_true_for_correct_password":0.243,"PasswordTest::test_password_verify_upgrade_returns_false_for_wrong_password":0.164,"PasswordTest::test_password_verify_upgrade_detects_bcrypt_and_rehashes":0.188,"PasswordTest::test_is_bcrypt_hash_returns_true_for_bcrypt":0.053,"PasswordTest::test_is_bcrypt_hash_returns_false_for_argon2id":0.081,"PasswordTest::test_is_argon2id_hash_returns_true_for_argon2id":0.082,"PasswordTest::test_is_argon2id_hash_returns_false_for_bcrypt":0.053,"PasswordTest::test_argon2id_hash_parameters_are_correct":0.081}}
+\ No newline at end of file
+diff --git a/.superpowers/sdd/tntt-website-improvement/progress.md b/.superpowers/sdd/tntt-website-improvement/progress.md
+index 0351eed..a840411 100644
+--- a/.superpowers/sdd/tntt-website-improvement/progress.md
++++ b/.superpowers/sdd/tntt-website-improvement/progress.md
+@@ -3,7 +3,7 @@
+ ## Project: TNTT Super App - Website Improvement Plan
+ 
+ ### Task Checklist
+-- [ ] Task 1: Security - CSRF Protection
++- [x] Task 1: Security - CSRF Protection
+ - [ ] Task 2: Security - Password Hashing Upgrade (bcrypt → argon2id)
+ - [ ] Task 3: Security - Security Headers
+ - [ ] Task 4: Performance - Database Index Optimization
+@@ -15,7 +15,7 @@
+ - [ ] Task 10: Code Quality - CI/CD Pipeline
+ 
+ ## Phase 1: Security (Tasks 1-4)
+-### Task 1: CSRF Protection
++### Task 1: CSRF Protection ✅ DONE
+ ### Task 2: Password Hashing
+ ### Task 3: Security Headers
+ ### Task 4: Database Indexes
+@@ -58,8 +58,8 @@ Check: plan explicitly mandates vs review rubric treats as defect
+ - Password hashing: Argon2id with memory_cost=65536, time_cost=4, threads=3
+ - CSRF: 32-byte random tokens, stored in session
+ 
+-## Rulings (record here)
+-(No rulings yet)
++## Rulings
++- **module_attendance.php/module_settings.php**: No `<form>` tags found in these files. Reviewer flagged them for missing CSRF inputs but forms don't exist. Ruling: N/A - files have no forms requiring CSRF protection.
+ 
+ ## Deferred Minor Issues
+ (No deferred issues yet)
+@@ -72,10 +72,12 @@ Phase 1: Bảo Mật - In Progress
+ - BASE commit: 4fbc0ae
+ - Brief: task-1-brief.md
+ - Report: task-1-report.md
+-- Status: DONE - 4/4 tests passing
+-- Reviewer: a55ed845cca75c5 (pending result)
++- Status: ✅ DONE - 4/4 tests passing
++- Reviewer: a55ed845cca75c5
++- Fix round: Applied (require_csrf() added to all endpoints, core.js updated)
+ 
+ ## Implementation Log
+ | Task | Status | Agent | BASE | HEAD | Review |
+ |------|--------|-------|------|------|--------|
+-| Task 1 | Reviewing | a9faee09d7de69d06 | 4fbc0ae | 89f069f | Pending |
++| Task 1 | ✅ Complete | a9faee09d7de69d06 | 4fbc0ae | 61495a3 | Approved |
++| Task 2 | 🔄 Implementing | a5ad719472a708738 | 61495a3 | - | Pending |
+diff --git a/config/password.php b/config/password.php
+new file mode 100644
+index 0000000..4f077f5
+--- /dev/null
++++ b/config/password.php
+@@ -0,0 +1,52 @@
++<?php
++/**
++ * Password Hashing - Argon2id with auto-upgrade support
++ *
++ * Upgrades password hashing from bcrypt to Argon2id while maintaining
++ * backward compatibility for existing passwords.
++ */
++
++function password_hash_upgrade(string $password): string {
++    return password_hash($password, PASSWORD_ARGON2ID, [
++        'memory_cost' => 65536,
++        'time_cost' => 4,
++        'threads' => 3,
++    ]);
++}
++
++function password_verify_upgrade(string $password, string $hash, ?int $memberId = null): bool {
++    // Verify with new or old method
++    if (password_verify($password, $hash)) {
++        // If old hash (bcrypt), upgrade to argon2id
++        if (password_needs_rehash($hash, PASSWORD_ARGON2ID)) {
++            $newHash = password_hash_upgrade($password);
++            // Update in database if memberId is provided
++            if ($memberId !== null) {
++                // Support test mocking via global override
++                if (isset($GLOBALS['db_run_override'])) {
++                    $GLOBALS['db_run_override']('UPDATE members SET password_hash = ? WHERE id = ?',
++                        [$newHash, $memberId]);
++                } else {
++                    db_run('UPDATE members SET password_hash = ? WHERE id = ?',
++                           [$newHash, $memberId]);
++                }
++            }
++        }
++        return true;
++    }
++    return false;
++}
++
++/**
++ * Check if a hash is a bcrypt hash (needs upgrading)
++ */
++function is_bcrypt_hash(string $hash): bool {
++    return password_needs_rehash($hash, PASSWORD_ARGON2ID);
++}
++
++/**
++ * Check if a hash is an Argon2id hash
++ */
++function is_argon2id_hash(string $hash): bool {
++    return str_starts_with($hash, '$argon2id$');
++}
+diff --git a/public/api/auth.php b/public/api/auth.php
+index 168b072..e1d35e6 100644
+--- a/public/api/auth.php
++++ b/public/api/auth.php
+@@ -10,6 +10,7 @@
+ 
+ require __DIR__ . '/_bootstrap.php';
+ require dirname(__DIR__, 2) . '/config/push.php';
++require dirname(__DIR__, 2) . '/config/password.php';
+ 
+ $action = $_GET['action'] ?? 'me';
+ $in     = json_input();
+@@ -64,7 +65,7 @@ switch ($action) {
+ 
+         // Cùng một thông điệp cho cả hai trường hợp — không tiết lộ
+         // số điện thoại nào có tài khoản.
+-        if (!$m || !password_verify($pass, $m['password_hash'])) {
++        if (!$m || !password_verify_upgrade($pass, $m['password_hash'], $m['id'])) {
+             login_failed($phone);
+             json_fail('Số điện thoại hoặc mật khẩu không đúng.', 401);
+         }
+@@ -107,13 +108,13 @@ switch ($action) {
+         $new     = (string) ($in['new'] ?? '');
+ 
+         if (strlen($new) < 6) json_fail('Mật khẩu mới phải từ 6 ký tự trở lên.');
+-        if (!password_verify($current, $me['password_hash'])) {
++        if (!password_verify_upgrade($current, $me['password_hash'], $me['id'])) {
+             json_fail('Mật khẩu hiện tại không đúng.');
+         }
+         if ($current === $new) json_fail('Mật khẩu mới phải khác mật khẩu cũ.');
+ 
+         db_run('UPDATE members SET password_hash = ?, must_change_pw = 0 WHERE id = ?',
+-               [password_hash($new, PASSWORD_DEFAULT), $me['id']]);
++               [password_hash_upgrade($new), $me['id']]);
+         log_action('sua', 'auth', 'Đổi mật khẩu', '');
+ 
+         json_out(['ok' => true]);
+@@ -161,7 +162,7 @@ switch ($action) {
+                                         role_code, title_id, status, must_change_pw,
+                                         register_note, registered_at)
+                    VALUES (?,?,?,?,?,?,?,?,?,0,?,NOW())',
+-            [$code, $holy, $name, $phone, $birth, password_hash($pass, PASSWORD_DEFAULT),
++            [$code, $holy, $name, $phone, $birth, password_hash_upgrade($pass),
+              'glv', $titleId, 'chờ duyệt', $note !== '' ? $note : null]);
+ 
+         // Báo cho Ban Điều Hành có hồ sơ mới chờ duyệt. Người vừa đăng ký
+diff --git a/scripts/upgrade_passwords.php b/scripts/upgrade_passwords.php
+new file mode 100644
+index 0000000..e6d2073
+--- /dev/null
++++ b/scripts/upgrade_passwords.php
+@@ -0,0 +1,46 @@
++<?php
++/**
++ * Script to upgrade all password hashes from bcrypt to Argon2id
++ * Run once: php scripts/upgrade_passwords.php
++ *
++ * This script identifies bcrypt hashes and reports them.
++ * Auto-upgrade happens on next login via password_verify_upgrade().
++ */
++
++require_once __DIR__ . '/../config/db.php';
++require_once __DIR__ . '/../config/password.php';
++
++echo "=== Password Hash Upgrade Check ===\n\n";
++
++$members = db_all('SELECT id, phone, password_hash FROM members');
++$argon2id = 0;
++$bcrypt = 0;
++$unknown = 0;
++
++foreach ($members as $member) {
++    $hash = $member['password_hash'];
++
++    if (is_argon2id_hash($hash)) {
++        $argon2id++;
++    } elseif (is_bcrypt_hash($hash)) {
++        $bcrypt++;
++        echo "Bcrypt hash detected:\n";
++        echo "  Member ID: {$member['id']}\n";
++        echo "  Phone: {$member['phone']}\n";
++        echo "  Hash prefix: " . substr($hash, 0, 10) . "...\n";
++        echo "  Will auto-upgrade on next login\n\n";
++    } else {
++        $unknown++;
++        echo "Unknown hash format:\n";
++        echo "  Member ID: {$member['id']}\n";
++        echo "  Phone: {$member['phone']}\n";
++        echo "  Hash prefix: " . substr($hash, 0, 10) . "...\n\n";
++    }
++}
++
++echo "=== Summary ===\n";
++echo "Argon2id (up to date): {$argon2id}\n";
++echo "Bcrypt (will upgrade on login): {$bcrypt}\n";
++echo "Unknown format: {$unknown}\n";
++echo "\nAuto-upgrade will happen when each user logs in.\n";
++echo "No manual action needed for bcrypt hashes.\n";
+diff --git a/tests/unit/PasswordTest.php b/tests/unit/PasswordTest.php
+new file mode 100644
+index 0000000..0dcc230
+--- /dev/null
++++ b/tests/unit/PasswordTest.php
+@@ -0,0 +1,116 @@
++<?php
++require_once __DIR__ . '/../bootstrap.php';
++require_once __DIR__ . '/../../config/password.php';
++
++use PHPUnit\Framework\TestCase;
++
++class PasswordTest extends TestCase {
++
++    public function test_password_hash_upgrade_generates_valid_argon2id_hash(): void {
++        $password = 'test_password_123';
++        $hash = password_hash_upgrade($password);
++
++        // Verify it starts with the Argon2id prefix
++        $this->assertStringStartsWith('$argon2id$', $hash);
++
++        // Verify the hash is not empty and longer than the password
++        $this->assertNotEmpty($hash);
++        $this->assertGreaterThan(strlen($password), strlen($hash));
++    }
++
++    public function test_password_verify_upgrade_returns_true_for_correct_password(): void {
++        $password = 'my_secure_password';
++        $hash = password_hash_upgrade($password);
++
++        // Test without memberId
++        $this->assertTrue(password_verify_upgrade($password, $hash));
++    }
++
++    public function test_password_verify_upgrade_returns_false_for_wrong_password(): void {
++        $password = 'correct_password';
++        $wrongPassword = 'wrong_password';
++        $hash = password_hash_upgrade($password);
++
++        $this->assertFalse(password_verify_upgrade($wrongPassword, $hash));
++    }
++
++    public function test_password_verify_upgrade_detects_bcrypt_and_rehashes(): void {
++        // Create a bcrypt hash using the old method
++        $password = 'old_bcrypt_password';
++        $bcryptHash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 10]);
++
++        // Verify it's actually a bcrypt hash (not Argon2id)
++        $this->assertStringStartsWith('$2y$', $bcryptHash);
++
++        // Mock db_run to capture the upgrade query
++        $updatedHash = null;
++        $capturedId = null;
++
++        // Override db_run temporarily
++        global $db_run_override;
++        $db_run_override = function($sql, $params) use (&$updatedHash, &$capturedId) {
++            if (strpos($sql, 'UPDATE members SET password_hash') !== false) {
++                $updatedHash = $params[0];
++                $capturedId = $params[1];
++            }
++            return 1;
++        };
++
++        // Verify with bcrypt hash - should return true and trigger upgrade
++        $result = password_verify_upgrade($password, $bcryptHash, 42);
++
++        $this->assertTrue($result);
++        $this->assertNotNull($updatedHash, 'db_run should have been called to update the hash');
++        $this->assertEquals(42, $capturedId, 'memberId should be passed to db_run');
++        $this->assertStringStartsWith('$argon2id$', $updatedHash, 'New hash should be Argon2id');
++
++        // Clean up
++        unset($GLOBALS['db_run_override']);
++    }
++
++    public function test_is_bcrypt_hash_returns_true_for_bcrypt(): void {
++        $bcryptHash = password_hash('test', PASSWORD_BCRYPT);
++        $this->assertTrue(is_bcrypt_hash($bcryptHash));
++    }
++
++    public function test_is_bcrypt_hash_returns_false_for_argon2id(): void {
++        $argon2idHash = password_hash_upgrade('test');
++        $this->assertFalse(is_bcrypt_hash($argon2idHash));
++    }
++
++    public function test_is_argon2id_hash_returns_true_for_argon2id(): void {
++        $argon2idHash = password_hash_upgrade('test');
++        $this->assertTrue(is_argon2id_hash($argon2idHash));
++    }
++
++    public function test_is_argon2id_hash_returns_false_for_bcrypt(): void {
++        $bcryptHash = password_hash('test', PASSWORD_BCRYPT);
++        $this->assertFalse(is_argon2id_hash($bcryptHash));
++    }
++
++    public function test_argon2id_hash_parameters_are_correct(): void {
++        $password = 'test_password';
++        $hash = password_hash_upgrade($password);
++
++        // Parse the hash to verify parameters
++        // Argon2id format: $argon2id$v=19$m=65536,t=4,p=3$...
++        $parts = explode('$', $hash);
++        $this->assertCount(5, $parts);
++
++        // $argon2id$v=19$m=65536,t=4,p=3$... -> parts[3] is "m=65536,t=4,p=3"
++        $params = explode(',', $parts[3]);
++        $memoryFound = false;
++        $timeFound = false;
++        $threadsFound = false;
++
++        foreach ($params as $param) {
++            if ($param === 'm=65536') $memoryFound = true;
++            if ($param === 't=4') $timeFound = true;
++            if ($param === 'p=3') $threadsFound = true;
++        }
++
++        $this->assertTrue($memoryFound, 'memory_cost should be 65536');
++        $this->assertTrue($timeFound, 'time_cost should be 4');
++        $this->assertTrue($threadsFound, 'threads should be 3');
++    }
++}

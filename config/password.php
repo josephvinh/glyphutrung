@@ -41,7 +41,8 @@ function password_verify_upgrade(string $password, string $hash, ?int $memberId 
  * Check if a hash is a bcrypt hash (needs upgrading)
  */
 function is_bcrypt_hash(string $hash): bool {
-    return password_needs_rehash($hash, PASSWORD_ARGON2ID);
+    // Bcrypt hashes start with $2a$, $2b$, or $2y$
+    return preg_match('/^\$2[aby]\$/', $hash) === 1;
 }
 
 /**

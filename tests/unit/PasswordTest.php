@@ -93,9 +93,9 @@ class PasswordTest extends TestCase {
         $hash = password_hash_upgrade($password);
 
         // Parse the hash to verify parameters
-        // Argon2id format: $argon2id$v=19$m=65536,t=4,p=3$...
+        // Argon2id format: $argon2id$v=19$m=65536,t=4,p=3$salta$... (6 parts)
         $parts = explode('$', $hash);
-        $this->assertCount(5, $parts);
+        $this->assertCount(6, $parts);
 
         // $argon2id$v=19$m=65536,t=4,p=3$... -> parts[3] is "m=65536,t=4,p=3"
         $params = explode(',', $parts[3]);
