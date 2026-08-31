@@ -412,3 +412,37 @@ CREATE TABLE IF NOT EXISTS push_outbox (
     KEY idx_outbox_cho (member_id, taken_at, id),
     CONSTRAINT fk_outbox_member FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- Performance Indexes - Add after existing table definitions
+-- ============================================================
+
+-- Attendance: lookup by student + date (for statistics)
+ALTER TABLE attendances ADD INDEX idx_att_student_date (student_id, session_date);
+
+-- Attendance: lookup by program + date (for session management)
+ALTER TABLE attendances ADD INDEX idx_att_program_date (program_id, session_date);
+
+-- Leave requests: lookup by status + date (for approval queue)
+ALTER TABLE leave_requests ADD INDEX idx_lv_status_date (status, session_date);
+
+-- Leave requests: lookup by student (for student history)
+ALTER TABLE leave_requests ADD INDEX idx_lv_student (student_id);
+
+-- Scores: lookup by student + term (for report cards)
+ALTER TABLE scores ADD INDEX idx_sc_student_term (student_id, term_id);
+
+-- Reports: lookup by student (for student history)
+ALTER TABLE reports ADD INDEX idx_rp_student (student_id);
+
+-- Members: lookup by phone (for login - critical)
+ALTER TABLE members ADD INDEX idx_member_phone (phone);
+
+-- Members: lookup by role (for permission checks)
+ALTER TABLE members ADD INDEX idx_member_role (role_code);
+
+-- Enrollments: lookup by year + status (for roster)
+ALTER TABLE enrollments ADD INDEX idx_enr_year_status (year_id, status);
+
+-- Announcements: lookup by year + status + expiry (for live announcements)
+ALTER TABLE announcements ADD INDEX idx_an_live (year_id, status, expires_at);
