@@ -9,7 +9,8 @@
       "Bash(phpunit --testdox)",
       "Bash(curl -sL https://phar.phpunit.de/phpunit-10.phar -o phpunit10.phar)",
       "Bash(php phpunit10.phar --version)",
-      "Bash(php phpunit10.phar --testdox --bootstrap tests/bootstrap.php tests/unit/CSRFTest.php)"
+      "Bash(php phpunit10.phar --testdox --bootstrap tests/bootstrap.php tests/unit/CSRFTest.php)",
+      "Bash(git commit -m 'Add CSRF protection for POST requests *)"
     ]
   }
 }
