@@ -44,6 +44,7 @@ switch ($action) {
     // ============================= KHỐI =============================
     case 'saveBlock':
         require_post();
+        require_csrf();
         $name = trim((string) ($in['name'] ?? ''));
         $old  = trim((string) ($in['original'] ?? ''));
         if ($name === '') json_fail('Vui lòng nhập tên khối.');
@@ -63,6 +64,7 @@ switch ($action) {
 
     case 'deleteBlock':
         require_post();
+        require_csrf();
         $name = trim((string) ($in['name'] ?? ''));
         $b = db_one('SELECT id FROM blocks WHERE name=?', [$name]);
         if (!$b) json_fail('Không tìm thấy khối.', 404);
@@ -77,6 +79,7 @@ switch ($action) {
     // ============================= LỚP ==============================
     case 'saveClass':
         require_post();
+        require_csrf();
         $name  = trim((string) ($in['name'] ?? ''));
         $old   = trim((string) ($in['original'] ?? ''));
         $block = trim((string) ($in['block'] ?? ''));
@@ -115,6 +118,7 @@ switch ($action) {
 
     case 'deleteClass':
         require_post();
+        require_csrf();
         $name = trim((string) ($in['name'] ?? ''));
         $c = db_one('SELECT id FROM classes WHERE name=?', [$name]);
         if (!$c) json_fail('Không tìm thấy lớp.', 404);
@@ -132,6 +136,7 @@ switch ($action) {
     // ============================ NHÂN SỰ ===========================
     case 'saveMember':
         require_post();
+        require_csrf();
         $id    = (int) ($in['id'] ?? 0);
         $name  = trim((string) ($in['fullName'] ?? ''));
         $phone = trim((string) ($in['phone'] ?? ''));
@@ -214,6 +219,7 @@ switch ($action) {
 
     case 'deleteMember':
         require_post();
+        require_csrf();
         $id = (int) ($in['id'] ?? 0);
         $m  = db_one('SELECT * FROM members WHERE id=?', [$id]);
         if (!$m) json_fail('Không tìm thấy thành viên.', 404);
@@ -227,6 +233,7 @@ switch ($action) {
     // ==================== DUYỆT TÀI KHOẢN TỰ ĐĂNG KÝ =================
     case 'approveMember':
         require_post();
+        require_csrf();
         $id = (int) ($in['id'] ?? 0);
         $m  = db_one('SELECT * FROM members WHERE id=?', [$id]);
         if (!$m) json_fail('Không tìm thấy thành viên.', 404);
@@ -275,6 +282,7 @@ switch ($action) {
 
     case 'rejectMember':
         require_post();
+        require_csrf();
         $id = (int) ($in['id'] ?? 0);
         $m  = db_one('SELECT * FROM members WHERE id=?', [$id]);
         if (!$m) json_fail('Không tìm thấy thành viên.', 404);
@@ -287,6 +295,7 @@ switch ($action) {
     // ==================== CẤP LẠI MẬT KHẨU ===========================
     case 'resetPassword':
         require_post();
+        require_csrf();
         $id = (int) ($in['id'] ?? 0);
         $m  = db_one('SELECT * FROM members WHERE id=?', [$id]);
         if (!$m) json_fail('Không tìm thấy thành viên.', 404);
@@ -311,6 +320,7 @@ switch ($action) {
     case 'setClassHead':
     case 'setBlockHead':
         require_post();
+        require_csrf();
         $isClass  = $action === 'setClassHead';
         $memberId = (int) ($in['memberId'] ?? 0);
 

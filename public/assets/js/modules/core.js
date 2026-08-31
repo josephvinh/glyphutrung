@@ -56,12 +56,18 @@ window.TNTT.core = {
     // ==========================================
     async api(file, action, body) {
         try {
+            const headers = { 'Content-Type': 'application/json' };
+            // Gửi CSRF token nếu có trong session
+            if (window.TNTT?.csrfToken) {
+                headers['X-CSRF-TOKEN'] = window.TNTT.csrfToken;
+            }
             const res = await fetch('api/' + file + '.php?action=' + action, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify(body || {})
             });
             if (res.status === 401) return { ok: false, error: 'Phiên đăng nhập đã hết hạn.' };
+            if (res.status === 403) return { ok: false, error: 'Yêu cầu không hợp lệ (CSRF). Vui lòng tải lại trang.' };
             return await res.json();
         } catch (e) {
             return { ok: false, error: 'Mất kết nối máy chủ. Kiểm tra lại mạng.' };

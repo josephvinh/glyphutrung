@@ -87,6 +87,7 @@ switch ($action) {
     // -------------------------------------------------------------
     case 'save':
         require_post();
+        require_csrf();
         $s = clean_student($in);
         if ($s['code'] === '' || $s['name'] === '') json_fail('Thiếu mã số hoặc họ tên.');
         if ($s['className'] === '') json_fail('Vui lòng chọn lớp cho em.');
@@ -121,6 +122,7 @@ switch ($action) {
     // -------------------------------------------------------------
     case 'import':
         require_post();
+        require_csrf();
         $rows = $in['rows'] ?? [];
         if (!is_array($rows) || count($rows) === 0) json_fail('Không có dòng nào để nhập.');
 

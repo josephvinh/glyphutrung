@@ -41,6 +41,7 @@ switch ($action) {
     // -------------------------------------------------------------
     case 'permission':
         require_post();
+        require_csrf();
         $mod   = (string) ($in['moduleKey'] ?? '');
         $role  = (string) ($in['roleCode'] ?? '');
         $level = (string) ($in['level'] ?? '');
@@ -72,6 +73,7 @@ switch ($action) {
     // -------------------------------------------------------------
     case 'module':
         require_post();
+        require_csrf();
         $mod = (string) ($in['moduleKey'] ?? '');
         $m = db_one('SELECT * FROM modules WHERE module_key=?', [$mod]);
         if (!$m) json_fail('Không tìm thấy chức năng.', 404);
@@ -87,6 +89,7 @@ switch ($action) {
     // -------------------------------------------------------------
     case 'resetPerms':
         require_post();
+        require_csrf();
         $order = ['admin', 'bdh', 'truong_khoi', 'glv_chu_nhiem', 'glv'];
         db()->beginTransaction();
         try {
@@ -107,6 +110,7 @@ switch ($action) {
     // -------------------------------------------------------------
     case 'clearLogs':
         require_post();
+        require_csrf();
         db_run('DELETE FROM activity_logs');
         log_action('xoa', 'settings', 'Xóa toàn bộ nhật ký thao tác', '');
         json_out(['ok' => true]);

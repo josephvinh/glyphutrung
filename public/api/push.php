@@ -62,6 +62,7 @@ switch ($action) {
     // -------------------------------------------------------------
     case 'subscribe':
         require_post();
+        require_csrf();
         $me = require_login();
         $ep = trim((string) ($in['endpoint'] ?? ''));
         if ($ep === '' || !preg_match('#^https://#', $ep)) json_fail('Đăng ký không hợp lệ.');
@@ -79,6 +80,7 @@ switch ($action) {
     // -------------------------------------------------------------
     case 'unsubscribe':
         require_post();
+        require_csrf();
         $me = require_login();
         $ep = trim((string) ($in['endpoint'] ?? ''));
         db_run('DELETE FROM push_subscriptions WHERE member_id = ? AND endpoint = ?', [$me['id'], $ep]);
@@ -87,6 +89,7 @@ switch ($action) {
     // -------------------------------------------------------------
     case 'test':
         require_post();
+        require_csrf();
         $me = require_login();
         // Kiểm tra trước khi gửi: nếu chưa có máy nào đăng ký thì đừng
         // ghi vào hộp thư đi, kẻo để lại một dòng "Thử thông báo" treo ở

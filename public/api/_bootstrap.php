@@ -174,9 +174,11 @@ function safe_error(Throwable $e, string $chung): string
    CSRF PROTECTION
    ================================================================ */
 
-/** Bắt buộc CSRF token cho mọi POST request */
+/** Bắt buộc CSRF token cho mọi POST request (chỉ khi session đã có token) */
 function require_csrf(): void {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
+    // Chỉ verify nếu session đã có CSRF token (đã đăng nhập)
+    if (!isset($_SESSION['csrf_token'])) return;
     $token = $_POST['_csrf'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
     if (!verify_csrf($token)) {
         json_fail('Invalid CSRF token.', 403);

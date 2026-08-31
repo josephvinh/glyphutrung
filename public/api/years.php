@@ -62,6 +62,7 @@ switch ($action) {
     // -------------------------------------------------------------
     case 'create':
         require_post();
+        require_csrf();
         $name  = trim((string) ($in['name'] ?? ''));
         $start = (string) ($in['startDate'] ?? '');
         $end   = (string) ($in['endDate'] ?? '');
@@ -108,6 +109,7 @@ switch ($action) {
     // -------------------------------------------------------------
     case 'update':
         require_post();
+        require_csrf();
         $id    = (int) ($in['id'] ?? 0);
         $name  = trim((string) ($in['name'] ?? ''));
         $start = (string) ($in['startDate'] ?? '');
@@ -197,6 +199,7 @@ switch ($action) {
     // -------------------------------------------------------------
     case 'activate':
         require_post();
+        require_csrf();
         $id = (int) ($in['id'] ?? 0);
         $y  = db_one('SELECT * FROM school_years WHERE id = ?', [$id]);
         if (!$y) json_fail('Không tìm thấy niên khoá.', 404);
@@ -219,6 +222,7 @@ switch ($action) {
     // -------------------------------------------------------------
     case 'lock':
         require_post();
+        require_csrf();
         $id = (int) ($in['id'] ?? 0);
         $y  = db_one('SELECT * FROM school_years WHERE id = ?', [$id]);
         if (!$y) json_fail('Không tìm thấy niên khoá.', 404);
@@ -233,6 +237,7 @@ switch ($action) {
     // -------------------------------------------------------------
     case 'unlock':
         require_post();
+        require_csrf();
         $id = (int) ($in['id'] ?? 0);
         $y  = db_one('SELECT * FROM school_years WHERE id = ?', [$id]);
         if (!$y) json_fail('Không tìm thấy niên khoá.', 404);
