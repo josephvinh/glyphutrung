@@ -1,0 +1,9 @@
+# PHPUnit runtime cache
+.phpunit.result.cache
+
+# File-based cache runtime data
+public/cache/*.json
+
+# Claude workspace artifacts
+.superpowers/sdd/
+.claude/launch.json
