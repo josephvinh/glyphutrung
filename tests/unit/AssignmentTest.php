@@ -89,16 +89,58 @@ class AssignmentTest extends TestCase {
         $this->assertEquals(0, $activeCount, 'Sau khi set to_date, phân công không còn active');
     }
 
-    public function test_can_have_only_one_active_primary(): void {
+    public function test_effective_assignments_returns_only_active(): void {
+        // Active
+        db_run(
+            "INSERT INTO member_assignments (member_id, role_code, is_primary, from_date, assigned_by)
+             VALUES (?, 'glv', 1, CURDATE(), ?)",
+            [$this->testMemberId, $this->adminId]
+        );
+        // Đã kết thúc
+        db_run(
+            "INSERT INTO member_assignments (member_id, role_code, is_primary, from_date, to_date, assigned_by)
+             VALUES (?, 'bdh', 0, '2020-01-01', '2020-12-31', ?)",
+            [$this->testMemberId, $this->adminId]
+        );
+
+        $active = effective_assignments($this->testMemberId);
+        $this->assertCount(1, $active);
+        $this->assertEquals('glv', $active[0]['role_code']);
+    }
+
+    public function test_enforce_single_primary_makes_other_assignments_non_primary(): void {
         $class1 = db_one("SELECT id FROM classes LIMIT 1");
+        $block = db_one("SELECT id FROM blocks LIMIT 1");
+
+        // Insert 2 assignments: first is primary
         db_run(
             "INSERT INTO member_assignments (member_id, role_code, class_id, is_primary, from_date, assigned_by)
              VALUES (?, 'glv', ?, 1, CURDATE(), ?)",
             [$this->testMemberId, $class1['id'], $this->adminId]
         );
+        $assign1Id = (int) db_one(
+            "SELECT id FROM member_assignments WHERE member_id = ? ORDER BY id LIMIT 1",
+            [$this->testMemberId]
+        )['id'];
 
-        // Insert phân công thứ 2 primary → application logic phải đảm bảo chỉ 1
-        // Test này sẽ PASS sau Task 3 (helper enforce_single_primary)
-        $this->markTestIncomplete('Sẽ pass sau khi có helper enforce_single_primary');
+        db_run(
+            "INSERT INTO member_assignments (member_id, role_code, block_id, is_primary, from_date, assigned_by)
+             VALUES (?, 'truong_khoi', ?, 0, CURDATE(), ?)",
+            [$this->testMemberId, $block['id'], $this->adminId]
+        );
+        $assign2Id = (int) db_one(
+            "SELECT id FROM member_assignments WHERE member_id = ? ORDER BY id DESC LIMIT 1",
+            [$this->testMemberId]
+        )['id'];
+
+        // enforce: make assign2 primary
+        enforce_single_primary($this->testMemberId, $assign2Id);
+
+        // Verify assign2 is now primary
+        $assign2 = db_one("SELECT is_primary FROM member_assignments WHERE id = ?", [$assign2Id]);
+        $assign1 = db_one("SELECT is_primary FROM member_assignments WHERE id = ?", [$assign1Id]);
+
+        $this->assertEquals(1, $assign2['is_primary'], 'assign2 should be primary');
+        $this->assertEquals(0, $assign1['is_primary'], 'assign1 should no longer be primary');
     }
 }
