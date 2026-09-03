@@ -60,9 +60,22 @@ function permission_of(string $moduleKey): string
     $me = current_member();
     if (!$me) return 'none';
 
-    $row = db_one('SELECT level FROM permissions WHERE module_key = ? AND role_code = ?',
-                  [$moduleKey, $me['role_code']]);
-    return $row['level'] ?? 'none';
+    // Lấy tất cả active roles (qua assignments)
+    $assignments = effective_assignments((int) $me['id']);
+    $activeRoles = array_column($assignments, 'role_code');
+
+    // Fallback về role_code trong members nếu assignments rỗng (edge case migration)
+    if (empty($activeRoles)) {
+        $activeRoles = [$me['role_code']];
+    }
+
+    $ph = implode(',', array_fill(0, count($activeRoles), '?'));
+    $row = db_one(
+        "SELECT MAX(level) AS max_level FROM permissions
+          WHERE module_key = ? AND role_code IN ($ph)",
+        array_merge([$moduleKey], $activeRoles)
+    );
+    return $row['max_level'] ?? 'none';
 }
 
 function require_permission(string $moduleKey, string $need = 'view'): array
