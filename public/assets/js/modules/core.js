@@ -4,8 +4,11 @@
    ========================================================== */
 window.TNTT = window.TNTT || {};
 
+// Boot data from server (populated by _bootstrap_page.php)
+window.TNTT.boot = window.TNTT_BOOT || {};
+
 // CSRF token from server boot data
-window.TNTT.csrfToken = window.TNTT_BOOT?.csrfToken || '';
+window.TNTT.csrfToken = window.TNTT.boot.csrfToken || '';
 
 /**
  * Fetch wrapper that automatically includes CSRF token in headers.
@@ -37,6 +40,10 @@ window.TNTT.core = {
         managedBlock: 'Khai Tâm',
         assignedClass: 'Khai Tâm 1A'
     },
+
+    // Member assignments from boot data
+    assignments: window.TNTT.boot?.assignments || [],
+    primaryAssignment: window.TNTT.boot?.primaryAssignment || null,
 
     // Dark mode support
     dark: localStorage.getItem('darkMode') === 'true'

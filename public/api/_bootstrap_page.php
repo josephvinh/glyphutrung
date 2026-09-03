@@ -36,6 +36,10 @@ function page_bootstrap(array $me): array
     $enabled = [];
     foreach ($modules as $m) $enabled[$m['module_key']] = (bool) $m['is_enabled'];
 
+    // Member assignments for the current user
+    $assignments = effective_assignments((int) $me['id']);
+    $primary = primary_assignment((int) $me['id']);
+
     return [
         'user' => [
             'memberId'      => (int) $me['id'],
@@ -48,6 +52,29 @@ function page_bootstrap(array $me): array
             'managedBlock'  => $me['block_name'] ?? '',
             'assignedClass' => $me['class_name'] ?? '',
         ],
+        'assignments' => array_map(function($a) {
+            return [
+                'id'        => (int) $a['id'],
+                'role'      => $a['role_code'],
+                'roleLabel' => $a['role_label'],
+                'scope'     => $a['role_scope'],
+                'blockId'   => $a['block_id'] ? (int) $a['block_id'] : null,
+                'blockName' => $a['block_name'] ?? '',
+                'classId'   => $a['class_id'] ? (int) $a['class_id'] : null,
+                'className' => $a['class_name'] ?? '',
+                'isPrimary' => (bool) $a['is_primary'],
+                'fromDate'  => $a['from_date'],
+                'toDate'    => $a['to_date'],
+                'note'      => $a['note'] ?? '',
+            ];
+        }, $assignments),
+        'primaryAssignment' => $primary ? [
+            'role'      => $primary['role_code'],
+            'roleLabel' => $primary['role_label'],
+            'scope'     => $primary['role_scope'],
+            'className' => $primary['class_name'] ?? '',
+            'blockName' => $primary['block_name'] ?? '',
+        ] : null,
         'year' => $year ? [
             'id'        => (int) $year['id'],
             'name'      => $year['name'],
