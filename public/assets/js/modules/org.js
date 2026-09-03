@@ -470,4 +470,80 @@ window.TNTT.org = {
             this.save('org', 'deleteMember', { id: m.id });
         }
     },
+
+    // ---- PHÂN CÔNG KIÊM NHIỆM ----
+    memberAssignments: {},     // {memberId: [...]}
+    showAssignmentModal: false,
+    assignmentForm: { memberId: 0, role: '', blockId: '', classId: '', note: '', isPrimary: false },
+
+    async openAddAssignment(member) {
+        this.assignmentForm = {
+            memberId: member.id,
+            role: 'glv',
+            blockId: '',
+            classId: '',
+            note: '',
+            isPrimary: false,
+        };
+        await this.loadMemberAssignments(member.id);
+        this.showAssignmentModal = true;
+    },
+
+    async loadMemberAssignments(memberId) {
+        const r = await fetch(`/tntt/public/api/assignments.php?action=list&memberId=${memberId}`, {
+            credentials: 'include'
+        }).then(r => r.json());
+        if (r.ok) {
+            this.memberAssignments = { ...this.memberAssignments, [memberId]: r.assignments };
+        }
+    },
+
+    async saveAssignment() {
+        const r = await fetch('/tntt/public/api/assignments.php?action=create', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(this.assignmentForm)
+        }).then(r => r.json());
+        if (r.ok) {
+            this.showAssignmentModal = false;
+            await this.loadMemberAssignments(this.assignmentForm.memberId);
+            toast.success('Đã thêm phân công');
+        } else {
+            toast.error(r.error || 'Lỗi');
+        }
+    },
+
+    async endAssignment(a) {
+        if (!confirm('Kết thúc phân công này?')) return;
+        const r = await fetch('/tntt/public/api/assignments.php?action=end', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ assignmentId: a.id })
+        }).then(r => r.json());
+        if (r.ok) {
+            await this.loadMemberAssignments(a.member_id);
+            toast.success('Đã kết thúc phân công');
+        }
+    },
+
+    async setPrimaryAssignment(a) {
+        const r = await fetch('/tntt/public/api/assignments.php?action=set_primary', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ assignmentId: a.id })
+        }).then(r => r.json());
+        if (r.ok) {
+            await this.loadMemberAssignments(a.member_id);
+            toast.success('Đã đặt làm phân công chính');
+        }
+    },
+
+    blockIdByName(blockName) {
+        // Lookup block id from name - assumes blocks array contains objects or we need to check structure
+        const cls = this.classes.find(c => c.block === blockName);
+        return cls ? cls.blockId || blockName : blockName;
+    },
 };
