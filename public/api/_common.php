@@ -54,3 +54,65 @@ function current_member(): ?array
     );
     return $me ?: null;
 }
+
+/* ============================================================================
+   KIÊM NHIỆM — truy vấn bảng member_assignments
+
+   Một thành viên có thể giữ nhiều vai trò và phụ trách nhiều lớp/khối cùng
+   lúc. Hàm dưới trả về các phân công ĐANG HIỆU LỰC (to_date IS NULL).
+   ========================================================================== */
+
+/** Tất cả phân công đang active của một thành viên */
+function effective_assignments(int $memberId): array
+{
+    return db_all(
+        "SELECT a.*, r.label AS role_label, r.level AS role_level, r.scope AS role_scope,
+                b.name AS block_name, c.name AS class_name
+           FROM member_assignments a
+           JOIN roles r ON r.code = a.role_code
+           LEFT JOIN blocks b ON b.id = a.block_id
+           LEFT JOIN classes c ON c.id = a.class_id
+          WHERE a.member_id = ? AND a.to_date IS NULL
+          ORDER BY a.is_primary DESC, a.from_date DESC",
+        [$memberId]
+    );
+}
+
+/** Có đang giữ vai trò X không (active) */
+function has_active_role(int $memberId, string $roleCode): bool
+{
+    $row = db_one(
+        "SELECT 1 FROM member_assignments
+          WHERE member_id = ? AND role_code = ? AND to_date IS NULL
+          LIMIT 1",
+        [$memberId, $roleCode]
+    );
+    return $row !== null;
+}
+
+/** Khi đánh dấu 1 assignment là primary, gỡ primary của các assignment khác */
+function enforce_single_primary(int $memberId, int $primaryAssignmentId): void
+{
+    db_run(
+        "UPDATE member_assignments
+            SET is_primary = (id = ?)
+          WHERE member_id = ? AND to_date IS NULL",
+        [$primaryAssignmentId, $memberId]
+    );
+}
+
+/** Lấy phân công CHÍNH (primary) của thành viên — dùng cho permission mặc định */
+function primary_assignment(int $memberId): ?array
+{
+    return db_one(
+        "SELECT a.*, r.label AS role_label, r.level AS role_level, r.scope AS role_scope,
+                b.name AS block_name, c.name AS class_name
+           FROM member_assignments a
+           JOIN roles r ON r.code = a.role_code
+           LEFT JOIN blocks b ON b.id = a.block_id
+           LEFT JOIN classes c ON c.id = a.class_id
+          WHERE a.member_id = ? AND a.to_date IS NULL AND a.is_primary = 1
+          LIMIT 1",
+        [$memberId]
+    );
+}
