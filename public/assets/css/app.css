@@ -118,13 +118,10 @@ body {
     border-radius: var(--r-sheet) var(--r-sheet) 0 0;
     box-shadow: 0 -8px 30px -12px rgb(15 23 42 / 0.2);
 }
-/* Từ tablet: thành thanh pill nổi, thụt vào trong khung app */
+/* Từ tablet: ẩn hẳn thanh bottom nav trên màn hình lớn */
 @media (min-width: 640px) {
-    .app-bottomnav .nav-inner {
-        margin: 0 1.5rem 2.25rem;
-        border: 1px solid #e2e8f0;
-        border-radius: var(--r-sheet);
-        box-shadow: 0 20px 40px -16px rgb(15 23 42 / 0.35);
+    .app-bottomnav {
+        display: none !important;
     }
 }
 
