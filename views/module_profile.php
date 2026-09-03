@@ -194,7 +194,24 @@
         </div>
     </div>
 
-    <!-- 8. TÀI KHOẢN -->
+    <!-- 8. PHÂN CÔNG CỦA BẠN -->
+    <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100 mb-5">
+        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Phân công của bạn</h3>
+        <div class="space-y-2">
+            <template x-for="a in assignments" :key="a.id">
+                <div class="flex items-center gap-2 bg-slate-50 rounded-xl px-3 py-2">
+                    <span class="text-micro font-bold uppercase px-2 py-0.5 rounded border"
+                          :class="roleChipClass(a.role)" x-text="roleLabel(a.role)"></span>
+                    <span class="text-micro text-slate-600 flex-1"
+                          x-text="(a.blockName || a.className || 'Toàn đoàn')"></span>
+                    <span x-show="a.isPrimary" class="text-micro font-black text-amber-600">★</span>
+                </div>
+            </template>
+            <p x-show="assignments.length === 0" class="text-sm text-slate-400 italic">Chưa có phân công nào.</p>
+        </div>
+    </div>
+
+    <!-- 9. TÀI KHOẢN -->
     <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100">
         <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Tài khoản</h3>
 
