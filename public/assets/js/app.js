@@ -33,6 +33,7 @@ document.addEventListener('alpine:init', () => {
         'push',           // thông báo đẩy ra màn hình điện thoại
         'access',         // lọc theo phạm vi quyền
         'shell',          // tiện ích chung, icon, init()
+        'dashboard',      // trang chủ với stats tổng hợp
     ];
 
     /**

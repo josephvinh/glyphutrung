@@ -1,5 +1,5 @@
 <!-- MÀN HÌNH SINH NHẬT — gồm cả thiếu nhi và Giáo Lý Viên -->
-<div x-show="currentModule === 'birthdays'" style="display: none;" class="module-panel pt-6 pb-10 relative">
+<div data-module="birthdays" class="module-panel pt-6 pb-10 relative">
 
     <!-- 1. THANH ĐIỀU HƯỚNG -->
     <div class="flex items-center mb-5">

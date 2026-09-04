@@ -106,8 +106,8 @@ self.addEventListener('push', (e) => {
 
         await self.registration.showNotification(tin.title, {
             body: tin.body,
-            icon: '/assets/img/icon-192.png',
-            badge: '/assets/img/icon-32.png',
+            icon: 'assets/img/icon.svg',
+            badge: 'assets/img/icon-32.png',
             tag: tin.tag,               // cùng tag thì gộp, không dội chuông liên tục
             renotify: false,
             data: { url: tin.url },

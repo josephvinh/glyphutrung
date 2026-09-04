@@ -1,5 +1,5 @@
 <!-- MÀN HÌNH KHỐI & LỚP  (Nhân sự đã tách sang module_staff.php) -->
-<div x-show="currentModule === 'org'" style="display: none;" class="module-panel pt-6 pb-10 relative">
+<div data-module="org" class="module-panel pt-6 pb-10 relative">
 
     <!-- 1. THANH ĐIỀU HƯỚNG -->
     <div class="flex items-center mb-5">

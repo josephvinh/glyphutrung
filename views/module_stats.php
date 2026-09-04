@@ -1,5 +1,5 @@
 <!-- MÀN HÌNH THỐNG KÊ -->
-<div x-show="currentModule === 'stats'" style="display: none;" class="module-panel pt-6 pb-10 relative">
+<div data-module="stats" class="module-panel pt-6 pb-10 relative">
 
     <!-- 1. THANH ĐIỀU HƯỚNG -->
     <div class="flex items-center justify-between mb-5">

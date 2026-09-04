@@ -1,5 +1,5 @@
 <!-- MÀN HÌNH LỊCH TRÌNH - Hiển thị chương trình/sự kiện trên lịch tháng -->
-<div x-show="currentModule === 'calendar'" style="display: none;" class="module-panel pt-6 pb-10 relative">
+<div data-module="calendar" class="module-panel pt-6 pb-10 relative">
 
     <!-- 1. THANH ĐIỀU HƯỚNG -->
     <div class="flex items-center justify-between mb-6">

@@ -1,5 +1,5 @@
 <!-- MÀN HÌNH QUẢN LÝ CHƯƠNG TRÌNH -->
-<div x-show="currentModule === 'programs'" style="display: none;" class="module-panel pt-6 pb-10 relative">
+<div data-module="programs" class="module-panel pt-6 pb-10 relative">
     
     <!-- 1. THANH ĐIỀU HƯỚNG -->
     <div class="flex items-center justify-between mb-6">

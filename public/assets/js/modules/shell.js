@@ -99,8 +99,10 @@ window.TNTT.shell = {
 
     changeModule(moduleName) {
         this.currentModule = moduleName;
-        // Đổi màn thì luôn kéo về đầu trang, tránh việc đang cuộn sâu ở
-        // Danh Sách rồi bấm tab khác lại thấy màn mới ở lưng chừng.
+        // Pure JavaScript module switching - no Alpine x-show dependency
+        document.querySelectorAll('[data-module]').forEach(el => {
+            el.style.display = el.dataset.module === moduleName ? '' : 'none';
+        });
         window.scrollTo({ top: 0, behavior: 'instant' });
     },
 
@@ -189,6 +191,9 @@ window.TNTT.shell = {
 
         // Nạp dữ liệu nghiệp vụ của niên khoá đang mở.
         this.loadData();
+
+        // Khởi tạo module mặc định (dashboard)
+        this.changeModule('dashboard');
 
         this.initIconWatcher();
 

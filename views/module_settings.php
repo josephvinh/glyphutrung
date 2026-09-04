@@ -1,5 +1,5 @@
 <!-- MÀN CÀI ĐẶT — chỉ Quản Trị Hệ Thống -->
-<div x-show="currentModule === 'settings'" style="display: none;" class="module-panel pt-6 pb-10 relative">
+<div data-module="settings" class="module-panel pt-6 pb-10 relative">
 
     <!-- 1. THANH ĐIỀU HƯỚNG -->
     <div class="flex items-center mb-5">

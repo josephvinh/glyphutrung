@@ -1,7 +1,7 @@
 <!-- HỒ SƠ CÁ NHÂN
      Không còn là một màn riêng: nay là thẻ đầu tiên trong màn Cài Đặt,
      nên bỏ thanh điều hướng riêng (màn Cài Đặt đã có nút quay lại). -->
-<div x-show="currentModule === 'settings' && settingsTab === 'profile'" style="display: none;" class="module-panel relative">
+<div data-module="settings-profile" class="module-panel relative">
 
     <!-- 2. THẺ HỒ SƠ -->
     <div class="bg-gradient-to-br from-blue-600 to-blue-700 rounded-card p-5 shadow-lg shadow-blue-200 mb-5 text-white">
