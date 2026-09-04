@@ -1,5 +1,5 @@
 <!-- MÀN HÌNH SỔ LIÊN LẠC -->
-<div x-show="currentModule === 'reports'" style="display: none;" class="module-panel pt-6 pb-10 relative">
+<div data-module="reports" class="module-panel pt-6 pb-10 relative">
 
     <!-- 1. THANH ĐIỀU HƯỚNG -->
     <div class="flex items-center justify-between mb-5">
@@ -11,7 +11,7 @@
         </div>
         <div class="flex items-center gap-2">
             <button @click="exportReport('csv')" class="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-slate-50 text-slate-600 rounded-xl font-bold text-xs active:scale-95 transition-transform border border-slate-200 hover:bg-slate-100">
-                <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> CSV
+                <i data-lucide="file-text" class="w-4 h-4"></i> CSV
             </button>
             <button @click="exportReport('excel')" class="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-emerald-50 text-emerald-600 rounded-xl font-bold text-xs active:scale-95 transition-transform border border-emerald-100 hover:bg-emerald-100">
                 <i data-lucide="table" class="w-4 h-4"></i> Excel

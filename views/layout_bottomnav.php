@@ -6,7 +6,8 @@
      - Tablet trở lên : thành thanh pill nổi, thụt vào trong khung app
      ========================================================== -->
 <nav class="app-bottomnav">
-    <div class="nav-outer max-w-md sm:max-w-xl lg:max-w-2xl">
+    <!-- max-w khớp với app-shell trong public/index.php để thanh nav không lệch biên -->
+    <div class="nav-outer max-w-md sm:max-w-xl lg:max-w-6xl xl:max-w-7xl">
     <div class="nav-inner">
         <div class="flex items-stretch justify-around px-2 py-2">
 

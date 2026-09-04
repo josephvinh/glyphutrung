@@ -1,5 +1,5 @@
 <!-- MÀN HÌNH DANH SÁCH LỚP -->
-<div x-show="currentModule === 'students'" style="display: none;" class="module-panel pt-6 pb-10 relative">
+<div data-module="students" class="module-panel pt-6 pb-10 relative">
 
     <!-- 1. THANH ĐIỀU HƯỚNG -->
     <div class="flex items-center mb-6">
@@ -10,56 +10,58 @@
     </div>
 
     <!-- 2. THANH TÌM KIẾM & BỘ LỌC -->
-    <div class="mb-4 relative flex gap-2">
-        <div class="relative flex-1">
-            <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
-            <input x-model="searchQuery" type="text" placeholder="Tìm tên, tên thánh, mã số..." class="w-full bg-white border border-slate-200 rounded-field py-3.5 pl-12 pr-10 text-sm font-medium text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
-            <button aria-label="Xóa ô tìm kiếm" x-show="searchQuery !== ''" @click="searchQuery = ''" style="display: none;" class="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 active:scale-90 transition-transform">
-                <i data-lucide="x" class="w-3.5 h-3.5"></i>
+    <div class="mb-4 sticky top-0 z-10 bg-slate-50/95 backdrop-blur-sm -mx-4 px-4 pt-2 pb-3 sm:bg-transparent sm:backdrop-blur-none sm:-mx-0 sm:px-0 sm:pt-0 sm:pb-0 sm:static sm:z-auto">
+        <div class="relative flex gap-2">
+            <div class="relative flex-1">
+                <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
+                <input x-model="searchQuery" type="text" placeholder="Tìm tên, tên thánh, mã số..." class="w-full bg-white border border-slate-200 rounded-field py-3.5 pl-12 pr-10 text-sm font-medium text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+                <button aria-label="Xóa ô tìm kiếm" x-show="searchQuery !== ''" @click="searchQuery = ''" style="display: none;" class="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 active:scale-90 transition-transform">
+                    <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                </button>
+            </div>
+
+            <button @click="showFilter = !showFilter" type="button" aria-label="Mở bộ lọc danh sách" :aria-expanded="showFilter ? 'true' : 'false'" :class="showFilter || hasActiveFilter ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-500 border-slate-200'" class="w-12 shrink-0 rounded-field border shadow-sm flex items-center justify-center active:scale-90 transition-all relative">
+                <i data-lucide="filter" class="w-5 h-5"></i>
+                <!-- Chấm đỏ báo đang có bộ lọc bật, kể cả khi bảng lọc đã đóng lại -->
+                <span x-show="hasActiveFilter && !showFilter" style="display: none;" class="absolute -top-1 -right-1 w-3 h-3 bg-rose-500 rounded-full border-2 border-slate-50"></span>
             </button>
         </div>
 
-        <button @click="showFilter = !showFilter" type="button" aria-label="Mở bộ lọc danh sách" :aria-expanded="showFilter ? 'true' : 'false'" :class="showFilter || hasActiveFilter ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-500 border-slate-200'" class="w-12 shrink-0 rounded-field border shadow-sm flex items-center justify-center active:scale-90 transition-all relative">
-            <i data-lucide="filter" class="w-5 h-5"></i>
-            <!-- Chấm đỏ báo đang có bộ lọc bật, kể cả khi bảng lọc đã đóng lại -->
-            <span x-show="hasActiveFilter && !showFilter" style="display: none;" class="absolute -top-1 -right-1 w-3 h-3 bg-rose-500 rounded-full border-2 border-slate-50"></span>
-        </button>
-    </div>
+        <!-- BẢNG LỌC -->
+        <div x-show="showFilter" x-collapse class="mt-3 bg-white p-4 rounded-card shadow-sm border border-slate-100 border-t-4 border-t-blue-500">
+            <div class="flex flex-col gap-4">
+                <div x-show="availableBlocks.length > 1">
+                    <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Khối</label>
+                    <select x-model="filterBlock" @change="filterClass = ''" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700">
+                        <option value="">Tất cả các khối</option>
+                        <template x-for="b in availableBlocks" :key="b">
+                            <option :value="b" x-text="b"></option>
+                        </template>
+                    </select>
+                </div>
+                <div x-show="availableClasses.length > 1">
+                    <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Lớp</label>
+                    <select x-model="filterClass" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700">
+                        <option value="">Tất cả các lớp</option>
+                        <template x-for="cls in availableClasses" :key="cls">
+                            <option :value="cls" x-text="cls"></option>
+                        </template>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Tình trạng</label>
+                    <select x-model="filterStatus" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700">
+                        <option value="">Tất cả tình trạng</option>
+                        <option value="đang sinh hoạt">Đang sinh hoạt</option>
+                        <option value="dừng sinh hoạt">Dừng sinh hoạt</option>
+                        <option value="chuyển xứ">Chuyển xứ</option>
+                    </select>
+                </div>
 
-    <!-- BẢNG LỌC -->
-    <div x-show="showFilter" x-collapse class="mb-4 bg-white p-4 rounded-card shadow-sm border border-slate-100 border-t-4 border-t-blue-500">
-        <div class="flex flex-col gap-4">
-            <div x-show="availableBlocks.length > 1">
-                <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Khối</label>
-                <select x-model="filterBlock" @change="filterClass = ''" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700">
-                    <option value="">Tất cả các khối</option>
-                    <template x-for="b in availableBlocks" :key="b">
-                        <option :value="b" x-text="b"></option>
-                    </template>
-                </select>
+                <button x-show="hasActiveFilter" style="display: none;" @click="clearFilters()" class="flex items-center justify-center gap-1.5 py-2.5 bg-slate-100 text-slate-600 rounded-xl font-bold text-xs active:scale-95 transition-transform border border-slate-200">
+                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Xóa bộ lọc
+                </button>
             </div>
-            <div x-show="availableClasses.length > 1">
-                <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Lớp</label>
-                <select x-model="filterClass" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700">
-                    <option value="">Tất cả các lớp</option>
-                    <template x-for="cls in availableClasses" :key="cls">
-                        <option :value="cls" x-text="cls"></option>
-                    </template>
-                </select>
-            </div>
-            <div>
-                <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Tình trạng</label>
-                <select x-model="filterStatus" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700">
-                    <option value="">Tất cả tình trạng</option>
-                    <option value="đang sinh hoạt">Đang sinh hoạt</option>
-                    <option value="dừng sinh hoạt">Dừng sinh hoạt</option>
-                    <option value="chuyển xứ">Chuyển xứ</option>
-                </select>
-            </div>
-
-            <button x-show="hasActiveFilter" style="display: none;" @click="clearFilters()" class="flex items-center justify-center gap-1.5 py-2.5 bg-slate-100 text-slate-600 rounded-xl font-bold text-xs active:scale-95 transition-transform border border-slate-200">
-                <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Xóa bộ lọc
-            </button>
         </div>
     </div>
 
@@ -134,8 +136,8 @@
     </div>
 
     <!-- 3. DANH SÁCH THIẾU NHI -->
-    <!-- Skeleton loading state -->
-    <div x-show="syncing && students.length === 0" style="display: none;" class="space-y-4 xl:space-y-0 xl:grid xl:grid-cols-2 xl:gap-4 xl:items-start">
+    <!-- Skeleton loading state - chỉ hiện khi đang sync và chưa có dữ liệu -->
+    <div x-show="syncing && students.length === 0" style="display: none;" class="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-2 xl:grid-cols-3 xl:gap-4 xl:items-start">
         <template x-for="i in 5" :key="'sk-' + i">
             <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100">
                 <div class="flex items-center gap-3 mb-4">
@@ -169,8 +171,8 @@
         </template>
     </div>
 
-    <!-- Actual student list -->
-    <div x-show="!syncing || students.length > 0" style="display: none;" class="space-y-4 xl:space-y-0 xl:grid xl:grid-cols-2 xl:gap-4 xl:items-start">
+    <!-- Actual student list - hiện khi KHÔNG sync HOẶC đã có dữ liệu -->
+    <div x-show="!syncing || students.length > 0" style="display: none;" class="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-2 xl:grid-cols-3 xl:gap-4 xl:items-start">
         <template x-for="student in displayedStudents" :key="student.id">
 
             <!-- content-visibility: bỏ qua việc dựng hình các thẻ ngoài màn hình.
@@ -224,15 +226,17 @@
         </template>
 
         <!-- NÚT TẢI THÊM: Chỉ hiện ra khi số lượng đang hiển thị nhỏ hơn tổng số kết quả lọc -->
-        <div x-show="displayLimit < filteredStudents.length" style="display: none;" class="text-center pt-2 pb-6">
+        <div x-show="displayLimit < filteredStudents.length" style="display: none;" class="text-center pt-2 pb-6 col-span-full">
             <button @click="loadMore()" class="px-6 py-2.5 bg-slate-200 text-slate-600 rounded-full font-bold text-sm active:scale-95 transition-transform border border-slate-300 shadow-sm">
                 Tải thêm danh sách...
             </button>
         </div>
 
-        <div x-show="filteredStudents.length === 0" style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
-            <i data-lucide="search-x" class="w-10 h-10 mx-auto text-slate-300 mb-3"></i>
-            <p class="text-slate-500 font-medium text-sm">Không tìm thấy dữ liệu phù hợp.</p>
+        <!-- Empty state với icon rõ ràng -->
+        <div x-show="filteredStudents.length === 0" style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed col-span-full">
+            <i data-lucide="search-x" class="w-12 h-12 mx-auto text-slate-300 mb-4"></i>
+            <p class="text-slate-600 font-semibold text-base mb-1">Không tìm thấy dữ liệu phù hợp</p>
+            <p class="text-slate-400 text-sm">Thử thay đổi từ khóa tìm kiếm hoặc xóa bộ lọc</p>
         </div>
     </div>
 

@@ -1,5 +1,5 @@
 <!-- MÀN HÌNH ĐIỂM DANH -->
-<div x-show="currentModule === 'attendance'" style="display: none;" class="module-panel pt-6 pb-10 relative">
+<div data-module="attendance" class="module-panel pt-6 pb-10 relative">
 
     <!-- ==========================================================
          BƯỚC 1: CHỌN BUỔI (chưa vào phiên điểm danh)
@@ -122,10 +122,10 @@
 
         <!-- KHÔNG CÓ BUỔI NÀO -->
             <div x-show="programsOnDate.length === 0" style="display: none;" class="text-center py-12 px-6 bg-white rounded-card border border-slate-100 border-dashed">
-                <i data-lucide="calendar-off" class="w-10 h-10 mx-auto text-slate-300 mb-3"></i>
-                <p class="text-slate-500 font-medium text-sm mb-1">Ngày này không có chương trình nào.</p>
-                <p class="text-slate-400 text-xs mb-4">Hầu hết chương trình rơi vào Chúa Nhật.</p>
-                <button @click="goToNearestSunday()" class="px-5 py-2.5 bg-slate-100 text-slate-600 rounded-full font-bold text-xs active:scale-95 transition-transform border border-slate-200">
+                <i data-lucide="calendar-x" class="w-12 h-12 mx-auto text-slate-300 mb-4"></i>
+                <p class="text-slate-600 font-semibold text-base mb-1">Ngày này không có chương trình nào</p>
+                <p class="text-slate-400 text-sm mb-4">Hầu hết chương trình rơi vào Chúa Nhật</p>
+                <button @click="goToNearestSunday()" class="px-5 py-2.5 bg-blue-50 text-blue-600 rounded-full font-bold text-xs active:scale-95 transition-transform border border-blue-100 hover:bg-blue-100">
                     Xem Chúa Nhật gần nhất
                 </button>
             </div>
@@ -179,13 +179,14 @@
             </div>
         </div>
 
-        <!-- Hai chế độ điểm danh -->
-        <div class="grid grid-cols-2 gap-3 mb-4">
-            <button @click="moQuetQR()" type="button"
+        <!-- Hai chế độ điểm danh - dùng role="tablist" để hỗ trợ accessibility -->
+        <div role="tablist" class="grid grid-cols-2 gap-3 mb-4">
+            <button @click="moQuetQR()" type="button" role="tab" aria-selected="false"
                     class="flex items-center justify-center gap-2 py-3 rounded-2xl border shadow-sm font-bold text-xs active:scale-95 transition-transform bg-white border-slate-200 text-slate-600">
                 <i data-lucide="scan-line" class="w-4 h-4"></i> Quét QR
             </button>
-            <button type="button" class="flex items-center justify-center gap-2 py-3 bg-blue-600 rounded-2xl border border-blue-600 shadow-md shadow-blue-200 text-white font-bold text-xs">
+            <button @click="attendanceMode = 'manual'" type="button" role="tab" aria-selected="true"
+                    class="flex items-center justify-center gap-2 py-3 bg-blue-600 rounded-2xl border border-blue-600 shadow-md shadow-blue-200 text-white font-bold text-xs">
                 <i data-lucide="hand" class="w-4 h-4"></i> Điểm danh tay
             </button>
         </div>
@@ -254,8 +255,9 @@
         </div>
 
             <div x-show="sessionStudents.length === 0" style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
-                <i data-lucide="search-x" class="w-10 h-10 mx-auto text-slate-300 mb-3"></i>
-                <p class="text-slate-500 font-medium text-sm">Không có em nào phù hợp.</p>
+                <i data-lucide="users-x" class="w-12 h-12 mx-auto text-slate-300 mb-4"></i>
+                <p class="text-slate-600 font-semibold text-base mb-1">Không có em nào phù hợp</p>
+                <p class="text-slate-400 text-sm">Hãy kiểm tra lại phạm vi điểm danh hoặc danh sách lớp</p>
             </div>
         </div>
 

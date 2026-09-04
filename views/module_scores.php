@@ -1,5 +1,5 @@
 <!-- MÀN ĐIỂM SỐ -->
-<div x-show="currentModule === 'scores'" style="display: none;" class="module-panel pt-6 pb-10 relative">
+<div data-module="scores" class="module-panel pt-6 pb-10 relative">
 
     <!-- 1. THANH ĐIỀU HƯỚNG -->
     <div class="flex items-center justify-between mb-5">
@@ -104,14 +104,17 @@
                            :disabled="!canWriteScores"
                            :value="scoreOf(s.id, scoreType)"
                            @change="onScoreInput(s.id, scoreType, $event)"
-                           class="w-20 shrink-0 text-center bg-slate-50 border rounded-xl px-2 py-2.5 text-base font-black text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:opacity-60"
-                           :class="scoreOf(s.id, scoreType) !== '' ? 'border-slate-200' : 'border-slate-200'">
+                           class="w-20 shrink-0 text-center rounded-xl px-2 py-2.5 text-base font-black focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all disabled:opacity-60"
+                           :class="scoreOf(s.id, scoreType) !== ''
+                               ? 'bg-blue-50 border-blue-300 text-blue-700'
+                               : 'bg-slate-50 border-slate-200 text-slate-800'">
                 </div>
             </template>
 
             <div x-show="scoreStudents.length === 0" style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
-                <i data-lucide="users" class="w-10 h-10 mx-auto text-slate-300 mb-3"></i>
-                <p class="text-slate-500 font-medium text-sm">Lớp này chưa có em nào.</p>
+                <i data-lucide="users-x" class="w-12 h-12 mx-auto text-slate-300 mb-4"></i>
+                <p class="text-slate-600 font-semibold text-base mb-1">Lớp này chưa có em nào</p>
+                <p class="text-slate-400 text-sm">Hãy kiểm tra lớp đã chọn hoặc thêm thiếu nhi vào lớp</p>
             </div>
         </div>
 

@@ -1,5 +1,5 @@
 <!-- MÀN HÌNH THÔNG BÁO -->
-<div x-show="currentModule === 'announcements'" style="display: none;" class="module-panel pt-6 pb-10 relative">
+<div data-module="announcements" class="module-panel pt-6 pb-10 relative">
 
     <!-- 1. THANH ĐIỀU HƯỚNG -->
     <div class="flex items-center justify-between mb-5">
@@ -61,8 +61,9 @@
             </template>
 
             <div x-show="visibleAnnouncements.length === 0" style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
-                <i data-lucide="bell-off" class="w-10 h-10 mx-auto text-slate-300 mb-3"></i>
-                <p class="text-slate-500 font-medium text-sm">Chưa có thông báo nào.</p>
+                <i data-lucide="bell-ring" class="w-12 h-12 mx-auto text-slate-300 mb-4"></i>
+                <p class="text-slate-600 font-semibold text-base mb-1">Chưa có thông báo nào</p>
+                <p class="text-slate-400 text-sm">Thông báo mới sẽ xuất hiện ở đây</p>
             </div>
         </div>
     </div>

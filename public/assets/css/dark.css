@@ -126,9 +126,11 @@ body {
     border-color: var(--border-color);
 }
 
-/* Modal / sheet backgrounds */
+/* Modal / sheet backgrounds - chỉ những phần tử cần đổi màu */
 .dark .modal-sheet > div,
-.dark [x-data] > .bg-white {
+.dark .modal-sheet > * > .bg-white,
+.dark .fixed .bg-white,
+.dark .absolute .bg-white {
     background-color: var(--bg-card) !important;
 }
 
