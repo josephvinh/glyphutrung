@@ -118,9 +118,8 @@
                     </button>
                 </div>
             </template>
-        </div>
 
-        <!-- KHÔNG CÓ BUỔI NÀO -->
+            <!-- KHÔNG CÓ BUỔI NÀO -->
             <div x-show="programsOnDate.length === 0" style="display: none;" class="text-center py-12 px-6 bg-white rounded-card border border-slate-100 border-dashed">
                 <i data-lucide="calendar-x" class="w-12 h-12 mx-auto text-slate-300 mb-4"></i>
                 <p class="text-slate-600 font-semibold text-base mb-1">Ngày này không có chương trình nào</p>
@@ -133,7 +132,7 @@
     </div>
 
     <!-- ==========================================================
-         BƯỚC 2: PHIÊN ĐIỂM DANH
+         BƯỚC 2: PHIÊU ĐIỂM DANH
          ========================================================== -->
     <div x-show="activeSession !== null" style="display: none;">
 
@@ -252,7 +251,6 @@
                     </div>
                 </button>
             </template>
-        </div>
 
             <div x-show="sessionStudents.length === 0" style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
                 <i data-lucide="users-x" class="w-12 h-12 mx-auto text-slate-300 mb-4"></i>
@@ -275,7 +273,7 @@
      Khung camera vuông, vừa phải — đủ ngắm mà vẫn thấy được số đã
      quét và nút Kết thúc mà không phải cuộn. Không chiếm hết màn
      hình vì GLV cần thấy mình đã ghi được bao nhiêu em.
-     ========================================================== */ -->
+     ========================================================== -->
 <div x-show="qrMo" style="display: none;"
      class="fixed inset-0 z-[300] bg-slate-900/95 backdrop-blur-sm flex items-center justify-center p-4">
 
