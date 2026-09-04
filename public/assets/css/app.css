@@ -334,6 +334,8 @@ textarea:focus-visible:not(:disabled),
         overflow: hidden;
         box-shadow: 0 25px 50px -12px rgb(15 23 42 / 0.25);
         min-height: calc(100dvh - 4rem);
+        display: flex;
+        flex-direction: column;
     }
 
     /* Không còn thanh dưới -> trả lại khoảng trống ở đáy */

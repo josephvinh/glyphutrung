@@ -84,13 +84,13 @@ $bootData = page_bootstrap($me);
         <?php include __DIR__ . '/../views/layout_sidebar.php'; ?>
 
         <!-- CỘT NỘI DUNG -->
-        <div class="app-content">
+        <div class="app-content flex flex-col overflow-hidden">
 
         <!-- HEADER -->
         <?php include __DIR__ . '/../views/layout_header.php'; ?>
 
-        <!-- Vùng nội dung: padding ngang tập trung 1 chỗ duy nhất -->
-        <main class="app-main px-4 sm:px-6">
+        <!-- Vùng nội dung: padding ngang tập trung 1 chỗ duy nhất, overflow-y-auto để cuộn -->
+        <main class="app-main px-4 sm:px-6 flex-1 overflow-y-auto">
 
 
             <!-- TRANG CHỦ -->
