@@ -252,8 +252,9 @@
             <div class="flex-1 overflow-y-auto p-5 space-y-4">
                 <input type="hidden" name="_csrf" :value="window.TNTT.csrfToken">
                 <div class="grid grid-cols-3 gap-3">
-                    <div class="col-span-1"><label class="block text-micro font-bold text-slate-500 uppercase mb-1">Tên Thánh</label><input x-model="editData.holyName" type="text" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"></div>
-                    <div class="col-span-2"><label class="block text-micro font-bold text-slate-500 uppercase mb-1">Họ và Tên</label><input x-model="editData.name" type="text" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"></div>
+                    <div><label class="block text-micro font-bold text-slate-500 uppercase mb-1">Mã số</label><input x-model="editData.code" type="text" placeholder="VD: TN001" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"></div>
+                    <div><label class="block text-micro font-bold text-slate-500 uppercase mb-1">Tên Thánh</label><input x-model="editData.holyName" type="text" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"></div>
+                    <div><label class="block text-micro font-bold text-slate-500 uppercase mb-1">Họ và Tên</label><input x-model="editData.name" type="text" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"></div>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div><label class="block text-micro font-bold text-slate-500 uppercase mb-1">Ngày Sinh</label><input x-model="editData.birthDate" type="date" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"></div>
