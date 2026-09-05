@@ -38,3 +38,19 @@ Cả phân công active và đã kết thúc đều hiển thị trong phần Ph
 | Vai trò khối cần chọn khối | API validate scope |
 | Vai trò lớp cần chọn lớp | API validate scope |
 | Chỉ xóa được khi đã kết thúc | Giữ audit trail |
+
+## Phạm vi theo phân công
+
+Quyền **thao tác dữ liệu** được xét theo TỪNG phân công đang hiệu lực, không
+gộp chung:
+
+- **Xem hồ sơ**: thấy mọi lớp/khối mình được phân công (kể cả kiêm nhiệm).
+- **Ghi / duyệt / export**: chỉ được khi có **một vai trò** vừa đủ cấp quyền
+  trên chức năng đó **vừa** phụ trách đúng lớp/khối liên quan.
+
+Ví dụ chống nhầm quyền: một người là Trưởng Khối (được *xem* điểm danh cả
+khối) kiêm GLV một lớp khác (được *sửa* điểm danh lớp mình) — người này
+KHÔNG thể sửa điểm danh các lớp trong khối mình chỉ được xem.
+
+Hàm nền: `can_access_class()`, `accessible_class_ids()` trong
+`public/api/_common.php`.
