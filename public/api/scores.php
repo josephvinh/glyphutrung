@@ -33,8 +33,12 @@ if (!db_one('SELECT id FROM terms WHERE id=? AND year_id=?', [$termId, $year['id
 if (!db_one('SELECT code FROM score_types WHERE code=?', [$type])) {
     json_fail('Đầu điểm không hợp lệ.');
 }
-if (!db_one('SELECT id FROM enrollments WHERE year_id=? AND student_id=?', [$year['id'], $studentId])) {
+$enr = db_one('SELECT class_id FROM enrollments WHERE year_id=? AND student_id=?', [$year['id'], $studentId]);
+if (!$enr) {
     json_fail('Em này không có trong danh sách năm nay.', 404);
+}
+if (!can_access_class($me, 'scores', (int) $enr['class_id'], 'edit')) {
+    json_fail('Bạn không phụ trách lớp của em này.', 403);
 }
 
 // Ô trống = xoá điểm

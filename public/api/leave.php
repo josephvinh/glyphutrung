@@ -104,13 +104,10 @@ switch ($action) {
         if (!$req) json_fail('Không tìm thấy đơn.', 404);
         if ($req['status'] !== 'chờ duyệt') json_fail('Đơn này đã được xử lý rồi.');
 
-        // Chỉ duyệt được đơn trong phạm vi quản lý của mình
-        $scope = db_one('SELECT r.scope FROM roles r WHERE r.code = ?', [$me['role_code']])['scope'];
-        if ($scope === 'lớp' && (int) $req['class_id'] !== (int) $me['class_id']) {
-            json_fail('Đơn này không thuộc lớp bạn phụ trách.', 403);
-        }
-        if ($scope === 'khối' && (int) $req['block_id'] !== (int) $me['block_id']) {
-            json_fail('Đơn này không thuộc khối bạn phụ trách.', 403);
+        // Chỉ duyệt được đơn của lớp mình thực sự phụ trách (xét theo TỪNG
+        // phân công: một vai trò vừa được 'edit' đơn phép vừa phủ lớp em đó).
+        if (!can_access_class($me, 'leave', (int) $req['class_id'], 'edit')) {
+            json_fail('Đơn này không thuộc phạm vi bạn phụ trách.', 403);
         }
 
         if ($action === 'approve') {

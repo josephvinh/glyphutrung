@@ -196,10 +196,16 @@ window.TNTT.core = {
 
     // Phạm vi phụ trách viết thành một câu cho gọn
     get myScopeLabel() {
-        const scope = this.roleScope(this.user.role);
-        if (scope === 'toàn đoàn') return 'Toàn đoàn';
-        if (scope === 'khối') return 'Khối ' + this.user.managedBlock;
-        return 'Lớp ' + this.user.assignedClass;
+        const a = this.assignments || [];
+        if (this.isUnrestrictedScope) return 'Toàn đoàn';
+        if (!a.length) {   // fallback theo phân công chính
+            const scope = this.roleScope(this.user.role);
+            if (scope === 'khối') return 'Khối ' + this.user.managedBlock;
+            return 'Lớp ' + this.user.assignedClass;
+        }
+        const parts = [...new Set(a.map(x =>
+            x.className ? x.className : (x.blockName ? 'Khối ' + x.blockName : 'Toàn đoàn')))];
+        return parts.join(' · ');
     },
 
     // Chỉ sửa được thông tin của chính mình; vai trò và phân công

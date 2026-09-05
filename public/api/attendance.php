@@ -162,11 +162,10 @@ $st = db_one('SELECT s.full_name, e.status, e.class_id
 if (!$st) json_fail('Em này không có trong danh sách năm nay.', 404);
 if ($st['status'] !== 'đang sinh hoạt') json_fail('Em này không còn sinh hoạt.');
 
-// Chạm tay chỉ trong phạm vi mình THẤY được (GLV: lớp mình, Trưởng Khối:
-// khối mình) — khớp đúng danh sách hiện trên màn hình. Khác với quét QR,
-// vốn rộng ra cả khối vì lúc đó các em xếp hàng theo khối.
-$duocSua = allowed_class_ids($me);
-if ($duocSua !== null && !in_array((int) $st['class_id'], $duocSua, true)) {
+// Chạm tay = GHI. Xét theo TỪNG phân công: phải có một vai trò vừa được
+// 'edit' điểm danh vừa phủ đúng lớp của em này. Tránh ghép 'edit' của vai
+// trò lớp khác với phạm vi rộng của vai trò chỉ được xem.
+if (!can_access_class($me, 'attendance', (int) $st['class_id'], 'edit')) {
     json_fail('Bạn không phụ trách lớp của em ' . $st['full_name'] . '.', 403);
 }
 

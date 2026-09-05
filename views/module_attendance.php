@@ -199,6 +199,17 @@
             </button>
         </div>
 
+        <!-- Chọn lớp (hiện khi phụ trách nhiều lớp: kiêm nhiệm, Trưởng Khối, BĐH) -->
+        <div x-show="availableClasses.length > 1" style="display: none;" class="relative mb-4">
+            <select x-model="attendanceClass" class="w-full bg-white border border-slate-200 rounded-field py-3.5 pl-4 pr-10 text-sm font-semibold text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none">
+                <option value="">Tất cả các lớp</option>
+                <template x-for="cls in availableClasses" :key="cls">
+                    <option :value="cls" x-text="cls"></option>
+                </template>
+            </select>
+            <i data-lucide="chevron-down" class="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none"></i>
+        </div>
+
         <!-- DANH SÁCH ĐIỂM DANH: chạm 1 phát là đổi trạng thái -->
         <!-- Skeleton loading state -->
         <div x-show="syncing && accessibleStudents.length === 0" style="display: none;" class="space-y-2.5">

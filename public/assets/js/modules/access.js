@@ -7,25 +7,72 @@ window.TNTT.access = {
     // ==========================================
     // 10. PHÂN QUYỀN & LỌC
     // ==========================================
+
+    // --- Nguồn dẫn xuất phạm vi (kiêm nhiệm): đọc từ this.assignments ---
+    // Không giới hạn nếu có BẤT KỲ phân công 'toàn đoàn' nào (Quản Trị / BĐH).
+    get isUnrestrictedScope() {
+        const a = this.assignments || [];
+        if (a.length) return a.some(x => x.scope === 'toàn đoàn');
+        return ['admin', 'bdh'].includes(this.user.role);   // fallback dữ liệu cũ
+    },
+
+    // Tên các KHỐI mình phụ trách, hợp mọi phân công đang hiệu lực.
+    get myBlocks() {
+        const a = this.assignments || [];
+        if (!a.length) {   // fallback theo phân công chính
+            if (this.user.role === 'truong_khoi') return [this.user.managedBlock];
+            const cls = this.classes.find(c => c.name === this.user.assignedClass);
+            return cls ? [cls.block] : [];
+        }
+        const set = new Set();
+        a.forEach(x => {
+            if (x.blockName) set.add(x.blockName);
+            else if (x.className) {
+                const c = this.classes.find(cc => cc.name === x.className);
+                if (c) set.add(c.block);
+            }
+        });
+        return [...set];
+    },
+
+    // Tên các LỚP mình phụ trách; phân công khối mở rộng ra mọi lớp trong khối.
+    get myClasses() {
+        const a = this.assignments || [];
+        if (!a.length) {   // fallback theo phân công chính
+            if (this.user.role === 'truong_khoi') {
+                return this.classes.filter(c => c.block === this.user.managedBlock).map(c => c.name);
+            }
+            return this.user.assignedClass ? [this.user.assignedClass] : [];
+        }
+        const set = new Set();
+        a.forEach(x => {
+            if (x.className) set.add(x.className);
+            else if (x.blockName) {
+                this.classes.filter(c => c.block === x.blockName).forEach(c => set.add(c.name));
+            }
+        });
+        return [...set];
+    },
+
     get accessibleStudents() {
-        if (['admin', 'bdh'].includes(this.user.role)) return this.students;
-        if (this.user.role === 'truong_khoi') return this.students.filter(s => s.block === this.user.managedBlock);
-        return this.students.filter(s => s.className === this.user.assignedClass);
+        if (this.isUnrestrictedScope) return this.students;
+        const classes = this.myClasses;
+        return this.students.filter(s => classes.includes(s.className));
     },
 
     // Khối được phép xem, lấy từ danh mục chứ không lấy từ dữ liệu thiếu nhi
     get availableBlocks() {
-        if (['admin', 'bdh'].includes(this.user.role)) return this.blocks;
-        if (this.user.role === 'truong_khoi') return this.blocks.filter(b => b === this.user.managedBlock);
-        const cls = this.classes.find(c => c.name === this.user.assignedClass);
-        return cls ? [cls.block] : [];
+        if (this.isUnrestrictedScope) return this.blocks;
+        const mine = this.myBlocks;
+        return this.blocks.filter(b => mine.includes(b));
     },
 
     // Lớp hiện trong bộ lọc, kể cả lớp mới mở chưa có em nào
     get availableClasses() {
         let list = this.classes.filter(c => this.availableBlocks.includes(c.block));
-        if (!['admin', 'bdh', 'truong_khoi'].includes(this.user.role)) {
-            list = list.filter(c => c.name === this.user.assignedClass);
+        if (!this.isUnrestrictedScope) {
+            const mine = this.myClasses;
+            list = list.filter(c => mine.includes(c.name));
         }
         if (this.filterBlock !== '') list = list.filter(c => c.block === this.filterBlock);
         return list.map(c => c.name);
@@ -38,12 +85,8 @@ window.TNTT.access = {
      * Trả về null nghĩa là không giới hạn (Quản Trị, Ban Điều Hành).
      */
     get writableClasses() {
-        const vt = this.user.role;
-        if (vt === 'admin' || vt === 'bdh') return null;
-        if (vt === 'truong_khoi') {
-            return this.classes.filter(c => c.block === this.user.managedBlock).map(c => c.name);
-        }
-        return this.user.assignedClass ? [this.user.assignedClass] : [];
+        if (this.isUnrestrictedScope) return null;   // Quản Trị / BĐH: không giới hạn
+        return this.myClasses;
     },
 
     get filteredStudents() {

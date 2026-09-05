@@ -60,10 +60,11 @@ window.TNTT.attendance = {
     startSession(prog) {
         this.activeSession = { programId: prog.id, date: this.attendanceDate };
         this.attendanceSearch = '';
-        // GLV thì khóa cứng vào lớp mình, cấp trên thì mặc định mở lớp đang phụ trách
-        this.attendanceClass = ['admin', 'bdh', 'truong_khoi'].includes(this.user.role)
-            ? (this.availableClasses.includes(this.user.assignedClass) ? this.user.assignedClass : '')
-            : this.user.assignedClass;
+        // Mặc định lớp chính; người kiêm nhiệm vẫn chuyển được sang lớp khác
+        // qua bộ chọn (availableClasses đã gồm mọi lớp mình phụ trách).
+        this.attendanceClass = this.availableClasses.includes(this.user.assignedClass)
+            ? this.user.assignedClass
+            : '';
         this.changeModule('attendance');
     },
 

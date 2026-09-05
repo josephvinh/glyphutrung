@@ -42,7 +42,8 @@ window.TNTT.birthdays = {
 
     // Sĩ số lớp đang phụ trách, dùng cho thẻ thống kê ngoài Trang chủ
     get myClassSize() {
-        return this.students.filter(s => s.className === this.user.assignedClass && s.status === 'đang sinh hoạt').length;
+        const classes = this.myClasses;
+        return this.students.filter(s => classes.includes(s.className) && s.status === 'đang sinh hoạt').length;
     },
 
     // Lọc theo nhóm: tất cả | thiếu nhi | giáo lý viên
