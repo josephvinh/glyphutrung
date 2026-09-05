@@ -85,8 +85,11 @@
                 <!-- Quản Trị và Ban Điều Hành không phụ trách lớp nào, nên
                      hiện tổng số em trong phạm vi họ thấy thay vì "lớp ()" rỗng. -->
                 <h3 class="text-slate-500 text-xs font-medium mb-1"
-                    x-text="user.assignedClass ? 'Sĩ số lớp (' + user.assignedClass + ')'
-                          : (user.managedBlock ? 'Sĩ số khối ' + user.managedBlock : 'Tổng sĩ số toàn đoàn')"></h3>
+                    x-text="user.assignedClass
+                          ? (myClasses.length > 1 ? 'Sĩ số các lớp phụ trách' : 'Sĩ số lớp (' + user.assignedClass + ')')
+                          : (user.managedBlock
+                             ? (myBlocks.length > 1 ? 'Sĩ số các khối phụ trách' : 'Sĩ số khối ' + user.managedBlock)
+                             : 'Tổng sĩ số toàn đoàn')"></h3>
                 <p class="text-slate-800 font-black text-2xl"><span x-text="user.assignedClass ? myClassSize : accessibleStudents.length"></span> <span class="text-sm font-medium text-slate-400">em</span></p>
             </div>
         </button>

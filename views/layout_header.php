@@ -15,8 +15,8 @@
                     <!-- Chỉ hiện dấu • khi thật sự có lớp/khối đi kèm, nếu không
                          Quản Trị sẽ thấy "Quản trị viên •" với dấu chấm treo lơ lửng. -->
                     <span x-text="user.roleTitle"></span><span
-                        x-show="user.assignedClass || user.managedBlock"
-                        x-text="' • ' + (user.assignedClass || user.managedBlock)"></span>
+                        x-show="!isUnrestrictedScope"
+                        x-text="' • ' + myScopeLabel"></span>
                 </p>
             </div>
         </div>
