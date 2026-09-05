@@ -16,14 +16,23 @@ Bảng `member_assignments` cho phép:
 
 ### Thêm phân công mới
 
-1. Vào **Nhân Sự** (module staff)
-2. Chọn thành viên → cuộn xuống **Phân công** → bấm **Thêm**
-3. Chọn vai trò, khối/lớp, ghi chú (tùy chọn)
-4. Bấm **Lưu**
+Quản lý ngay trong module **Khối & Lớp** (không còn ở Nhân Sự):
+
+1. Vào **Khối & Lớp**, mở khối chứa lớp cần phân.
+2. Ở thẻ lớp, chọn tên thành viên ở ô **"+ Thêm GLV vào lớp…"** → tạo phân
+   công GLV kiêm nhiệm cho lớp đó.
+3. Đặt **Chủ nhiệm lớp** / **Trưởng khối** bằng ô chọn riêng (mỗi lớp một
+   chủ nhiệm, mỗi khối một trưởng khối).
+
+Vai trò được suy theo chỗ phân: thêm vào lớp = `glv`, chủ nhiệm = `glv_chu_nhiem`,
+trưởng khối = `truong_khoi`. **Vai trò chính không đổi** — kể cả Ban Điều Hành /
+Quản Trị vẫn giữ quyền toàn đoàn khi được thêm vào một lớp (chỉ là kiêm nhiệm
+thêm). Trang **Cá nhân** của thành viên tự cập nhật danh sách phân công.
 
 ### Kết thúc phân công
 
-Bấm biểu tượng ✕ cạnh phân công cần kết thúc. Hệ thống ghi lại ngày kết thúc.
+Bấm biểu tượng ✕ cạnh GLV trong thẻ lớp (hoặc đổi ô Chủ nhiệm/Trưởng khối sang
+người khác / "Chưa phân công"). Hệ thống ghi lại ngày kết thúc.
 
 ### Xem lịch sử
 

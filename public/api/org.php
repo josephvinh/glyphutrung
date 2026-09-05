@@ -332,20 +332,16 @@ switch ($action) {
         db()->beginTransaction();
         try {
             $roleCode = $isClass ? 'glv_chu_nhiem' : 'truong_khoi';
+            $scopeCol = $isClass ? 'class_id' : 'block_id';
 
-            // Bỏ hạ người cũ - thay vào đó chỉ kết thúc phân công cũ
-            $oldAssignments = db_all(
-                "SELECT a.id FROM member_assignments a
-                 JOIN roles r ON r.code = a.role_code
-                 WHERE r.role_code = ? AND " . ($isClass ? "a.class_id" : "a.block_id") . " = ?",
-                [$roleCode, $target['id']]
+            // Mỗi lớp 1 chủ nhiệm, mỗi khối 1 trưởng khối: kết thúc phân công
+            // cũ của NGƯỜI KHÁC (giữ nếu vẫn là người này). memberId = 0 nghĩa
+            // là gỡ hẳn chức, khi đó kết thúc tất cả.
+            db_run(
+                "UPDATE member_assignments SET to_date = CURDATE()
+                  WHERE role_code = ? AND $scopeCol = ? AND to_date IS NULL AND member_id != ?",
+                [$roleCode, $target['id'], $memberId]
             );
-            foreach ($oldAssignments as $old) {
-                if ($isClass) {
-                    db_run("UPDATE member_assignments SET to_date = CURDATE() WHERE id = ? AND member_id != ?",
-                           [$old['id'], $memberId]);
-                }
-            }
 
             if ($memberId) {
                 $m = db_one('SELECT * FROM members WHERE id=?', [$memberId]);

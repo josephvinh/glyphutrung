@@ -46,6 +46,33 @@ switch ($action) {
         break;
 
     // -------------------------------------------------------------
+    // Mọi phân công đang hiệu lực của toàn đoàn — cho màn Khối & Lớp dựng
+    // roster kiêm nhiệm. Chỉ cần quyền xem org (đã require ở đầu tệp).
+    case 'list_active':
+        $rows = db_all(
+            "SELECT a.id, a.member_id, a.role_code, a.is_primary,
+                    r.scope AS role_scope,
+                    b.name AS block_name, c.name AS class_name
+               FROM member_assignments a
+               JOIN roles r ON r.code = a.role_code
+               JOIN members m ON m.id = a.member_id
+               LEFT JOIN blocks b ON b.id = a.block_id
+               LEFT JOIN classes c ON c.id = a.class_id
+              WHERE a.to_date IS NULL
+              ORDER BY a.is_primary DESC, r.level DESC"
+        );
+        json_out(['ok' => true, 'assignments' => array_map(fn($a) => [
+            'id'        => (int) $a['id'],
+            'memberId'  => (int) $a['member_id'],
+            'role'      => $a['role_code'],
+            'scope'     => $a['role_scope'],
+            'className' => $a['class_name'] ?? '',
+            'blockName' => $a['block_name'] ?? '',
+            'isPrimary' => (bool) $a['is_primary'],
+        ], $rows)]);
+        break;
+
+    // -------------------------------------------------------------
     case 'create':
         require_csrf();
         $meEditor = require_permission('org', 'edit');

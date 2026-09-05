@@ -141,33 +141,7 @@
                     <p class="text-micro font-medium text-slate-500 mt-1"
                        x-text="m.className || m.block || 'Toàn đoàn'"></p>
 
-                    <!-- PHÂN CÔNG KIÊM NHIỆM -->
-                    <div class="mt-3 pt-3 border-t border-slate-100" x-show="canManageOrg">
-                        <div class="flex items-center justify-between mb-2">
-                            <p class="text-micro font-bold text-slate-500 uppercase tracking-wider">Phân công</p>
-                            <button @click="openAddAssignment(m)"
-                                    class="text-micro font-bold text-blue-600 flex items-center gap-1 active:scale-95 transition-transform">
-                                <i data-lucide="plus" class="w-3 h-3"></i> Thêm
-                            </button>
-                        </div>
-                        <div class="space-y-1.5">
-                            <template x-for="a in (memberAssignments[m.id] || [])" :key="a.id">
-                                <div class="flex items-center gap-2 bg-slate-50 rounded-xl px-3 py-2">
-                                    <span class="text-micro font-bold uppercase px-1.5 py-0.5 rounded border"
-                                          :class="roleChipClass(a.role_code)" x-text="roleLabel(a.role_code)"></span>
-                                    <span class="text-micro text-slate-600 truncate flex-1"
-                                          x-text="(a.block_name || a.class_name || 'toàn đoàn')"></span>
-                                    <span x-show="a.is_primary" class="text-micro font-black text-amber-600">★</span>
-                                    <button @click="endAssignment(a)"
-                                            x-show="!a.to_date"
-                                            class="text-rose-500 active:scale-90"><i data-lucide="x-circle" class="w-3.5 h-3.5"></i></button>
-                                    <button @click="setPrimaryAssignment(a)"
-                                            x-show="!a.is_primary && !a.to_date"
-                                            class="text-blue-500 active:scale-90"><i data-lucide="star" class="w-3.5 h-3.5"></i></button>
-                                </div>
-                            </template>
-                        </div>
-                    </div>
+                    <!-- Phân công kiêm nhiệm nay quản lý ở màn Khối & Lớp -->
                 </div>
 
                 <div class="flex flex-col gap-1.5 shrink-0 items-end">
@@ -210,60 +184,6 @@
                     </div>
                 </div>
             </template>
-        </div>
-    </div>
-</div>
-
-<!-- ==========================================================
-     POPUP THÊM PHÂN CÔNG
-     ========================================================== -->
-<div x-show="showAssignmentModal" style="display: none;" class="fixed inset-0 z-[210] flex items-end justify-center sm:items-center sm:p-6">
-    <div @click="showAssignmentModal = false" class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
-    <div class="modal-sheet relative w-full max-w-md bg-white rounded-t-sheet sm:rounded-sheet shadow-2xl flex flex-col max-h-[88dvh] overflow-y-auto">
-        <div class="flex justify-center pt-3 pb-2"><div class="w-12 h-1.5 bg-slate-200 rounded-full"></div></div>
-        <div class="flex justify-between items-center px-5 pb-4 border-b border-slate-100">
-            <h3 class="text-lg font-black text-slate-800">Thêm phân công</h3>
-            <button @click="showAssignmentModal = false" class="tap-safe w-8 h-8 bg-slate-100 rounded-full text-slate-500 active:scale-90 flex items-center justify-center"><i data-lucide="x" class="w-4 h-4"></i></button>
-        </div>
-        <div class="p-5 space-y-4">
-            <div>
-                <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Vai trò</label>
-                <select x-model="assignmentForm.role" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm">
-                    <template x-for="r in roleDefs" :key="r.value">
-                        <option :value="r.value" x-text="r.label + ' (' + r.scope + ')'"></option>
-                    </template>
-                </select>
-            </div>
-            <div x-show="roleScope(assignmentForm.role) === 'khối'">
-                <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Khối</label>
-                <select x-model="assignmentForm.blockId" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm">
-                    <template x-for="b in blocks" :key="b">
-                        <option :value="blockIdByName(b)" x-text="b"></option>
-                    </template>
-                </select>
-            </div>
-            <div x-show="roleScope(assignmentForm.role) === 'lớp'">
-                <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Lớp</label>
-                <select x-model="assignmentForm.classId" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm">
-                    <template x-for="c in classes" :key="c.id">
-                        <option :value="c.id" x-text="c.name + ' (' + c.block + ')'"></option>
-                    </template>
-                </select>
-            </div>
-            <div>
-                <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Ghi chú</label>
-                <input x-model="assignmentForm.note" type="text" placeholder="Lý do phân công..."
-                       class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm">
-            </div>
-            <label class="flex items-center gap-2 text-sm text-slate-700">
-                <input type="checkbox" x-model="assignmentForm.isPrimary" class="w-4 h-4 rounded">
-                Đặt làm phân công chính
-            </label>
-        </div>
-        <div class="p-4 border-t border-slate-100">
-            <button @click="saveAssignment()" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-blue-200 flex justify-center items-center">
-                <i data-lucide="save" class="w-5 h-5 mr-2"></i> Lưu phân công
-            </button>
         </div>
     </div>
 </div>

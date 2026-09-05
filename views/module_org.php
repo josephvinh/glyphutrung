@@ -150,28 +150,47 @@
                                         </select>
                                     </div>
 
-                                    <!-- Thành viên của lớp -->
+                                    <!-- Thành viên của lớp (suy từ phân công kiêm nhiệm) -->
                                     <div x-show="membersInClass(cls.name).length > 0" class="space-y-2">
-                                        <template x-for="m in membersInClass(cls.name)" :key="m.id">
-                                            <button @click="canManageOrg && openEditMember(m)" type="button"
-                                                    class="w-full text-left flex items-center gap-2.5 py-1"
-                                                    :class="canManageOrg ? 'active:scale-[0.98] transition-transform' : 'cursor-default'">
-                                                <div class="flex-1 min-w-0">
-                                                    <p class="text-sm font-bold text-slate-700 leading-snug truncate">
-                                                        <span class="font-normal text-slate-400" x-text="m.holyName"></span>
-                                                        <span x-text="m.fullName"></span>
-                                                    </p>
-                                                    <p class="text-micro font-medium text-slate-500" x-text="titleFor(m)"></p>
-                                                </div>
-                                                <span x-show="m.status !== 'đang phục vụ'" style="display: none;"
-                                                      class="shrink-0 text-micro font-bold uppercase px-1.5 py-0.5 rounded bg-slate-100 text-slate-500" x-text="m.status"></span>
-                                                <span x-show="roleLabelFor(m) !== ''" style="display: none;" class="shrink-0 text-micro font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border"
-                                                      :class="roleChipClass(m.role)" x-text="roleLabelFor(m)"></span>
-                                            </button>
+                                        <template x-for="m in membersInClass(cls.name)" :key="m.assignmentId">
+                                            <div class="flex items-center gap-1.5">
+                                                <button @click="canManageOrg && openEditMember(m)" type="button"
+                                                        class="flex-1 min-w-0 text-left flex items-center gap-2.5 py-1"
+                                                        :class="canManageOrg ? 'active:scale-[0.98] transition-transform' : 'cursor-default'">
+                                                    <div class="flex-1 min-w-0">
+                                                        <p class="text-sm font-bold text-slate-700 leading-snug truncate">
+                                                            <span class="font-normal text-slate-400" x-text="m.holyName"></span>
+                                                            <span x-text="m.fullName"></span>
+                                                        </p>
+                                                        <p class="text-micro font-medium text-slate-500" x-text="titleFor(m)"></p>
+                                                    </div>
+                                                    <span x-show="m.status !== 'đang phục vụ'" style="display: none;"
+                                                          class="shrink-0 text-micro font-bold uppercase px-1.5 py-0.5 rounded bg-slate-100 text-slate-500" x-text="m.status"></span>
+                                                    <span x-show="roleLabelFor(m) !== ''" style="display: none;" class="shrink-0 text-micro font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border"
+                                                          :class="roleChipClass(m.role)" x-text="roleLabelFor(m)"></span>
+                                                </button>
+                                                <button x-show="canManageOrg" style="display: none;" type="button"
+                                                        @click="removeClassAssignment(m.assignmentId)"
+                                                        aria-label="Gỡ khỏi lớp"
+                                                        class="tap-safe shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-rose-400 active:scale-90 border border-rose-100">
+                                                    <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                                                </button>
+                                            </div>
                                         </template>
                                     </div>
 
                                     <p x-show="membersInClass(cls.name).length === 0" style="display: none;" class="text-micro text-slate-500 italic">Chưa có GLV nào.</p>
+
+                                    <!-- Thêm GLV vào lớp (kiêm nhiệm) -->
+                                    <div x-show="canManageOrg" style="display: none;" class="mt-2.5">
+                                        <select @change="addClassMember(cls.name, $event.target.value); $event.target.value=''"
+                                                class="w-full bg-white border border-dashed border-blue-300 rounded-lg px-2.5 py-1.5 text-sm font-semibold text-blue-600">
+                                            <option value="">+ Thêm GLV vào lớp…</option>
+                                            <template x-for="m in addableToClass(cls.name)" :key="m.id">
+                                                <option :value="m.id" x-text="memberOptionLabel(m)"></option>
+                                            </template>
+                                        </select>
+                                    </div>
                                 </div>
                             </template>
 

@@ -41,8 +41,18 @@ window.TNTT.org = {
     showClassModal: false,
     classForm: { original: '', name: '', block: '' },
 
+    // Mọi phân công đang hiệu lực của toàn đoàn — nguồn để dựng roster kiêm
+    // nhiệm ở màn Khối & Lớp (thay cho việc đọc lớp chính trong members).
+    allAssignments: [],
+
     openOrg() {
         this.changeModule('org');
+        this.loadAllAssignments();
+    },
+
+    async loadAllAssignments() {
+        const r = await this.api('assignments', 'list_active');
+        if (r && r.ok) this.allAssignments = r.assignments;
     },
 
     // Nhân sự tách khỏi Khối & Lớp thành module riêng.
@@ -134,8 +144,20 @@ window.TNTT.org = {
             .reduce((tong, c) => tong + (this.classCounts[c.name] || 0), 0);
     },
 
+    // Phân công glv/glv_chu_nhiem đang hiệu lực của một lớp.
+    assignmentsInClass(className) {
+        return this.allAssignments.filter(a =>
+            a.className === className && ['glv', 'glv_chu_nhiem'].includes(a.role));
+    },
+
+    // Roster lớp suy từ phân công (kiêm nhiệm) — mỗi phần tử là member thật
+    // trộn thêm role của phân công + assignmentId để gỡ.
     membersInClass(className) {
-        return this.members.filter(m => m.className === className)
+        return this.assignmentsInClass(className)
+            .map(a => {
+                const mem = this.members.find(x => x.id === a.memberId) || {};
+                return { ...mem, id: a.memberId, role: a.role, assignmentId: a.id };
+            })
             .sort((a, b) => this.roleLevel(b.role) - this.roleLevel(a.role));
     },
 
@@ -149,11 +171,13 @@ window.TNTT.org = {
     },
 
     headOfBlock(block) {
-        return this.members.find(m => m.role === 'truong_khoi' && m.block === block && !m.className) || null;
+        const a = this.allAssignments.find(x => x.role === 'truong_khoi' && x.blockName === block);
+        return a ? (this.members.find(m => m.id === a.memberId) || null) : null;
     },
 
     headOfClass(className) {
-        return this.members.find(m => m.role === 'glv_chu_nhiem' && m.className === className) || null;
+        const a = this.allAssignments.find(x => x.role === 'glv_chu_nhiem' && x.className === className);
+        return a ? (this.members.find(m => m.id === a.memberId) || null) : null;
     },
 
     memberFullName(m) {
@@ -161,54 +185,42 @@ window.TNTT.org = {
     },
 
     // ---- Chọn chủ nhiệm / trưởng khối ----
-    // Nhấc người này lên thì người đang giữ chức phải hạ xuống, để không
-    // bao giờ có hai chủ nhiệm cùng một lớp.
-    setClassHead(className, memberId) {
-        const current = this.headOfClass(className);
-        if (current && current.id !== Number(memberId)) {
-            current.role = 'glv';
-            current.title = 'GLV Phụ Tá';
-        }
+    // Chỉ thêm/đổi phân công chủ nhiệm (glv_chu_nhiem) / trưởng khối
+    // (truong_khoi) — KHÔNG đổi vai trò chính. Backend đảm bảo mỗi lớp/khối
+    // chỉ một người giữ chức.
+    async setClassHead(className, memberId) {
+        await this.save('org', 'setClassHead', { className, memberId: Number(memberId) });
+        await this.loadAllAssignments();
+    },
+
+    async setBlockHead(block, memberId) {
+        await this.save('org', 'setBlockHead', { block, memberId: Number(memberId) });
+        await this.loadAllAssignments();
+    },
+
+    // Thêm một GLV vào lớp (phân công glv, kiêm nhiệm). Vai chính giữ nguyên,
+    // nên BĐH/Quản trị vẫn thêm được mà không mất quyền toàn đoàn.
+    async addClassMember(className, memberId) {
         if (!memberId) return;
-        const m = this.members.find(x => x.id === Number(memberId));
-        if (!m) return;
-        if (this.isProtectedMember(m)) {
-            alert('Không thể đổi vai trò của thành viên Ban Điều Hành hoặc Quản trị.');
-            return;
-        }
         const cls = this.classes.find(c => c.name === className);
-        m.role = 'glv_chu_nhiem';
-        m.title = 'GLV Chủ Nhiệm';
-        m.className = className;
-        m.block = cls ? cls.block : m.block;
-        this.save('org', 'setClassHead', { className: className, memberId: Number(memberId) });
+        if (!cls) return;
+        await this.save('assignments', 'create', {
+            memberId: Number(memberId), role: 'glv', classId: cls.id
+        });
+        await this.loadAllAssignments();
     },
 
-    setBlockHead(block, memberId) {
-        const current = this.headOfBlock(block);
-        if (current && current.id !== Number(memberId)) {
-            current.role = 'glv';
-            current.title = 'GLV Phụ Tá';
-        }
-        if (!memberId) return;
-        const m = this.members.find(x => x.id === Number(memberId));
-        if (!m) return;
-        if (this.isProtectedMember(m)) {
-            alert('Không thể đổi vai trò của thành viên Ban Điều Hành hoặc Quản trị.');
-            return;
-        }
-        m.role = 'truong_khoi';
-        m.title = 'Trưởng Khối';
-        m.block = block;
-        m.className = '';   // trưởng khối quản cả khối, không gắn vào lớp nào
-        this.save('org', 'setBlockHead', { block: block, memberId: Number(memberId) });
+    async removeClassAssignment(assignmentId) {
+        if (!assignmentId) return;
+        if (!confirm('Gỡ phân công này khỏi lớp?')) return;
+        await this.save('assignments', 'end', { assignmentId });
+        await this.loadAllAssignments();
     },
 
-    // Ai cũng có thể được nhấc lên, kể cả người đang ở khối/lớp khác —
-    // nhấc lên thì phân công của họ chuyển theo. Chỉ loại BĐH/Admin và
-    // người đang tạm nghỉ.
+    // Ai đang phục vụ đều có thể được phân công kiêm nhiệm — kể cả BĐH/Quản
+    // trị (vai chính toàn đoàn giữ nguyên, lớp/khối chỉ là kiêm nhiệm thêm).
     get assignableMembers() {
-        return this.members.filter(m => !this.isProtectedMember(m) && m.status === 'đang phục vụ');
+        return this.members.filter(m => m.status === 'đang phục vụ');
     },
 
     candidatesForClass() {
@@ -217,6 +229,12 @@ window.TNTT.org = {
 
     candidatesForBlock() {
         return this.assignableMembers;
+    },
+
+    // Người có thể THÊM vào lớp: loại những ai đã có phân công ở lớp đó.
+    addableToClass(className) {
+        const already = new Set(this.assignmentsInClass(className).map(a => a.memberId));
+        return this.assignableMembers.filter(m => !already.has(m.id));
     },
 
     // Ghi kèm phân công hiện tại để không nhấc nhầm người đang giữ lớp khác
@@ -471,84 +489,8 @@ window.TNTT.org = {
         }
     },
 
-    // ---- PHÂN CÔNG KIÊM NHIỆM ----
-    memberAssignments: {},     // {memberId: [...]}
-    showAssignmentModal: false,
-    assignmentForm: { memberId: 0, role: '', blockId: '', classId: '', note: '', isPrimary: false },
-
-    async openAddAssignment(member) {
-        this.assignmentForm = {
-            memberId: member.id,
-            role: 'glv',
-            blockId: '',
-            classId: '',
-            note: '',
-            isPrimary: false,
-        };
-        await this.loadMemberAssignments(member.id);
-        this.showAssignmentModal = true;
-    },
-
-    async loadMemberAssignments(memberId) {
-        const r = await fetch(`/tntt/public/api/assignments.php?action=list&memberId=${memberId}`, {
-            credentials: 'include'
-        }).then(r => r.json());
-        if (r.ok) {
-            this.memberAssignments = { ...this.memberAssignments, [memberId]: r.assignments };
-        }
-    },
-
-    async saveAssignment() {
-        const r = await fetch('/tntt/public/api/assignments.php?action=create', {
-            method: 'POST',
-            credentials: 'include',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': window.TNTT.csrfToken
-            },
-            body: JSON.stringify(this.assignmentForm)
-        }).then(r => r.json());
-        if (r.ok) {
-            this.showAssignmentModal = false;
-            await this.loadMemberAssignments(this.assignmentForm.memberId);
-            window.TNTT.toast.success('Đã thêm phân công');
-        } else {
-            window.TNTT.toast.error(r.error || 'Lỗi');
-        }
-    },
-
-    async endAssignment(a) {
-        if (!confirm('Kết thúc phân công này?')) return;
-        const r = await fetch('/tntt/public/api/assignments.php?action=end', {
-            method: 'POST',
-            credentials: 'include',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': window.TNTT.csrfToken
-            },
-            body: JSON.stringify({ assignmentId: a.id })
-        }).then(r => r.json());
-        if (r.ok) {
-            await this.loadMemberAssignments(a.member_id);
-            window.TNTT.toast.success('Đã kết thúc phân công');
-        }
-    },
-
-    async setPrimaryAssignment(a) {
-        const r = await fetch('/tntt/public/api/assignments.php?action=set_primary', {
-            method: 'POST',
-            credentials: 'include',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': window.TNTT.csrfToken
-            },
-            body: JSON.stringify({ assignmentId: a.id })
-        }).then(r => r.json());
-        if (r.ok) {
-            await this.loadMemberAssignments(a.member_id);
-            window.TNTT.toast.success('Đã đặt làm phân công chính');
-        }
-    },
+    // Quản lý phân công kiêm nhiệm đã chuyển sang màn Khối & Lớp:
+    // addClassMember / removeClassAssignment / setClassHead / setBlockHead.
 
     blockIdByName(blockName) {
         // Lookup block id from name - assumes blocks array contains objects or we need to check structure
