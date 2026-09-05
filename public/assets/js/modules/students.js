@@ -55,7 +55,8 @@ window.TNTT.students = {
 
         this.editData = {
             id: null, isNew: true,
-            code: '', holyName: '', name: '',
+            code: this.generateStudentCode(), // Tự động tạo mã số
+            holyName: '', name: '',
             gender: 1, birthDate: '', address: '',
             fatherName: '', fatherPhone: '',
             motherName: '', motherPhone: '',
@@ -65,6 +66,17 @@ window.TNTT.students = {
         this.showEditModal = true;
     },
 
+    // Tự động tạo mã số theo quy ước: TNTT + số thứ tự
+    generateStudentCode() {
+        const prefix = 'TN';
+        const existing = this.students
+            .map(s => s.code)
+            .filter(c => c && c.startsWith(prefix))
+            .map(c => parseInt(c.replace(prefix, ''), 10) || 0);
+        const maxNum = existing.length ? Math.max(...existing) : 0;
+        return prefix + String(maxNum + 1).padStart(4, '0');
+    },
+
     get editModalTitle() {
         return this.editData.isNew ? 'Thêm thiếu nhi' : 'Cập nhật hồ sơ';
     },
@@ -72,25 +84,10 @@ window.TNTT.students = {
     async saveEdit() {
         const e = this.editData;
 
-        if (!String(e.code || '').trim())  return alert('Vui lòng nhập mã số cho em.');
         if (!String(e.name || '').trim())  return alert('Vui lòng nhập họ và tên.');
         if (!e.className)                 return alert('Vui lòng chọn lớp cho em.');
 
-        e.code = String(e.code).trim();
         e.name = String(e.name).trim();
-
-        // Máy chủ lưu theo MÃ SỐ: mã đã có thì nó CẬP NHẬT chứ không
-        // báo lỗi. Nên khi THÊM MỚI mà gõ trúng mã của em khác, hồ sơ
-        // em đó bị ghi đè im lặng. Chặn ngay tại đây.
-        if (e.isNew) {
-            const trung = this.students.find(s => s.code === e.code);
-            if (trung) {
-                alert('Mã số "' + e.code + '" đã thuộc về em ' + trung.name
-                    + ' (lớp ' + trung.className + ').'
-                    + '\nMỗi em một mã riêng — vui lòng đặt mã khác.');
-                return;
-            }
-        }
 
         // Lớp đổi thì khối phải đổi theo, tránh dữ liệu mâu thuẫn
         const cls = this.classes.find(c => c.name === e.className);

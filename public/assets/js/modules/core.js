@@ -53,12 +53,6 @@ window.TNTT.core = {
     init() {
         // Apply saved dark mode state
         this.applyDarkMode();
-
-        // Merge user data from server boot (fixes empty profile page)
-        const bootUser = window.TNTT.boot?.user;
-        if (bootUser) {
-            Object.assign(this.user, bootUser);
-        }
     },
 
     applyDarkMode() {
