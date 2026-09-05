@@ -1,7 +1,15 @@
-<!-- HỒ SƠ CÁ NHÂN
-     Không còn là một màn riêng: nay là thẻ đầu tiên trong màn Cài Đặt,
-     nên bỏ thanh điều hướng riêng (màn Cài Đặt đã có nút quay lại). -->
-<div data-module="settings-profile" class="module-panel relative">
+<!-- HỒ SƠ CÁ NHÂN -->
+<div data-module="profile" class="module-panel pt-6 pb-10 relative">
+
+    <!-- THANH ĐIỀU HƯỚNG -->
+    <div class="flex items-center justify-between mb-5">
+        <div class="flex items-center">
+            <button aria-label="Quay lại trang chủ" @click="changeModule('dashboard')" class="tap-safe w-10 h-10 shrink-0 bg-white rounded-2xl shadow-sm border border-slate-200 flex items-center justify-center active:scale-90 transition-transform mr-4">
+                <i data-lucide="chevron-left" class="w-6 h-6 text-slate-600"></i>
+            </button>
+            <h2 class="text-xl font-black text-slate-800 tracking-tight">Cá Nhân</h2>
+        </div>
+    </div>
 
     <!-- 2. THẺ HỒ SƠ -->
     <div class="bg-gradient-to-br from-blue-600 to-blue-700 rounded-card p-5 shadow-lg shadow-blue-200 mb-5 text-white">

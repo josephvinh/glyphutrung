@@ -331,25 +331,53 @@ switch ($action) {
 
         db()->beginTransaction();
         try {
-            // Hạ người đang giữ chức
-            $cur = $isClass
-                ? db_all("SELECT id FROM members WHERE role_code='glv_chu_nhiem' AND class_id=?", [$target['id']])
-                : db_all("SELECT id FROM members WHERE role_code='truong_khoi' AND block_id=?", [$target['id']]);
-            foreach ($cur as $c) if ((int) $c['id'] !== $memberId) demote((int) $c['id']);
+            $roleCode = $isClass ? 'glv_chu_nhiem' : 'truong_khoi';
+
+            // Bỏ hạ người cũ - thay vào đó chỉ kết thúc phân công cũ
+            $oldAssignments = db_all(
+                "SELECT a.id FROM member_assignments a
+                 JOIN roles r ON r.code = a.role_code
+                 WHERE r.role_code = ? AND " . ($isClass ? "a.class_id" : "a.block_id") . " = ?",
+                [$roleCode, $target['id']]
+            );
+            foreach ($oldAssignments as $old) {
+                if ($isClass) {
+                    db_run("UPDATE member_assignments SET to_date = CURDATE() WHERE id = ? AND member_id != ?",
+                           [$old['id'], $memberId]);
+                }
+            }
 
             if ($memberId) {
                 $m = db_one('SELECT * FROM members WHERE id=?', [$memberId]);
                 if (!$m) json_fail('Không tìm thấy thành viên.', 404);
-                if (is_protected($m)) json_fail('Không thể đổi vai trò của Ban Điều Hành hoặc Quản trị.', 403);
 
                 if ($isClass) {
-                    $t = db_one("SELECT id FROM titles WHERE role_code='glv_chu_nhiem' LIMIT 1");
-                    db_run("UPDATE members SET role_code='glv_chu_nhiem', title_id=?, class_id=?, block_id=? WHERE id=?",
-                           [$t['id'] ?? null, $target['id'], $target['block_id'], $memberId]);
+                    // Thêm phân công kiêm nhiệm, KHÔNG thay đổi vai trò chính
+                    // Kiểm tra đã có phân công chưa
+                    $existing = db_one(
+                        "SELECT id FROM member_assignments WHERE member_id = ? AND class_id = ? AND role_code = ? AND to_date IS NULL",
+                        [$memberId, $target['id'], $roleCode]
+                    );
+                    if (!$existing) {
+                        db_insert(
+                            "INSERT INTO member_assignments (member_id, role_code, class_id, block_id, is_primary, from_date, assigned_by, note)
+                             VALUES (?, ?, ?, ?, 0, CURDATE(), ?, ?)",
+                            [$memberId, $roleCode, $target['id'], $target['block_id'], $me['id'], 'Phân công chủ nhiệm lớp']
+                        );
+                    }
                 } else {
-                    $t = db_one("SELECT id FROM titles WHERE role_code='truong_khoi' AND label='Trưởng Khối' LIMIT 1");
-                    db_run("UPDATE members SET role_code='truong_khoi', title_id=?, block_id=?, class_id=NULL WHERE id=?",
-                           [$t['id'] ?? null, $target['id'], $memberId]);
+                    // Trưởng khối - thêm vào block
+                    $existing = db_one(
+                        "SELECT id FROM member_assignments WHERE member_id = ? AND block_id = ? AND role_code = ? AND to_date IS NULL",
+                        [$memberId, $target['id'], $roleCode]
+                    );
+                    if (!$existing) {
+                        db_insert(
+                            "INSERT INTO member_assignments (member_id, role_code, block_id, is_primary, from_date, assigned_by, note)
+                             VALUES (?, ?, ?, 0, CURDATE(), ?, ?)",
+                            [$memberId, $roleCode, $target['id'], $me['id'], 'Phân công trưởng khối']
+                        );
+                    }
                 }
                 log_action('sua', 'org', 'Phân công ' . ($isClass ? 'chủ nhiệm lớp' : 'trưởng khối'),
                            $m['full_name']);
