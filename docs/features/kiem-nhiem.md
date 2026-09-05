@@ -54,3 +54,13 @@ KHÔNG thể sửa điểm danh các lớp trong khối mình chỉ được xem
 
 Hàm nền: `can_access_class()`, `accessible_class_ids()` trong
 `public/api/_common.php`.
+
+### Giao diện
+
+Giao diện đọc phạm vi từ danh sách phân công của bạn:
+- Nhãn phạm vi (Trang chủ) liệt kê mọi lớp/khối bạn phụ trách.
+- Bộ lọc lớp, danh sách thiếu nhi, sĩ số gồm tất cả lớp kiêm nhiệm.
+- Điểm danh mặc định lớp chính, chuyển được sang lớp khác qua bộ chọn.
+- Trang cá nhân đánh dấu ★ cho phân công chính.
+
+Cơ sở: getter `myClasses` / `isUnrestrictedScope` trong `access.js`, có fallback về phân công chính khi chưa có dữ liệu phân công.
