@@ -35,6 +35,18 @@ window.TNTT.access = {
         return [...set];
     },
 
+    // Tên các KHỐI mình LÀM TRƯỞNG (phân công phạm vi 'khối') — hẹp hơn
+    // myBlocks: không tính khối chỉ vì mình dạy một lớp trong đó. Dùng cho
+    // quyền quản thông báo khối.
+    get myHeadBlocks() {
+        const a = this.assignments || [];
+        if (!a.length) {   // fallback dữ liệu cũ
+            return this.user.role === 'truong_khoi' && this.user.managedBlock
+                ? [this.user.managedBlock] : [];
+        }
+        return [...new Set(a.filter(x => x.scope === 'khối' && x.blockName).map(x => x.blockName))];
+    },
+
     // Tên các LỚP mình phụ trách; phân công khối mở rộng ra mọi lớp trong khối.
     get myClasses() {
         const a = this.assignments || [];

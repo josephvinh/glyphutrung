@@ -20,15 +20,35 @@ $action = $_GET['action'] ?? '';
 $in     = json_input();
 
 /**
- * Trưởng khối chỉ đụng được thông báo của chính khối mình.
- * BĐH và Quản trị thì toàn quyền.
+ * Các khối mà người này LÀM TRƯỞNG (phân công phạm vi 'khối', gồm kiêm
+ * nhiệm nhiều khối). Fallback về block chính trong members khi chưa có
+ * phân công nào (dữ liệu cũ).
+ */
+function my_head_block_ids(array $me): array
+{
+    $ids = [];
+    foreach (effective_assignments((int) $me['id']) as $a) {
+        if (($a['role_scope'] ?? '') === 'khối' && !empty($a['block_id'])) {
+            $ids[] = (int) $a['block_id'];
+        }
+    }
+    if (!$ids && $me['role_code'] === 'truong_khoi' && !empty($me['block_id'])) {
+        $ids[] = (int) $me['block_id'];
+    }
+    return $ids;
+}
+
+/**
+ * Trưởng khối chỉ đụng được thông báo của khối mình làm trưởng (gồm kiêm
+ * nhiệm nhiều khối). BĐH và Quản trị thì toàn quyền.
  */
 function can_edit_announcement(array $me, ?array $a): bool
 {
     if (in_array($me['role_code'], ['admin', 'bdh'], true)) return true;
     if ($me['role_code'] !== 'truong_khoi') return false;
-    if ($a === null) return true;   // đang tạo mới
-    return $a['audience_type'] === 'khối' && (int) $a['audience_block'] === (int) $me['block_id'];
+    if ($a === null) return true;   // đang tạo mới (khối được validate lúc lưu)
+    return $a['audience_type'] === 'khối'
+        && in_array((int) $a['audience_block'], my_head_block_ids($me), true);
 }
 
 /**
@@ -67,10 +87,10 @@ switch ($action) {
         if (!in_array($aType, ['toàn đoàn', 'khối', 'lớp'], true)) $aType = 'toàn đoàn';
         if (!in_array($stt, ['nháp', 'đã phát'], true)) $stt = 'nháp';
 
-        // Trưởng khối bị khoá cứng vào khối mình
+        // Trưởng khối chỉ gửi được thông báo KHỐI (không toàn đoàn/lớp);
+        // khối cụ thể do họ chọn, được validate ngay bên dưới.
         if ($me['role_code'] === 'truong_khoi') {
             $aType = 'khối';
-            $aVal  = $me['block_name'] ?? '';
         }
 
         $blockId = null; $classId = null;
@@ -79,6 +99,10 @@ switch ($action) {
             $b = db_one('SELECT id FROM blocks WHERE name=?', [$aVal]);
             if (!$b) json_fail('Không tìm thấy khối "' . $aVal . '".');
             $blockId = (int) $b['id'];
+            if ($me['role_code'] === 'truong_khoi'
+                && !in_array($blockId, my_head_block_ids($me), true)) {
+                json_fail('Bạn chỉ gửi được thông báo cho khối mình phụ trách.', 403);
+            }
         } elseif ($aType === 'lớp') {
             if ($aVal === '') json_fail('Vui lòng chọn lớp nhận thông báo.');
             $c = db_one('SELECT id FROM classes WHERE name=?', [$aVal]);

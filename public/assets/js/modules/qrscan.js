@@ -62,22 +62,12 @@ window.TNTT.qrscan = {
      *
      * null = không giới hạn.
      */
-    get qrKhoiCuaToi() {
-        if (['admin', 'bdh'].includes(this.user.role)) return null;
-
-        let khoi = this.user.managedBlock || '';
-        if (!khoi && this.user.assignedClass) {
-            const c = this.classes.find(x => x.name === this.user.assignedClass);
-            khoi = c ? c.block : '';
-        }
-        return khoi;
-    },
-
     get qrLopQuetDuoc() {
-        const khoi = this.qrKhoiCuaToi;
-        if (khoi === null) return null;                  // toàn đoàn
-        if (!khoi) return [];                            // chưa phân khối
-        return this.classes.filter(c => c.block === khoi).map(c => c.name);
+        if (this.isUnrestrictedScope) return null;       // toàn đoàn
+        // Kiêm nhiệm: hợp mọi KHỐI mình có mặt (khớp scan_class_ids ở backend).
+        const khoi = this.myBlocks;
+        if (!khoi.length) return [];                     // chưa phân khối
+        return this.classes.filter(c => khoi.includes(c.block)).map(c => c.name);
     },
 
     /**
@@ -86,10 +76,12 @@ window.TNTT.qrscan = {
      * nhầm là GLV tưởng chỉ quét được lớp mình.
      */
     get qrPhamVi() {
-        const khoi = this.qrKhoiCuaToi;
-        if (khoi === null) return 'Quét được toàn đoàn';
-        if (!khoi) return 'Chưa được phân khối';
-        return 'Quét được cả khối ' + khoi;
+        if (this.isUnrestrictedScope) return 'Quét được toàn đoàn';
+        const khoi = this.myBlocks;
+        if (!khoi.length) return 'Chưa được phân khối';
+        return khoi.length === 1
+            ? 'Quét được cả khối ' + khoi[0]
+            : 'Quét được các khối ' + khoi.join(', ');
     },
 
     async _qrCoNative() {

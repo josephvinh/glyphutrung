@@ -19,19 +19,12 @@ window.TNTT.announcements = {
         return this.canEditModule('announcements');
     },
 
-    // Trưởng khối chỉ sửa/xóa được thông báo của chính khối mình,
-    // thông báo toàn đoàn của BĐH thì chỉ được đọc.
+    // Trưởng khối chỉ sửa/xóa được thông báo của khối MÌNH LÀM TRƯỞNG
+    // (gồm cả khối kiêm nhiệm); thông báo toàn đoàn của BĐH thì chỉ được đọc.
     canEditAnnouncement(a) {
         if (['admin', 'bdh'].includes(this.user.role)) return true;
         if (this.user.role !== 'truong_khoi') return false;
-        return a.audienceType === 'khối' && a.audienceValue === this.user.managedBlock;
-    },
-
-    // Khối mà người đăng nhập thuộc về
-    get myBlock() {
-        if (this.user.role === 'truong_khoi') return this.user.managedBlock;
-        const c = this.classes.find(x => x.name === this.user.assignedClass);
-        return c ? c.block : '';
+        return a.audienceType === 'khối' && this.myHeadBlocks.includes(a.audienceValue);
     },
 
     isAnnouncementExpired(a) {
@@ -39,11 +32,12 @@ window.TNTT.announcements = {
         return a.expiresAt < this.toDateInput(new Date());
     },
 
+    // Đối tượng nhận: kiêm nhiệm thấy thông báo cho MỌI khối/lớp mình phụ trách.
     matchesAudience(a) {
         if (['admin', 'bdh'].includes(this.user.role)) return true;
         if (a.audienceType === 'toàn đoàn') return true;
-        if (a.audienceType === 'khối') return a.audienceValue === this.myBlock;
-        if (a.audienceType === 'lớp')  return a.audienceValue === this.user.assignedClass;
+        if (a.audienceType === 'khối') return this.myBlocks.includes(a.audienceValue);
+        if (a.audienceType === 'lớp')  return this.myClasses.includes(a.audienceValue);
         return false;
     },
 
@@ -93,20 +87,29 @@ window.TNTT.announcements = {
     },
 
     openCreateAnnouncement() {
-        // Trưởng khối bị khóa cứng vào khối mình, không chọn đối tượng khác được
+        // Trưởng khối chỉ gửi cho khối mình; kiêm nhiều khối thì mặc định
+        // khối đầu, vẫn đổi được sang khối khác mình làm trưởng.
         const locked = this.user.role === 'truong_khoi';
         this.announcementForm = {
             id: null, title: '', body: '', level: 'thường',
             audienceType: locked ? 'khối' : 'toàn đoàn',
-            audienceValue: locked ? this.user.managedBlock : '',
+            audienceValue: locked ? (this.myHeadBlocks[0] || '') : '',
             status: 'đã phát', publishedAt: '', expiresAt: '', createdBy: this.user.fullName
         };
         this.isEditingAnnouncement = false;
         this.showAnnouncementModal = true;
     },
 
+    // Trưởng khối bị khoá KIỂU đối tượng (chỉ 'khối'), nhưng vẫn chọn được
+    // trong các khối mình làm trưởng.
     get audienceLocked() {
         return this.user.role === 'truong_khoi';
+    },
+
+    // Khối hiện trong ô "Chọn khối" khi soạn: BĐH/Quản trị mọi khối,
+    // trưởng khối chỉ khối mình làm trưởng (có thể nhiều khi kiêm nhiệm).
+    get audienceBlockChoices() {
+        return ['admin', 'bdh'].includes(this.user.role) ? this.blocks : this.myHeadBlocks;
     },
 
     openEditAnnouncement(a) {

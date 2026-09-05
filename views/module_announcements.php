@@ -185,9 +185,9 @@
 
                 <div x-show="announcementForm.audienceType === 'khối'" style="display: none;">
                     <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Chọn khối</label>
-                    <select x-model="announcementForm.audienceValue" :disabled="audienceLocked" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                    <select x-model="announcementForm.audienceValue" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                         <option value="">-- Chọn khối --</option>
-                        <template x-for="b in blocks" :key="b">
+                        <template x-for="b in audienceBlockChoices" :key="b">
                             <option :value="b" x-text="b"></option>
                         </template>
                     </select>

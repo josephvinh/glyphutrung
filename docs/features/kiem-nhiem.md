@@ -62,5 +62,9 @@ Giao diện đọc phạm vi từ danh sách phân công của bạn:
 - Bộ lọc lớp, danh sách thiếu nhi, sĩ số gồm tất cả lớp kiêm nhiệm.
 - Điểm danh mặc định lớp chính, chuyển được sang lớp khác qua bộ chọn.
 - Trang cá nhân đánh dấu ★ cho phân công chính.
+- Máy quét QR nhận cả các lớp thuộc MỌI khối mình có mặt (khớp
+  `scan_class_ids`); thông báo hiện theo mọi khối/lớp mình phụ trách, và
+  trưởng khối kiêm nhiều khối quản được thông báo của tất cả khối đó
+  (`myHeadBlocks` ↔ `my_head_block_ids`).
 
 Cơ sở: getter `myClasses` / `isUnrestrictedScope` trong `access.js`, có fallback về phân công chính khi chưa có dữ liệu phân công.
