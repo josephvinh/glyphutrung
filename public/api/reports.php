@@ -28,9 +28,12 @@ if (!db_one('SELECT id FROM terms WHERE id=? AND year_id=?', [$termId, $year['id
     json_fail('Học kỳ không thuộc niên khoá đang mở.', 409);
 }
 
-$st = db_one('SELECT s.full_name FROM enrollments e JOIN students s ON s.id=e.student_id
+$st = db_one('SELECT s.full_name, e.class_id FROM enrollments e JOIN students s ON s.id=e.student_id
                WHERE e.year_id=? AND e.student_id=?', [$year['id'], $studentId]);
 if (!$st) json_fail('Em này không có trong danh sách năm nay.', 404);
+if (!can_access_class($me, 'reports', (int) $st['class_id'], 'edit')) {
+    json_fail('Bạn không phụ trách lớp của em này.', 403);
+}
 
 switch ($action) {
 
