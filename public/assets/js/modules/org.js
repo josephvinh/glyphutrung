@@ -502,7 +502,10 @@ window.TNTT.org = {
         const r = await fetch('/tntt/public/api/assignments.php?action=create', {
             method: 'POST',
             credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': window.TNTT.csrfToken
+            },
             body: JSON.stringify(this.assignmentForm)
         }).then(r => r.json());
         if (r.ok) {
@@ -519,7 +522,10 @@ window.TNTT.org = {
         const r = await fetch('/tntt/public/api/assignments.php?action=end', {
             method: 'POST',
             credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': window.TNTT.csrfToken
+            },
             body: JSON.stringify({ assignmentId: a.id })
         }).then(r => r.json());
         if (r.ok) {
@@ -532,7 +538,10 @@ window.TNTT.org = {
         const r = await fetch('/tntt/public/api/assignments.php?action=set_primary', {
             method: 'POST',
             credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': window.TNTT.csrfToken
+            },
             body: JSON.stringify({ assignmentId: a.id })
         }).then(r => r.json());
         if (r.ok) {
