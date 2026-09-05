@@ -42,7 +42,10 @@
             </button>
         </div>
 
-        <!-- THẺ: CÁ NHÂN — đã tách ra module riêng -->
+        <!-- THẺ: CÁ NHÂN (ai cũng thấy) -->
+        <div x-show="settingsTab === 'profile'">
+            <?php include __DIR__ . '/module_profile.php'; ?>
+        </div>
 
         <!-- ==========================================================
              TAB 1: NHẬT KÝ THAO TÁC

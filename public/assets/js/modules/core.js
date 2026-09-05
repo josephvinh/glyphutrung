@@ -454,7 +454,6 @@ window.TNTT.core = {
     // area: 'glv' = khu nghiệp vụ chung, 'bdh' = khu điều hành
     // ==========================================
     moduleDefs: [
-        { key: 'profile',       label: 'Cá nhân',      icon: 'user-circle',    color: 'text-blue-600',   area: 'glv' },
         { key: 'students',      label: 'Danh sách',    icon: 'users',           color: 'text-blue-600',   area: 'glv' },
         { key: 'attendance',    label: 'Điểm danh',    icon: 'clipboard-check', color: 'text-blue-600',   area: 'glv' },
         { key: 'leave',         label: 'Xin phép',     icon: 'file-text',       color: 'text-blue-600',   area: 'glv', badge: 'leave' },
