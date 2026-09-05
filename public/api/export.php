@@ -43,6 +43,13 @@ switch ($action) {
             [$year['id'], $studentId]);
         if (!$student) json_fail('Không tìm thấy em này trong niên khoá.', 404);
 
+        // Phiếu liên lạc chứa điểm — chặn theo phạm vi 'scores' của lớp em này
+        $enr = db_one('SELECT class_id FROM enrollments WHERE year_id = ? AND student_id = ?',
+                      [$year['id'], $studentId]);
+        if (!$enr || !can_access_class($me, 'scores', (int) $enr['class_id'], 'view')) {
+            json_fail('Bạn không phụ trách lớp của em này.', 403);
+        }
+
         // Get term info
         $term = db_one('SELECT * FROM terms WHERE id = ? AND year_id = ?', [$termId, $year['id']]);
         if (!$term) json_fail('Không tìm thấy học kỳ.', 404);
@@ -74,13 +81,21 @@ switch ($action) {
     // -------------------------------------------------------------
     case 'attendance':
         $classId = (int) ($in['classId'] ?? 0);
+        $allow   = accessible_class_ids($me, 'attendance', 'view'); // null = toàn đoàn
 
-        // Get students
         $dk = '';
         $params = [$year['id']];
         if ($classId > 0) {
+            if ($allow !== null && !in_array($classId, $allow, true)) {
+                json_fail('Bạn không phụ trách lớp này.', 403);
+            }
             $dk = ' AND e.class_id = ?';
             $params[] = $classId;
+        } elseif ($allow !== null) {
+            // Không chỉ định lớp: chỉ export các lớp trong phạm vi
+            if (!$allow) json_fail('Bạn chưa được phân công lớp nào.', 403);
+            $dk = ' AND e.class_id IN (' . implode(',', array_fill(0, count($allow), '?')) . ')';
+            $params = array_merge($params, $allow);
         }
 
         $students = db_all(
@@ -126,12 +141,20 @@ switch ($action) {
         // Get score types
         $scoreTypes = db_all('SELECT * FROM score_types ORDER BY display_order');
 
-        // Get students
+        // Get students — chặn theo phạm vi 'scores'
+        $allow = accessible_class_ids($me, 'scores', 'view'); // null = toàn đoàn
         $dk = '';
         $params = [$year['id'], $termId];
         if ($classId > 0) {
+            if ($allow !== null && !in_array($classId, $allow, true)) {
+                json_fail('Bạn không phụ trách lớp này.', 403);
+            }
             $dk = ' AND e.class_id = ?';
             $params[] = $classId;
+        } elseif ($allow !== null) {
+            if (!$allow) json_fail('Bạn chưa được phân công lớp nào.', 403);
+            $dk = ' AND e.class_id IN (' . implode(',', array_fill(0, count($allow), '?')) . ')';
+            $params = array_merge($params, $allow);
         }
 
         $students = db_all(
