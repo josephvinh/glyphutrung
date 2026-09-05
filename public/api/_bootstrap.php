@@ -228,18 +228,10 @@ function require_csrf(): void {
    ================================================================ */
 function allowed_class_ids(array $me): ?array
 {
-    $scope = $me['role_scope'] ?? 'lớp';
-
-    if ($scope === 'toàn đoàn') return null;             // không giới hạn
-
-    if ($scope === 'khối') {
-        if (empty($me['block_id'])) return [];            // chưa phân khối thì không ghi được gì
-        return array_map('intval', array_column(
-            db_all('SELECT id FROM classes WHERE block_id = ?', [$me['block_id']]), 'id'));
-    }
-
-    // phạm vi lớp
-    return empty($me['class_id']) ? [] : [(int) $me['class_id']];
+    // Ranh giới XEM hồ sơ: mọi lớp/khối mình được phân công (kể cả kiêm nhiệm).
+    // Chỉ xét phạm vi, không xét module — GLV vẫn xem được hồ sơ lớp mình dù
+    // không có quyền quản trị bảng thiếu nhi.
+    return responsible_class_ids($me);
 }
 
 /** Tên các lớp được phép, để ghi vào thông báo lỗi cho dễ hiểu */
@@ -260,15 +252,21 @@ function scan_class_ids(array $me): ?array
 {
     if (in_array($me['role_code'] ?? '', ['admin', 'bdh'], true)) return null;
 
-    $blockId = (int) ($me['block_id'] ?? 0);
-    if (!$blockId && !empty($me['class_id'])) {
-        $c = db_one('SELECT block_id FROM classes WHERE id = ?', [(int) $me['class_id']]);
-        $blockId = (int) ($c['block_id'] ?? 0);
+    $blockIds = [];
+    foreach (member_scopes($me) as $a) {
+        if (($a['role_scope'] ?? '') === 'toàn đoàn') return null;
+        if (!empty($a['block_id'])) {
+            $blockIds[] = (int) $a['block_id'];
+        } elseif (!empty($a['class_id'])) {
+            $c = db_one('SELECT block_id FROM classes WHERE id = ?', [(int) $a['class_id']]);
+            if ($c && $c['block_id']) $blockIds[] = (int) $c['block_id'];
+        }
     }
-    if (!$blockId) return [];
+    if (!$blockIds) return [];
 
+    $ph = implode(',', array_fill(0, count($blockIds), '?'));
     return array_map('intval', array_column(
-        db_all('SELECT id FROM classes WHERE block_id = ?', [$blockId]), 'id'));
+        db_all("SELECT id FROM classes WHERE block_id IN ($ph)", $blockIds), 'id'));
 }
 
 /* ============================================================================

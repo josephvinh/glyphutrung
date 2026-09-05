@@ -128,4 +128,19 @@ class ScopeTest extends TestCase
         $this->assertNull(accessible_class_ids($me, 'scores', 'view'),
             'toàn đoàn → null = không giới hạn');
     }
+
+    public function test_allowed_class_ids_unions_all_assignments(): void
+    {
+        require_once __DIR__ . '/../../public/api/_bootstrap.php';
+
+        $this->addAssignment('glv', null, (int) $this->classA['id']);
+        $this->addAssignment('glv', null, (int) $this->classB['id']);
+
+        $me = ['id' => $this->memberId, 'role_code' => 'glv', 'role_scope' => 'lớp',
+               'block_id' => null, 'class_id' => $this->classA['id']];
+
+        $ids = allowed_class_ids($me);
+        $this->assertContains((int) $this->classA['id'], $ids);
+        $this->assertContains((int) $this->classB['id'], $ids, 'Lớp kiêm nhiệm phải nằm trong phạm vi xem');
+    }
 }
