@@ -508,9 +508,9 @@ window.TNTT.org = {
         if (r.ok) {
             this.showAssignmentModal = false;
             await this.loadMemberAssignments(this.assignmentForm.memberId);
-            toast.success('Đã thêm phân công');
+            window.TNTT.toast.success('Đã thêm phân công');
         } else {
-            toast.error(r.error || 'Lỗi');
+            window.TNTT.toast.error(r.error || 'Lỗi');
         }
     },
 
@@ -524,7 +524,7 @@ window.TNTT.org = {
         }).then(r => r.json());
         if (r.ok) {
             await this.loadMemberAssignments(a.member_id);
-            toast.success('Đã kết thúc phân công');
+            window.TNTT.toast.success('Đã kết thúc phân công');
         }
     },
 
@@ -537,7 +537,7 @@ window.TNTT.org = {
         }).then(r => r.json());
         if (r.ok) {
             await this.loadMemberAssignments(a.member_id);
-            toast.success('Đã đặt làm phân công chính');
+            window.TNTT.toast.success('Đã đặt làm phân công chính');
         }
     },
 
