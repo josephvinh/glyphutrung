@@ -18,6 +18,7 @@ document.addEventListener('alpine:init', () => {
     const MANH = [
         'core',           // người dùng, gọi máy chủ, nhật ký, phân quyền, danh mục
         'programs',       // chương trình sinh hoạt
+        'calendar',       // lịch trình chương trình
         'students',       // danh sách thiếu nhi + CSV
         'attendance',     // điểm danh
         'qrscan',         // quét QR điểm danh
@@ -26,6 +27,7 @@ document.addEventListener('alpine:init', () => {
         'birthdays',      // sinh nhật
         'announcements',  // thông báo
         'stats',          // thống kê
+        'analytics',      // phân tích chuyên cần
         'scores',         // điểm số
         'reports',        // sổ liên lạc
         'promotion',      // lên lớp cuối năm
