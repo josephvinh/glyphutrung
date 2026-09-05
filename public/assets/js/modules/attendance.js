@@ -64,7 +64,7 @@ window.TNTT.attendance = {
         // qua bộ chọn (availableClasses đã gồm mọi lớp mình phụ trách).
         this.attendanceClass = this.availableClasses.includes(this.user.assignedClass)
             ? this.user.assignedClass
-            : (this.availableClasses[0] || '');
+            : '';
         this.changeModule('attendance');
     },
 

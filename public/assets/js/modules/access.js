@@ -39,6 +39,9 @@ window.TNTT.access = {
     get myClasses() {
         const a = this.assignments || [];
         if (!a.length) {   // fallback theo phân công chính
+            if (this.user.role === 'truong_khoi') {
+                return this.classes.filter(c => c.block === this.user.managedBlock).map(c => c.name);
+            }
             return this.user.assignedClass ? [this.user.assignedClass] : [];
         }
         const set = new Set();
