@@ -361,6 +361,13 @@ switch ($action) {
                             [$memberId, $roleCode, $target['id'], $target['block_id'], $me['id'], 'Phân công chủ nhiệm lớp']
                         );
                     }
+                    // Gộp: nếu người này đang là GLV thường của lớp thì kết thúc
+                    // phân công 'glv' để không hiện hai dòng (glv + chủ nhiệm).
+                    db_run(
+                        "UPDATE member_assignments SET to_date = CURDATE()
+                          WHERE member_id = ? AND class_id = ? AND role_code = 'glv' AND to_date IS NULL",
+                        [$memberId, $target['id']]
+                    );
                 } else {
                     // Trưởng khối - thêm vào block
                     $existing = db_one(
