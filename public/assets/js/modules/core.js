@@ -467,7 +467,7 @@ window.TNTT.core = {
         { key: 'students',      label: 'Thiếu Nhi',    icon: 'users',           color: 'text-blue-600',   area: 'glv' },
         { key: 'attendance',    label: 'Điểm danh',    icon: 'clipboard-check', color: 'text-blue-600',   area: 'glv' },
         { key: 'leave',         label: 'Xin phép',     icon: 'file-text',       color: 'text-blue-600',   area: 'glv', badge: 'leave' },
-        { key: 'birthdays',     label: 'Sinh nhật',    icon: 'cake',            color: 'text-rose-500',   area: 'glv', badge: 'birthday' },
+        { key: 'birthdays',     label: 'Sinh nhật',    icon: 'cake',            color: 'text-rose-500',   area: 'glv', badge: 'birthday', hidden: true },
         { key: 'stats',         label: 'Thống kê',     icon: 'bar-chart-3',     color: 'text-emerald-600', area: 'glv' },
         { key: 'analytics',     label: 'Phân tích',    icon: 'bar-chart-2',     color: 'text-purple-600', area: 'glv' },
         { key: 'org',           label: 'Khối lớp',     icon: 'layers',          color: 'text-indigo-600', area: 'glv' },
