@@ -158,6 +158,8 @@ function bundle_v(array $files): int {   // ?v = mtime lớn nhất trong nhóm
     <!-- Link file JS (Có Phá Cache để điện thoại luôn load mới) -->
     <!-- Dữ liệu phiên và cấu hình, nhúng sẵn để app.js không phải chờ thêm một vòng mạng -->
     <script>window.TNTT_BOOT = <?php echo json_encode($bootData, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP); ?>;</script>
+    <!-- Danh sách mảnh để app.js gộp — cùng nguồn với nạp/gộp (asset_manifest.php) -->
+    <script>window.TNTT_MODULES = <?php echo json_encode($__manifest['js_modules']); ?>;</script>
     <!-- Các mảnh của component tnttApp. Phải nạp TRƯỚC app.js vì
          app.js chỉ làm nhiệm vụ gộp chúng lại. -->
     <?php if ($__dev): ?>

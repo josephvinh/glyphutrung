@@ -183,6 +183,11 @@ Mở dự án trong Claude Code (thư mục `htdocs/tntt`) rồi bảo nó đọ
 - **Hồ sơ tổng hợp từng em** (`module_student_profile.php`, `student_profile.js`):
   trang riêng với 5 tab (Thông tin, Điểm số, Phiếu LC, Điểm danh, QR Card).
   Nút "Xem hồ sơ" trên card thiếu nhi trong Danh sách. Quay lại = về Danh sách.
+- **Gộp danh sách module về MỘT nguồn** (`public/assets/asset_manifest.php`):
+  `app.js` đọc `window.TNTT_MODULES` (index.php nhúng từ manifest) thay cho mảng
+  cứng → **thêm module JS mới chỉ khai ở `asset_manifest.php`**, cả nạp/bundle/gộp
+  component đều theo, hết cảnh "nạp mà quên gộp vào `app.js`" (đã từng làm vỡ
+  student_profile, calendar, analytics).
 
 ---
 

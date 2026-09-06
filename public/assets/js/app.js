@@ -13,30 +13,16 @@
 
 document.addEventListener('alpine:init', () => {
 
-    // Thứ tự nạp không quan trọng về mặt chức năng, nhưng giữ đúng
-    // thứ tự này để khi cần đọc thì đi từ nền tảng ra ngoài.
-    const MANH = [
-        'core',           // người dùng, gọi máy chủ, nhật ký, phân quyền, danh mục
-        'programs',       // chương trình sinh hoạt
-        'calendar',       // lịch trình chương trình
-        'students',       // danh sách thiếu nhi + CSV
-        'attendance',     // điểm danh
-        'qrscan',         // quét QR điểm danh
-        'qrcard',         // in thẻ QR cho thiếu nhi
-        'leave',          // xin phép
-        'birthdays',      // sinh nhật
-        'announcements',  // thông báo
-        'stats',          // thống kê
-        'analytics',      // phân tích chuyên cần
-        'scores',         // điểm số
-        'reports',        // sổ liên lạc
-        'promotion',      // lên lớp cuối năm
-        'org',            // khối lớp & nhân sự
-        'push',           // thông báo đẩy ra màn hình điện thoại
-        'access',         // lọc theo phạm vi quyền
-        'shell',          // tiện ích chung, icon, init()
-        'dashboard',      // trang chủ với stats tổng hợp
-    ];
+    // Danh sách các mảnh cần gộp — NGUỒN DUY NHẤT ở
+    // public/assets/asset_manifest.php, được index.php nhúng vào
+    // window.TNTT_MODULES (cả bản dev nạp lẻ lẫn bản gộp production). Nhờ vậy
+    // thêm module mới chỉ khai MỘT chỗ, không còn cảnh nạp mà quên gộp.
+    // (Thứ tự nạp không quan trọng về chức năng — mỗi mảnh tự đứng độc lập.)
+    const MANH = window.TNTT_MODULES || [];
+    if (!MANH.length) {
+        console.error('[TNTT] window.TNTT_MODULES rỗng — index.php chưa nhúng '
+                    + 'danh sách module (public/assets/asset_manifest.php).');
+    }
 
     /**
      * Gộp các mảnh thành một đối tượng.
