@@ -149,6 +149,7 @@ $roles = [
     ['truong_khoi',   'Trưởng Khối',       3, 'khối',      'Quản lý các lớp trong khối mình'],
     ['glv_chu_nhiem', 'GLV Chủ Nhiệm',     2, 'lớp',       'Phụ trách một lớp, được duyệt đơn của lớp'],
     ['glv',           'Giáo Lý Viên',      1, 'lớp',       'Dạy và điểm danh lớp được phân công'],
+    ['du_bi',         'Dự Bị',             1, 'lớp',       'Hỗ trợ tại lớp được phân công'],
 ];
 foreach ($roles as $r) {
     db_run('INSERT IGNORE INTO roles (code, label, level, scope, descr) VALUES (?,?,?,?,?)', $r);
@@ -163,6 +164,7 @@ $titles = [
     ['truong_khoi', 'Trưởng Khối', 1], ['truong_khoi', 'Phó Khối', 2],
     ['glv_chu_nhiem', 'GLV Chủ Nhiệm', 1],
     ['glv', 'GLV Phụ Tá', 1], ['glv', 'Huynh Trưởng', 2], ['glv', 'Dự Trưởng', 3],
+    ['du_bi', 'Dự Bị', 1],
 ];
 foreach ($titles as $t) {
     db_run('INSERT IGNORE INTO titles (role_code, label, sort_order) VALUES (?,?,?)', $t);
@@ -190,31 +192,31 @@ foreach ($modules as $m) {
             VALUES (?,?,?,?,?,?)', $m);
 }
 
-// none | view | edit  — theo thứ tự admin, bdh, truong_khoi, glv_chu_nhiem, glv
+// none | view | edit — theo thứ tự: admin, bdh, truong_khoi, glv_chu_nhiem, glv, du_bi
 $perms = [
-    'students'      => ['edit','edit','view','view','view'],
-    'attendance'    => ['edit','edit','edit','edit','edit'],
-    'leave'         => ['edit','edit','edit','edit','view'],
-    'birthdays'     => ['view','view','view','view','view'],
-    'stats'         => ['view','view','view','view','view'],
-    'org'           => ['edit','edit','view','view','view'],
-    // Duyệt người mới là việc của Ban Điều Hành, Trưởng Khối chỉ xem
-    'staff'         => ['edit','edit','view','view','view'],
-    'years'         => ['edit','edit','view','view','view'],
-    'reports'       => ['edit','edit','edit','edit','view'],
-    'scores'        => ['edit','edit','edit','edit','edit'],
-    'promotion'     => ['edit','edit','view','none','none'],
-    'programs'      => ['edit','edit','none','none','none'],
-    'announcements' => ['edit','edit','edit','view','view'],
+    'students'      => ['edit','edit','edit','edit','view','view'],
+    'attendance'    => ['edit','edit','edit','edit','edit','edit'],
+    'leave'         => ['edit','edit','edit','edit','view','view'],
+    'birthdays'     => ['view','view','view','view','view','view'],
+    'stats'         => ['view','view','view','view','view','view'],
+    'org'           => ['edit','edit','edit','view','view','view'],
+    // Duyệt người mới là việc của Ban Điều Hành, cấp dưới chỉ xem
+    'staff'         => ['edit','edit','view','view','view','view'],
+    'years'         => ['edit','edit','view','view','view','view'],
+    'reports'       => ['edit','edit','edit','edit','view','view'],
+    'scores'        => ['edit','edit','edit','edit','edit','view'],
+    'promotion'     => ['edit','edit','view','none','none','none'],
+    'programs'      => ['edit','edit','none','none','none','none'],
+    'announcements' => ['edit','edit','edit','edit','view','view'],
 ];
-$roleOrder = ['admin','bdh','truong_khoi','glv_chu_nhiem','glv'];
+$roleOrder = ['admin','bdh','truong_khoi','glv_chu_nhiem','glv','du_bi'];
 foreach ($perms as $mod => $levels) {
     foreach ($roleOrder as $i => $role) {
         db_run('INSERT IGNORE INTO permissions (module_key, role_code, level) VALUES (?,?,?)',
                [$mod, $role, $levels[$i]]);
     }
 }
-say('✓ Module: ' . count($modules) . ' · Phân quyền: ' . (count($perms) * 5));
+say('✓ Module: ' . count($modules) . ' · Phân quyền: ' . (count($perms) * count($roleOrder)));
 
 // --- Đầu điểm ---
 $scoreTypes = [
