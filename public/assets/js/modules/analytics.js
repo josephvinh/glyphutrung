@@ -11,8 +11,8 @@ window.TNTT.analytics = {
     // using existing attendance and leave data
     // ==========================================
 
-    openAnalytics() {
-        this.changeModule('analytics');
+    openAnalytics(khongDoiMan = false) {
+        if (!khongDoiMan) this.changeModule('analytics');
     },
 
     // Get total sessions (programs with attendance records)

@@ -132,7 +132,7 @@ function bundle_v(array $files): int {   // ?v = mtime lớn nhất trong nhóm
             <?php include __DIR__ . '/../views/module_leave.php'; ?>
             <?php include __DIR__ . '/../views/module_birthdays.php'; ?>
             <?php include __DIR__ . '/../views/module_announcements.php'; ?>
-            <?php include __DIR__ . '/../views/module_stats.php'; ?>
+            <?php include __DIR__ . '/../views/module_reporthub.php'; ?>
             <?php include __DIR__ . '/../views/module_org.php'; ?>
             <?php include __DIR__ . '/../views/module_staff.php'; ?>
             <?php include __DIR__ . '/../views/module_years.php'; ?>
@@ -144,7 +144,6 @@ function bundle_v(array $files): int {   // ?v = mtime lớn nhất trong nhóm
             <?php include __DIR__ . '/../views/module_promotion.php'; ?>
             <?php include __DIR__ . '/../views/module_programs.php'; ?>
             <?php include __DIR__ . '/../views/module_calendar.php'; ?>
-            <?php include __DIR__ . '/../views/module_analytics.php'; ?>
 
         </main>
 

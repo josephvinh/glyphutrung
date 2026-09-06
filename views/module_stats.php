@@ -1,4 +1,4 @@
-<!-- MÀN HÌNH THỐNG KÊ -->
+<!-- MÀN HÌNH THỐNG KÊ (standalone) -->
 <div data-module="stats" class="module-panel pt-6 pb-10 relative">
 
     <!-- 1. THANH ĐIỀU HƯỚNG -->

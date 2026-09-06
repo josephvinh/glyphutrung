@@ -469,8 +469,9 @@ window.TNTT.core = {
         { key: 'attendance',    label: 'Điểm danh',    icon: 'clipboard-check', color: 'text-blue-600',   area: 'glv', group: 'Hằng ngày' },
         { key: 'leave',         label: 'Xin phép',     icon: 'file-text',       color: 'text-blue-600',   area: 'glv', group: 'Hằng ngày', badge: 'leave' },
         { key: 'birthdays',     label: 'Sinh nhật',    icon: 'cake',            color: 'text-rose-500',   area: 'glv', group: 'Hằng ngày', badge: 'birthday', hidden: true },
-        { key: 'stats',         label: 'Thống kê',     icon: 'bar-chart-3',     color: 'text-emerald-600', area: 'glv', group: 'Theo dõi' },
-        { key: 'analytics',     label: 'Phân tích',    icon: 'bar-chart-2',     color: 'text-purple-600', area: 'glv', group: 'Theo dõi' },
+        { key: 'reporthub',     label: 'Báo cáo',      icon: 'bar-chart-3',     color: 'text-emerald-600', area: 'glv', group: 'Theo dõi' },
+        { key: 'stats',         label: 'Thống kê',     icon: 'bar-chart-3',     color: 'text-emerald-600', area: 'glv', group: 'Theo dõi', hidden: true },
+        { key: 'analytics',     label: 'Phân tích',    icon: 'bar-chart-2',     color: 'text-purple-600', area: 'glv', group: 'Theo dõi', hidden: true },
         { key: 'org',           label: 'Khối lớp',     icon: 'layers',          color: 'text-indigo-600', area: 'glv', group: 'Quản lý' },
         // reports + scores gộp vào tile "Thiếu Nhi" (mở qua thẻ), ẩn khỏi lưới
         { key: 'reports',       label: 'Sổ liên lạc',  icon: 'clipboard-list',  color: 'text-amber-600',  area: 'glv', group: 'Hằng ngày', hidden: true },
@@ -524,7 +525,13 @@ window.TNTT.core = {
     },
 
     canAccess(key) {
+        if (key === 'reporthub') return this.permOf('stats') !== 'none' || this.permOf('analytics') !== 'none';
         return this.permOf(key) !== 'none';
+    },
+
+    // Helper for x-show in templates
+    permOfKey(k) {
+        return this.permOf(k) !== 'none';
     },
 
     canEditModule(key) {
@@ -573,6 +580,7 @@ window.TNTT.core = {
         if (key === 'birthdays')     return this.openBirthdays();
         if (key === 'staff')         return this.openStaff();
         if (key === 'years')         return this.openYears();
+        if (key === 'reporthub')     return this.openReportHub();
         if (key === 'stats')         return this.openStats();
         if (key === 'analytics')     return this.openAnalytics();
         if (key === 'org')           return this.openOrg();
@@ -592,6 +600,9 @@ window.TNTT.core = {
     // ---- Màn Cài đặt (chỉ Quản trị) ----
     settingsTab: 'profile',   // 'profile' | 'logs' | 'perms' | 'maintenance' | 'years'
     permRoleTab: 'glv',
+
+    // ---- TAB BÁO CÁO ----
+    reportsTab: 'stats',   // 'stats' | 'analytics'
 
     // ---- NIÊN KHOÁ ----
     years: [],
@@ -707,6 +718,14 @@ window.TNTT.core = {
     openYears() {
         this.loadYears();
         this.changeModule('years');
+    },
+
+    openReportHub() {
+        // mở tab đầu tiên mà người dùng có quyền
+        this.reportsTab = this.permOf('stats') !== 'none' ? 'stats' : 'analytics';
+        this.changeModule('reporthub');
+        if (this.reportsTab === 'stats' && this.openStats) this.openStats(true);
+        if (this.reportsTab === 'analytics' && this.openAnalytics) this.openAnalytics(true);
     },
 
     openSettings(the) {

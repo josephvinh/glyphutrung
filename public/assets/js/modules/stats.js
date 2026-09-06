@@ -13,9 +13,9 @@ window.TNTT.stats = {
     // ==========================================
     statMonth: '',
 
-    openStats() {
+    openStats(khongDoiMan = false) {
         if (!this.statMonth) this.statMonth = this.toDateInput(new Date()).slice(0, 7);
-        this.changeModule('stats');
+        if (!khongDoiMan) this.changeModule('stats');
     },
 
     shiftStatMonth(delta) {
