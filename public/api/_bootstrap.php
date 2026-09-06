@@ -60,22 +60,32 @@ function permission_of(string $moduleKey): string
     $me = current_member();
     if (!$me) return 'none';
 
-    // Lấy tất cả active roles (qua assignments)
+    // Quyền = HỢP của vai trò GỐC (members.role_code) + mọi vai kiêm nhiệm.
+    // Kiêm nhiệm chỉ THÊM quyền, KHÔNG hạ vai gốc: một Quản trị/BĐH tự thêm
+    // mình vào một lớp (thành GLV) vẫn phải giữ nguyên quyền gốc. Nếu chỉ lấy
+    // theo assignments, họ bị coi là GLV và tự khoá mình khỏi màn Khối & Lớp
+    // (frontend dùng role gốc nên vẫn hiện nút, backend lại chặn — lệch nhau).
     $assignments = effective_assignments((int) $me['id']);
     $activeRoles = array_column($assignments, 'role_code');
+    $activeRoles[] = $me['role_code'];
+    $activeRoles = array_values(array_unique(array_filter($activeRoles)));
+    if (empty($activeRoles)) return 'none';
 
-    // Fallback về role_code trong members nếu assignments rỗng (edge case migration)
-    if (empty($activeRoles)) {
-        $activeRoles = [$me['role_code']];
-    }
-
+    // Lấy mọi mức quyền của các vai rồi chọn cao nhất THEO HẠNG
+    // (none < view < edit). KHÔNG dùng SQL MAX(level): level là chuỗi nên so
+    // sánh chữ cái ra 'view' > 'edit' (sai) — người có cả vai edit lẫn view
+    // (VD Quản trị tự thêm mình vào một lớp = admin + glv) bị tụt xuống 'view'.
     $ph = implode(',', array_fill(0, count($activeRoles), '?'));
-    $row = db_one(
-        "SELECT MAX(level) AS max_level FROM permissions
-          WHERE module_key = ? AND role_code IN ($ph)",
+    $rows = db_all(
+        "SELECT level FROM permissions WHERE module_key = ? AND role_code IN ($ph)",
         array_merge([$moduleKey], $activeRoles)
     );
-    return $row['max_level'] ?? 'none';
+    $hang = ['none' => 0, 'view' => 1, 'edit' => 2];
+    $tot = 'none';
+    foreach ($rows as $r) {
+        if (($hang[$r['level']] ?? 0) > ($hang[$tot] ?? 0)) $tot = $r['level'];
+    }
+    return $tot;
 }
 
 function require_permission(string $moduleKey, string $need = 'view'): array

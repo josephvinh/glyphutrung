@@ -80,8 +80,8 @@ switch ($action) {
 
         $memberId = (int) ($in['memberId'] ?? 0);
         $role     = trim((string) ($in['role'] ?? ''));
-        $blockId  = $in['blockId']  ? (int) $in['blockId']  : null;
-        $classId  = $in['classId']  ? (int) $in['classId']  : null;
+        $blockId  = !empty($in['blockId']) ? (int) $in['blockId'] : null;
+        $classId  = !empty($in['classId']) ? (int) $in['classId'] : null;
         $fromDate = $in['fromDate'] ?? date('Y-m-d');
         $note     = trim((string) ($in['note'] ?? ''));
 
