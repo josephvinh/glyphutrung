@@ -1,5 +1,7 @@
 # Kế hoạch cải tổ bố cục (Information Architecture) — TNTT Super App
 
+> ✅ **ĐÃ HOÀN THÀNH** — cả 5 Task đã thực thi & push (HEAD `ea63350`). Giữ tài liệu này làm hồ sơ; các ô `[ ]` bên dưới là bản kế hoạch gốc, KHÔNG phản ánh việc còn lại. Xem `docs/HANDOFF.md` mục 9.1.
+
 > **Cho người thực thi:** Làm lần lượt từng Task theo thứ tự. Mỗi Task tự chạy được, tự kiểm chứng, tự commit. Đánh dấu `- [x]` khi xong từng bước.
 
 **Mục tiêu:** Giảm số icon phẳng trên Trang chủ, gộp các module trùng vai, và làm Trang chủ chủ động ("biết việc cần làm") — mà không đụng tới backend/quyền.

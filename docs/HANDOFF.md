@@ -208,25 +208,23 @@ Mở dự án trong Claude Code (thư mục `htdocs/tntt`) rồi bảo nó đọ
 
 ---
 
-## 10. Việc đang làm dở & CHỈ THỊ TIẾP TỤC
+## 9. Trạng thái hiện tại & tham chiếu cho phiên sau
 
-### 10.1 ✅ ĐÃ XONG — Cải tổ bố cục Trang chủ
-Plan `docs/superpowers/plans/2026-09-06-cai-to-bo-cuc.md` đã hoàn thành (6 commits đã push):
-- Task 1: Việc cần làm ra Trang chủ (`582e49e`)
-- Task 2: Sinh nhật ẩn khỏi lưới (`e6f621e`)
-- Task 3: Lưới nút chia cụm (`ce2373f`)
-- Task 4: Hub Báo cáo + fix tab permission (`d963aa3`, `20aecec`)
-- Task 5: Thanh dưới 5 tab (`4651dcc`)
-- Final fix: `moduleEnabled` thêm `reporthub` (`d936c7d`)
+### 9.1 ✅ ĐÃ XONG — Cải tổ bố cục Trang chủ
+Plan `docs/superpowers/plans/2026-09-06-cai-to-bo-cuc.md` đã hoàn thành & push (HEAD `ea63350`):
+- Task 1 — Việc cần làm ra Trang chủ (`582e49e`)
+- Task 2 — Sinh nhật ẩn khỏi lưới, giữ thẻ Hero (`e6f621e`)
+- Task 3 — Lưới nút chia cụm (`ce2373f`)
+- Task 4 — Hub "Báo cáo" gộp Thống kê + Phân tích + quyền tab (`d963aa3`, `20aecec`, `d936c7d`)
+- Task 5 — Thanh dưới 5 tab (`4651dcc`)
+- Trước đó: Nhân sự + Niên khoá sang khu BĐH (`2c67597`); vai Dự Bị + picker (`1f1895a`, `b99b94b`)
 
-**Ghi chú theo dõi:**
-- Sidebar (`layout_sidebar.php`) vẫn dùng `visibleModules` trực tiếp, chưa nhóm — tuỳ chọn, không ảnh hưởng.
+Kiểm chứng nhanh: `grep reporthub core.js` (có), thanh dưới 5 tab, `moduleGroups` chạy.
 
-### 10.2 Việc mới
-- Thư mục lạ `NGOC VINH/` chưa track — hỏi trước khi làm gì với nó.
-- Chạy `php config/migrate_roles_du_bi.php` trên máy chủ thật nếu chưa chạy.
+**Ghi chú theo dõi (tuỳ chọn, không ảnh hưởng):**
+- Sidebar (`layout_sidebar.php`) vẫn dùng `visibleModules` trực tiếp, chưa nhóm theo cụm.
 
-### 10.2 Mô hình tư duy kiến trúc (nắm cái này là code đúng)
+### 9.2 Mô hình tư duy kiến trúc (nắm cái này là code đúng)
 - SPA Alpine.js, **một component khổng lồ `tnttApp`** ghép từ ~23 mảnh
   `window.TNTT.*`. `app.js` gộp bằng `gopManh()` (dùng `Object.defineProperties`
   để **giữ getter**). Danh sách mảnh = `window.TNTT_MODULES` (nhúng từ
@@ -242,7 +240,7 @@ Plan `docs/superpowers/plans/2026-09-06-cai-to-bo-cuc.md` đã hoàn thành (6 c
   `permissions`: module × vai → `none`/`view`/`edit`). Kiêm nhiệm = bảng
   `member_assignments`. Frontend đọc quyền từ boot (`window.TNTT_BOOT`).
 
-### 10.3 Tư duy code (bắt buộc tuân theo)
+### 9.3 Tư duy code (bắt buộc tuân theo)
 1. **Viết như code xung quanh:** cùng phong cách, cùng độ dày comment, comment +
    nhãn hiển thị **bằng tiếng Việt**.
 2. **DRY:** dùng lại thì tách `views/partial_*.php`, đừng lặp markup.
@@ -260,14 +258,14 @@ Plan `docs/superpowers/plans/2026-09-06-cai-to-bo-cuc.md` đã hoàn thành (6 c
    `config/config.php` có secrets nhưng repo private nên chấp nhận; nếu công khai
    phải gỡ.
 
-### 10.4 Nhớ nhắc người dùng
+### 9.4 Nhớ nhắc người dùng
 - Chạy `php config/migrate_roles_du_bi.php` trên máy chủ thật (vai Dự Bị + quyền
   GVCN/Trưởng khối).
 - Thư mục lạ `NGOC VINH/` chưa track — hỏi trước khi làm gì với nó.
 
 ---
 
-## 9. Cheat-sheet lệnh
+## 10. Cheat-sheet lệnh
 
 ```bash
 # Lấy code
