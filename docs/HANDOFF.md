@@ -122,12 +122,21 @@ http://localhost/tntt/public/
 ```
 Đăng nhập bằng số điện thoại + mật khẩu (mục 5).
 
-> **Nên dùng Apache của XAMPP** để chạy/test, KHÔNG dùng `php -S`. `php -S` chạy
-> đơn luồng nên khi trang tải ~25 file JS cùng lúc dễ rớt request; cộng với
-> Service Worker của app cache asset cũ → dễ thấy màn trắng hoặc bản cũ. Apache
-> đa luồng + cache-busting `?v=` sẵn có thì mượt.
-> Nếu buộc phải test bằng trình duyệt và thấy bản cũ: DevTools → Application →
-> Service Workers → Unregister, và Clear storage, rồi tải lại (Ctrl+Shift+R).
+> **Tải tài nguyên (dev vs production) — đã tối ưu:**
+> - **localhost** (dev): nạp file JS/CSS **lẻ** + `?v` đổi mỗi lần tải → sửa
+>   code là thấy ngay, không cần Unregister service worker thủ công như trước.
+>   Mở F12 sẽ thấy **nhiều request** — đúng thiết kế cho dev.
+> - **Server thật** (tên miền giáo xứ): nạp **1 bundle JS + 1 bundle CSS** (qua
+>   `assets/js/bundle.php` và `assets/css/bundle.php`) → ~5 request, nhẹ cho
+>   điện thoại. Service worker cache bundle nên vẫn chạy offline.
+> - Chia theo tên miền trong `public/index.php` (`$__dev` = localhost/127.0.0.1);
+>   thứ tự file khai ở `public/assets/asset_manifest.php`.
+>
+> **Vẫn nên dùng Apache của XAMPP**, KHÔNG dùng `php -S` (đơn luồng, tải nhiều
+> file dễ rớt request → màn trắng). Nếu hiếm khi thấy bản cũ trên trình duyệt:
+> DevTools → Application → Service Workers → Unregister + Clear storage →
+> Ctrl+Shift+R. (Khi deploy bản mới, bump `PHIEN_BAN` trong `sw.js` là kho cũ
+> tự dọn.)
 
 ---
 
@@ -156,8 +165,16 @@ Mở dự án trong Claude Code (thư mục `htdocs/tntt`) rồi bảo nó đọ
   **Khối & Lớp** (thêm/gỡ GLV, chủ nhiệm/trưởng khối), BĐH kiêm nhiệm được.
 - Mã thiếu nhi **GDGLPT + năm + số**, sinh ở máy chủ (`config/student_code.php`),
   đã chuyển đổi mã cũ (script `config/migrate_student_codes.php`).
-- Gom **Danh sách + Điểm số + Phiếu liên lạc** vào một module **Thiếu Nhi**
-  (thanh thẻ `views/partial_children_tabs.php`).
+- Gom **Danh sách + Điểm số + Phiếu liên lạc + In thẻ QR** vào một module
+  **Thiếu Nhi** (thanh thẻ `views/partial_children_tabs.php`, 4 thẻ).
+- **In thẻ QR** thành thẻ riêng (`views/module_qrcard.php`, `qrcard.js`): chọn
+  phạm vi (lớp/khối/tất cả), bật/tắt field (mã, tên thánh, họ tên, lớp, khối,
+  ngày sinh), 2 kiểu thẻ (gọn / thẻ đeo), xem trước rồi in. QR luôn chỉ chứa
+  mã số. Đã bỏ nút "Thẻ QR" cũ trong Danh sách.
+- **Tối ưu tải:** production gộp JS/CSS thành bundle (`public/assets/asset_manifest.php`,
+  `assets/js/bundle.php`, `assets/css/bundle.php`), dev nạp lẻ. Fix cache dev
+  (SW bỏ qua kho ở localhost + `?v` duy nhất mỗi lần tải). Thêm icon
+  `moon`/`sun`/`hash` vào bản lucide rút gọn (`assets/js/vendor/lucide-icons.js`).
 - Sửa bug: trang Cá nhân mồ côi; module Lịch trình/Phân tích chưa gộp vào
   `app.js`.
 
