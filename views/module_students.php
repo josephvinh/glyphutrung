@@ -210,6 +210,14 @@
                         <a :href="'tel:' + student.motherPhone" :aria-label="'Gọi mẹ của ' + student.name" class="w-10 h-10 bg-rose-50 rounded-full flex items-center justify-center text-rose-500 active:scale-90 transition-transform shadow-sm border border-rose-100"><i data-lucide="phone" class="w-4 h-4 fill-rose-100"></i></a>
                     </div>
                 </div>
+
+                <!-- Nút xem hồ sơ tổng hợp -->
+                <div class="border-t border-slate-100 pt-3 mt-3">
+                    <button @click="openStudentProfile(student)" type="button"
+                            class="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-blue-600 rounded-xl font-bold text-xs transition-colors border border-slate-200 hover:border-blue-200">
+                        <i data-lucide="folder-open" class="w-4 h-4"></i> Xem hồ sơ
+                    </button>
+                </div>
             </div>
         </template>
 

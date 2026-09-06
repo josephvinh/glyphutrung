@@ -186,4 +186,99 @@ window.TNTT.qrcard = {
             .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;');
     },
+
+    /** Trả về chuỗi SVG QR code cho một mã */
+    qrSvg(code) {
+        if (!code) return '';
+        try {
+            const qr = window.qrcode(0, 'M');
+            qr.addData(String(code));
+            qr.make();
+            const moduleCount = qr.getModuleCount();
+            const cellSize = Math.floor(64 / moduleCount);
+            const size = moduleCount * cellSize;
+            let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 ${size} ${size}">`;
+            svg += `<rect width="${size}" height="${size}" fill="white"/>`;
+            for (let r = 0; r < moduleCount; r++) {
+                for (let c = 0; c < moduleCount; c++) {
+                    if (qr.isDark(r, c)) {
+                        svg += `<rect x="${c * cellSize}" y="${r * cellSize}" width="${cellSize}" height="${cellSize}" fill="black"/>`;
+                    }
+                }
+            }
+            svg += '</svg>';
+            return svg;
+        } catch (e) {
+            return '';
+        }
+    },
+};
+
+/** In thẻ QR của một em (gọi từ ngoài module) */
+window.printSingleQrcard = function(student) {
+    if (!student || !student.code) return;
+    const qrcard = window.TNTT.qrcard;
+    const cardHtml = qrcard.qrCardHtml(student);
+    const html = '<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>Thẻ QR - ' + qrcard._thoat(student.code) + '</title>'
+        + '<style>@page{size:A5;margin:5mm}' + qrcard.qrStyleCss()
+        + '*{box-sizing:border-box}body{font-family:"Be Vietnam Pro",system-ui,sans-serif;margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh}'
+        + '.wrapper{display:flex;justify-content:center;align-items:center}.the{page-break-after:always}</style></head><body>'
+        + '<div class="wrapper"><div class="the">' + cardHtml + '</div></div>'
+        + '<scr' + 'ipt>window.onload=function(){window.print()};</scr' + 'ipt></body></html>';
+    const win = window.open('', '_blank');
+    if (!win) { alert('Trình duyệt đã chặn cửa sổ in.'); return; }
+    win.document.write(html);
+    win.document.close();
+};
+
+/** In phiếu liên lạc của một em */
+window.printReportSingle = function(report, student) {
+    if (!report || !student) return;
+    const app = window.TNTT;
+    const term = app.terms.find(t => t.id === report.termId);
+    const html = '<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>Phiếu liên lạc</title>'
+        + '<style>@page{size:A4;margin:15mm}*{box-sizing:border-box}body{font-family:"Be Vietnam Pro",system-ui,sans-serif;margin:0;padding:0}'
+        + '.card{border:2px solid #2563eb;border-radius:8px;padding:20px;max-width:800px;margin:0 auto}'
+        + '.header{text-align:center;border-bottom:2px solid #e2e8f0;padding-bottom:15px;margin-bottom:20px}'
+        + '.header h1{font-size:20px;color:#1e40af;margin:0 0 5px}'
+        + '.header p{font-size:12px;color:#64748b;margin:0}'
+        + '.student-info{margin-bottom:20px}'
+        + '.student-info h2{font-size:18px;color:#1e3a8a;margin:0 0 10px;border-bottom:1px solid #e2e8f0;padding-bottom:5px}'
+        + '.student-info p{margin:5px 0;font-size:14px}'
+        + '.scores{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:20px}'
+        + '.score-item{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:15px;text-align:center}'
+        + '.score-item label{font-size:11px;color:#64748b;text-transform:uppercase;font-weight:bold}'
+        + '.score-item .value{font-size:28px;font-weight:800;color:#1e3a8a;margin:5px 0 0}'
+        + '.attendance{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:15px;margin-bottom:20px}'
+        + '.attendance h3{font-size:14px;color:#166534;margin:0 0 10px}'
+        + '.attendance table{width:100%;font-size:13px;border-collapse:collapse}'
+        + '.attendance td{border:1px solid #bbf7d0;padding:8px;text-align:center}'
+        + '.attendance td:first-child{text-align:left;font-weight:600}'
+        + '.remark{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:15px;margin-bottom:20px}'
+        + '.remark h3{font-size:14px;color:#1e40af;margin:0 0 10px}'
+        + '.remark p{font-size:14px;color:#1e3a8a;margin:0;line-height:1.6}'
+        + '.footer{text-align:center;font-size:11px;color:#94a3b8;margin-top:20px;padding-top:15px;border-top:1px solid #e2e8f0}'
+        + '@media print{.wrapper{display:none}}</style></head><body>'
+        + '<div class="card">'
+        + '<div class="header"><h1>PHIẾU LIÊN LẠC</h1><p>' + (term ? term.name : 'Học kỳ ' + report.termId) + ' · ' + (window.TNTT && window.TNTT.year ? window.TNTT.year.name : '') + '</p></div>'
+        + '<div class="student-info"><h2>' + (student.holyName ? student.holyName + ' ' : '') + student.name + '</h2>'
+        + '<p><strong>Mã số:</strong> ' + student.code + ' &nbsp;|&nbsp; <strong>Lớp:</strong> ' + student.className + '</p></div>'
+        + '<div class="scores">'
+        + '<div class="score-item"><label>Học tập</label><div class="value">' + (report.score !== null ? report.score.toFixed(1) : '-') + '</div></div>'
+        + '<div class="score-item"><label>Xếp loại</label><div class="value" style="font-size:20px">' + (report.rank || '-') + '</div></div>'
+        + '</div>'
+        + '<div class="attendance"><h3>📋 Chuyên cần</h3><table><tr><td>Tổng buổi</td><td>Có mặt</td><td>Đi trễ</td><td>Vắng</td><td>Tỷ lệ</td></tr>'
+        + '<tr><td>' + (report.attendance ? report.attendance.total : 0) + '</td>'
+        + '<td style="color:#166534;font-weight:bold">' + (report.attendance ? report.attendance.present : 0) + '</td>'
+        + '<td style="color:#a16207;font-weight:bold">' + (report.attendance ? report.attendance.late : 0) + '</td>'
+        + '<td style="color:#dc2626;font-weight:bold">' + ((report.attendance ? report.attendance.unexcused : 0) || 0) + '</td>'
+        + '<td>' + (report.attendance && report.attendance.total > 0 ? Math.round((report.attendance.present / report.attendance.total) * 100) : 0) + '%</td></tr></table></div>'
+        + (report.remark ? '<div class="remark"><h3>📝 Nhận xét của Giaovien</h3><p>' + report.remark + '</p></div>' : '')
+        + '<div class="footer">TNTT Phú Trung · In ngày ' + new Date().toLocaleDateString('vi-VN') + '</div>'
+        + '</div>'
+        + '<scr' + 'ipt>window.onload=function(){window.print()};</scr' + 'ipt></body></html>';
+    const win = window.open('', '_blank');
+    if (!win) { alert('Trình duyệt đã chặn cửa sổ in.'); return; }
+    win.document.write(html);
+    win.document.close();
 };
