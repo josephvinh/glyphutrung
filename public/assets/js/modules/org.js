@@ -144,10 +144,10 @@ window.TNTT.org = {
             .reduce((tong, c) => tong + (this.classCounts[c.name] || 0), 0);
     },
 
-    // Phân công glv/glv_chu_nhiem đang hiệu lực của một lớp.
+    // Phân công đang hiệu lực của một lớp (GLV chủ nhiệm, GLV phụ tá, Dự bị).
     assignmentsInClass(className) {
         return this.allAssignments.filter(a =>
-            a.className === className && ['glv', 'glv_chu_nhiem'].includes(a.role));
+            a.className === className && ['glv', 'glv_chu_nhiem', 'du_bi'].includes(a.role));
     },
 
     // Roster lớp suy từ phân công (kiêm nhiệm) — mỗi phần tử là member thật
@@ -200,12 +200,12 @@ window.TNTT.org = {
 
     // Thêm một GLV vào lớp (phân công glv, kiêm nhiệm). Vai chính giữ nguyên,
     // nên BĐH/Quản trị vẫn thêm được mà không mất quyền toàn đoàn.
-    async addClassMember(className, memberId) {
+    async addClassMember(className, memberId, role = 'glv') {
         if (!memberId) return;
         const cls = this.classes.find(c => c.name === className);
         if (!cls) return;
         await this.save('assignments', 'create', {
-            memberId: Number(memberId), role: 'glv', classId: cls.id
+            memberId: Number(memberId), role, classId: cls.id
         });
         await this.loadAllAssignments();
     },

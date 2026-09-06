@@ -181,11 +181,18 @@
 
                                     <p x-show="membersInClass(cls.name).length === 0" style="display: none;" class="text-micro text-slate-500 italic">Chưa có GLV nào.</p>
 
-                                    <!-- Thêm GLV vào lớp (kiêm nhiệm) -->
-                                    <div x-show="canManageOrg" style="display: none;" class="mt-2.5">
-                                        <select @change="addClassMember(cls.name, $event.target.value); $event.target.value=''"
+                                    <!-- Thêm GLV / Dự Bị vào lớp (kiêm nhiệm) -->
+                                    <div x-show="canManageOrg" style="display: none;" class="mt-2.5 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                        <select @change="addClassMember(cls.name, $event.target.value, 'glv'); $event.target.value=''"
                                                 class="w-full bg-white border border-dashed border-blue-300 rounded-lg px-2.5 py-1.5 text-sm font-semibold text-blue-600">
                                             <option value="">+ Thêm GLV vào lớp…</option>
+                                            <template x-for="m in addableToClass(cls.name)" :key="m.id">
+                                                <option :value="m.id" x-text="memberOptionLabel(m)"></option>
+                                            </template>
+                                        </select>
+                                        <select @change="addClassMember(cls.name, $event.target.value, 'du_bi'); $event.target.value=''"
+                                                class="w-full bg-white border border-dashed border-slate-300 rounded-lg px-2.5 py-1.5 text-sm font-semibold text-slate-600">
+                                            <option value="">+ Thêm Dự Bị…</option>
                                             <template x-for="m in addableToClass(cls.name)" :key="m.id">
                                                 <option :value="m.id" x-text="memberOptionLabel(m)"></option>
                                             </template>
