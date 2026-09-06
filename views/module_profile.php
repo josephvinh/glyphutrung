@@ -45,29 +45,12 @@
     </div>
 
     <!-- 3. VIỆC CẦN LÀM -->
-    <div class="mb-5">
-        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-1">Việc cần làm</h3>
+    <?php include __DIR__ . '/partial_my_tasks.php'; ?>
 
-        <div class="space-y-2.5">
-            <template x-for="t in myTasks" :key="t.key">
-                <button @click="openModule(t.go)" type="button"
-                        class="w-full text-left bg-white rounded-field p-4 shadow-sm border border-slate-100 flex items-center gap-3 active:scale-[0.98] transition-transform">
-                    <div class="w-10 h-10 shrink-0 rounded-2xl flex items-center justify-center border" :class="t.cls">
-                        <i :data-lucide="t.icon" class="w-5 h-5"></i>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-sm font-black text-slate-800 leading-snug" x-text="t.text"></p>
-                        <p class="text-micro font-medium text-slate-500 mt-0.5" x-text="t.detail"></p>
-                    </div>
-                    <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300 shrink-0"></i>
-                </button>
-            </template>
-
-            <div x-show="myTasks.length === 0" style="display: none;" class="text-center py-8 bg-white rounded-card border border-slate-100 border-dashed">
-                <i data-lucide="party-popper" class="tap-safe w-9 h-9 mx-auto text-emerald-300 mb-2"></i>
-                <p class="text-slate-500 font-medium text-sm">Xong hết việc rồi. Nghỉ ngơi thôi!</p>
-            </div>
-        </div>
+    <!-- Empty state riêng cho Cá nhân — chỉ hiện khi không có việc -->
+    <div x-show="myTasks.length === 0" style="display: none;" class="text-center py-8 bg-white rounded-card border border-slate-100 border-dashed mb-5">
+        <i data-lucide="party-popper" class="tap-safe w-9 h-9 mx-auto text-emerald-300 mb-2"></i>
+        <p class="text-slate-500 font-medium text-sm">Xong hết việc rồi. Nghỉ ngơi thôi!</p>
     </div>
 
     <!-- 4. PHẠM VI PHỤ TRÁCH -->

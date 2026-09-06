@@ -5,6 +5,9 @@
      ========================================================== -->
 <div class="mb-10 space-y-5">
 
+    <!-- VIỆC CẦN LÀM -->
+    <?php include __DIR__ . '/partial_my_tasks.php'; ?>
+
     <!-- KHU VỰC CHỨC NĂNG -->
     <div x-show="visibleModules('glv').length > 0" class="bg-white rounded-card p-5 sm:p-6 shadow-sm border border-slate-100">
         <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Chức năng</h3>
