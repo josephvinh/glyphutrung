@@ -153,7 +153,7 @@ window.TNTT.core = {
         try {
             const res = await fetch('api/data.php');
             const d = await res.json();
-            if (!d.ok) { window.TNTT.toast.error(d.error || 'Không nạp được dữ liệu.'); return; }
+            if (!d.ok) { window.TNTT.toast.error(d.error || 'Không nạp được dữ liệu.'); return false; }
 
             this.students          = d.students;
             // Sĩ số mọi lớp, đếm ở máy chủ. Cần vì this.students nay chỉ
@@ -168,12 +168,22 @@ window.TNTT.core = {
             this.readAnnouncements = d.readAnnouncements;
             this.members           = d.members;
             this.logs              = d.logs;
+            return true;
         } catch (e) {
             window.TNTT.toast.error('Không nạp được dữ liệu từ máy chủ.');
+            return false;
         } finally {
             this.syncing = false;
             this.$nextTick(() => lucide.createIcons());
         }
+    },
+
+    // Làm mới thủ công — thay cho thao tác "kéo xuống" mà PWA cài ra màn hình
+    // chính không có. Chỉ nạp lại dữ liệu (nhẹ, không chớp trắng như tải lại
+    // cả trang); báo cho người dùng biết đã đồng bộ.
+    async refreshApp() {
+        if (this.syncing) return;
+        if (await this.loadData()) window.TNTT.toast.success('Đã đồng bộ dữ liệu mới nhất.');
     },
 
     // Đăng xuất thật, gọi lên máy chủ để hủy phiên

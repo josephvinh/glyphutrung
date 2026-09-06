@@ -23,6 +23,14 @@
 
         <!-- Dark mode toggle + Đăng xuất -->
         <div class="flex items-center gap-2">
+            <!-- Làm mới / đồng bộ — thay cho kéo-xuống khi cài app ra màn hình chính -->
+            <button @click="refreshApp()" :disabled="syncing" type="button" aria-label="Làm mới dữ liệu"
+                    class="w-12 h-12 shrink-0 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center border-2 border-white/40 shadow-sm active:scale-90 transition-all disabled:opacity-60">
+                <span class="flex" :class="syncing ? 'animate-spin' : ''">
+                    <i data-lucide="refresh-cw" class="text-white w-5 h-5 pointer-events-none"></i>
+                </span>
+            </button>
+
             <!-- Dark mode toggle -->
             <button @click="toggleDark()" type="button" :aria-label="dark ? 'Chuyển sang chế độ sáng' : 'Chuyển sang chế độ tối'"
                     class="w-12 h-12 shrink-0 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center border-2 border-white/40 shadow-sm active:scale-90 transition-all">
