@@ -188,6 +188,83 @@ Mở dự án trong Claude Code (thư mục `htdocs/tntt`) rồi bảo nó đọ
   cứng → **thêm module JS mới chỉ khai ở `asset_manifest.php`**, cả nạp/bundle/gộp
   component đều theo, hết cảnh "nạp mà quên gộp vào `app.js`" (đã từng làm vỡ
   student_profile, calendar, analytics).
+- **Sửa bug quyền lớn** (`public/api/_bootstrap.php` → `permission_of`): quyền nay =
+  **hợp vai gốc + vai kiêm nhiệm**, so theo **hạng** (none<view<edit) thay vì
+  `MAX()` chuỗi (trước bị tụt 'edit'→'view'). Đây là lý do admin xoá mình khỏi
+  lớp không lưu được.
+- **Thêm vai "Dự Bị"** theo cơ cấu đoàn (`config/migrate_roles_du_bi.php`,
+  `config/install.php`): điểm danh=sửa, còn lại=xem. Đồng thời GVCN được sửa hồ sơ
+  + gửi thông báo lớp mình; Trưởng khối sửa hồ sơ trong khối. Thêm/gỡ GLV & Dự Bị
+  vào lớp ngay ở màn **Khối & Lớp** (`org.js`, `views/module_org.php`).
+  ⚠️ **Máy chủ thật phải chạy 1 lần:** `php config/migrate_roles_du_bi.php`.
+- **Chuyển Nhân sự + Niên khoá sang khu Ban điều hành** (`core.js` `moduleDefs`,
+  `area:'bdh'`, icon `text-white`).
+
+---
+
+## 10. Việc đang làm dở & CHỈ THỊ TIẾP TỤC (đọc kỹ)
+
+> Phiên trước sắp hết quota nên dừng ở đây. Toàn bộ việc còn lại nằm trong
+> **một plan chi tiết đã viết sẵn** — cứ theo đó mà làm, đừng thiết kế lại.
+
+### 10.1 Việc tiếp theo
+Đọc **`docs/superpowers/plans/2026-09-06-cai-to-bo-cuc.md`** — kế hoạch cải tổ bố
+cục (Information Architecture), 5 Task độc lập, mỗi Task có đường dẫn tệp + code
+cụ thể + bước kiểm chứng + commit riêng. Thứ tự đề xuất: **Task 1 → 2 → 5 → 3 → 4**
+(rủi ro tăng dần; Task 4 "gộp Thống kê+Phân tích thành hub Báo cáo" khó nhất, làm
+cuối). **Đã làm trước một phần:** picker "+ Thêm Dự Bị" ở Khối & Lớp, và chuyển
+Nhân sự/Niên khoá sang `bdh` (nên Task 3 chỉ cần gán `group`).
+
+### 10.2 Dùng AI agent nào
+- **Mặc định: làm TRỰC TIẾP, không spawn subagent.** Đây là refactor frontend
+  trong codebase đã hiểu rõ; mỗi lần spawn agent là một lần khởi động lạnh phải
+  dựng lại ngữ cảnh → **tốn quota vô ích**. Chỉ spawn khi người dùng yêu cầu đích
+  danh.
+- Cần **tìm nhanh** một đoạn code/quy ước rải nhiều tệp: dùng agent **Explore**
+  (đọc-only, trả kết luận, không đổ cả tệp).
+- Trước khi làm **Task 4** (khó nhất): có thể nhờ agent **Plan** rà lối
+  `canAccess`/`openModule` rồi mới sửa. Không bắt buộc.
+- Có `.codegraph/` thì dùng `codegraph_explore`/`codegraph explore "..."` trước
+  grep/find để hiểu/định vị code (theo CLAUDE.md).
+
+### 10.3 Mô hình tư duy kiến trúc (nắm cái này là code đúng)
+- SPA Alpine.js, **một component khổng lồ `tnttApp`** ghép từ ~23 mảnh
+  `window.TNTT.*`. `app.js` gộp bằng `gopManh()` (dùng `Object.defineProperties`
+  để **giữ getter**). Danh sách mảnh = `window.TNTT_MODULES` (nhúng từ
+  `asset_manifest.php`). → **Thêm mảnh JS mới: khai ở `asset_manifest.php` là đủ.**
+- Mỗi màn = `<div data-module="key" class="module-panel">` trong
+  `public/index.php`, bật/tắt bằng `currentModule`. Điều hướng: `openModule(key)`
+  (có gate quyền + bảo trì) hoặc `changeModule(key)`.
+- Lưới nút Trang chủ **sinh từ `moduleDefs`** (`core.js`) qua `visibleModules(area)`
+  → thêm/ẩn/đổi khu một module = sửa `moduleDefs`, **không** sửa tay
+  `module_menu.php`.
+- **Hai trục quyền:** *scope* (vai `toàn đoàn`/`khối`/`lớp` → lớp nào truy cập
+  được, qua `can_access_class`/`accessible_class_ids`) × *quyền module* (bảng
+  `permissions`: module × vai → `none`/`view`/`edit`). Kiêm nhiệm = bảng
+  `member_assignments`. Frontend đọc quyền từ boot (`window.TNTT_BOOT`).
+
+### 10.4 Tư duy code (bắt buộc tuân theo)
+1. **Viết như code xung quanh:** cùng phong cách, cùng độ dày comment, comment +
+   nhãn hiển thị **bằng tiếng Việt**.
+2. **DRY:** dùng lại thì tách `views/partial_*.php`, đừng lặp markup.
+3. **IA/bố cục thì KHÔNG đụng backend/quyền** — chỉ view + JS. Mọi nút vẫn qua
+   `canAccess()`/`isUnderMaintenance()`.
+4. **Kiểm chứng mọi thay đổi:** `php -l <view>` + `node --check <js>` +
+   `php phpunit10.phar --no-coverage` (phải **25/25**) + mở preview soi mắt
+   (Browser pane / preview_start).
+5. **Commit theo từng Task**, message tiếng Việt, kết:
+   `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`. Push khi người dùng
+   yêu cầu (remote `https://github.com/josephvinh/glyphutrung.git`, private).
+6. **Dọn dữ liệu test:** tài khoản thử luôn prefix `ZZ`, sđt `0900000009`; xong
+   phải xoá (xoá `member_assignments` phụ thuộc trước vì FK `fk_assign_by`).
+7. **Không commit** `config/backup/` (tên thật thiếu nhi — đã gitignore).
+   `config/config.php` có secrets nhưng repo private nên chấp nhận; nếu công khai
+   phải gỡ.
+
+### 10.5 Nhớ nhắc người dùng
+- Chạy `php config/migrate_roles_du_bi.php` trên máy chủ thật (vai Dự Bị + quyền
+  GVCN/Trưởng khối).
+- Thư mục lạ `NGOC VINH/` chưa track — hỏi trước khi làm gì với nó.
 
 ---
 
