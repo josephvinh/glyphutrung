@@ -199,6 +199,12 @@ Mở dự án trong Claude Code (thư mục `htdocs/tntt`) rồi bảo nó đọ
   ⚠️ **Máy chủ thật phải chạy 1 lần:** `php config/migrate_roles_du_bi.php`.
 - **Chuyển Nhân sự + Niên khoá sang khu Ban điều hành** (`core.js` `moduleDefs`,
   `area:'bdh'`, icon `text-white`).
+- **Cải tổ bố cục Trang chủ** (`docs/superpowers/plans/2026-09-06-cai-to-bo-cuc.md`):
+  - Việc cần làm ra Trang chủ (partial `partial_my_tasks.php`, dùng chung Cá nhân)
+  - Sinh nhật ẩn khỏi lưới (giữ ở thẻ Hero)
+  - Lưới nút chia cụm có tiêu đề: Hằng ngày / Theo dõi / Quản lý (GLV) và Chương trình / Điều hành (BĐH)
+  - Thống kê + Phân tích gộp thành hub **Báo cáo** (tab), quyền tab riêng
+  - Thanh dưới 5 tab: Trang chủ · Thiếu Nhi · Điểm danh · Thông báo · Cá nhân
 
 ---
 
@@ -224,7 +230,7 @@ tổng ở cuối. Quy trình cụ thể:
    ledger. Không tự viết code — chỉ dựng brief, dispatch, review, commit.
 2. **Implementer — mỗi Task một agent `general-purpose` mới** (khởi động lạnh,
    chỉ nhận đúng brief của Task, không dồn lịch sử các Task trước):
-   - **Model `sonnet`** cho Task 1, 2, 3, 5 (sửa view/JS máy móc, có sẵn code
+   - **Model `opus`** cho Task 1, 2, 3, 5 (sửa view/JS máy móc, có sẵn code
      trong plan).
    - **Model `opus`** cho **Task 4** (hub Báo cáo — đụng `canAccess`/`openModule`/
      2 màn con, cần suy luận).
