@@ -105,7 +105,7 @@ function bundle_v(array $files): int {   // ?v = mtime lớn nhất trong nhóm
          - Tablet      : giãn tới max-w-xl, thành thẻ nổi bo tròn
          - Desktop     : giãn tới max-w-2xl
          ========================================================== -->
-    <div x-data="tnttApp" x-cloak class="app-shell has-sidebar max-w-md sm:max-w-xl lg:max-w-6xl xl:max-w-7xl">
+    <div x-data="tnttApp" x-cloak class="app-shell has-sidebar max-w-md sm:max-w-xl lg:max-w-5xl xl:max-w-6xl">
 
         <!-- THANH BÊN (chỉ máy tính) -->
         <?php include __DIR__ . '/../views/layout_sidebar.php'; ?>
