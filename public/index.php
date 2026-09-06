@@ -24,6 +24,19 @@ function asset_v(string $file): string {
     $m = @filemtime($file) ?: 0;
     return $__dev ? $m . '-' . mt_rand() : (string) $m;
 }
+
+/* Bản gộp cho production: nạp 1 tệp JS + 1 tệp CSS thay vì ~30, nhẹ hơn hẳn
+   (nhất là điện thoại). Dev thì vẫn nạp lẻ để sửa file nào thấy ngay. */
+$__manifest = require __DIR__ . '/assets/asset_manifest.php';
+$__jsFiles = array_merge(
+    [__DIR__ . '/assets/js/modules/toast.js'],
+    array_map(fn($x) => __DIR__ . '/assets/js/modules/' . $x . '.js', $__manifest['js_modules']),
+    [__DIR__ . '/assets/js/app.js']
+);
+$__cssFiles = array_map(fn($x) => __DIR__ . '/assets/css/' . $x . '.css', $__manifest['css']);
+function bundle_v(array $files): int {   // ?v = mtime lớn nhất trong nhóm
+    $m = 0; foreach ($files as $f) $m = max($m, @filemtime($f) ?: 0); return $m;
+}
 ?>
 <!DOCTYPE html>
 <html lang="vi">
@@ -50,8 +63,8 @@ function asset_v(string $file): string {
     <title>TNTT Super App</title>
 
     <!-- Tailwind biên dịch sẵn. Token thiết kế khai trong tailwind.config.js
-         ở gốc dự án; chạy `npm run css` sau khi thêm lớp mới. -->
-    <link rel="stylesheet" href="assets/css/tailwind.css?v=<?php echo asset_v(__DIR__ . '/assets/css/tailwind.css'); ?>">
+         ở gốc dự án; chạy `npm run css` sau khi thêm lớp mới.
+         (Các <link> CSS gom xuống một khối bên dưới — dev nạp lẻ, prod gộp.) -->
     <!-- THƯ VIỆN ĐẶT NGAY TRÊN MÁY CHỦ MÌNH, KHÔNG LẤY TỪ CDN NGOÀI.
          Đo thực tế trên đường truyền tốt: lấy từ unpkg mất 356ms, từ
          jsdelivr 94ms, còn từ máy chủ mình 9ms. Trên điện thoại 4G sóng
@@ -76,12 +89,13 @@ function asset_v(string $file): string {
          và fonts.gstatic.com. Hai tên miền đó mỗi cái bắt điện thoại tra
          DNS rồi bắt tay TLS lại từ đầu, mà thẻ <link> lại chặn hiển thị.
          Dựng lại bằng:  node build/tao_font.cjs -->
-    <link rel="stylesheet" href="assets/css/font.css?v=<?php echo asset_v(__DIR__ . '/assets/css/font.css'); ?>">
-    <link rel="stylesheet" href="assets/css/app.css?v=<?php echo asset_v(__DIR__ . '/assets/css/app.css'); ?>">
-    <link rel="stylesheet" href="assets/css/dark.css?v=<?php echo asset_v(__DIR__ . '/assets/css/dark.css'); ?>">
-    <link rel="stylesheet" href="assets/css/skeleton.css?v=<?php echo asset_v(__DIR__ . '/assets/css/skeleton.css'); ?>">
-    <link rel="stylesheet" href="assets/css/analytics.css?v=<?php echo asset_v(__DIR__ . '/assets/css/analytics.css'); ?>">
-    <link rel="stylesheet" href="assets/css/toast.css?v=<?php echo asset_v(__DIR__ . '/assets/css/toast.css'); ?>">
+    <?php if ($__dev): ?>
+    <?php foreach ($__manifest['css'] as $c): ?>
+    <link rel="stylesheet" href="assets/css/<?= $c ?>.css?v=<?php echo asset_v(__DIR__ . '/assets/css/' . $c . '.css'); ?>">
+    <?php endforeach; ?>
+    <?php else: ?>
+    <link rel="stylesheet" href="assets/css/bundle.php?v=<?php echo bundle_v($__cssFiles); ?>">
+    <?php endif; ?>
 </head>
 <body class="text-slate-800 antialiased overflow-x-hidden">
 
@@ -145,14 +159,17 @@ function asset_v(string $file): string {
     <script>window.TNTT_BOOT = <?php echo json_encode($bootData, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP); ?>;</script>
     <!-- Các mảnh của component tnttApp. Phải nạp TRƯỚC app.js vì
          app.js chỉ làm nhiệm vụ gộp chúng lại. -->
-    <!-- Toast notifications -->
+    <?php if ($__dev): ?>
+    <!-- DEV (localhost): nạp lẻ từng mảnh để sửa file nào thấy ngay file đó -->
     <script src="assets/js/modules/toast.js?v=<?php echo asset_v(__DIR__ . '/assets/js/modules/toast.js'); ?>"></script>
-    <?php foreach (['core', 'programs', 'students', 'attendance', 'qrscan', 'qrcard', 'leave', 'birthdays', 'announcements', 'stats', 'analytics', 'scores', 'reports', 'promotion', 'org', 'push', 'access', 'dashboard', 'shell', 'calendar'] as $m): ?>
+    <?php foreach ($__manifest['js_modules'] as $m): ?>
     <script src="assets/js/modules/<?= $m ?>.js?v=<?php echo asset_v(__DIR__ . '/assets/js/modules/' . $m . '.js'); ?>"></script>
     <?php endforeach; ?>
-
-    <!-- Gộp các mảnh và đăng ký với Alpine -->
     <script src="assets/js/app.js?v=<?php echo asset_v(__DIR__ . '/assets/js/app.js'); ?>"></script>
+    <?php else: ?>
+    <!-- PRODUCTION: một tệp gộp (toast + module + app.js) cho nhẹ -->
+    <script src="assets/js/bundle.php?v=<?php echo bundle_v($__jsFiles); ?>"></script>
+    <?php endif; ?>
     <script>document.addEventListener('DOMContentLoaded', () => { lucide.createIcons(); });</script>
 </body>
 </html>

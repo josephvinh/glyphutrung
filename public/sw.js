@@ -62,7 +62,11 @@ self.addEventListener('fetch', (e) => {
     // Những thứ TUYỆT ĐỐI không được lấy từ kho
     if (url.pathname.startsWith('/api/')) return;
     if (url.pathname.endsWith('/sw.js')) return;
-    if (!CHO_GIU.test(url.pathname)) return;
+
+    // Tệp tĩnh: đuôi .js/.css/ảnh, HOẶC bundle.php (JS/CSS gộp cho bản thật —
+    // đuôi .php nhưng bản chất là tệp tĩnh, cần giữ để chạy offline).
+    const laTinh = CHO_GIU.test(url.pathname) || url.pathname.endsWith('/bundle.php');
+    if (!laTinh) return;
 
     e.respondWith((async () => {
         const kho = await caches.open(KHO);
