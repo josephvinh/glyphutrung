@@ -55,7 +55,7 @@ window.TNTT.students = {
 
         this.editData = {
             id: null, isNew: true,
-            code: this.generateStudentCode(), // Tự động tạo mã số
+            code: 'Đang cấp…',      // máy chủ tự cấp; điền ngay bên dưới
             holyName: '', name: '',
             gender: 1, birthDate: '', address: '',
             fatherName: '', fatherPhone: '',
@@ -64,17 +64,14 @@ window.TNTT.students = {
             status: 'đang sinh hoạt'
         };
         this.showEditModal = true;
+        this.fillNextStudentCode();
     },
 
-    // Tự động tạo mã số theo quy ước: TNTT + số thứ tự
-    generateStudentCode() {
-        const prefix = 'TN';
-        const existing = this.students
-            .map(s => s.code)
-            .filter(c => c && c.startsWith(prefix))
-            .map(c => parseInt(c.replace(prefix, ''), 10) || 0);
-        const maxNum = existing.length ? Math.max(...existing) : 0;
-        return prefix + String(maxNum + 1).padStart(4, '0');
+    // Lấy mã kế tiếp từ máy chủ để hiện sẵn (chỉ đọc). Máy chủ vẫn cấp lại
+    // lúc lưu nên đây chỉ là xem trước — client không tự sinh để tránh trùng.
+    async fillNextStudentCode() {
+        const r = await this.api('students', 'next_code');
+        if (r && r.ok && this.editData.isNew) this.editData.code = r.code;
     },
 
     get editModalTitle() {

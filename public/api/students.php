@@ -85,26 +85,33 @@ function upsert_student(array $s, int $yid, int $actorId): int
 switch ($action) {
 
     // -------------------------------------------------------------
+    // Xem trước mã kế tiếp cho em mới (client điền sẵn vào ô mã, chỉ đọc).
+    case 'next_code':
+        json_out(['ok' => true, 'code' => next_student_code(year_two_digit($year))]);
+        break;
+
+    // -------------------------------------------------------------
     case 'save':
         require_post();
         require_csrf();
         $s = clean_student($in);
-        if ($s['code'] === '' || $s['name'] === '') json_fail('Thiếu mã số hoặc họ tên.');
+        if ($s['name'] === '') json_fail('Thiếu họ tên.');
         if ($s['className'] === '') json_fail('Vui lòng chọn lớp cho em.');
+
+        // Thêm mới: MÁY CHỦ tự cấp mã (GDGLPT + năm nhập + số thứ tự) — không
+        // tin mã do client gửi, để chắc chắn duy nhất toàn đoàn, hết đụng độ.
+        // Sửa hồ sơ thì giữ nguyên mã cũ (mã bền theo em, đổi là hỏng thẻ QR).
+        if (!empty($in['isNew'])) {
+            $s['code'] = next_student_code(year_two_digit($year));
+        } elseif ($s['code'] === '') {
+            json_fail('Thiếu mã số.');
+        }
 
         // Chỉ được ghi vào lớp thuộc phạm vi mình phụ trách
         $chophep = allowed_class_ids($me);
         if ($chophep !== null && !in_array(class_id_by_name($s['className']), $chophep, true)) {
             json_fail('Bạn không phụ trách lớp "' . $s['className'] . '".'
                     . ' Bạn chỉ ghi được vào: ' . allowed_class_names($chophep) . '.', 403);
-        }
-
-        // Thêm mới thì mã PHẢI chưa tồn tại. upsert_student() lưu theo
-        // mã số nên mã trùng sẽ ghi đè hồ sơ em khác. Máy khách đã chặn,
-        // nhưng nó chỉ thấy các em trong phạm vi mình — một chủ nhiệm gõ
-        // trúng mã của em lớp khác thì máy khách không biết.
-        if (!empty($in['isNew']) && db_one('SELECT id FROM students WHERE code = ?', [$s['code']])) {
-            json_fail('Mã số "' . $s['code'] . '" đã có người dùng. Vui lòng đặt mã khác.', 409);
         }
 
         db()->beginTransaction();
@@ -140,7 +147,10 @@ switch ($action) {
         try {
             foreach ($rows as $i => $raw) {
                 $s = clean_student($raw);
-                if ($s['code'] === '' || $s['name'] === '') { $skipped++; continue; }
+                if ($s['name'] === '') { $skipped++; continue; }
+                // Dòng không có mã -> máy chủ tự cấp; dòng có mã (mang dữ liệu
+                // cũ sang) thì giữ nguyên.
+                if ($s['code'] === '') $s['code'] = next_student_code(year_two_digit($year));
                 $lop = $s['className'] === '' ? null
                      : db_one('SELECT id FROM classes WHERE name=?', [$s['className']]);
                 if (!$lop) {
