@@ -375,9 +375,11 @@
                 <div class="bg-white rounded-card p-6 shadow-sm border border-slate-100 text-center">
                     <p class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Thẻ QR</p>
 
-                    <!-- QR Code lớn -->
+                    <!-- QR Code lớn — chỉ vẽ khi bộ sinh mã đã nạp xong.
+                         Nhắc qrReady trong biểu thức để Alpine vẽ lại khi nạp xong. -->
                     <div class="w-48 h-48 mx-auto bg-white rounded-2xl border-4 border-slate-200 flex items-center justify-center mb-4 overflow-hidden">
-                        <div x-html="qrSvg(profileStudent.code)" class="w-full h-full flex items-center justify-center"></div>
+                        <div x-show="qrReady" x-html="qrReady ? qrSvg(profileStudent.code) : ''" class="w-full h-full flex items-center justify-center"></div>
+                        <span x-show="!qrReady" style="display: none;" class="text-xs text-slate-400">Đang tải mã QR…</span>
                     </div>
 
                     <h3 class="text-lg font-black text-slate-800 mb-1">

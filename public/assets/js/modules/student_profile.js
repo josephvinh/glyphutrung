@@ -31,6 +31,17 @@ window.TNTT.student_profile = {
             el.style.display = el.dataset.module === 'student_profile' ? '' : 'none';
         });
         window.scrollTo({ top: 0, behavior: 'instant' });
+        // Nạp sẵn bộ sinh mã QR để tab "QR Card" hiển thị được ngay cả khi
+        // người dùng chưa từng mở module In thẻ QR. qrReady là cờ dùng chung.
+        this.ensureQrLib();
+    },
+
+    /** Bảo đảm thư viện qrcode đã nạp; trả về Promise, đặt cờ qrReady. */
+    ensureQrLib() {
+        if (window.qrcode) { this.qrReady = true; return Promise.resolve(); }
+        return this._qrTaiBoSinh()
+            .then(() => { this.qrReady = true; })
+            .catch(() => { this.qrReady = false; window.TNTT.toast.error('Không tải được bộ sinh mã QR.'); });
     },
 
     /**
@@ -115,8 +126,14 @@ window.TNTT.student_profile = {
     /**
      * In thẻ QR của một em
      */
-    printSingleQrcard(student) {
+    async printSingleQrcard(student) {
         if (!student || !student.code) return;
+        // Thư viện phải sẵn sàng trước khi dựng thẻ, nếu không thẻ in ra
+        // sẽ trống mã QR (hoặc lỗi khi vẽ).
+        if (!window.qrcode) {
+            await this.ensureQrLib();
+            if (!window.qrcode) return; // ensureQrLib đã báo lỗi
+        }
         window.printSingleQrcard(student);
     },
 };
