@@ -110,6 +110,7 @@ $bootData = page_bootstrap($me);
             <?php include __DIR__ . '/../views/module_staff.php'; ?>
             <?php include __DIR__ . '/../views/module_years.php'; ?>
             <?php include __DIR__ . '/../views/module_reports.php'; ?>
+            <?php include __DIR__ . '/../views/module_qrcard.php'; ?>
             <?php include __DIR__ . '/../views/module_settings.php'; ?>
             <?php include __DIR__ . '/../views/module_scores.php'; ?>
             <?php include __DIR__ . '/../views/module_promotion.php'; ?>

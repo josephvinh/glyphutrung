@@ -29,4 +29,9 @@
             :class="currentModule === 'reports' ? 'bg-blue-600 text-white shadow-md shadow-blue-200' : 'text-slate-500'">
         <i data-lucide="clipboard-list" class="w-4 h-4"></i> Phiếu liên lạc
     </button>
+    <button @click="openQrcard()" type="button"
+            class="shrink-0 whitespace-nowrap px-4 py-2.5 sm:flex-1 rounded-2xl font-bold text-micro transition-colors flex items-center justify-center gap-1.5"
+            :class="currentModule === 'qrcard' ? 'bg-blue-600 text-white shadow-md shadow-blue-200' : 'text-slate-500'">
+        <i data-lucide="qr-code" class="w-4 h-4"></i> In thẻ QR
+    </button>
 </div>

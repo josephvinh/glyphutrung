@@ -88,14 +88,7 @@
     <div class="flex justify-between items-center mb-6">
         <div class="text-sm font-bold text-slate-500">Tổng: <span x-text="filteredStudents.length" class="text-blue-600 text-base"></span> em</div>
         <div class="flex gap-2">
-            <!-- In thẻ QR: không có thẻ thì nút Quét QR bên Điểm danh vô dụng -->
-            <button @click="inTheQR()" :disabled="qrTheDangLam" type="button"
-                    title="In thẻ QR cho các em đang hiện trong danh sách"
-                    class="flex items-center gap-1.5 px-3 py-2 bg-violet-50 text-violet-700 rounded-xl font-bold text-xs active:scale-95 transition-transform border border-violet-100 shadow-sm disabled:opacity-50">
-                <i data-lucide="qr-code" class="w-4 h-4"></i>
-                <span x-text="qrTheDangLam ? 'Đang tạo…' : 'Thẻ QR'"></span>
-            </button>
-
+            <!-- In thẻ QR nay là thẻ riêng trong module Thiếu Nhi -->
             <button x-show="canEditModule('students')" style="display: none;"
                     @click="openAddStudent()" type="button"
                     class="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-xl font-bold text-xs active:scale-95 transition-transform border border-blue-600 shadow-md shadow-blue-200">
