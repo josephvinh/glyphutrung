@@ -454,7 +454,7 @@ window.TNTT.core = {
     // area: 'glv' = khu nghiệp vụ chung, 'bdh' = khu điều hành
     // ==========================================
     moduleDefs: [
-        { key: 'students',      label: 'Danh sách',    icon: 'users',           color: 'text-blue-600',   area: 'glv' },
+        { key: 'students',      label: 'Thiếu Nhi',    icon: 'users',           color: 'text-blue-600',   area: 'glv' },
         { key: 'attendance',    label: 'Điểm danh',    icon: 'clipboard-check', color: 'text-blue-600',   area: 'glv' },
         { key: 'leave',         label: 'Xin phép',     icon: 'file-text',       color: 'text-blue-600',   area: 'glv', badge: 'leave' },
         { key: 'birthdays',     label: 'Sinh nhật',    icon: 'cake',            color: 'text-rose-500',   area: 'glv', badge: 'birthday' },
@@ -463,8 +463,9 @@ window.TNTT.core = {
         { key: 'org',           label: 'Khối lớp',     icon: 'layers',          color: 'text-indigo-600', area: 'glv' },
         { key: 'staff',         label: 'Nhân sự',      icon: 'user-cog',        color: 'text-cyan-600',   area: 'glv', badge: 'staff' },
         { key: 'years',         label: 'Niên khoá',    icon: 'calendar-range',  color: 'text-teal-600',   area: 'glv' },
-        { key: 'reports',       label: 'Sổ liên lạc',  icon: 'clipboard-list',  color: 'text-amber-600',  area: 'glv' },
-        { key: 'scores',        label: 'Điểm số',      icon: 'graduation-cap',  color: 'text-violet-600', area: 'glv' },
+        // reports + scores gộp vào tile "Thiếu Nhi" (mở qua thẻ), ẩn khỏi lưới
+        { key: 'reports',       label: 'Sổ liên lạc',  icon: 'clipboard-list',  color: 'text-amber-600',  area: 'glv', hidden: true },
+        { key: 'scores',        label: 'Điểm số',      icon: 'graduation-cap',  color: 'text-violet-600', area: 'glv', hidden: true },
         { key: 'promotion',     label: 'Lên lớp',      icon: 'trending-up',     color: 'text-white',      area: 'bdh' },
         { key: 'programs',      label: 'Chương trình', icon: 'calendar-plus',   color: 'text-white',      area: 'bdh' },
         { key: 'calendar',      label: 'Lịch trình',   icon: 'calendar-days',   color: 'text-white',      area: 'bdh' },
@@ -525,7 +526,7 @@ window.TNTT.core = {
 
     // Nút trên lưới App Center: thấy được và bấm được hay không
     visibleModules(area) {
-        return this.moduleDefs.filter(m => m.area === area && this.canAccess(m.key));
+        return this.moduleDefs.filter(m => m.area === area && !m.hidden && this.canAccess(m.key));
     },
 
     moduleBadge(key) {

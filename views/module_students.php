@@ -1,13 +1,8 @@
 <!-- MÀN HÌNH DANH SÁCH LỚP -->
 <div data-module="students" class="module-panel pt-6 pb-10 relative">
 
-    <!-- 1. THANH ĐIỀU HƯỚNG -->
-    <div class="flex items-center mb-6">
-        <button aria-label="Quay lại trang chủ" @click="changeModule('dashboard')" class="w-10 h-10 bg-white rounded-2xl shadow-sm border border-slate-200 flex items-center justify-center active:scale-90 transition-transform mr-4">
-            <i data-lucide="chevron-left" class="w-6 h-6 text-slate-600"></i>
-        </button>
-        <h2 class="text-xl font-black text-slate-800 tracking-tight">Danh Sách Lớp</h2>
-    </div>
+    <!-- 1. THANH ĐIỀU HƯỚNG GỘP (Thiếu nhi) -->
+    <?php include __DIR__ . '/partial_children_tabs.php'; ?>
 
     <!-- 2. THANH TÌM KIẾM & BỘ LỌC -->
     <div class="mb-4 sticky top-0 z-10 bg-slate-50/95 backdrop-blur-sm -mx-4 px-4 pt-2 pb-3 sm:bg-transparent sm:backdrop-blur-none sm:-mx-0 sm:px-0 sm:pt-0 sm:pb-0 sm:static sm:z-auto">
