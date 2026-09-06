@@ -471,15 +471,16 @@ window.TNTT.core = {
         { key: 'stats',         label: 'Thống kê',     icon: 'bar-chart-3',     color: 'text-emerald-600', area: 'glv' },
         { key: 'analytics',     label: 'Phân tích',    icon: 'bar-chart-2',     color: 'text-purple-600', area: 'glv' },
         { key: 'org',           label: 'Khối lớp',     icon: 'layers',          color: 'text-indigo-600', area: 'glv' },
-        { key: 'staff',         label: 'Nhân sự',      icon: 'user-cog',        color: 'text-cyan-600',   area: 'glv', badge: 'staff' },
-        { key: 'years',         label: 'Niên khoá',    icon: 'calendar-range',  color: 'text-teal-600',   area: 'glv' },
         // reports + scores gộp vào tile "Thiếu Nhi" (mở qua thẻ), ẩn khỏi lưới
         { key: 'reports',       label: 'Sổ liên lạc',  icon: 'clipboard-list',  color: 'text-amber-600',  area: 'glv', hidden: true },
         { key: 'scores',        label: 'Điểm số',      icon: 'graduation-cap',  color: 'text-violet-600', area: 'glv', hidden: true },
+        // Khu điều hành: nền tối, icon dùng text-white
         { key: 'promotion',     label: 'Lên lớp',      icon: 'trending-up',     color: 'text-white',      area: 'bdh' },
         { key: 'programs',      label: 'Chương trình', icon: 'calendar-plus',   color: 'text-white',      area: 'bdh' },
         { key: 'calendar',      label: 'Lịch trình',   icon: 'calendar-days',   color: 'text-white',      area: 'bdh' },
-        { key: 'announcements', label: 'Thông báo',    icon: 'megaphone',       color: 'text-white',      area: 'bdh' }
+        { key: 'announcements', label: 'Thông báo',    icon: 'megaphone',       color: 'text-white',      area: 'bdh' },
+        { key: 'staff',         label: 'Nhân sự',      icon: 'user-cog',        color: 'text-white',      area: 'bdh', badge: 'staff' },
+        { key: 'years',         label: 'Niên khoá',    icon: 'calendar-range',  color: 'text-white',      area: 'bdh' }
     ],
 
     // Công tắc bảo trì. Tắt thì mọi người thấy nút mờ kèm nhãn "Bảo trì",
