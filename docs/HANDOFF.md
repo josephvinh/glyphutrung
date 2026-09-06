@@ -174,7 +174,10 @@ Mở dự án trong Claude Code (thư mục `htdocs/tntt`) rồi bảo nó đọ
 - **Tối ưu tải:** production gộp JS/CSS thành bundle (`public/assets/asset_manifest.php`,
   `assets/js/bundle.php`, `assets/css/bundle.php`), dev nạp lẻ. Fix cache dev
   (SW bỏ qua kho ở localhost + `?v` duy nhất mỗi lần tải). Thêm icon
-  `moon`/`sun`/`hash` vào bản lucide rút gọn (`assets/js/vendor/lucide-icons.js`).
+  `moon`/`sun`/`hash`/`refresh-cw` vào bản lucide rút gọn (`assets/js/vendor/lucide-icons.js`).
+- **Nút Làm mới/đồng bộ** trên header (cạnh nút Sáng/Tối): `refreshApp()` gọi
+  `loadData()` — thay cho thao tác kéo-xuống mà PWA cài ra màn hình chính không
+  có. `loadData()` nay trả về true/false.
 - Sửa bug: trang Cá nhân mồ côi; module Lịch trình/Phân tích chưa gộp vào
   `app.js`.
 
