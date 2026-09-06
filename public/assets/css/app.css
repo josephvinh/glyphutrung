@@ -311,6 +311,10 @@ textarea:focus-visible:not(:disabled),
         margin-block: 2rem;
         min-height: calc(100dvh - 4rem);
         padding-inline: 1.5rem;
+        /* Chốt bề rộng desktop ngay tại đây (không phụ thuộc class Tailwind
+           max-w-* có được build hay không). ~64rem: sidebar 16.5rem + nội dung
+           ~45rem là bề rộng đọc thoải mái, không kéo giãn thẻ. */
+        max-width: 68rem;
     }
 
     /* Thanh bên bám theo khi cuộn.
