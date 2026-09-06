@@ -11,6 +11,19 @@ if (!$me || $me['must_change_pw']) {
     exit;
 }
 $bootData = page_bootstrap($me);
+
+/**
+ * Dấu phá cache cho tệp tĩnh.
+ *   - Bản thật: ?v = filemtime (đổi khi sửa tệp -> cache được, deploy là mới).
+ *   - Máy dev (localhost): thêm số ngẫu nhiên -> trình duyệt LUÔN tải bản mới,
+ *     khỏi cảnh sửa code mà vẫn thấy bản cũ do cache HTTP giữ cùng ?v.
+ */
+$__dev = in_array(explode(':', $_SERVER['HTTP_HOST'] ?? '')[0], ['localhost', '127.0.0.1'], true);
+function asset_v(string $file): string {
+    global $__dev;
+    $m = @filemtime($file) ?: 0;
+    return $__dev ? $m . '-' . mt_rand() : (string) $m;
+}
 ?>
 <!DOCTYPE html>
 <html lang="vi">
@@ -38,7 +51,7 @@ $bootData = page_bootstrap($me);
 
     <!-- Tailwind biên dịch sẵn. Token thiết kế khai trong tailwind.config.js
          ở gốc dự án; chạy `npm run css` sau khi thêm lớp mới. -->
-    <link rel="stylesheet" href="assets/css/tailwind.css?v=<?php echo @filemtime(__DIR__ . '/assets/css/tailwind.css') ?: 0; ?>">
+    <link rel="stylesheet" href="assets/css/tailwind.css?v=<?php echo asset_v(__DIR__ . '/assets/css/tailwind.css'); ?>">
     <!-- THƯ VIỆN ĐẶT NGAY TRÊN MÁY CHỦ MÌNH, KHÔNG LẤY TỪ CDN NGOÀI.
          Đo thực tế trên đường truyền tốt: lấy từ unpkg mất 356ms, từ
          jsdelivr 94ms, còn từ máy chủ mình 9ms. Trên điện thoại 4G sóng
@@ -51,9 +64,9 @@ $bootData = page_bootstrap($me);
 
          Cả ba đều defer — thẻ lucide trước đây KHÔNG có defer, nên
          trình duyệt phải tải xong 410 KB rồi mới vẽ được gì lên màn hình. -->
-    <script defer src="assets/js/vendor/alpine-collapse.js?v=<?php echo @filemtime(__DIR__ . '/assets/js/vendor/alpine-collapse.js') ?: 0; ?>"></script>
-    <script defer src="assets/js/vendor/alpine.js?v=<?php echo @filemtime(__DIR__ . '/assets/js/vendor/alpine.js') ?: 0; ?>"></script>
-    <script defer src="assets/js/vendor/lucide-icons.js?v=<?php echo @filemtime(__DIR__ . '/assets/js/vendor/lucide-icons.js') ?: 0; ?>"></script>
+    <script defer src="assets/js/vendor/alpine-collapse.js?v=<?php echo asset_v(__DIR__ . '/assets/js/vendor/alpine-collapse.js'); ?>"></script>
+    <script defer src="assets/js/vendor/alpine.js?v=<?php echo asset_v(__DIR__ . '/assets/js/vendor/alpine.js'); ?>"></script>
+    <script defer src="assets/js/vendor/lucide-icons.js?v=<?php echo asset_v(__DIR__ . '/assets/js/vendor/lucide-icons.js'); ?>"></script>
 
     <!-- Độ đậm chữ: 400 500 600 700 900.
          Trước đây khai 800 (giao diện KHÔNG dùng chỗ nào) mà thiếu 900
@@ -63,12 +76,12 @@ $bootData = page_bootstrap($me);
          và fonts.gstatic.com. Hai tên miền đó mỗi cái bắt điện thoại tra
          DNS rồi bắt tay TLS lại từ đầu, mà thẻ <link> lại chặn hiển thị.
          Dựng lại bằng:  node build/tao_font.cjs -->
-    <link rel="stylesheet" href="assets/css/font.css?v=<?php echo @filemtime(__DIR__ . '/assets/css/font.css') ?: 0; ?>">
-    <link rel="stylesheet" href="assets/css/app.css?v=<?php echo @filemtime(__DIR__ . '/assets/css/app.css') ?: 0; ?>">
-    <link rel="stylesheet" href="assets/css/dark.css?v=<?php echo @filemtime(__DIR__ . '/assets/css/dark.css') ?: 0; ?>">
-    <link rel="stylesheet" href="assets/css/skeleton.css?v=<?php echo @filemtime(__DIR__ . '/assets/css/skeleton.css') ?: 0; ?>">
-    <link rel="stylesheet" href="assets/css/analytics.css?v=<?php echo @filemtime(__DIR__ . '/assets/css/analytics.css') ?: 0; ?>">
-    <link rel="stylesheet" href="assets/css/toast.css?v=<?php echo @filemtime(__DIR__ . '/assets/css/toast.css') ?: 0; ?>">
+    <link rel="stylesheet" href="assets/css/font.css?v=<?php echo asset_v(__DIR__ . '/assets/css/font.css'); ?>">
+    <link rel="stylesheet" href="assets/css/app.css?v=<?php echo asset_v(__DIR__ . '/assets/css/app.css'); ?>">
+    <link rel="stylesheet" href="assets/css/dark.css?v=<?php echo asset_v(__DIR__ . '/assets/css/dark.css'); ?>">
+    <link rel="stylesheet" href="assets/css/skeleton.css?v=<?php echo asset_v(__DIR__ . '/assets/css/skeleton.css'); ?>">
+    <link rel="stylesheet" href="assets/css/analytics.css?v=<?php echo asset_v(__DIR__ . '/assets/css/analytics.css'); ?>">
+    <link rel="stylesheet" href="assets/css/toast.css?v=<?php echo asset_v(__DIR__ . '/assets/css/toast.css'); ?>">
 </head>
 <body class="text-slate-800 antialiased overflow-x-hidden">
 
@@ -133,13 +146,13 @@ $bootData = page_bootstrap($me);
     <!-- Các mảnh của component tnttApp. Phải nạp TRƯỚC app.js vì
          app.js chỉ làm nhiệm vụ gộp chúng lại. -->
     <!-- Toast notifications -->
-    <script src="assets/js/modules/toast.js?v=<?php echo @filemtime(__DIR__ . '/assets/js/modules/toast.js') ?: 0; ?>"></script>
+    <script src="assets/js/modules/toast.js?v=<?php echo asset_v(__DIR__ . '/assets/js/modules/toast.js'); ?>"></script>
     <?php foreach (['core', 'programs', 'students', 'attendance', 'qrscan', 'qrcard', 'leave', 'birthdays', 'announcements', 'stats', 'analytics', 'scores', 'reports', 'promotion', 'org', 'push', 'access', 'dashboard', 'shell', 'calendar'] as $m): ?>
-    <script src="assets/js/modules/<?= $m ?>.js?v=<?php echo @filemtime(__DIR__ . '/assets/js/modules/' . $m . '.js') ?: 0; ?>"></script>
+    <script src="assets/js/modules/<?= $m ?>.js?v=<?php echo asset_v(__DIR__ . '/assets/js/modules/' . $m . '.js'); ?>"></script>
     <?php endforeach; ?>
 
     <!-- Gộp các mảnh và đăng ký với Alpine -->
-    <script src="assets/js/app.js?v=<?php echo @filemtime(__DIR__ . '/assets/js/app.js') ?: 0; ?>"></script>
+    <script src="assets/js/app.js?v=<?php echo asset_v(__DIR__ . '/assets/js/app.js'); ?>"></script>
     <script>document.addEventListener('DOMContentLoaded', () => { lucide.createIcons(); });</script>
 </body>
 </html>

@@ -12,7 +12,7 @@
    payload, vốn là phần dài và dễ sai nhất của Web Push.
    ========================================================== */
 
-const PHIEN_BAN = 'tntt-sw-2';
+const PHIEN_BAN = 'tntt-sw-3';
 const KHO      = 'tntt-tinh-' + PHIEN_BAN;
 
 self.addEventListener('install', () => self.skipWaiting());
@@ -47,6 +47,13 @@ self.addEventListener('fetch', (e) => {
     if (req.method !== 'GET') return;
 
     const url = new URL(req.url);
+
+    // MÁY PHÁT TRIỂN (localhost / 127.0.0.1): KHÔNG dùng kho, luôn đi mạng.
+    // Kiểu cache-first bên dưới khiến sửa code phải reload hai lần mới thấy
+    // (lần đầu trả bản cũ trong kho). Trên máy dev điều đó rất khó chịu và
+    // dễ tưởng "code không ăn". Bản thật (Apache production) vẫn giữ kho để
+    // mở nhanh + chạy offline.
+    if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') return;
 
     // Chỉ giữ tệp của chính mình. Phông chữ Google có bộ đệm riêng của
     // trình duyệt rồi, xen vào chỉ tổ rắc rối.
