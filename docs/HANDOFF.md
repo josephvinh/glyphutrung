@@ -208,50 +208,25 @@ Mở dự án trong Claude Code (thư mục `htdocs/tntt`) rồi bảo nó đọ
 
 ---
 
-## 10. Việc đang làm dở & CHỈ THỊ TIẾP TỤC (đọc kỹ)
+## 10. Việc đang làm dở & CHỈ THỊ TIẾP TỤC
 
-> Phiên trước sắp hết quota nên dừng ở đây. Toàn bộ việc còn lại nằm trong
-> **một plan chi tiết đã viết sẵn** — cứ theo đó mà làm, đừng thiết kế lại.
+### 10.1 ✅ ĐÃ XONG — Cải tổ bố cục Trang chủ
+Plan `docs/superpowers/plans/2026-09-06-cai-to-bo-cuc.md` đã hoàn thành (6 commits đã push):
+- Task 1: Việc cần làm ra Trang chủ (`582e49e`)
+- Task 2: Sinh nhật ẩn khỏi lưới (`e6f621e`)
+- Task 3: Lưới nút chia cụm (`ce2373f`)
+- Task 4: Hub Báo cáo + fix tab permission (`d963aa3`, `20aecec`)
+- Task 5: Thanh dưới 5 tab (`4651dcc`)
+- Final fix: `moduleEnabled` thêm `reporthub` (`d936c7d`)
 
-### 10.1 Việc tiếp theo
-Đọc **`docs/superpowers/plans/2026-09-06-cai-to-bo-cuc.md`** — kế hoạch cải tổ bố
-cục (Information Architecture), 5 Task độc lập, mỗi Task có đường dẫn tệp + code
-cụ thể + bước kiểm chứng + commit riêng. Thứ tự đề xuất: **Task 1 → 2 → 5 → 3 → 4**
-(rủi ro tăng dần; Task 4 "gộp Thống kê+Phân tích thành hub Báo cáo" khó nhất, làm
-cuối). **Đã làm trước một phần:** picker "+ Thêm Dự Bị" ở Khối & Lớp, và chuyển
-Nhân sự/Niên khoá sang `bdh` (nên Task 3 chỉ cần gán `group`).
+**Ghi chú theo dõi:**
+- Sidebar (`layout_sidebar.php`) vẫn dùng `visibleModules` trực tiếp, chưa nhóm — tuỳ chọn, không ảnh hưởng.
 
-### 10.2 Dùng AI agent nào (tài khoản mới quota dư → CHẠY THEO SUBAGENT)
-Plan này viết đúng khuôn **skill `superpowers:subagent-driven-development`** — hãy
-chạy theo skill đó: mỗi Task một implementer mới, review sau từng Task, review
-tổng ở cuối. Quy trình cụ thể:
+### 10.2 Việc mới
+- Thư mục lạ `NGOC VINH/` chưa track — hỏi trước khi làm gì với nó.
+- Chạy `php config/migrate_roles_du_bi.php` trên máy chủ thật nếu chưa chạy.
 
-1. **Điều phối (session chính):** đọc plan, tạo todo mỗi Task, giữ tiến độ trong
-   ledger. Không tự viết code — chỉ dựng brief, dispatch, review, commit.
-2. **Implementer — mỗi Task một agent `general-purpose` mới** (khởi động lạnh,
-   chỉ nhận đúng brief của Task, không dồn lịch sử các Task trước):
-   - **Model `opus`** cho Task 1, 2, 3, 5 (sửa view/JS máy móc, có sẵn code
-     trong plan).
-   - **Model `opus`** cho **Task 4** (hub Báo cáo — đụng `canAccess`/`openModule`/
-     2 màn con, cần suy luận).
-   - Dặn implementer: **không spawn subagent con**; xong thì tự `php -l` +
-     `node --check`, báo cáo lại diff + kết quả kiểm chứng.
-3. **Review sau mỗi Task — một agent `Plan` hoặc `general-purpose` (đọc diff):**
-   soi đúng plan (đường dẫn, tên hàm, không đụng backend/quyền, PHPUnit 25/25).
-   Đạt thì session chính mới commit Task đó.
-4. **Tìm code rải nhiều tệp:** agent **Explore** (đọc-only, trả kết luận, không
-   đổ cả tệp) — rẻ và nhanh cho khâu định vị.
-5. **Review tổng cuối** (sau cả 5 Task): một agent review trên **model `opus`**
-   soi toàn nhánh trước khi push.
-
-> Nếu người dùng muốn nhanh gọn hơn thì vẫn có thể làm trực tiếp (inline) không
-> subagent — nhưng với quota dư, luồng subagent ở trên cho chất lượng cao hơn nhờ
-> ngữ cảnh sạch mỗi Task + có cửa review.
-
-- Có `.codegraph/` thì dùng `codegraph_explore`/`codegraph explore "..."` trước
-  grep/find để hiểu/định vị code (theo CLAUDE.md).
-
-### 10.3 Mô hình tư duy kiến trúc (nắm cái này là code đúng)
+### 10.2 Mô hình tư duy kiến trúc (nắm cái này là code đúng)
 - SPA Alpine.js, **một component khổng lồ `tnttApp`** ghép từ ~23 mảnh
   `window.TNTT.*`. `app.js` gộp bằng `gopManh()` (dùng `Object.defineProperties`
   để **giữ getter**). Danh sách mảnh = `window.TNTT_MODULES` (nhúng từ
@@ -259,7 +234,7 @@ tổng ở cuối. Quy trình cụ thể:
 - Mỗi màn = `<div data-module="key" class="module-panel">` trong
   `public/index.php`, bật/tắt bằng `currentModule`. Điều hướng: `openModule(key)`
   (có gate quyền + bảo trì) hoặc `changeModule(key)`.
-- Lưới nút Trang chủ **sinh từ `moduleDefs`** (`core.js`) qua `visibleModules(area)`
+- Lưới nút Trang chủ **sinh từ `moduleDefs`** (`core.js`) qua `moduleGroups(area)`
   → thêm/ẩn/đổi khu một module = sửa `moduleDefs`, **không** sửa tay
   `module_menu.php`.
 - **Hai trục quyền:** *scope* (vai `toàn đoàn`/`khối`/`lớp` → lớp nào truy cập
@@ -267,7 +242,7 @@ tổng ở cuối. Quy trình cụ thể:
   `permissions`: module × vai → `none`/`view`/`edit`). Kiêm nhiệm = bảng
   `member_assignments`. Frontend đọc quyền từ boot (`window.TNTT_BOOT`).
 
-### 10.4 Tư duy code (bắt buộc tuân theo)
+### 10.3 Tư duy code (bắt buộc tuân theo)
 1. **Viết như code xung quanh:** cùng phong cách, cùng độ dày comment, comment +
    nhãn hiển thị **bằng tiếng Việt**.
 2. **DRY:** dùng lại thì tách `views/partial_*.php`, đừng lặp markup.
@@ -285,7 +260,7 @@ tổng ở cuối. Quy trình cụ thể:
    `config/config.php` có secrets nhưng repo private nên chấp nhận; nếu công khai
    phải gỡ.
 
-### 10.5 Nhớ nhắc người dùng
+### 10.4 Nhớ nhắc người dùng
 - Chạy `php config/migrate_roles_du_bi.php` trên máy chủ thật (vai Dự Bị + quyền
   GVCN/Trưởng khối).
 - Thư mục lạ `NGOC VINH/` chưa track — hỏi trước khi làm gì với nó.
