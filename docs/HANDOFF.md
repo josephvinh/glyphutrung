@@ -180,9 +180,9 @@ Mở dự án trong Claude Code (thư mục `htdocs/tntt`) rồi bảo nó đọ
   có. `loadData()` nay trả về true/false.
 - Sửa bug: trang Cá nhân mồ côi; module Lịch trình/Phân tích chưa gộp vào
   `app.js`.
-
-**Việc còn để ngỏ (nếu muốn làm tiếp):** hồ sơ tổng hợp từng em (bấm 1 em xem
-info + điểm + phiếu + điểm danh) — "bước 2" của việc gom module Thiếu Nhi.
+- **Hồ sơ tổng hợp từng em** (`module_student_profile.php`, `student_profile.js`):
+  trang riêng với 5 tab (Thông tin, Điểm số, Phiếu LC, Điểm danh, QR Card).
+  Nút "Xem hồ sơ" trên card thiếu nhi trong Danh sách. Quay lại = về Danh sách.
 
 ---
 
