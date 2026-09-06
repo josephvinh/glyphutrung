@@ -215,15 +215,33 @@ cụ thể + bước kiểm chứng + commit riêng. Thứ tự đề xuất: **
 cuối). **Đã làm trước một phần:** picker "+ Thêm Dự Bị" ở Khối & Lớp, và chuyển
 Nhân sự/Niên khoá sang `bdh` (nên Task 3 chỉ cần gán `group`).
 
-### 10.2 Dùng AI agent nào
-- **Mặc định: làm TRỰC TIẾP, không spawn subagent.** Đây là refactor frontend
-  trong codebase đã hiểu rõ; mỗi lần spawn agent là một lần khởi động lạnh phải
-  dựng lại ngữ cảnh → **tốn quota vô ích**. Chỉ spawn khi người dùng yêu cầu đích
-  danh.
-- Cần **tìm nhanh** một đoạn code/quy ước rải nhiều tệp: dùng agent **Explore**
-  (đọc-only, trả kết luận, không đổ cả tệp).
-- Trước khi làm **Task 4** (khó nhất): có thể nhờ agent **Plan** rà lối
-  `canAccess`/`openModule` rồi mới sửa. Không bắt buộc.
+### 10.2 Dùng AI agent nào (tài khoản mới quota dư → CHẠY THEO SUBAGENT)
+Plan này viết đúng khuôn **skill `superpowers:subagent-driven-development`** — hãy
+chạy theo skill đó: mỗi Task một implementer mới, review sau từng Task, review
+tổng ở cuối. Quy trình cụ thể:
+
+1. **Điều phối (session chính):** đọc plan, tạo todo mỗi Task, giữ tiến độ trong
+   ledger. Không tự viết code — chỉ dựng brief, dispatch, review, commit.
+2. **Implementer — mỗi Task một agent `general-purpose` mới** (khởi động lạnh,
+   chỉ nhận đúng brief của Task, không dồn lịch sử các Task trước):
+   - **Model `sonnet`** cho Task 1, 2, 3, 5 (sửa view/JS máy móc, có sẵn code
+     trong plan).
+   - **Model `opus`** cho **Task 4** (hub Báo cáo — đụng `canAccess`/`openModule`/
+     2 màn con, cần suy luận).
+   - Dặn implementer: **không spawn subagent con**; xong thì tự `php -l` +
+     `node --check`, báo cáo lại diff + kết quả kiểm chứng.
+3. **Review sau mỗi Task — một agent `Plan` hoặc `general-purpose` (đọc diff):**
+   soi đúng plan (đường dẫn, tên hàm, không đụng backend/quyền, PHPUnit 25/25).
+   Đạt thì session chính mới commit Task đó.
+4. **Tìm code rải nhiều tệp:** agent **Explore** (đọc-only, trả kết luận, không
+   đổ cả tệp) — rẻ và nhanh cho khâu định vị.
+5. **Review tổng cuối** (sau cả 5 Task): một agent review trên **model `opus`**
+   soi toàn nhánh trước khi push.
+
+> Nếu người dùng muốn nhanh gọn hơn thì vẫn có thể làm trực tiếp (inline) không
+> subagent — nhưng với quota dư, luồng subagent ở trên cho chất lượng cao hơn nhờ
+> ngữ cảnh sạch mỗi Task + có cửa review.
+
 - Có `.codegraph/` thì dùng `codegraph_explore`/`codegraph explore "..."` trước
   grep/find để hiểu/định vị code (theo CLAUDE.md).
 
