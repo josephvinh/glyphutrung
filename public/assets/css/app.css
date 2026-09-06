@@ -362,6 +362,10 @@ textarea:focus-visible:not(:disabled),
 
     /* Ẩn hẳn thanh điều hướng dưới */
     .has-sidebar .app-bottomnav { display: none; }
+
+    /* Lưới chức năng ở Trang chủ trùng với thanh bên -> ẩn trên PC.
+       !important để thắng inline display của x-show. */
+    .has-sidebar .home-fn-grid { display: none !important; }
 }
 
 /* ==========================================================

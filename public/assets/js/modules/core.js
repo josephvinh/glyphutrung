@@ -476,13 +476,13 @@ window.TNTT.core = {
         // reports + scores gộp vào tile "Thiếu Nhi" (mở qua thẻ), ẩn khỏi lưới
         { key: 'reports',       label: 'Sổ liên lạc',  icon: 'clipboard-list',  color: 'text-amber-600',  area: 'glv', group: 'Hằng ngày', hidden: true },
         { key: 'scores',        label: 'Điểm số',      icon: 'graduation-cap',  color: 'text-violet-600', area: 'glv', group: 'Hằng ngày', hidden: true },
-        // Khu điều hành: nền tối, icon dùng text-white
-        { key: 'promotion',     label: 'Lên lớp',      icon: 'trending-up',     color: 'text-white',      area: 'bdh', group: 'Chương trình' },
-        { key: 'programs',      label: 'Chương trình', icon: 'calendar-plus',   color: 'text-white',      area: 'bdh', group: 'Chương trình' },
-        { key: 'calendar',      label: 'Lịch trình',   icon: 'calendar-days',   color: 'text-white',      area: 'bdh', group: 'Chương trình' },
-        { key: 'announcements', label: 'Thông báo',    icon: 'megaphone',       color: 'text-white',      area: 'bdh', group: 'Điều hành' },
-        { key: 'staff',         label: 'Nhân sự',      icon: 'user-cog',        color: 'text-white',      area: 'bdh', group: 'Điều hành', badge: 'staff' },
-        { key: 'years',         label: 'Niên khoá',    icon: 'calendar-range',  color: 'text-white',      area: 'bdh', group: 'Điều hành' }
+        // Khu điều hành (icon màu để dùng chung lưới phẳng + thanh bên)
+        { key: 'promotion',     label: 'Lên lớp',      icon: 'trending-up',     color: 'text-violet-600', area: 'bdh', group: 'Chương trình' },
+        { key: 'programs',      label: 'Chương trình', icon: 'calendar-plus',   color: 'text-amber-600',  area: 'bdh', group: 'Chương trình' },
+        { key: 'calendar',      label: 'Lịch trình',   icon: 'calendar-days',   color: 'text-teal-600',   area: 'bdh', group: 'Chương trình' },
+        { key: 'announcements', label: 'Thông báo',    icon: 'megaphone',       color: 'text-rose-500',   area: 'bdh', group: 'Điều hành' },
+        { key: 'staff',         label: 'Nhân sự',      icon: 'user-cog',        color: 'text-cyan-600',   area: 'bdh', group: 'Điều hành', badge: 'staff' },
+        { key: 'years',         label: 'Niên khoá',    icon: 'calendar-range',  color: 'text-indigo-600', area: 'bdh', group: 'Điều hành' }
     ],
 
     // Công tắc bảo trì. Tắt thì mọi người thấy nút mờ kèm nhãn "Bảo trì",
@@ -546,6 +546,12 @@ window.TNTT.core = {
     // Nút trên lưới App Center: thấy được và bấm được hay không
     visibleModules(area) {
         return this.moduleDefs.filter(m => m.area === area && !m.hidden && this.canAccess(m.key));
+    },
+
+    // Lưới phẳng: TẤT CẢ module truy cập được, không chia khu/nhóm,
+    // giữ đúng thứ tự ưu tiên trong moduleDefs.
+    visibleFlat() {
+        return this.moduleDefs.filter(m => !m.hidden && this.canAccess(m.key));
     },
 
     // Gom nút theo nhóm, giữ thứ tự nhóm xuất hiện lần đầu trong moduleDefs
