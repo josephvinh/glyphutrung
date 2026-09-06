@@ -489,7 +489,7 @@ window.TNTT.core = {
     // riêng Quản trị vẫn vào được để kiểm tra trước khi mở lại.
     moduleEnabled: {
         students: true, attendance: true, leave: true, birthdays: true,
-        stats: true, analytics: true, org: true, reports: true, programs: true, announcements: true,
+        stats: true, analytics: true, org: true, reports: true, reporthub: true, programs: true, announcements: true,
         scores: true, promotion: true, calendar: true
     },
 
