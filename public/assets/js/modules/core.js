@@ -728,11 +728,10 @@ window.TNTT.core = {
     },
 
     openReportHub() {
-        // mở tab đầu tiên mà người dùng có quyền
-        this.reportsTab = this.permOf('stats') !== 'none' ? 'stats' : 'analytics';
+        // Chỉ còn Thống kê (đã bỏ Phân tích).
+        this.reportsTab = 'stats';
         this.changeModule('reporthub');
-        if (this.reportsTab === 'stats' && this.openStats) this.openStats(true);
-        if (this.reportsTab === 'analytics' && this.openAnalytics) this.openAnalytics(true);
+        if (this.openStats) this.openStats(true);
     },
 
     openSettings(the) {

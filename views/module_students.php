@@ -229,7 +229,18 @@
         </div>
 
         <!-- Empty state với icon rõ ràng -->
-        <div x-show="filteredStudents.length === 0" style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed col-span-full">
+        <!-- Vai toàn đoàn (Quản Trị/BĐH) chưa chọn lọc: mời chọn khối/lớp,
+             KHÔNG đổ cả đoàn ra cho nhẹ -->
+        <div x-show="isUnrestrictedScope && searchQuery === '' && filterBlock === '' && filterClass === ''"
+             style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed col-span-full">
+            <i data-lucide="filter" class="w-12 h-12 mx-auto text-slate-300 mb-4"></i>
+            <p class="text-slate-600 font-semibold text-base mb-1">Chọn khối hoặc lớp để xem</p>
+            <p class="text-slate-400 text-sm">Đoàn đông nên danh sách chỉ hiện khi bạn lọc theo khối/lớp, hoặc gõ tìm tên/mã.</p>
+        </div>
+
+        <!-- Đã lọc/tìm nhưng không ra kết quả -->
+        <div x-show="filteredStudents.length === 0 && !(isUnrestrictedScope && searchQuery === '' && filterBlock === '' && filterClass === '')"
+             style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed col-span-full">
             <i data-lucide="search-x" class="w-12 h-12 mx-auto text-slate-300 mb-4"></i>
             <p class="text-slate-600 font-semibold text-base mb-1">Không tìm thấy dữ liệu phù hợp</p>
             <p class="text-slate-400 text-sm">Thử thay đổi từ khóa tìm kiếm hoặc xóa bộ lọc</p>

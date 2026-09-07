@@ -103,6 +103,11 @@ window.TNTT.access = {
 
     get filteredStudents() {
         const q = this.normalizeText(this.searchQuery);
+        // Toàn đoàn (Quản Trị / Ban Điều Hành): KHÔNG đổ cả trăm/nghìn em ra
+        // ngay. Bắt buộc chọn khối/lớp (hoặc gõ tìm) mới hiện — nhẹ + gọn.
+        if (this.isUnrestrictedScope && q === '' && this.filterBlock === '' && this.filterClass === '') {
+            return [];
+        }
         return this.accessibleStudents.filter(s => {
             const matchSearch = q === ''
                 || this.normalizeText(s.name).includes(q)
