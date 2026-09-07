@@ -209,8 +209,10 @@ $perms = [
     // Duyệt người mới là việc của Ban Điều Hành, cấp dưới chỉ xem
     'staff'         => ['edit','edit','view','view','view','view'],
     'years'         => ['edit','edit','view','view','view','view'],
-    'reports'       => ['edit','edit','edit','edit','view','view'],
-    'scores'        => ['edit','edit','edit','edit','edit','view'],
+    // BĐH chỉ GIÁM SÁT điểm số + phiếu liên lạc (view); nhập/sửa là việc của
+    // GVCN/GLV lớp. Admin giữ edit để xử lý sự cố.
+    'reports'       => ['edit','view','edit','edit','view','view'],
+    'scores'        => ['edit','view','edit','edit','edit','view'],
     'promotion'     => ['edit','edit','view','none','none','none'],
     'programs'      => ['edit','edit','none','none','none','none'],
     'announcements' => ['edit','edit','edit','edit','view','view'],
