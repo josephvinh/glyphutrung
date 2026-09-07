@@ -177,6 +177,43 @@ bước Deploy. Đơn giản hơn nhưng thư mục web = thư mục git (kém t
 
 ---
 
+## Bước 9 — (Tuỳ chọn) Tự động deploy khi push (GitHub Actions + SSH)
+
+Repo đã có sẵn workflow `.github/workflows/deploy.yml`: mỗi lần **push lên
+master**, GitHub SSH vào AZDIGI, `git pull` ở thư mục clone rồi chạy
+`scripts/deploy.sh` (rsync sang thư mục app, giữ `config.php`/`backup`).
+
+**Điều kiện:** host cho phép **SSH** (hỏi AZDIGI nếu chưa chắc). Không có SSH →
+xem Phụ lục B.
+
+**Thiết lập một lần:**
+1. Tạo một cặp khoá SSH RIÊNG cho GitHub Actions (khác khoá deploy ở Bước 1):
+   - Trên máy bạn: `ssh-keygen -t ed25519 -f deploy_actions -N ""` → được
+     `deploy_actions` (private) và `deploy_actions.pub` (public).
+   - Dán nội dung `deploy_actions.pub` vào host: cPanel → **SSH Access → Manage
+     SSH Keys → Import Key** (dán vào ô public) → **Authorize**.
+2. Thêm 4 **secret** trong GitHub repo (**Settings → Secrets and variables →
+   Actions → New repository secret**):
+   | Secret | Giá trị |
+   |---|---|
+   | `AZDIGI_HOST` | hostname/IP máy chủ SSH (AZDIGI cấp) |
+   | `AZDIGI_USER` | user cPanel |
+   | `AZDIGI_PORT` | cổng SSH (AZDIGI thường KHÔNG phải 22 — xem trong cPanel) |
+   | `AZDIGI_SSH_KEY` | **toàn bộ nội dung file `deploy_actions`** (private key) |
+3. Đảm bảo thư mục clone `~/repositories/tntt` đã tồn tại (Bước 2) và pull được
+   (nó dùng deploy key GitHub ở Bước 1).
+
+**Xong.** Từ giờ chỉ cần `git push` → sau ~1 phút host tự cập nhật. Xem log ở
+tab **Actions** của repo. Chạy tay: tab Actions → **Deploy AZDIGI → Run workflow**.
+
+> ⚠️ Migration KHÔNG tự chạy. Bản cập nhật nào có migration (thêm module/vai) thì
+> vẫn SSH chạy tay một lần (Bước 6).
+>
+> Muốn "chỉ deploy khi CI xanh": đổi trigger trong `deploy.yml` sang
+> `workflow_run` theo workflow CI — nhắn mình nếu cần.
+
+---
+
 ## Phụ lục A — Lỗi thường gặp
 - **500 Internal Server Error**: gần như luôn do `config.php` sai thông tin DB,
   hoặc PHP < 8.2. Xem log: cPanel → **Errors** / **Metrics → Errors**.

@@ -1,0 +1,44 @@
+name: Deploy AZDIGI
+
+# Tự động chạy mỗi khi push lên master (và có nút chạy tay trong tab Actions).
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+# Không để 2 lần deploy chồng nhau.
+concurrency:
+  group: deploy-azdigi
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # SSH vào AZDIGI: kéo code mới về thư mục CLONE rồi chạy script deploy
+      # (rsync sang thư mục APP, giữ config.php/backup của máy chủ).
+      #
+      # CẦN thêm 4 secret trong repo (Settings -> Secrets and variables ->
+      # Actions -> New repository secret):
+      #   AZDIGI_HOST     máy chủ SSH (hostname hoặc IP AZDIGI cấp)
+      #   AZDIGI_USER     user cPanel
+      #   AZDIGI_PORT     cổng SSH (AZDIGI thường KHÔNG phải 22 — xem cPanel)
+      #   AZDIGI_SSH_KEY  KHOÁ RIÊNG (private) của cặp khoá dành cho Actions;
+      #                   khoá public của cặp này phải được Authorize trên host
+      #                   (cPanel -> SSH Access -> Manage SSH Keys).
+      #
+      # Thư mục clone mặc định ~/repositories/tntt (khớp mô hình 2). Đổi thì
+      # sửa dòng `cd` bên dưới.
+      - name: SSH pull + deploy
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.AZDIGI_HOST }}
+          username: ${{ secrets.AZDIGI_USER }}
+          port: ${{ secrets.AZDIGI_PORT }}
+          key: ${{ secrets.AZDIGI_SSH_KEY }}
+          script_stop: true
+          script: |
+            set -e
+            cd "$HOME/repositories/tntt"
+            git pull --ff-only origin master
+            bash scripts/deploy.sh

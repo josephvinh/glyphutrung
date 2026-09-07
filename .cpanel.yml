@@ -31,10 +31,10 @@
 # ============================================================
 deployment:
   tasks:
-    - export DEPLOYPATH="$HOME/tntt-app"
-    - /bin/mkdir -p "$DEPLOYPATH"
-    - /usr/bin/rsync -a --delete --exclude=.git --exclude=.github --exclude=.claude --exclude=docs --exclude=config/config.php --exclude=config/config.local.php --exclude=config/backup ./ "$DEPLOYPATH/"
-    - /bin/echo "Deploy xong -> $DEPLOYPATH (docroot phải trỏ vào $DEPLOYPATH/public)"
+    # Gọi script chung (dùng lại được cho cả GitHub Actions).
+    # Đổi thư mục app thì đặt DEPLOYPATH ở đây, ví dụ:
+    #   - export DEPLOYPATH="$HOME/ten-khac"
+    - /bin/bash scripts/deploy.sh
 
 # ------------------------------------------------------------
 # Nếu không có rsync, thay dòng rsync ở trên bằng 3 dòng sau
