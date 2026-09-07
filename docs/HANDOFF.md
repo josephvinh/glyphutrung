@@ -259,9 +259,37 @@ Kiểm chứng nhanh: `grep reporthub core.js` (có), thanh dưới 5 tab, `modu
    phải gỡ.
 
 ### 9.4 Nhớ nhắc người dùng
-- Chạy `php config/migrate_roles_du_bi.php` trên máy chủ thật (vai Dự Bị + quyền
-  GVCN/Trưởng khối).
+- **Migration phải chạy 1 lần trên máy chủ thật** (idempotent, chạy lại vô hại):
+  - `php config/migrate_roles_du_bi.php` — vai Dự Bị + quyền GVCN/Trưởng khối.
+  - `php config/migrate_modules_sync.php` — thêm dòng `reporthub`/`analytics`/
+    `calendar` vào bảng `modules` (thiếu là mất icon Báo cáo).
+  - `php config/migrate_bdh_view.php` — hạ BĐH xuống `view` cho `scores`+`reports`.
 - Thư mục lạ `NGOC VINH/` chưa track — hỏi trước khi làm gì với nó.
+- **`config/config.php` đang trỏ DB `tntt_demo`** để test localhost — KHÔNG commit;
+  khi người dùng nói "đổi lại DB thật" thì sửa `name` về `ylcqukhi_glyphutrung`.
+
+### 9.5 ✅ ĐÃ XONG — "Chọn bộ lọc mới hiện" cho các màn theo lớp/khối
+Đẩy tiếp mô hình của tab **Danh sách** (đoàn đông → không đổ cả danh sách, bắt
+lọc trước) sang mọi màn làm việc theo lớp/khối, cho **mọi vai** (đã push):
+- `b65744a` Danh sách toàn đoàn trống tới khi lọc (khối/lớp/tìm) + bỏ tab Phân tích.
+- `9ef87f9` **Điểm số** + **Phiếu liên lạc**: mặc định "— Chọn lớp —", chọn mới hiện.
+- `336b9a1` **Điểm danh** (tay) + **Lên lớp**: bắt chọn lớp/khối; **perf Lên lớp**
+  xét khối 120 em ~9.9s → ~0.7s (đệm `yearAttendance` theo khối + chỉ tính trong
+  khối, thay vì dựng lại chỉ số điểm danh cho từng em).
+
+**Quy tắc chung áp dụng:** ai chỉ có **đúng 1 lớp/khối** thì tự mở luôn (không
+phiền GLV chủ nhiệm); nhiều lớp/khối (kiêm nhiệm/Trưởng khối/BĐH/QT) thì để trống
++ hiện lời mời. Bộ chọn **chỉ liệt kê lớp mình được phân công** (`availableClasses`
+đã lọc theo `myClasses`). Cài đặt mặc định nằm ở `openScores/openReports/
+startSession/openPromotion`; điều kiện rỗng trong view khoá theo giá trị lớp
+(`scoreClass===''`…), không theo vai → tự đúng cho mọi role. **Ngoại lệ:** tab
+**In thẻ QR** và **quét QR** giữ nguyên (quét chạy theo khối, không cần chọn lớp;
+gõ tên vẫn tìm xuyên lớp khi chưa chọn).
+
+**Còn nợ (tuỳ chọn):** `promoteSummary`/`promoteVerdict` vẫn gọi `yearAverage`
+(quét `scores`) cho từng em mỗi lần render → ~0.7s cho 120 em; muốn nhanh hơn nữa
+thì đệm nốt phần điểm. Lỗi console `profileStudent.code` (img QR trong modal hồ sơ
+khi chưa mở) có sẵn từ trước, vô hại — dọn khi tiện.
 
 ---
 
