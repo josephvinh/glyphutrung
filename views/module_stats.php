@@ -1,5 +1,7 @@
-<!-- MÀN HÌNH THỐNG KÊ (standalone) -->
-<div data-module="stats" class="module-panel pt-6 pb-10 relative">
+<!-- MÀN HÌNH THỐNG KÊ — chỉ hiển thị trong hub Báo cáo (tab Thống kê).
+     KHÔNG đặt data-module ở đây: changeModule sẽ set display:none cho mọi
+     [data-module] -> nếu để, tab Thống kê trong hub bị ẩn trắng. -->
+<div class="module-panel pt-6 pb-10 relative">
 
     <!-- 1. THANH ĐIỀU HƯỚNG -->
     <div class="flex items-center justify-between mb-5">

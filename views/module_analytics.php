@@ -1,5 +1,6 @@
-<!-- MÀN HÌNH PHÂN TÍCH ĐIỂM DANH -->
-<div data-module="analytics" class="module-panel pt-6 pb-10 relative">
+<!-- MÀN HÌNH PHÂN TÍCH ĐIỂM DANH — chỉ trong hub Báo cáo (tab Phân tích).
+     KHÔNG đặt data-module (xem lý do ở module_stats.php). -->
+<div class="module-panel pt-6 pb-10 relative">
 
     <!-- 1. THANH ĐIỀU HƯỚNG -->
     <div class="flex items-center justify-between mb-5">

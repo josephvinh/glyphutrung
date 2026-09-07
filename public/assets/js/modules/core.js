@@ -480,7 +480,7 @@ window.TNTT.core = {
         // Khu điều hành (icon màu để dùng chung lưới phẳng + thanh bên)
         { key: 'promotion',     label: 'Lên lớp',      icon: 'trending-up',     color: 'text-violet-600', area: 'bdh', group: 'Chương trình' },
         { key: 'programs',      label: 'Chương trình', icon: 'calendar-plus',   color: 'text-amber-600',  area: 'bdh', group: 'Chương trình' },
-        { key: 'calendar',      label: 'Lịch trình',   icon: 'calendar-days',   color: 'text-teal-600',   area: 'bdh', group: 'Chương trình' },
+        { key: 'calendar',      label: 'Lịch trình',   icon: 'calendar-days',   color: 'text-teal-600',   area: 'bdh', group: 'Chương trình', hidden: true },
         { key: 'announcements', label: 'Thông báo',    icon: 'megaphone',       color: 'text-rose-500',   area: 'bdh', group: 'Điều hành' },
         { key: 'staff',         label: 'Nhân sự',      icon: 'user-cog',        color: 'text-cyan-600',   area: 'bdh', group: 'Điều hành', badge: 'staff' },
         { key: 'years',         label: 'Niên khoá',    icon: 'calendar-range',  color: 'text-indigo-600', area: 'bdh', group: 'Điều hành' }
