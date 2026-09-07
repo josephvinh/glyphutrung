@@ -29,6 +29,15 @@ if (!headers_sent()) {
     header('X-Frame-Options: SAMEORIGIN');
     header('Referrer-Policy: strict-origin-when-cross-origin');
     header('Permissions-Policy: geolocation=(), microphone=(), camera=(), payment=()');
+    // CSP đặt SONG SONG với .htaccess: máy chủ nào thiếu mod_headers thì
+    // tầng PHP vẫn siết. Cho 'unsafe-eval' vì Alpine.js dựng biểu thức bằng
+    // AsyncFunction; 'unsafe-inline' vì có <script> nhúng dữ liệu boot.
+    header("Content-Security-Policy: default-src 'self'; "
+         . "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
+         . "style-src 'self' 'unsafe-inline'; "
+         . "img-src 'self' data: https: blob:; "
+         . "font-src 'self'; connect-src 'self'; "
+         . "base-uri 'self'; form-action 'self'; frame-ancestors 'none';");
     if (!empty($_SERVER['HTTPS'])) {
         header('Strict-Transport-Security: max-age=15552000');
     }

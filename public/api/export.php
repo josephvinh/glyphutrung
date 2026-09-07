@@ -482,6 +482,14 @@ function build_scores_csv(array $students, array $scores, array $scoreTypes, arr
 
 function csv_escape(string $value): string
 {
+    // CHỐNG CSV/EXCEL FORMULA INJECTION:
+    // Ô bắt đầu bằng = + - @ (hoặc tab/xuống dòng) bị Excel/Google Sheets
+    // hiểu là CÔNG THỨC. Kẻ xấu đặt tên/nhận xét kiểu =HYPERLINK(...) hay
+    // =cmd|... để lừa người mở file. Thêm dấu nháy đơn ở đầu -> ép thành
+    // văn bản thuần, không còn là công thức.
+    if ($value !== '' && in_array($value[0], ['=', '+', '-', '@', "\t", "\r"], true)) {
+        $value = "'" . $value;
+    }
     if (strpos($value, ',') !== false || strpos($value, '"') !== false || strpos($value, "\n") !== false) {
         return '"' . str_replace('"', '""', $value) . '"';
     }

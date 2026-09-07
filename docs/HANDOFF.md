@@ -282,3 +282,41 @@ php config/install.php
 # Test
 php phpunit10.phar --no-coverage
 ```
+
+---
+
+## 11. Bảo mật khi lên máy chủ thật
+
+### 11.1 ✅ Đã có sẵn trong code (không phải làm lại)
+- **SQL injection**: PDO prepared + `ATTR_EMULATE_PREPARES=false` (`config/db.php`); mọi truy vấn dùng `?`.
+- **Brute-force đăng nhập**: `login_throttle()` chặn theo SĐT + IP, quá ngưỡng → 429 (bảng `login_attempts`), `_bootstrap.php`.
+- **Session**: cookie `HttpOnly` + `SameSite=Lax` + `Secure` khi HTTPS; `session_regenerate_id(true)` khi đăng nhập (`_common.php`, `auth.php`).
+- **CSRF**: `require_csrf()` kiểm token qua header `X-CSRF-TOKEN` (`_bootstrap.php` + `csrf.php`).
+- **Header bảo mật**: `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, `HSTS` (khi HTTPS) — đặt SONG SONG ở `.htaccess` VÀ `_common.php`.
+- **CSP**: có ở `public/.htaccess` VÀ `_common.php` (khớp nhau). Cho `'unsafe-inline'`+`'unsafe-eval'` vì Alpine.js + script nhúng boot; `frame-ancestors 'none'`, `object`/`base-uri`/`form-action` siết.
+- **`.htaccess`**: `Options -Indexes`, chặn tải `.sql/.bak/.env/.log/.md/...` và dotfiles, `RedirectMatch 404` cho `config|backup|views`.
+- **Mật khẩu**: `password_hash` bcrypt.
+- **CSV/Excel formula injection**: `csv_escape()` (`export.php`) thêm `'` vào ô bắt đầu `= + - @` (tránh `=HYPERLINK/=cmd`).
+- Đã **xoá** file debug `public/kiem-tra.php`, `kiem-tra-qr.php` (khôi phục từ git nếu cần chẩn đoán 500: `git show <commit>:public/kiem-tra.php > public/kiem-tra.php`).
+
+### 11.2 ⚠️ Việc PHẢI làm trên máy chủ (thao tác hạ tầng, không phải code)
+Ưu tiên cao → thấp:
+1. **Bật HTTPS** (Let's Encrypt / SSL của AZDIGI). HSTS + cookie Secure chỉ bật khi có HTTPS.
+2. **Đổi tài khoản DB `root` không mật khẩu** → tạo user riêng chỉ có quyền trên đúng 1 database:
+   ```sql
+   CREATE USER 'tntt_app'@'localhost' IDENTIFIED BY '<mật-khẩu-mạnh>';
+   GRANT SELECT, INSERT, UPDATE, DELETE ON ylcqukhi_glyphutrung.* TO 'tntt_app'@'localhost';
+   FLUSH PRIVILEGES;
+   ```
+   Rồi sửa `config/config.php`: `user`/`pass` sang tài khoản mới. (Giới hạn thiệt hại nếu bị chọc thủng.)
+3. **Đổi mật khẩu mặc định** `tntt@2026` và ép đổi lần đầu (`must_change_pw`).
+4. **Đặt document root = thư mục `public/`** (để `config/`, `views/`, `backup/` nằm ngoài web). Đây là điều kiện tiên quyết cho các lớp phòng thủ khác.
+5. **Tắt hiện lỗi** production: `display_errors=Off` (đã có cờ `production=true` trong config — kiểm tra nó thực sự tắt lỗi).
+6. **Sao lưu DB định kỳ** ra nơi khác + mã hoá. KHÔNG để lộ `config/backup/` (chứa tên thật thiếu nhi — đã gitignore).
+
+### 11.3 🛡️ Chống DDoS — ở tầng hạ tầng, PHP không tự chống được
+- **Đặt sau Cloudflare (gói miễn phí)** — giải pháp chính: chống DDoS thể tích, WAF, rate-limit, che IP gốc, cache. Chỉ cần trỏ DNS qua Cloudflare.
+- Web server: `mod_evasive` (Apache) / `limit_req` (nginx); **fail2ban** chặn IP spam.
+- (Tuỳ chọn) thêm throttle cho API ghi dữ liệu, không chỉ login.
+
+> Đây là rà soát thực dụng theo code, KHÔNG phải kiểm định an ninh đầy đủ. Với dữ liệu trẻ em, nếu có điều kiện nên nhờ pentest chuyên sâu một lần.
