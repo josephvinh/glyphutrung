@@ -161,6 +161,7 @@ window.TNTT.core = {
             this.classCounts       = d.classCounts || {};
             this.programs          = d.programs;
             this.attendances       = d.attendances;
+            this.rebuildAttendanceIndex(); // index O(1) — tránh treo khi đoàn lớn
             this.leaveRequests     = d.leaveRequests;
             this.scores            = d.scores;
             this.reports           = d.reports;

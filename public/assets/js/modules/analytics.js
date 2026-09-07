@@ -136,9 +136,11 @@ window.TNTT.analytics = {
             }
         });
 
+        // Tra học sinh theo id bằng Map (O(1)) — tránh students.find() lặp 34k lần
+        const stuById = new Map(students.map(s => [s.id, s]));
         // Count attendance by class
         this.attendances.forEach(a => {
-            const student = students.find(s => s.id === a.studentId);
+            const student = stuById.get(a.studentId);
             if (student && classMap[student.className]) {
                 classMap[student.className].total++;
                 if (a.status === 'present' || a.status === 'có mặt' || a.status === 'late' || a.status === 'đi trễ') {
@@ -163,10 +165,10 @@ window.TNTT.analytics = {
     get lowAttendance() {
         const students = this.accessibleStudents.filter(s => s.status === 'đang sinh hoạt');
         const results = [];
+        const totalSessions = this.totalSessions; // tính MỘT lần, không lặp lại 600 lần
 
         students.forEach(s => {
-            const totalSessions = this.totalSessions;
-            const studentAttendance = this.attendances.filter(a => a.studentId === s.id);
+            const studentAttendance = this.attOfStudent(s.id);
             const present = studentAttendance.filter(a =>
                 a.status === 'present' || a.status === 'có mặt' ||
                 a.status === 'late' || a.status === 'đi trễ'

@@ -50,11 +50,9 @@ window.TNTT.student_profile = {
     getUnexcusedAbsences(studentId) {
         if (!this.attendances || !this.leaves || !this.programs) return 0;
 
-        // Lấy danh sách các buổi đã điểm danh của em
+        // Lấy danh sách các buổi đã điểm danh của em (index O(1) theo em)
         const attendedDates = new Set(
-            this.attendances
-                .filter(a => a.studentId === studentId)
-                .map(a => a.date)
+            this.attOfStudent(studentId).map(a => a.date)
         );
 
         // Lấy các ngày có phép
@@ -102,9 +100,10 @@ window.TNTT.student_profile = {
     getAttendanceRate(studentId) {
         if (!this.attendances || !this.programs) return 0;
 
-        const total = this.attendances.filter(a => a.studentId === studentId).length;
-        const present = this.attendances.filter(a => a.studentId === studentId && a.status === 'có mặt').length;
-        const late = this.attendances.filter(a => a.studentId === studentId && a.status === 'đi trễ').length;
+        const mine = this.attOfStudent(studentId);
+        const total = mine.length;
+        const present = mine.filter(a => a.status === 'có mặt').length;
+        const late = mine.filter(a => a.status === 'đi trễ').length;
 
         // Ước tính tổng số buổi dựa trên các buổi đã điểm danh + vắng
         const attended = present + late;

@@ -15,6 +15,10 @@ window.TNTT.attendance = {
     // Nhờ vậy không cần tiến trình chạy nền lúc 07:30 để "đánh vắng".
     // ==========================================
     attendances: [],   // máy chủ nạp qua loadData()
+    // Index tra cứu O(1) (dựng trong loadData) — tránh .find/.filter O(n) trên
+    // hàng chục nghìn dòng ở mỗi lần render, vốn làm treo máy với đoàn lớn.
+    attIndex: null,      // 'programId|date|studentId' -> bản ghi
+    attByStudent: null,  // studentId -> mảng bản ghi của em đó
 
     attendanceDate: '',
     activeSession: null,      // { programId, date }
@@ -111,9 +115,54 @@ window.TNTT.attendance = {
                 || this.normalizeText(s.code).includes(q));
     },
 
+    // ---- Index điểm danh (O(1)) ----
+    attKey(programId, date, studentId) { return programId + '|' + date + '|' + studentId; },
+
+    // Dựng lại toàn bộ index từ this.attendances. Gọi sau loadData.
+    rebuildAttendanceIndex() {
+        const idx = new Map();
+        const byStu = new Map();
+        for (const a of this.attendances) {
+            idx.set(this.attKey(a.programId, a.date, a.studentId), a);
+            let arr = byStu.get(a.studentId);
+            if (!arr) { arr = []; byStu.set(a.studentId, arr); }
+            arr.push(a);
+        }
+        this.attIndex = idx;
+        this.attByStudent = byStu;
+    },
+
+    // Thêm/xoá 1 bản ghi: cập nhật CẢ mảng lẫn index để không lệch.
+    _attThem(rec) {
+        this.attendances.push(rec);
+        if (this.attIndex) this.attIndex.set(this.attKey(rec.programId, rec.date, rec.studentId), rec);
+        if (this.attByStudent) {
+            let arr = this.attByStudent.get(rec.studentId);
+            if (!arr) { arr = []; this.attByStudent.set(rec.studentId, arr); }
+            arr.push(rec);
+        }
+    },
+    _attXoa(programId, date, studentId) {
+        const key = this.attKey(programId, date, studentId);
+        const rec = this.attIndex ? this.attIndex.get(key) : null;
+        const i = this.attendances.findIndex(a => a.programId === programId && a.date === date && a.studentId === studentId);
+        if (i !== -1) this.attendances.splice(i, 1);
+        if (this.attIndex) this.attIndex.delete(key);
+        if (this.attByStudent && rec) {
+            const arr = this.attByStudent.get(studentId);
+            if (arr) { const j = arr.indexOf(rec); if (j !== -1) arr.splice(j, 1); }
+        }
+        return rec;
+    },
+    // Mảng điểm danh của 1 em (O(1) lấy mảng nhỏ) — cho hồ sơ/phân tích.
+    attOfStudent(studentId) {
+        return (this.attByStudent && this.attByStudent.get(studentId)) || [];
+    },
+
     attendanceRecord(studentId, session) {
         const ss = session || this.activeSession;
         if (!ss) return null;
+        if (this.attIndex) return this.attIndex.get(this.attKey(ss.programId, ss.date, studentId)) || null;
         return this.attendances.find(a => a.programId === ss.programId && a.date === ss.date && a.studentId === studentId) || null;
     },
 
@@ -151,14 +200,10 @@ window.TNTT.attendance = {
         if (this._chamGanNhat[student.id] && gio - this._chamGanNhat[student.id] < 450) return;
         this._chamGanNhat[student.id] = gio;
 
-        const idx = this.attendances.findIndex(a =>
-            a.programId === this.activeSession.programId &&
-            a.date === this.activeSession.date &&
-            a.studentId === student.id);
+        const cu = this.attendanceRecord(student.id, this.activeSession);
 
-        if (idx !== -1) {
-            const cu = this.attendances[idx];
-            this.attendances.splice(idx, 1);
+        if (cu) {
+            this._attXoa(this.activeSession.programId, this.activeSession.date, student.id);
             this.save('attendance', 'toggle', {
                 programId: this.activeSession.programId,
                 date: this.activeSession.date,
@@ -171,7 +216,7 @@ window.TNTT.attendance = {
             return;
         }
 
-        this.attendances.push({
+        this._attThem({
             programId: this.activeSession.programId,
             date: this.activeSession.date,
             studentId: student.id,

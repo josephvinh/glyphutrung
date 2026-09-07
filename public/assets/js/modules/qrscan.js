@@ -346,10 +346,8 @@ window.TNTT.qrscan = {
      */
     _qrGhiTamThoi(em) {
         const s = this.activeSession;
-        const co = this.attendances.some(a =>
-            a.programId === s.programId && a.date === s.date && a.studentId === em.id);
-        if (co) return;
-        this.attendances.push({
+        if (this.attendanceRecord(em.id, s)) return;   // đã có -> bỏ
+        this._attThem({
             programId: s.programId, date: s.date, studentId: em.id,
             status: this.isPastCutoff ? 'đi trễ' : 'có mặt',
             method: 'qr', markedBy: this.user.fullName, markedAt: this.currentTime()
