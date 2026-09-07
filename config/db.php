@@ -23,6 +23,14 @@ function db(): PDO
     }
 
     $c = app_config('db');
+    // Cho phép TRỎ SANG DB KHÁC qua biến môi trường (tiện cho demo/staging/
+    // seed dữ liệu) mà không phải sửa config.php. Chỉ ghi đè khi biến tồn tại.
+    foreach (['host' => 'TNTT_DB_HOST', 'port' => 'TNTT_DB_PORT',
+              'name' => 'TNTT_DB_NAME', 'user' => 'TNTT_DB_USER',
+              'pass' => 'TNTT_DB_PASS'] as $k => $env) {
+        $v = getenv($env);
+        if ($v !== false) $c[$k] = $v;
+    }
     $dsn = sprintf('mysql:host=%s;port=%d;dbname=%s;charset=%s',
         $c['host'], $c['port'], $c['name'], $c['charset']);
 

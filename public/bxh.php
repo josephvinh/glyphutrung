@@ -63,28 +63,30 @@ $students = db_all(
 
 /* ---------- Điểm danh trong kỳ (bao gồm cả tuần này) ---------- */
 $attRows = db_all(
-    "SELECT student_id, session_date, status FROM attendances
+    "SELECT student_id, program_id, session_date, status FROM attendances
       WHERE year_id = ? AND session_date BETWEEN ? AND ?",
     [$yearId, $termStart, $termEnd]
 );
 // gộp theo học sinh: đếm cho KỲ + cho TUẦN
 $att = []; // id => ['tCM','tDT','tCP','tTong','wCM','wDT','wCP']
+// Vắng = KHÔNG có dòng điểm danh (enum status chỉ có 'có mặt'/'đi trễ').
+// Nên "tổng số buổi" của kỳ = số buổi ĐÃ DIỄN RA = số (program_id|ngày) khác nhau
+// có ít nhất một em được ghi. Đó là mẫu số để tính tỷ lệ có mặt cho mọi em.
+$buoiKy = []; // 'program_id|date' => 1
 foreach ($attRows as $a) {
     $sid = (int) $a['student_id'];
-    if (!isset($att[$sid])) $att[$sid] = ['tCM'=>0,'tDT'=>0,'tCP'=>0,'tTong'=>0,'wCM'=>0,'wDT'=>0,'wCP'=>0];
+    if (!isset($att[$sid])) $att[$sid] = ['tCM'=>0,'tDT'=>0,'wCM'=>0,'wDT'=>0];
     $st = $a['status'];
-    $att[$sid]['tTong']++;
-    if ($st === 'có mặt')            $att[$sid]['tCM']++;
-    elseif ($st === 'đi trễ')        $att[$sid]['tDT']++;
-    elseif ($st === 'vắng có phép')  $att[$sid]['tCP']++;
-    // vắng không phép: chỉ tính vào tổng
+    $buoiKy[$a['program_id'] . '|' . $a['session_date']] = 1;
+    if ($st === 'có mặt')      $att[$sid]['tCM']++;
+    elseif ($st === 'đi trễ')  $att[$sid]['tDT']++;
     $trongTuan = ($a['session_date'] >= $weekStart && $a['session_date'] <= $weekEnd);
     if ($trongTuan) {
-        if ($st === 'có mặt')           $att[$sid]['wCM']++;
-        elseif ($st === 'đi trễ')       $att[$sid]['wDT']++;
-        elseif ($st === 'vắng có phép') $att[$sid]['wCP']++;
+        if ($st === 'có mặt')     $att[$sid]['wCM']++;
+        elseif ($st === 'đi trễ') $att[$sid]['wDT']++;
     }
 }
+$soBuoiKy = count($buoiKy); // tổng số buổi đã diễn ra trong kỳ
 
 /* ---------- Điểm số trong kỳ (kèm trọng số) ----------
    KHÔNG JOIN score_types trong SQL: cột code/type_code có thể khác collation
@@ -109,11 +111,13 @@ foreach ($scoreRows as $r) {
 $rowsEm = [];
 foreach ($students as $s) {
     $sid = (int) $s['id'];
-    $a = $att[$sid] ?? ['tCM'=>0,'tDT'=>0,'tCP'=>0,'tTong'=>0,'wCM'=>0,'wDT'=>0,'wCP'=>0];
+    $a = $att[$sid] ?? ['tCM'=>0,'tDT'=>0,'wCM'=>0,'wDT'=>0];
     if ($period === 'tuan') {
-        $diem = (float) td_diem_tuan($a['wCM'], $a['wDT'], $a['wCP']);
+        $diem = (float) td_diem_tuan($a['wCM'], $a['wDT'], 0);
     } else {
-        $tyLe    = td_ty_le_co_mat($a['tCM'], $a['tDT'], $a['tTong']);
+        // Mẫu số là TỔNG số buổi đã diễn ra (không phải số dòng của em) ->
+        // em vắng nhiều thì tỷ lệ thấp.
+        $tyLe    = td_ty_le_co_mat($a['tCM'], $a['tDT'], $soBuoiKy);
         $hocTap  = td_hoc_tap_100($scoreOf[$sid] ?? []);
         $diem    = td_diem_ky($tyLe, $hocTap);
     }
@@ -321,10 +325,10 @@ select{border:1px solid #e2e8f0;border-radius:999px;padding:8px 12px;font-size:1
   <div class="ct">
     <b>Cách tính điểm (tự động, không ai chỉnh):</b><br>
     <?php if ($period==='tuan'): ?>
-      Điểm <b>Tuần</b> theo chuyên cần: Có mặt +10 · Đi trễ +6 · Vắng có phép +3 · Vắng không phép 0.
+      Điểm <b>Tuần</b> theo chuyên cần: Có mặt +10 · Đi trễ +6 · Vắng 0.
     <?php else: ?>
-      Điểm <b>Học kỳ</b> (thang 100) = <b>60%</b> chuyên cần (tỷ lệ có mặt) + <b>40%</b> học tập (điểm trung bình).
-      Xếp hạng <b>lớp</b> = điểm trung bình các em trong lớp.
+      Điểm <b>Học kỳ</b> (thang 100) = <b>60%</b> chuyên cần (số buổi có mặt / tổng số buổi đã diễn ra)
+      + <b>40%</b> học tập (điểm trung bình). Xếp hạng <b>lớp</b> = điểm trung bình các em trong lớp.
     <?php endif; ?>
   </div>
 
