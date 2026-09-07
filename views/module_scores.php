@@ -28,6 +28,7 @@
         <div>
             <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Lớp</label>
             <select x-model="scoreClass" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                <option value="">— Chọn lớp —</option>
                 <template x-for="c in availableClasses" :key="c">
                     <option :value="c" x-text="c"></option>
                 </template>
@@ -35,8 +36,15 @@
         </div>
     </div>
 
+    <!-- Chưa chọn lớp: mời chọn, KHÔNG đổ cả đoàn ra cho nhẹ (giống Danh sách) -->
+    <div x-show="scoreClass === ''" style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
+        <i data-lucide="filter" class="w-12 h-12 mx-auto text-slate-300 mb-4"></i>
+        <p class="text-slate-600 font-semibold text-base mb-1">Chọn lớp để xem điểm</p>
+        <p class="text-slate-400 text-sm">Điểm số xem theo từng lớp — hãy chọn một lớp ở ô phía trên.</p>
+    </div>
+
     <!-- 3. HAI TAB -->
-    <div class="bg-white rounded-field p-1.5 shadow-sm border border-slate-100 flex gap-1.5 mb-4">
+    <div x-show="scoreClass !== ''" style="display: none;" class="bg-white rounded-field p-1.5 shadow-sm border border-slate-100 flex gap-1.5 mb-4">
         <button @click="scoreTab = 'enter'" type="button"
                 class="flex-1 py-2.5 rounded-2xl font-bold text-xs transition-colors flex items-center justify-center gap-1.5"
                 :class="scoreTab === 'enter' ? 'bg-blue-600 text-white shadow-md shadow-blue-200' : 'text-slate-500'">
@@ -54,7 +62,7 @@
          Chấm xong bài nào nhập cột đó, gõ một mạch từ trên xuống —
          nhanh hơn nhiều so với mở popup từng em.
          ========================================================== -->
-    <div x-show="scoreTab === 'enter'">
+    <div x-show="scoreClass !== '' && scoreTab === 'enter'" style="display: none;">
 
         <!-- Chọn đầu điểm -->
         <div class="grid grid-cols-4 gap-2 mb-4">
@@ -123,7 +131,7 @@
     <!-- ==========================================================
          TAB 2: BẢNG ĐIỂM
          ========================================================== -->
-    <div x-show="scoreTab === 'table'" style="display: none;">
+    <div x-show="scoreClass !== '' && scoreTab === 'table'" style="display: none;">
         <div class="scroll-x bg-white rounded-card border border-slate-100 shadow-sm overflow-x-auto">
             <table class="w-full text-sm">
                 <thead>

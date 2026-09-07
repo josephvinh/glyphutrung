@@ -30,9 +30,13 @@ window.TNTT.scores = {
     PASS_ATTENDANCE: 60,
 
     openScores() {
-        this.scoreClass = this.availableClasses.includes(this.user.assignedClass)
-            ? this.user.assignedClass
-            : (this.availableClasses[0] || '');
+        // Toàn đoàn (Quản Trị / Ban Điều Hành): KHÔNG tự chọn lớp đầu tiên —
+        // bắt chọn lớp mới hiện, giống danh sách Thiếu Nhi cho nhẹ + gọn.
+        this.scoreClass = this.isUnrestrictedScope
+            ? ''
+            : (this.availableClasses.includes(this.user.assignedClass)
+                ? this.user.assignedClass
+                : (this.availableClasses[0] || ''));
         this.scoreTermId = this.currentTerm.id;
         this.changeModule('scores');
     },

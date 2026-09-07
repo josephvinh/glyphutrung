@@ -37,6 +37,7 @@
         <div>
             <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Lớp</label>
             <select x-model="reportClass" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                <option value="">— Chọn lớp —</option>
                 <template x-for="c in availableClasses" :key="c">
                     <option :value="c" x-text="c"></option>
                 </template>
@@ -44,8 +45,15 @@
         </div>
     </div>
 
+    <!-- Chưa chọn lớp: mời chọn, KHÔNG đổ cả đoàn ra cho nhẹ (giống Danh sách) -->
+    <div x-show="reportClass === ''" style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
+        <i data-lucide="filter" class="w-12 h-12 mx-auto text-slate-300 mb-4"></i>
+        <p class="text-slate-600 font-semibold text-base mb-1">Chọn lớp để xem phiếu</p>
+        <p class="text-slate-400 text-sm">Phiếu liên lạc lập theo từng lớp — hãy chọn một lớp ở ô phía trên.</p>
+    </div>
+
     <!-- 3. TIẾN ĐỘ LẬP PHIẾU -->
-    <div class="grid grid-cols-3 gap-3 mb-4">
+    <div x-show="reportClass !== ''" style="display: none;" class="grid grid-cols-3 gap-3 mb-4">
         <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-100 text-center">
             <p class="text-2xl font-black text-emerald-600" x-text="reportProgress.sent"></p>
             <p class="text-micro font-bold text-slate-500 uppercase tracking-wide">Đã gửi</p>
@@ -112,7 +120,7 @@
             </button>
         </template>
 
-        <div x-show="reportStudents.length === 0" style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
+        <div x-show="reportClass !== '' && reportStudents.length === 0" style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
             <i data-lucide="users" class="w-10 h-10 mx-auto text-slate-300 mb-3"></i>
             <p class="text-slate-500 font-medium text-sm">Lớp này chưa có em nào.</p>
         </div>
