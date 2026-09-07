@@ -28,13 +28,10 @@ window.TNTT.reports = {
     previewStudentId: null,
 
     openReports() {
-        // Toàn đoàn (Quản Trị / Ban Điều Hành): KHÔNG tự chọn lớp đầu tiên —
-        // bắt chọn lớp mới hiện, giống danh sách Thiếu Nhi cho nhẹ + gọn.
-        this.reportClass = this.isUnrestrictedScope
-            ? ''
-            : (this.availableClasses.includes(this.user.assignedClass)
-                ? this.user.assignedClass
-                : (this.availableClasses[0] || ''));
+        // Bắt chọn lớp trước khi hiện phiếu (giống Danh sách). Chỉ tự mở khi
+        // người dùng vỏn vẹn MỘT lớp; nhiều lớp thì để trống, chọn lớp nào
+        // xem lớp đó. Bộ chọn chỉ liệt kê lớp mình được phân công.
+        this.reportClass = this.availableClasses.length === 1 ? this.availableClasses[0] : '';
         this.changeModule('reports');
     },
 

@@ -30,13 +30,11 @@ window.TNTT.scores = {
     PASS_ATTENDANCE: 60,
 
     openScores() {
-        // Toàn đoàn (Quản Trị / Ban Điều Hành): KHÔNG tự chọn lớp đầu tiên —
-        // bắt chọn lớp mới hiện, giống danh sách Thiếu Nhi cho nhẹ + gọn.
-        this.scoreClass = this.isUnrestrictedScope
-            ? ''
-            : (this.availableClasses.includes(this.user.assignedClass)
-                ? this.user.assignedClass
-                : (this.availableClasses[0] || ''));
+        // Bắt chọn lớp trước khi hiện điểm (giống Danh sách). Chỉ tự mở khi
+        // người dùng vỏn vẹn MỘT lớp; nhiều lớp (kiêm nhiệm / Trưởng khối /
+        // BĐH / Quản trị) thì để trống, chọn lớp nào xem lớp đó. Bộ chọn chỉ
+        // liệt kê lớp mình được phân công (availableClasses).
+        this.scoreClass = this.availableClasses.length === 1 ? this.availableClasses[0] : '';
         this.scoreTermId = this.currentTerm.id;
         this.changeModule('scores');
     },

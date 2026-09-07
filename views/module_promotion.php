@@ -36,14 +36,22 @@
     <div class="bg-white rounded-card p-4 shadow-sm border border-slate-100 mb-4">
         <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Khối xét lên lớp</label>
         <select x-model="promoteBlock" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+            <option value="">— Chọn khối —</option>
             <template x-for="b in availableBlocks" :key="b">
                 <option :value="b" x-text="b"></option>
             </template>
         </select>
     </div>
 
+    <!-- Chưa chọn khối: mời chọn, KHÔNG xét cả đoàn cho nhẹ (giống Danh sách) -->
+    <div x-show="promoteBlock === ''" style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
+        <i data-lucide="filter" class="w-12 h-12 mx-auto text-slate-300 mb-4"></i>
+        <p class="text-slate-600 font-semibold text-base mb-1">Chọn khối để xét lên lớp</p>
+        <p class="text-slate-400 text-sm">Việc xét lên lớp làm theo từng khối — hãy chọn một khối ở ô phía trên.</p>
+    </div>
+
     <!-- 3. BA BƯỚC -->
-    <div class="bg-white rounded-field p-1.5 shadow-sm border border-slate-100 flex gap-1.5 mb-4">
+    <div x-show="promoteBlock !== ''" style="display: none;" class="bg-white rounded-field p-1.5 shadow-sm border border-slate-100 flex gap-1.5 mb-4">
         <button @click="promoteTab = 'result'" type="button"
                 class="flex-1 py-2.5 rounded-2xl font-bold text-micro transition-colors"
                 :class="promoteTab === 'result' ? 'bg-blue-600 text-white shadow-md shadow-blue-200' : 'text-slate-500'">
@@ -66,7 +74,7 @@
     <!-- ==========================================================
          BƯỚC 1: XÉT KẾT QUẢ
          ========================================================== -->
-    <div x-show="promoteTab === 'result'">
+    <div x-show="promoteBlock !== '' && promoteTab === 'result'" style="display: none;">
 
         <div class="bg-slate-100 border border-slate-200 rounded-2xl p-3 mb-4 flex items-start gap-2.5">
             <i data-lucide="info" class="w-4 h-4 text-slate-500 shrink-0 mt-0.5"></i>
@@ -144,7 +152,7 @@
     <!-- ==========================================================
          BƯỚC 2: SƠ ĐỒ LÊN LỚP
          ========================================================== -->
-    <div x-show="promoteTab === 'map'" style="display: none;">
+    <div x-show="promoteBlock !== '' && promoteTab === 'map'" style="display: none;">
 
         <div class="bg-slate-100 border border-slate-200 rounded-2xl p-3 mb-4 flex items-start gap-2.5">
             <i data-lucide="info" class="w-4 h-4 text-slate-500 shrink-0 mt-0.5"></i>
@@ -190,7 +198,7 @@
     <!-- ==========================================================
          BƯỚC 3: THỰC HIỆN
          ========================================================== -->
-    <div x-show="promoteTab === 'run'" style="display: none;">
+    <div x-show="promoteBlock !== '' && promoteTab === 'run'" style="display: none;">
 
         <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100 mb-4">
             <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Sắp thực hiện</h3>

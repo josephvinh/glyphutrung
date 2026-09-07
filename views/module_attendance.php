@@ -202,12 +202,20 @@
         <!-- Chọn lớp (hiện khi phụ trách nhiều lớp: kiêm nhiệm, Trưởng Khối, BĐH) -->
         <div x-show="availableClasses.length > 1" style="display: none;" class="relative mb-4">
             <select x-model="attendanceClass" class="w-full bg-white border border-slate-200 rounded-field py-3.5 pl-4 pr-10 text-sm font-semibold text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none">
-                <option value="">Tất cả các lớp</option>
+                <option value="">— Chọn lớp —</option>
                 <template x-for="cls in availableClasses" :key="cls">
                     <option :value="cls" x-text="cls"></option>
                 </template>
             </select>
             <i data-lucide="chevron-down" class="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none"></i>
+        </div>
+
+        <!-- Chưa chọn lớp: mời chọn, KHÔNG đổ cả đoàn ra (giống Danh sách).
+             Quét QR vẫn dùng được vì chạy theo khối. -->
+        <div x-show="attendanceClass === '' && attendanceSearch === ''" style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
+            <i data-lucide="filter" class="w-12 h-12 mx-auto text-slate-300 mb-4"></i>
+            <p class="text-slate-600 font-semibold text-base mb-1">Chọn lớp để điểm danh</p>
+            <p class="text-slate-400 text-sm">Chọn một lớp ở ô trên để hiện danh sách, hoặc gõ tên để tìm nhanh. Quét QR thì không cần chọn lớp.</p>
         </div>
 
         <!-- DANH SÁCH ĐIỂM DANH: chạm 1 phát là đổi trạng thái -->
@@ -263,7 +271,7 @@
                 </button>
             </template>
 
-            <div x-show="sessionStudents.length === 0" style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
+            <div x-show="sessionStudents.length === 0 && !(attendanceClass === '' && attendanceSearch === '')" style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
                 <i data-lucide="users-x" class="w-12 h-12 mx-auto text-slate-300 mb-4"></i>
                 <p class="text-slate-600 font-semibold text-base mb-1">Không có em nào phù hợp</p>
                 <p class="text-slate-400 text-sm">Hãy kiểm tra lại phạm vi điểm danh hoặc danh sách lớp</p>

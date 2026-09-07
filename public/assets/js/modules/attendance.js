@@ -64,11 +64,10 @@ window.TNTT.attendance = {
     startSession(prog) {
         this.activeSession = { programId: prog.id, date: this.attendanceDate };
         this.attendanceSearch = '';
-        // Mặc định lớp chính; người kiêm nhiệm vẫn chuyển được sang lớp khác
-        // qua bộ chọn (availableClasses đã gồm mọi lớp mình phụ trách).
-        this.attendanceClass = this.availableClasses.includes(this.user.assignedClass)
-            ? this.user.assignedClass
-            : '';
+        // Bắt chọn lớp cho điểm danh TAY (giống Danh sách): một lớp thì tự mở,
+        // nhiều lớp để trống, chọn lớp nào điểm danh lớp đó. Bộ chọn chỉ hiện
+        // lớp mình phụ trách. Riêng quét QR chạy theo khối, không cần chọn lớp.
+        this.attendanceClass = this.availableClasses.length === 1 ? this.availableClasses[0] : '';
         this.changeModule('attendance');
     },
 
@@ -106,6 +105,9 @@ window.TNTT.attendance = {
     // Chỉ điểm danh các em đang sinh hoạt, trong phạm vi quyền của người đăng nhập
     get sessionStudents() {
         const q = this.normalizeText(this.attendanceSearch);
+        // Chưa chọn lớp thì KHÔNG đổ danh sách (giống Danh sách) — trừ khi
+        // đang gõ tìm tên. Áp cho mọi vai; bộ chọn chỉ hiện lớp mình phụ trách.
+        if (this.attendanceClass === '' && q === '') return [];
         return this.accessibleStudents
             .filter(s => s.status === 'đang sinh hoạt')
             .filter(s => this.attendanceClass === '' || s.className === this.attendanceClass)

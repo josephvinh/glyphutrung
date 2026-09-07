@@ -3,6 +3,14 @@
    Một mảnh của component tnttApp. app.js gộp tất cả các mảnh lại.
    ========================================================== */
 window.TNTT = window.TNTT || {};
+
+// Bộ nhớ đệm chuyên cần cả năm theo KHỐI. yearAttendance bị gọi lại cho
+// TỪNG em khi render (getter không tự nhớ), mà mỗi lần lại dựng chỉ số điểm
+// danh vài chục nghìn dòng -> treo với đoàn lớn. Đệm ở đây, tính một lần cho
+// mỗi khối. Đặt NGOÀI đối tượng Alpine để không dính vòng phản ứng. Khoá theo
+// khối + số bản ghi điểm danh (đổi khi điểm danh thay đổi -> tự tính lại).
+let _promoYearAttCache = { block: null, sig: -1, data: null };
+
 window.TNTT.promotion = {
     // ==========================================
     // 8c. DATA: LÊN LỚP CUỐI NĂM
@@ -18,7 +26,9 @@ window.TNTT.promotion = {
 
     openPromotion() {
         this.promoteTab = 'result';
-        this.promoteBlock = this.availableBlocks[0] || '';
+        // Bắt chọn khối trước khi xét (giống Danh sách): một khối thì tự mở,
+        // nhiều khối (BĐH / Quản trị) để trống, chọn khối nào xét khối đó.
+        this.promoteBlock = this.availableBlocks.length === 1 ? this.availableBlocks[0] : '';
         this.promoteDone = null;
         this.changeModule('promotion');
     },
@@ -38,12 +48,23 @@ window.TNTT.promotion = {
     },
 
     // Chuyên cần cả năm, gộp mọi học kỳ. Vẫn bỏ buổi không ai điểm danh.
+    // CHỈ tính cho khối đang xét (promoteStudents), không quét cả đoàn —
+    // xét lên lớp luôn theo từng khối, tính cả 600 em mỗi lần gọi là thừa
+    // và gây treo khi đoàn lớn.
     get yearAttendance() {
-        const students = this.accessibleStudents.filter(s => s.status === 'đang sinh hoạt');
+        // Trả bản đã đệm nếu vẫn đúng khối + chưa có thay đổi điểm danh.
+        const sig = this.attendances.length;
+        if (_promoYearAttCache.block === this.promoteBlock
+            && _promoYearAttCache.sig === sig
+            && _promoYearAttCache.data) {
+            return _promoYearAttCache.data;
+        }
+
+        const students = this.promoteStudents;
         const blank = () => ({ present: 0, late: 0, excused: 0, unexcused: 0, total: 0 });
         const out = {};
         students.forEach(s => { out[s.id] = blank(); });
-        if (this.terms.length === 0) return out;
+        if (this.terms.length === 0) { _promoYearAttCache = { block: this.promoteBlock, sig, data: out }; return out; }
 
         const idx = this.buildAttendanceIndex();
         const from = this.terms[0].from;
@@ -64,6 +85,7 @@ window.TNTT.promotion = {
                 out[st.id][b]++; out[st.id].total++;
             });
         });
+        _promoYearAttCache = { block: this.promoteBlock, sig, data: out };
         return out;
     },
 
