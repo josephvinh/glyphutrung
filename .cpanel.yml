@@ -17,7 +17,8 @@
 #    - config/backup/           (sao lưu, có tên thật thiếu nhi)
 #  -> nhờ vậy mỗi lần deploy KHÔNG làm mất cấu hình/ dữ liệu máy chủ.
 #
-#  ⚠️ TRƯỚC KHI DÙNG: sửa CPANELUSER thành user cPanel thật của bạn.
+#  DEPLOYPATH tự lấy từ $HOME nên KHÔNG cần sửa user. Muốn đổi tên thư
+#  mục app thì sửa "tntt-app" bên dưới.
 #     Lần deploy đầu, tự tạo config/config.php trong $DEPLOYPATH với
 #     thông tin DB của AZDIGI (xem docs/DEPLOY-AZDIGI.md Bước 5).
 #
@@ -30,7 +31,7 @@
 # ============================================================
 deployment:
   tasks:
-    - export DEPLOYPATH=/home/CPANELUSER/tntt-app
+    - export DEPLOYPATH="$HOME/tntt-app"
     - /bin/mkdir -p "$DEPLOYPATH"
     - /usr/bin/rsync -a --delete --exclude=.git --exclude=.github --exclude=.claude --exclude=docs --exclude=config/config.php --exclude=config/config.local.php --exclude=config/backup ./ "$DEPLOYPATH/"
     - /bin/echo "Deploy xong -> $DEPLOYPATH (docroot phải trỏ vào $DEPLOYPATH/public)"

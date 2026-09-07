@@ -153,8 +153,8 @@ deploy. Mô hình này dùng **2 thư mục**:
   mục clone).
 
 **Thiết lập một lần:**
-1. Mở `.cpanel.yml` (trên GitHub hoặc trong thư mục clone) → sửa `CPANELUSER`
-   thành user cPanel thật của bạn (dòng `export DEPLOYPATH=/home/CPANELUSER/tntt-app`).
+1. `.cpanel.yml` dùng `$HOME/tntt-app` nên **không cần sửa gì** (đổi tên thư mục
+   app thì sửa `tntt-app` trong file). Deploy lần đầu để cPanel tạo `~/tntt-app`.
 2. Trỏ Document Root của tên miền vào `/home/<cpaneluser>/tntt-app/public`.
 3. Tạo `config/config.php` **trong thư mục APP** (`~/tntt-app/config/`) với thông
    tin DB AZDIGI (Bước 5). File này KHÔNG bị deploy đè (đã loại trừ trong `.cpanel.yml`).
