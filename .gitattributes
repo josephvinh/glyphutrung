@@ -1,0 +1,5 @@
+# Script chạy trên Linux host: BẮT BUỘC xuống dòng LF, nếu không bash lỗi
+# "\r: command not found" khi checkout trên Windows rồi deploy.
+*.sh   text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
