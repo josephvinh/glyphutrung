@@ -15,32 +15,24 @@
         <p class="text-micro text-slate-600 leading-snug">Bạn đang ở chế độ <span class="font-bold">chỉ xem</span>.</p>
     </div>
 
-    <!-- 2. CHỌN HỌC KỲ & LỚP -->
-    <div class="bg-white rounded-card p-4 shadow-sm border border-slate-100 mb-4 grid grid-cols-2 gap-3">
-        <div>
-            <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Học kỳ</label>
-            <select x-model.number="scoreTermId" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
-                <template x-for="t in terms" :key="t.id">
-                    <option :value="t.id" x-text="t.name"></option>
-                </template>
-            </select>
-        </div>
-        <div>
-            <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Lớp</label>
-            <select x-model="scoreClass" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
-                <option value="">— Chọn lớp —</option>
-                <template x-for="c in availableClasses" :key="c">
-                    <option :value="c" x-text="c"></option>
-                </template>
-            </select>
-        </div>
+    <!-- 2. CHỌN LỚP — cùng kiểu bộ lọc của Danh sách (thanh + nút phễu) -->
+    <?php $scopeClassModel = 'scoreClass'; include __DIR__ . '/partial_scope_filter.php'; ?>
+
+    <!-- Học kỳ: chỉ hiện sau khi đã chọn lớp -->
+    <div x-show="scoreClass !== ''" style="display: none;" class="bg-white rounded-card p-4 shadow-sm border border-slate-100 mb-4">
+        <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Học kỳ</label>
+        <select x-model.number="scoreTermId" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+            <template x-for="t in terms" :key="t.id">
+                <option :value="t.id" x-text="t.name"></option>
+            </template>
+        </select>
     </div>
 
     <!-- Chưa chọn lớp: mời chọn, KHÔNG đổ cả đoàn ra cho nhẹ (giống Danh sách) -->
     <div x-show="scoreClass === ''" style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
         <i data-lucide="filter" class="w-12 h-12 mx-auto text-slate-300 mb-4"></i>
         <p class="text-slate-600 font-semibold text-base mb-1">Chọn lớp để xem điểm</p>
-        <p class="text-slate-400 text-sm">Điểm số xem theo từng lớp — hãy chọn một lớp ở ô phía trên.</p>
+        <p class="text-slate-400 text-sm">Điểm số xem theo từng lớp — bấm nút lọc <i data-lucide="filter" class="inline w-3.5 h-3.5 -mt-0.5"></i> phía trên rồi chọn lớp.</p>
     </div>
 
     <!-- 3. HAI TAB -->

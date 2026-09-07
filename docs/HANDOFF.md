@@ -286,6 +286,15 @@ startSession/openPromotion`; điều kiện rỗng trong view khoá theo giá tr
 **In thẻ QR** và **quét QR** giữ nguyên (quét chạy theo khối, không cần chọn lớp;
 gõ tên vẫn tìm xuyên lớp khi chưa chọn).
 
+**Giao diện bộ lọc — DÙNG CHUNG `views/partial_scope_filter.php`** (đồng bộ với
+tab Danh sách: thanh + nút phễu mở panel Khối/Lớp). Cách nhúng: đặt biến rồi
+include —
+- Chế độ lớp: `$scopeClassModel='scoreClass'` (+ `$scopeSearchModel='attendanceSearch'`
+  nếu muốn ô tìm). Dùng chung `filterBlock` để lọc Khối như Danh sách.
+- Chế độ khối (Lên lớp): `$scopeBlockModel='promoteBlock'`.
+Partial tự `unset` biến sau khi include. Cờ mở panel `showFilter` là state CHUNG
+(khai ở `students.js`) → mở/đóng dùng chung mọi tab, chấp nhận được.
+
 **Còn nợ (tuỳ chọn):** `promoteSummary`/`promoteVerdict` vẫn gọi `yearAverage`
 (quét `scores`) cho từng em mỗi lần render → ~0.7s cho 120 em; muốn nhanh hơn nữa
 thì đệm nốt phần điểm. Lỗi console `profileStudent.code` (img QR trong modal hồ sơ

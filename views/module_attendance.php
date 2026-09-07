@@ -190,32 +190,15 @@
             </button>
         </div>
 
-        <!-- Tìm kiếm -->
-        <div class="relative mb-4">
-            <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
-            <input x-model="attendanceSearch" type="text" placeholder="Gõ tên để lọc nhanh..." class="w-full bg-white border border-slate-200 rounded-field py-3.5 pl-12 pr-10 text-sm font-medium text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
-            <button aria-label="Xóa ô tìm kiếm" x-show="attendanceSearch !== ''" @click="attendanceSearch = ''" style="display: none;" class="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 active:scale-90 transition-transform">
-                <i data-lucide="x" class="w-3.5 h-3.5"></i>
-            </button>
-        </div>
-
-        <!-- Chọn lớp (hiện khi phụ trách nhiều lớp: kiêm nhiệm, Trưởng Khối, BĐH) -->
-        <div x-show="availableClasses.length > 1" style="display: none;" class="relative mb-4">
-            <select x-model="attendanceClass" class="w-full bg-white border border-slate-200 rounded-field py-3.5 pl-4 pr-10 text-sm font-semibold text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none">
-                <option value="">— Chọn lớp —</option>
-                <template x-for="cls in availableClasses" :key="cls">
-                    <option :value="cls" x-text="cls"></option>
-                </template>
-            </select>
-            <i data-lucide="chevron-down" class="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none"></i>
-        </div>
+        <!-- CHỌN LỚP + TÌM NHANH — cùng kiểu bộ lọc của Danh sách (thanh + nút phễu) -->
+        <?php $scopeClassModel = 'attendanceClass'; $scopeSearchModel = 'attendanceSearch'; include __DIR__ . '/partial_scope_filter.php'; ?>
 
         <!-- Chưa chọn lớp: mời chọn, KHÔNG đổ cả đoàn ra (giống Danh sách).
              Quét QR vẫn dùng được vì chạy theo khối. -->
         <div x-show="attendanceClass === '' && attendanceSearch === ''" style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
             <i data-lucide="filter" class="w-12 h-12 mx-auto text-slate-300 mb-4"></i>
             <p class="text-slate-600 font-semibold text-base mb-1">Chọn lớp để điểm danh</p>
-            <p class="text-slate-400 text-sm">Chọn một lớp ở ô trên để hiện danh sách, hoặc gõ tên để tìm nhanh. Quét QR thì không cần chọn lớp.</p>
+            <p class="text-slate-400 text-sm">Bấm nút lọc <i data-lucide="filter" class="inline w-3.5 h-3.5 -mt-0.5"></i> để chọn lớp, hoặc gõ tên để tìm nhanh. Quét QR thì không cần chọn lớp.</p>
         </div>
 
         <!-- DANH SÁCH ĐIỂM DANH: chạm 1 phát là đổi trạng thái -->

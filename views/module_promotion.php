@@ -32,22 +32,14 @@
         <p class="text-micro text-slate-600 leading-snug">Bạn đang ở chế độ <span class="font-bold">chỉ xem</span>. Chỉ Ban Điều Hành mới chuyển lớp được.</p>
     </div>
 
-    <!-- 2. CHỌN KHỐI -->
-    <div class="bg-white rounded-card p-4 shadow-sm border border-slate-100 mb-4">
-        <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Khối xét lên lớp</label>
-        <select x-model="promoteBlock" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
-            <option value="">— Chọn khối —</option>
-            <template x-for="b in availableBlocks" :key="b">
-                <option :value="b" x-text="b"></option>
-            </template>
-        </select>
-    </div>
+    <!-- 2. CHỌN KHỐI — cùng kiểu bộ lọc của Danh sách (thanh + nút phễu) -->
+    <?php $scopeBlockModel = 'promoteBlock'; include __DIR__ . '/partial_scope_filter.php'; ?>
 
     <!-- Chưa chọn khối: mời chọn, KHÔNG xét cả đoàn cho nhẹ (giống Danh sách) -->
     <div x-show="promoteBlock === ''" style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
         <i data-lucide="filter" class="w-12 h-12 mx-auto text-slate-300 mb-4"></i>
         <p class="text-slate-600 font-semibold text-base mb-1">Chọn khối để xét lên lớp</p>
-        <p class="text-slate-400 text-sm">Việc xét lên lớp làm theo từng khối — hãy chọn một khối ở ô phía trên.</p>
+        <p class="text-slate-400 text-sm">Việc xét lên lớp làm theo từng khối — bấm nút lọc <i data-lucide="filter" class="inline w-3.5 h-3.5 -mt-0.5"></i> phía trên rồi chọn khối.</p>
     </div>
 
     <!-- 3. BA BƯỚC -->
