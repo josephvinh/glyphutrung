@@ -9,6 +9,17 @@
     <!-- VIỆC CẦN LÀM (hiện ở mọi màn, kể cả PC) -->
     <?php include __DIR__ . '/partial_my_tasks.php'; ?>
 
+    <!-- BẢNG THI ĐUA (trang công khai, chỉ xem) — mở tab mới để chia sẻ cho các em -->
+    <a href="bxh.php" target="_blank" rel="noopener"
+       class="flex items-center gap-3 bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-card p-4 shadow-sm active:scale-[0.99] transition-transform">
+        <span class="w-11 h-11 rounded-2xl bg-white/15 flex items-center justify-center text-2xl shrink-0">🏆</span>
+        <span class="min-w-0">
+            <span class="block font-black leading-tight">Bảng thi đua</span>
+            <span class="block text-micro text-white/80">Xếp hạng tự động từ chuyên cần &amp; học tập · mở để khích lệ các em</span>
+        </span>
+        <i data-lucide="chevron-right" class="w-5 h-5 ml-auto shrink-0 opacity-80"></i>
+    </a>
+
     <!-- LƯỚI CHỨC NĂNG — phẳng, đồng nhất kiểu nút -->
     <div x-show="visibleFlat().length > 0"
          class="home-fn-grid bg-white rounded-card p-5 sm:p-6 shadow-sm border border-slate-100">
