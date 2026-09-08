@@ -4,8 +4,8 @@
 #  .cpanel.yml và GitHub Actions). Chạy TỪ trong thư mục repo clone.
 #
 #  GIỮ NGUYÊN các thứ riêng của máy chủ (không đè khi deploy):
-#    - config/config.php        (DB + secret production)
-#    - config/config.local.php  (nếu tách cấu hình riêng)
+#    - config/config.php        (mặc định trên git — không đè)
+#    - config/config.local.php  (DB thật + secret của máy chủ — KHÔNG lên git)
 #    - config/backup/           (sao lưu, có tên thật)
 #
 #  Không tự chạy migration (việc một lần) — chạy tay khi cần.

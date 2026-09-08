@@ -1,12 +1,13 @@
 <?php
 /**
- * CẤU HÌNH KẾT NỐI
+ * CẤU HÌNH KẾT NỐI (giá trị MẶC ĐỊNH, lên git)
  *
- * Khi đưa lên AZDIGI thì sửa đúng 4 dòng dưới đây theo thông tin
- * cPanel cấp, không phải đụng vào chỗ nào khác.
+ * KHÔNG sửa file này trên máy chủ. Thay vào đó tạo `config/config.local.php`
+ * (KHÔNG lên git) để ghi đè DB thật + secrets — xem `config/config.local.example.php`.
+ * Nhờ vậy `git pull` không bao giờ đụng cấu hình riêng của máy chủ.
  */
 
-return [
+$config = [
     'db' => [
         'host'     => '127.0.0.1',
         'port'     => 3306,
@@ -31,14 +32,30 @@ return [
     // chỉ chạy trình cài đặt bằng dòng lệnh.
     'setup_key' => '123456789012120937867508',
 
-    // ĐỂ NGUYÊN true khi chạy trên máy chủ thật. Cờ này:
-    //   - cấm chạy install.php / seed_demo.php qua trình duyệt
-    //   - không đưa nội dung lỗi cơ sở dữ liệu ra cho người dùng
-    // Chỉ đổi thành false khi lập trình trên máy mình.
-     'push' => [
+    'push' => [
         'public'  => 'BKwJPh2CRLonC6WHGRXHifm1SUuwOhHOSgy6ZmkiAe3X8aLhNNIuJ58dgsu9yTlx2XuCPy_eHK60KDF68F9NDB8',
         'private' => 't1m_pTScHFjS8Z2CQcNXUYOqJGKUw5vyTru_mT2UQac',
         'subject' => 'mailto:tuongngocvinh@gmail.com',
     ],
+
+    // ĐỂ NGUYÊN true trên máy chủ thật: cấm install.php/seed_demo.php qua trình
+    // duyệt + không lộ lỗi CSDL cho người dùng. Máy nhà đặt false qua config.local.php.
     'production' => true,
 ];
+
+// ---------------------------------------------------------------------------
+// GHI ĐÈ THEO MÁY — config/config.local.php (KHÔNG lên git).
+// Dùng để đặt DB thật + secrets trên hosting, hoặc DB demo khi test ở máy nhà,
+// mà KHÔNG phải sửa file này (tránh xung đột mỗi lần git pull). Trộn đệ quy nên
+// chỉ cần khai những khoá muốn đổi (vd chỉ 'db'). Env TNTT_DB_* trong db.php
+// vẫn ghi đè tiếp lên trên cùng.
+// ---------------------------------------------------------------------------
+$__local = __DIR__ . '/config.local.php';
+if (is_file($__local)) {
+    $__over = require $__local;
+    if (is_array($__over)) {
+        $config = array_replace_recursive($config, $__over);
+    }
+}
+
+return $config;

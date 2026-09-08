@@ -2,8 +2,9 @@
 
 > App PHP thuần (không cần Composer/Node). Yêu cầu **PHP 8.2+**, MySQL/MariaDB.
 > Repo: `https://github.com/josephvinh/glyphutrung.git` (private).
-> Điểm quan trọng: **document root phải trỏ vào thư mục `public/`**, và
-> `config/config.php` phải dùng thông tin DB của AZDIGI (không phải bản local).
+> Điểm quan trọng: **document root phải trỏ vào thư mục `public/`**, và tạo
+> **`config/config.local.php`** (không lên git) chứa thông tin DB của AZDIGI —
+> KHÔNG sửa `config/config.php`. (Xem Bước 5.)
 
 ---
 
@@ -76,37 +77,39 @@ Chọn 1 trong 2 cách:
 
 ---
 
-## Bước 5 — Cấu hình `config.php` cho production (QUAN TRỌNG)
+## Bước 5 — Cấu hình DB thật bằng `config.local.php` (QUAN TRỌNG)
 
-`config/config.php` trong repo đang là cấu hình **máy local** (`host=127.0.0.1`,
-`user=root`, `pass=''`). Trên AZDIGI phải đổi thành thông tin DB ở Bước 4.
+**KHÔNG sửa `config/config.php`** trên máy chủ (nó bị git theo dõi → sửa là xung
+đột mỗi lần `git pull`). Thay vào đó tạo **`config/config.local.php`** — file này
+**đã .gitignore**, `config.php` tự trộn đè lên khi có, nên `git pull` không bao giờ
+đụng tới. (Cơ chế đã dựng sẵn: `config.php` đọc `config.local.php` rồi
+`array_replace_recursive`.)
 
-**Vấn đề:** file này bị git theo dõi → mỗi lần `git pull` sẽ đòi ghi đè/ xung đột.
+Trên hosting (cPanel File Manager hoặc SSH), trong **thư mục APP** (`~/tntt-app/config/`
+nếu dùng `.cpanel.yml`, hoặc `~/tntt/config/` nếu docroot trỏ thẳng thư mục clone):
 
-**Cách xử lý sạch (khuyến nghị — mình có thể set sẵn cho bạn):**
-tách cấu hình riêng-máy-chủ ra file **không** đưa lên git:
-- `config/config.php` (trong repo) đọc thêm `config/config.local.php` nếu có và
-  ghi đè các khoá nhạy cảm.
-- Trên hosting tạo `config/config.local.php` chứa DB thật → `git pull` không bao
-  giờ đụng tới nó.
-
-> Muốn dùng cách này, nhắn mình "làm config.local" — mình sửa `config.php` +
-> thêm `.gitignore` + file mẫu, rồi bạn chỉ việc tạo `config.local.php` trên server.
-
-**Cách nhanh (tạm, nếu chưa tách):** sửa trực tiếp `config/config.php` trên hosting
-(cPanel File Manager → Edit) các khoá:
-```php
-'db' => [
-    'host' => 'localhost',
-    'name' => 'cpaneluser_tntt',
-    'user' => 'cpaneluser_tntt',
-    'pass' => '<mật-khẩu-DB>',
-],
-'production'       => true,
-'default_password' => '<đổi khác tntt@2026>',
-'setup_key'        => '<đổi thành chuỗi bí mật mới>',
+```bash
+cp config/config.local.example.php config/config.local.php
 ```
-Khi `git pull` sau này nếu báo xung đột file này → giữ bản trên server.
+Rồi sửa `config/config.local.php` cho đúng cPanel (chỉ khai khoá cần đổi):
+```php
+return [
+    'db' => [
+        'host' => 'localhost',
+        'name' => 'cpaneluser_tntt',   // DB tạo ở Bước 4
+        'user' => 'cpaneluser_tntt',
+        'pass' => '<mật-khẩu-DB>',
+    ],
+    'default_password' => '<đổi khác tntt@2026>',
+    'setup_key'        => '<chuỗi bí mật mới>',
+    // 'push' => ['public'=>'...','private'=>'...','subject'=>'mailto:...'], // khoá VAPID riêng
+    'production' => true,
+];
+```
+
+> `config.php` mặc định (trên git) trỏ DB thật `ylcqukhi_glyphutrung` + `production=true`;
+> máy nhà đã có `config.local.php` riêng trỏ `tntt_demo`. Nhờ vậy KHÔNG còn phải
+> "đổi lại DB" thủ công. Env `TNTT_DB_*` (nếu đặt) vẫn ghi đè tiếp lên trên cùng.
 
 ---
 
@@ -147,6 +150,17 @@ php phpunit10.phar --no-coverage          # 33/33 là OK
 
 Kiểm tra cuối: mở `https://tenmien/` → đăng nhập → thấy đủ module (Báo cáo,
 Lịch trình...) và icon không trống.
+
+**Nén (hiệu năng — nên bật):** API đã **tự nén gzip** ở tầng PHP (`ob_gzhandler`
+trong `api/_bootstrap.php`) nên `api/data.php` truyền rất nhẹ (vd toàn đoàn
+~4.8MB → ~140KB). Để nén luôn **JS/CSS tĩnh**, thêm vào `public/.htaccess` (nếu
+host bật `mod_deflate`):
+```apache
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json image/svg+xml
+</IfModule>
+```
+Kiểm chứng: DevTools → Network → `data.php` có `Content-Encoding: gzip`.
 
 ---
 
@@ -222,11 +236,13 @@ tab **Actions** của repo. Chạy tay: tab Actions → **Deploy AZDIGI → Run 
 ---
 
 ## Phụ lục A — Lỗi thường gặp
-- **500 Internal Server Error**: gần như luôn do `config.php` sai thông tin DB,
-  hoặc PHP < 8.2. Xem log: cPanel → **Errors** / **Metrics → Errors**.
+- **500 Internal Server Error**: gần như luôn do **chưa tạo `config/config.local.php`**
+  (hoặc sai thông tin DB trong đó), hoặc PHP < 8.2. Xem log: cPanel → **Errors**.
 - **Trang trắng / thiếu CSS-JS**: docroot chưa trỏ đúng `public/`.
-- **"Access denied for user"**: sai `user`/`pass`/`name` DB ở Bước 5, hoặc chưa
-  Add User To Database.
+- **"Access denied for user"**: sai `user`/`pass`/`name` DB trong `config.local.php`
+  (Bước 5), hoặc chưa Add User To Database.
+- **Kết nối nhầm DB (vẫn ra `ylcqukhi_glyphutrung`/không có bảng)**: chưa tạo
+  `config/config.local.php` ở đúng **thư mục APP** đang chạy (không phải thư mục clone).
 - **Không thấy module Báo cáo/Lịch trình**: chưa chạy `php config/migrate_modules_sync.php`.
 - **Không thấy "Lịch của tôi" / không tạo được buổi họp**: chưa chạy
   `php config/migrate_lich_hop.php`.

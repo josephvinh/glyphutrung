@@ -269,8 +269,13 @@ Kiểm chứng nhanh: `grep reporthub core.js` (có), thanh dưới 5 tab, `modu
 - **CRON nhắc lịch** (bắt buộc để có push khi đóng app): đặt cron 5 phút/lần
   gọi `php <đường-dẫn>/config/nhac_lich.php` — xem `docs/DEPLOY-AZDIGI.md`.
 - Thư mục lạ `NGOC VINH/` chưa track — hỏi trước khi làm gì với nó.
-- **`config/config.php` đang trỏ DB `tntt_demo`** để test localhost — KHÔNG commit;
-  khi người dùng nói "đổi lại DB thật" thì sửa `name` về `ylcqukhi_glyphutrung`.
+- **Cấu hình đã tách `config.local.php`** (không còn cảnh "đổi lại DB thật"):
+  `config/config.php` (trên git) mặc định DB thật `ylcqukhi_glyphutrung` +
+  `production=true`; `config/config.local.php` (đã .gitignore) ghi đè — máy nhà
+  trỏ `tntt_demo`+`production=false`, máy chủ chứa DB thật + secrets. `config.php`
+  trộn bằng `array_replace_recursive`. Mẫu: `config/config.local.example.php`.
+  Deploy (`.cpanel.yml`/`deploy.sh`) loại `config.local.php` khỏi rsync nên nó
+  được giữ nguyên qua mỗi lần deploy.
 
 ### 9.5 ✅ ĐÃ XONG — "Chọn bộ lọc mới hiện" cho các màn theo lớp/khối
 Đẩy tiếp mô hình của tab **Danh sách** (đoàn đông → không đổ cả danh sách, bắt

@@ -10,3 +10,6 @@ public/cache/*.json
 
 # Bảng đối chiếu migration (chứa tên thật — không đưa lên repo)
 config/backup/
+
+# Cấu hình riêng máy chủ/máy nhà — KHÔNG lên git
+config/config.local.php

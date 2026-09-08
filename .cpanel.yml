@@ -12,15 +12,15 @@
 #                       của tên miền phải trỏ vào  $DEPLOYPATH/public
 #
 #  rsync copy code sang APP nhưng GIỮ NGUYÊN các thứ RIÊNG của máy chủ:
-#    - config/config.php        (thông tin DB + secret production)
-#    - config/config.local.php  (nếu sau này tách cấu hình riêng)
+#    - config/config.php        (mặc định trên git — không đè)
+#    - config/config.local.php  (DB thật + secret máy chủ — KHÔNG lên git)
 #    - config/backup/           (sao lưu, có tên thật thiếu nhi)
 #  -> nhờ vậy mỗi lần deploy KHÔNG làm mất cấu hình/ dữ liệu máy chủ.
 #
 #  DEPLOYPATH tự lấy từ $HOME nên KHÔNG cần sửa user. Muốn đổi tên thư
 #  mục app thì sửa "tntt-app" bên dưới.
-#     Lần deploy đầu, tự tạo config/config.php trong $DEPLOYPATH với
-#     thông tin DB của AZDIGI (xem docs/DEPLOY-AZDIGI.md Bước 5).
+#     Lần deploy đầu, tạo config/config.local.php trong $DEPLOYPATH/config
+#     với thông tin DB của AZDIGI (xem docs/DEPLOY-AZDIGI.md Bước 5).
 #
 #  Nếu hosting KHÔNG có rsync: đổi dòng rsync thành lệnh cp trong
 #  phần ghi chú ở cuối tệp.
