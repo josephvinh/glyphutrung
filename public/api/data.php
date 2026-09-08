@@ -193,6 +193,20 @@ $reports = array_map(fn($r) => [
 // ---------------------------------------------------------------
 // Thông báo — kèm dấu đã đọc của chính người đang đăng nhập
 // ---------------------------------------------------------------
+// Trả lời họp của CHÍNH người này + số đếm chung (cho người phát xem nhanh)
+$rsvpMine = [];
+foreach (db_all('SELECT announcement_id, status FROM meeting_rsvp WHERE member_id = ?', [$me['id']]) as $r) {
+    $rsvpMine[(int) $r['announcement_id']] = $r['status'];
+}
+$rsvpCount = [];   // id -> ['tham gia'=>n, 'không tham gia'=>n]
+foreach (db_all("SELECT mr.announcement_id, mr.status, COUNT(*) AS n
+                   FROM meeting_rsvp mr
+                   JOIN announcements a ON a.id = mr.announcement_id
+                  WHERE a.year_id = ?
+                  GROUP BY mr.announcement_id, mr.status", [$yid]) as $r) {
+    $rsvpCount[(int) $r['announcement_id']][$r['status']] = (int) $r['n'];
+}
+
 $announcements = array_map(fn($a) => [
     'id'            => (int) $a['id'],
     'title'         => $a['title'],
@@ -205,6 +219,13 @@ $announcements = array_map(fn($a) => [
     'publishedAt'   => $a['published_at'] ? substr($a['published_at'], 0, 16) : '',
     'expiresAt'     => $a['expires_at'] ?? '',
     'createdBy'     => $a['by_name'] ?? '',
+    // Buổi họp + RSVP
+    'isMeeting'     => (bool) ($a['is_meeting'] ?? 0),
+    'meetingAt'     => !empty($a['meeting_at']) ? substr($a['meeting_at'], 0, 16) : '',
+    'meetingPlace'  => $a['meeting_place'] ?? '',
+    'myRsvp'        => $rsvpMine[(int) $a['id']] ?? '',
+    'rsvpYes'       => $rsvpCount[(int) $a['id']]['tham gia'] ?? 0,
+    'rsvpNo'        => $rsvpCount[(int) $a['id']]['không tham gia'] ?? 0,
 ], db_all(
     'SELECT a.*, b.name AS block_name, c.name AS class_name, m.full_name AS by_name
        FROM announcements a
@@ -256,8 +277,21 @@ $logs = array_map(fn($l) => [
     'detail' => $l['detail'] ?? '',
 ], db_all('SELECT * FROM activity_logs ORDER BY id DESC LIMIT 300'));
 
+// ---------------------------------------------------------------
+// Lịch cá nhân — CHỈ ghi chú của chính người đang đăng nhập (riêng tư)
+// ---------------------------------------------------------------
+$notes = array_map(fn($n) => [
+    'id'       => (int) $n['id'],
+    'title'    => $n['title'],
+    'note'     => $n['note'] ?? '',
+    'remindAt' => substr($n['remind_at'], 0, 16),
+    'allDay'   => (bool) $n['all_day'],
+    'done'     => (bool) $n['done'],
+], db_all('SELECT * FROM personal_notes WHERE member_id = ? ORDER BY remind_at', [$me['id']]));
+
 $result = [
     'ok' => true,
+    'notes'         => $notes,
     'students'      => $students,
     'classCounts'   => $classCounts,
     'programs'      => $programs,

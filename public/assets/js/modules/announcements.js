@@ -12,8 +12,13 @@ window.TNTT.announcements = {
     readAnnouncements: [],   // sau này lưu theo từng tài khoản dưới DB
     showAnnouncementModal: false,
     isEditingAnnouncement: false,
-    announcementForm: { id: null, title: '', body: '', level: 'thường', audienceType: 'toàn đoàn', audienceValue: '', status: 'đã phát', publishedAt: '', expiresAt: '', createdBy: '' },
+    announcementForm: { id: null, title: '', body: '', level: 'thường', audienceType: 'toàn đoàn', audienceValue: '', status: 'đã phát', publishedAt: '', expiresAt: '', createdBy: '', isMeeting: false, meetingAt: '', meetingPlace: '' },
     announcementLevels: ['thường', 'quan trọng', 'khẩn'],
+
+    // ---- Kết quả họp (người phát xem) ----
+    showMeetingResult: false,
+    meetingResultBusy: false,
+    meetingResult: { title: '', yes: 0, no: 0, pending: 0, total: 0, rows: [] },
 
     get canManageAnnouncements() {
         return this.canEditModule('announcements');
@@ -94,7 +99,8 @@ window.TNTT.announcements = {
             id: null, title: '', body: '', level: 'thường',
             audienceType: locked ? 'khối' : 'toàn đoàn',
             audienceValue: locked ? (this.myHeadBlocks[0] || '') : '',
-            status: 'đã phát', publishedAt: '', expiresAt: '', createdBy: this.user.fullName
+            status: 'đã phát', publishedAt: '', expiresAt: '', createdBy: this.user.fullName,
+            isMeeting: false, meetingAt: '', meetingPlace: ''
         };
         this.isEditingAnnouncement = false;
         this.showAnnouncementModal = true;
@@ -114,8 +120,33 @@ window.TNTT.announcements = {
 
     openEditAnnouncement(a) {
         this.announcementForm = JSON.parse(JSON.stringify(a));
+        // Ô datetime-local cần dạng 'YYYY-MM-DDTHH:MM'
+        this.announcementForm.isMeeting = !!a.isMeeting;
+        this.announcementForm.meetingAt = (a.meetingAt || '').replace(' ', 'T');
+        this.announcementForm.meetingPlace = a.meetingPlace || '';
         this.isEditingAnnouncement = true;
         this.showAnnouncementModal = true;
+    },
+
+    // Người phát mở xem ai tham gia / không / chưa trả lời
+    async openMeetingResult(a) {
+        this.meetingResult = { title: a.title, yes: 0, no: 0, pending: 0, total: 0, rows: [] };
+        this.meetingResultBusy = true;
+        this.showMeetingResult = true;
+        const r = await this.api('announcements', 'rsvpList', { id: a.id });
+        this.meetingResultBusy = false;
+        if (r && r.ok) {
+            this.meetingResult = { title: a.title, yes: r.yes, no: r.no, pending: r.pending, total: r.total, rows: r.rows };
+        } else {
+            window.TNTT.toast.error((r && r.error) || 'Không tải được kết quả họp.');
+            this.showMeetingResult = false;
+        }
+    },
+
+    rsvpRowClass(status) {
+        if (status === 'tham gia')       return 'text-emerald-600';
+        if (status === 'không tham gia') return 'text-rose-500';
+        return 'text-slate-400';
     },
 
     saveAnnouncement() {
@@ -128,9 +159,18 @@ window.TNTT.announcements = {
             alert('Vui lòng chọn ' + (f.audienceType === 'khối' ? 'khối' : 'lớp') + ' nhận thông báo!');
             return;
         }
+        if (f.isMeeting && !f.meetingAt) {
+            alert('Buổi họp cần chọn ngày và giờ họp!');
+            return;
+        }
         f.title = f.title.trim();
         f.body = f.body.trim();
         if (f.audienceType === 'toàn đoàn') f.audienceValue = '';
+        // Chuẩn hoá giờ họp về 'YYYY-MM-DD HH:MM' (khớp máy chủ + màn lịch)
+        if (f.isMeeting) f.meetingAt = (f.meetingAt || '').replace('T', ' ').slice(0, 16);
+        else { f.meetingAt = ''; f.meetingPlace = ''; }
+        // Bản mới cần sẵn số RSVP để màn lịch/thông báo hiển thị đúng
+        if (!this.isEditingAnnouncement) { f.rsvpYes = 0; f.rsvpNo = 0; f.myRsvp = ''; }
         // Chuyển từ nháp sang phát thì mới đóng dấu thời gian
         if (f.status === 'đã phát' && !f.publishedAt) f.publishedAt = this.timestamp();
         if (f.status === 'nháp') f.publishedAt = '';
@@ -150,7 +190,8 @@ window.TNTT.announcements = {
             id: this.isEditingAnnouncement ? f.id : 0,
             title: f.title, body: f.body, level: f.level,
             audienceType: f.audienceType, audienceValue: f.audienceValue,
-            status: f.status, expiresAt: f.expiresAt
+            status: f.status, expiresAt: f.expiresAt,
+            isMeeting: f.isMeeting, meetingAt: f.meetingAt, meetingPlace: f.meetingPlace
         }).then(r => { if (r.ok && r.id) f.id = r.id; });
     },
 

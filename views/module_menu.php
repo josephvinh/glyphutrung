@@ -6,8 +6,11 @@
      ========================================================== -->
 <div class="mb-10 space-y-5">
 
-    <!-- VIỆC CẦN LÀM (hiện ở mọi màn, kể cả PC) -->
-    <?php include __DIR__ . '/partial_my_tasks.php'; ?>
+    <!-- VIỆC CẦN LÀM — ẩn với Quản trị + Ban Điều Hành ở Trang chính
+         (họ không có việc lớp để nhắc; vẫn nhận nhắc việc cá nhân qua push). -->
+    <template x-if="!['admin','bdh'].includes(user.role)">
+        <?php include __DIR__ . '/partial_my_tasks.php'; ?>
+    </template>
 
     <!-- BẢNG THI ĐUA (trang công khai, chỉ xem) — mở tab mới để chia sẻ cho các em -->
     <a href="bxh.php" target="_blank" rel="noopener"

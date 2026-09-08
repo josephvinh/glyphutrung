@@ -183,6 +183,7 @@ $modules = [
     ['org',           'Khối lớp',     'layers',          'text-indigo-600',  'glv', 8],
     ['reports',       'Sổ liên lạc',  'clipboard-list',  'text-amber-600',   'glv', 9],
     ['scores',        'Điểm số',      'graduation-cap',  'text-violet-600',  'glv', 10],
+    ['notes',         'Lịch của tôi', 'calendar-check',  'text-teal-600',    'glv', 11],
     ['promotion',     'Lên lớp',      'trending-up',     'text-violet-600',  'bdh', 1],
     ['programs',      'Chương trình', 'calendar-plus',   'text-amber-600',   'bdh', 2],
     ['calendar',      'Lịch trình',   'calendar-days',   'text-teal-600',    'bdh', 3],
@@ -216,6 +217,8 @@ $perms = [
     'promotion'     => ['edit','edit','view','none','none','none'],
     'programs'      => ['edit','edit','none','none','none','none'],
     'announcements' => ['edit','edit','edit','edit','view','view'],
+    // Lịch cá nhân: ai cũng tự quản việc của mình
+    'notes'         => ['edit','edit','edit','edit','edit','edit'],
 ];
 $roleOrder = ['admin','bdh','truong_khoi','glv_chu_nhiem','glv','du_bi'];
 foreach ($perms as $mod => $levels) {

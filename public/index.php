@@ -144,6 +144,7 @@ function bundle_v(array $files): int {   // ?v = mtime lớn nhất trong nhóm
             <?php include __DIR__ . '/../views/module_promotion.php'; ?>
             <?php include __DIR__ . '/../views/module_programs.php'; ?>
             <?php include __DIR__ . '/../views/module_calendar.php'; ?>
+            <?php include __DIR__ . '/../views/module_notes.php'; ?>
 
         </main>
 

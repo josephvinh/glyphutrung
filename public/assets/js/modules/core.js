@@ -169,6 +169,7 @@ window.TNTT.core = {
             this.readAnnouncements = d.readAnnouncements;
             this.members           = d.members;
             this.logs              = d.logs;
+            this.notes             = d.notes || [];
             return true;
         } catch (e) {
             window.TNTT.toast.error('Không nạp được dữ liệu từ máy chủ.');
@@ -351,6 +352,9 @@ window.TNTT.core = {
             });
         }
 
+        // Việc từ Lịch cá nhân (ghi chú + buổi họp sắp tới)
+        if (this.noteTasks) tasks.push(...this.noteTasks);
+
         return tasks;
     },
 
@@ -469,6 +473,7 @@ window.TNTT.core = {
         { key: 'students',      label: 'Thiếu Nhi',    icon: 'users',           color: 'text-blue-600',   area: 'glv', group: 'Hằng ngày' },
         { key: 'attendance',    label: 'Điểm danh',    icon: 'clipboard-check', color: 'text-blue-600',   area: 'glv', group: 'Hằng ngày' },
         { key: 'leave',         label: 'Xin phép',     icon: 'file-text',       color: 'text-blue-600',   area: 'glv', group: 'Hằng ngày', badge: 'leave' },
+        { key: 'notes',         label: 'Lịch của tôi', icon: 'calendar-check',  color: 'text-teal-600',   area: 'glv', group: 'Hằng ngày', badge: 'notes' },
         { key: 'birthdays',     label: 'Sinh nhật',    icon: 'cake',            color: 'text-rose-500',   area: 'glv', group: 'Hằng ngày', badge: 'birthday', hidden: true },
         { key: 'reporthub',     label: 'Báo cáo',      icon: 'bar-chart-3',     color: 'text-emerald-600', area: 'glv', group: 'Theo dõi' },
         { key: 'stats',         label: 'Thống kê',     icon: 'bar-chart-3',     color: 'text-emerald-600', area: 'glv', group: 'Theo dõi', hidden: true },
@@ -491,7 +496,7 @@ window.TNTT.core = {
     moduleEnabled: {
         students: true, attendance: true, leave: true, birthdays: true,
         stats: true, analytics: true, org: true, reports: true, reporthub: true, programs: true, announcements: true,
-        scores: true, promotion: true, calendar: true
+        scores: true, promotion: true, calendar: true, notes: true
     },
 
     // ==========================================
@@ -517,7 +522,8 @@ window.TNTT.core = {
         announcements: { admin: 'edit', bdh: 'edit', truong_khoi: 'edit', glv_chu_nhiem: 'view', glv: 'view' },
         scores:        { admin: 'edit', bdh: 'edit', truong_khoi: 'edit', glv_chu_nhiem: 'edit', glv: 'edit' },
         promotion:     { admin: 'edit', bdh: 'edit', truong_khoi: 'view', glv_chu_nhiem: 'none', glv: 'none' },
-        calendar:       { admin: 'view', bdh: 'view', truong_khoi: 'view', glv_chu_nhiem: 'view', glv: 'view' }
+        calendar:       { admin: 'view', bdh: 'view', truong_khoi: 'view', glv_chu_nhiem: 'view', glv: 'view' },
+        notes:          { admin: 'edit', bdh: 'edit', truong_khoi: 'edit', glv_chu_nhiem: 'edit', glv: 'edit' }
     },
 
     permOf(key) {
@@ -573,6 +579,7 @@ window.TNTT.core = {
         // Người tự đăng ký đang chờ Ban Điều Hành duyệt. Chỉ nhắc người
         // thực sự duyệt được, để GLV thường khỏi thấy chấm đỏ vô nghĩa.
         if (key === 'staff')     return this.canEditModule('staff') ? this.pendingMembers.length : 0;
+        if (key === 'notes')     return this.notesBadgeCount;
         return 0;
     },
 
@@ -596,6 +603,7 @@ window.TNTT.core = {
         if (key === 'scores')        return this.openScores();
         if (key === 'promotion')     return this.openPromotion();
         if (key === 'calendar')      return this.changeModule('calendar');
+        if (key === 'notes')         return this.openNotes();
         this.changeModule(key);
     },
 

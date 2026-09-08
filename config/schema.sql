@@ -338,6 +338,11 @@ CREATE TABLE IF NOT EXISTS announcements (
     published_at   DATETIME NULL,
     expires_at     DATE NULL,
     created_by     INT NULL,
+    -- Buổi họp: vào lịch cá nhân người nhận + hỏi tham gia (RSVP)
+    is_meeting     TINYINT NOT NULL DEFAULT 0,
+    meeting_at     DATETIME NULL,
+    meeting_place  VARCHAR(255) NULL,
+    reminded_at    DATETIME NULL,
     CONSTRAINT fk_an_year  FOREIGN KEY (year_id) REFERENCES school_years(id) ON DELETE CASCADE,
     CONSTRAINT fk_an_block FOREIGN KEY (audience_block) REFERENCES blocks(id) ON DELETE CASCADE,
     CONSTRAINT fk_an_class FOREIGN KEY (audience_class) REFERENCES classes(id) ON DELETE CASCADE,
@@ -352,6 +357,34 @@ CREATE TABLE IF NOT EXISTS announcement_reads (
     PRIMARY KEY (member_id, announcement_id),
     CONSTRAINT fk_ar_member FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE,
     CONSTRAINT fk_ar_ann    FOREIGN KEY (announcement_id) REFERENCES announcements(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Trả lời họp (RSVP): mỗi người một dòng cho mỗi buổi họp
+CREATE TABLE IF NOT EXISTS meeting_rsvp (
+    announcement_id INT NOT NULL,
+    member_id       INT NOT NULL,
+    status          ENUM('tham gia','không tham gia') NOT NULL,
+    responded_at    DATETIME NOT NULL,
+    PRIMARY KEY (announcement_id, member_id),
+    CONSTRAINT fk_rsvp_ann    FOREIGN KEY (announcement_id) REFERENCES announcements(id) ON DELETE CASCADE,
+    CONSTRAINT fk_rsvp_member FOREIGN KEY (member_id)       REFERENCES members(id)       ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Lịch cá nhân: ghi chú riêng tư của từng thành viên
+CREATE TABLE IF NOT EXISTS personal_notes (
+    id          INT AUTO_INCREMENT PRIMARY KEY,
+    member_id   INT NOT NULL,
+    title       VARCHAR(160) NOT NULL,
+    note        TEXT NULL,
+    remind_at   DATETIME NOT NULL,
+    all_day     TINYINT NOT NULL DEFAULT 0,
+    done        TINYINT NOT NULL DEFAULT 0,
+    notified_at DATETIME NULL,
+    created_at  DATETIME NOT NULL,
+    updated_at  DATETIME NOT NULL,
+    INDEX idx_note_member (member_id, remind_at),
+    INDEX idx_note_due (done, notified_at, remind_at),
+    CONSTRAINT fk_note_member FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================================================

@@ -82,6 +82,19 @@ switch ($action) {
         $stt   = (string) ($in['status'] ?? 'đã phát');
         $exp   = ($in['expiresAt'] ?? '') ?: null;
 
+        // Buổi họp: cần ngày giờ họp; địa điểm tuỳ chọn
+        $isMeeting = !empty($in['isMeeting']) ? 1 : 0;
+        $meetAt = null; $meetPlace = null;
+        if ($isMeeting) {
+            $mRaw = str_replace('T', ' ', trim((string) ($in['meetingAt'] ?? '')));
+            if (!preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/', $mRaw)) {
+                json_fail('Buổi họp cần chọn ngày và giờ họp.');
+            }
+            $meetAt    = $mRaw . ':00';
+            $meetPlace = trim((string) ($in['meetingPlace'] ?? ''));
+            $meetPlace = $meetPlace === '' ? null : mb_substr($meetPlace, 0, 255);
+        }
+
         if ($title === '' || $body === '') json_fail('Vui lòng nhập tiêu đề và nội dung thông báo.');
         if (!in_array($level, ['thường', 'quan trọng', 'khẩn'], true)) $level = 'thường';
         if (!in_array($aType, ['toàn đoàn', 'khối', 'lớp'], true)) $aType = 'toàn đoàn';
@@ -118,17 +131,22 @@ switch ($action) {
             // Chuyển từ nháp sang phát thì mới đóng dấu thời gian
             $daPhatMoi = $old['status'] !== 'đã phát' && $stt === 'đã phát';
             $pub = $stt === 'đã phát' ? ($old['published_at'] ?: date('Y-m-d H:i:s')) : null;
+            // Sửa buổi họp -> cho phép nhắc lại theo giờ mới (reminded_at về NULL)
             db_run('UPDATE announcements SET title=?, body=?, level=?, audience_type=?,
-                           audience_block=?, audience_class=?, status=?, published_at=?, expires_at=?
+                           audience_block=?, audience_class=?, status=?, published_at=?, expires_at=?,
+                           is_meeting=?, meeting_at=?, meeting_place=?, reminded_at=NULL
                      WHERE id=?',
-                [$title, $body, $level, $aType, $blockId, $classId, $stt, $pub, $exp, $id]);
-            log_action('sua', 'announcements', 'Sửa thông báo "' . $title . '"', $stt);
+                [$title, $body, $level, $aType, $blockId, $classId, $stt, $pub, $exp,
+                 $isMeeting, $meetAt, $meetPlace, $id]);
+            log_action('sua', 'announcements', 'Sửa ' . ($isMeeting ? 'buổi họp' : 'thông báo') . ' "' . $title . '"', $stt);
         } else {
             $pub = $stt === 'đã phát' ? date('Y-m-d H:i:s') : null;
             $id = db_insert('INSERT INTO announcements (year_id, title, body, level, audience_type,
-                                    audience_block, audience_class, status, published_at, expires_at, created_by)
-                             VALUES (?,?,?,?,?,?,?,?,?,?,?)',
-                [$yid, $title, $body, $level, $aType, $blockId, $classId, $stt, $pub, $exp, $me['id']]);
+                                    audience_block, audience_class, status, published_at, expires_at, created_by,
+                                    is_meeting, meeting_at, meeting_place)
+                             VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+                [$yid, $title, $body, $level, $aType, $blockId, $classId, $stt, $pub, $exp, $me['id'],
+                 $isMeeting, $meetAt, $meetPlace]);
             log_action('tao', 'announcements', ($stt === 'đã phát' ? 'Phát' : 'Lưu nháp')
                        . ' thông báo "' . $title . '"', $aType);
         }
@@ -139,6 +157,10 @@ switch ($action) {
         if ($stt === 'đã phát' && ($daPhatMoi ?? true)) {
             bao_thong_bao_moi($id, $title, $level, $aType, $blockId, $classId, (int) $me['id']);
         }
+
+        // Buổi họp vừa đổi -> xoá cache để lịch của mọi người trong phạm vi
+        // cập nhật buổi họp mới ở lần nạp sau.
+        if ($isMeeting) Cache::flush();
 
         json_out(['ok' => true, 'id' => $id, 'createdBy' => $me['full_name'],
                   'publishedAt' => $stt === 'đã phát' ? date('Y-m-d H:i') : '']);
@@ -195,6 +217,61 @@ switch ($action) {
                 SELECT ?, id FROM announcements WHERE year_id = ? AND status = ?',
                [$me['id'], $yid, 'đã phát']);
         json_out(['ok' => true]);
+
+    // -------------------------------------------------------------
+    // Trả lời họp (tham gia / không) — bất kỳ thành viên nào được mời
+    case 'rsvp':
+        require_post();
+        require_csrf();
+        $me     = require_login();
+        $id     = (int) ($in['id'] ?? 0);
+        $status = (string) ($in['status'] ?? '');
+        if (!in_array($status, ['tham gia', 'không tham gia'], true)) json_fail('Lựa chọn không hợp lệ.');
+        $a = db_one("SELECT * FROM announcements WHERE id=? AND year_id=? AND is_meeting=1 AND status='đã phát'", [$id, $yid]);
+        if (!$a) json_fail('Không tìm thấy buổi họp.', 404);
+
+        db_run('INSERT INTO meeting_rsvp (announcement_id, member_id, status, responded_at)
+                VALUES (?,?,?,?)
+                ON DUPLICATE KEY UPDATE status = VALUES(status), responded_at = VALUES(responded_at)',
+               [$id, $me['id'], $status, date('Y-m-d H:i:s')]);
+        // Cập nhật cache của người trả lời + người phát (để họ thấy số mới)
+        Cache::del('data_' . $yid . '_' . (int) $me['id']);
+        Cache::del('data_' . $yid . '_' . (int) $a['created_by']);
+        json_out(['ok' => true, 'status' => $status]);
+
+    // -------------------------------------------------------------
+    // Kết quả họp — chỉ người phát (hoặc BĐH/Quản trị) mới xem
+    case 'rsvpList':
+        $me = require_login();
+        $id = (int) ($in['id'] ?? 0);
+        $a  = db_one('SELECT * FROM announcements WHERE id=? AND year_id=?', [$id, $yid]);
+        if (!$a || !$a['is_meeting']) json_fail('Không tìm thấy buổi họp.', 404);
+        if ((int) $a['created_by'] !== (int) $me['id'] && !in_array($me['role_code'], ['admin', 'bdh'], true)) {
+            json_fail('Chỉ người phát mới xem được kết quả.', 403);
+        }
+
+        $ids = push_nguoi_nhan($a['audience_type'],
+            $a['audience_block'] !== null ? (int) $a['audience_block'] : null,
+            $a['audience_class'] !== null ? (int) $a['audience_class'] : null);
+
+        $rsvp = [];
+        foreach (db_all('SELECT member_id, status FROM meeting_rsvp WHERE announcement_id=?', [$id]) as $r) {
+            $rsvp[(int) $r['member_id']] = $r['status'];
+        }
+
+        $rows = []; $yes = 0; $no = 0; $pending = 0;
+        if ($ids) {
+            $chan = implode(',', array_fill(0, count($ids), '?'));
+            foreach (db_all("SELECT id, holy_name, full_name FROM members WHERE id IN ($chan) ORDER BY full_name", $ids) as $m) {
+                $st = $rsvp[(int) $m['id']] ?? 'chưa trả lời';
+                if ($st === 'tham gia') $yes++; elseif ($st === 'không tham gia') $no++; else $pending++;
+                $rows[] = [
+                    'name'   => trim(($m['holy_name'] ? $m['holy_name'] . ' ' : '') . $m['full_name']),
+                    'status' => $st,
+                ];
+            }
+        }
+        json_out(['ok' => true, 'yes' => $yes, 'no' => $no, 'pending' => $pending, 'total' => count($rows), 'rows' => $rows]);
 
     // -------------------------------------------------------------
     default:
