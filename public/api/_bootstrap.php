@@ -10,6 +10,15 @@ require_once __DIR__ . '/_common.php';
 require_once __DIR__ . '/csrf.php';
 require_once __DIR__ . '/cache.php';
 
+// Nén phản hồi khi trình duyệt hỗ trợ. data.php có thể tới vài MB (điểm danh
+// cả đoàn); JSON nén gzip giảm ~10 lần → mạng di động đỡ hẳn. Bọc buffer TRƯỚC
+// khi in bất kỳ thứ gì. Bỏ qua nếu server đã tự nén (zlib.output_compression).
+if (extension_loaded('zlib')
+    && !ini_get('zlib.output_compression')
+    && stripos($_SERVER['HTTP_ACCEPT_ENCODING'] ?? '', 'gzip') !== false) {
+    @ob_start('ob_gzhandler');
+}
+
 header('Content-Type: application/json; charset=utf-8');
 
 // Security Headers

@@ -108,8 +108,32 @@ $programs = array_map(fn($p) => [
 ], db_all('SELECT * FROM programs WHERE year_id = ? ORDER BY start_time', [$yid]));
 
 // ---------------------------------------------------------------
-// Điểm danh — chỉ các em CÓ TỚI
+// Điểm danh — chỉ các em CÓ TỚI.
+// GIỚI HẠN theo phạm vi: chỉ gửi điểm danh của các em người này được xem.
+// Admin/BĐH (phạm vi null) vẫn nhận toàn đoàn (họ cần thống kê cả đoàn);
+// GLV/Trưởng khối chỉ nhận lớp/khối mình -> payload nhẹ hẳn.
 // ---------------------------------------------------------------
+$attScopeIds = allowed_class_ids($me);          // null = toàn đoàn
+$attRows = [];
+if ($attScopeIds === null) {
+    $attRows = db_all(
+        'SELECT a.*, m.full_name AS marked_by_name
+           FROM attendances a
+           LEFT JOIN members m ON m.id = a.marked_by
+          WHERE a.year_id = ?', [$yid]);
+} else {
+    // Chỉ điểm danh của các em trong phạm vi (dùng lại danh sách $students)
+    $stuIds = array_map(fn($s) => (int) $s['id'], $students);
+    if ($stuIds) {
+        $ph = implode(',', array_fill(0, count($stuIds), '?'));
+        $attRows = db_all(
+            "SELECT a.*, m.full_name AS marked_by_name
+               FROM attendances a
+               LEFT JOIN members m ON m.id = a.marked_by
+              WHERE a.year_id = ? AND a.student_id IN ($ph)",
+            array_merge([$yid], $stuIds));
+    }
+}
 $attendances = array_map(fn($a) => [
     'programId' => (int) $a['program_id'],
     'date'      => $a['session_date'],
@@ -118,11 +142,7 @@ $attendances = array_map(fn($a) => [
     'method'    => $a['method'],
     'markedBy'  => $a['marked_by_name'] ?? '',
     'markedAt'  => substr($a['marked_at'], 11, 5),
-], db_all(
-    'SELECT a.*, m.full_name AS marked_by_name
-       FROM attendances a
-       LEFT JOIN members m ON m.id = a.marked_by
-      WHERE a.year_id = ?', [$yid]));
+], $attRows);
 
 // ---------------------------------------------------------------
 // Đơn xin phép
