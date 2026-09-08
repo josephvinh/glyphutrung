@@ -355,6 +355,19 @@ Tạo bằng script tạm (không commit) để test/chụp; mật khẩu chung 
 Chỉ là dữ liệu demo (không có trên DB thật). Có ít nội dung mẫu (1 ghi chú,
 1 thông báo, 1 buổi họp) để 2 thẻ Trang chủ có gì hiển thị.
 
+### 9.9 ✅ ĐÃ XONG — Module Hướng dẫn + xuất .doc
+Module `guide` (Hướng dẫn sử dụng), quyền `view` mọi vai. Nội dung TĨNH, không
+cần DB/JS riêng: nguồn duy nhất ở **`config/huong_dan.php`** (mảng: `chung` +
+`vai` theo từng role).
+- `views/module_guide.php` render server-side (PHP loop) + tab chọn vai bằng
+  Alpine lồng `x-data="{ gr: user.role }"` (mặc định mở đúng vai người xem).
+- `openModule('guide')` không có handler riêng → rơi về `changeModule('guide')`.
+- Đăng ký: `migrate_guide.php` (+ install.php/core.js/index.php). CHẠY trên máy
+  chủ: `php config/migrate_guide.php`.
+- **Xuất .doc**: `php scripts/xuat_huong_dan_doc.php [đường-dẫn.doc]` → sinh HTML
+  tương thích Word (mặc định `docs/Huong-dan-su-dung.doc`). Sửa nội dung 1 chỗ
+  (`huong_dan.php`) là cả module lẫn .doc đổi theo.
+
 ---
 
 ## 10. Cheat-sheet lệnh

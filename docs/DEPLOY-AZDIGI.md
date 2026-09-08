@@ -121,6 +121,7 @@ php config/migrate_roles_du_bi.php        # thêm vai Dự Bị + quyền
 php config/migrate_modules_sync.php       # thêm module Báo cáo/Lịch trình
 php config/migrate_bdh_view.php           # BĐH chỉ XEM điểm số + phiếu liên lạc
 php config/migrate_lich_hop.php           # Lịch cá nhân + thông báo họp (RSVP)
+php config/migrate_guide.php              # module Hướng dẫn sử dụng
 php config/migrate_student_codes.php      # chuẩn hoá mã (nếu chưa chạy)
 php phpunit10.phar --no-coverage          # 33/33 là OK
 ```
