@@ -366,6 +366,10 @@ textarea:focus-visible:not(:disabled),
     /* Lưới chức năng ở Trang chủ trùng với thanh bên -> ẩn trên PC.
        !important để thắng inline display của x-show. */
     .has-sidebar .home-fn-grid { display: none !important; }
+
+    /* Tổng quan Trang chủ (Sắp tới / Thông báo) -> 2 cột cho đỡ trống trên PC.
+       (Build Tailwind tĩnh không có lg:grid-cols-2 nên đặt tay ở đây.) */
+    .has-sidebar .home-overview { grid-template-columns: 1fr 1fr; align-items: start; }
 }
 
 /* ==========================================================

@@ -118,6 +118,16 @@ window.TNTT.notes = {
         return this.upcomingAgenda.length;
     },
 
+    // Vài việc/họp gần nhất từ hôm nay trở đi — cho thẻ "Sắp tới" ở Trang chủ
+    get homeUpcoming() {
+        const today = this.nowStamp().slice(0, 10);
+        return this.agendaItems
+            .filter(it => it.at.slice(0, 10) >= today
+                && !(it.kind === 'note' && it.done)
+                && it.rsvp !== 'không tham gia')
+            .slice(0, 5);
+    },
+
     // ---- Thêm / sửa ----
     openCreateNote() {
         const d = new Date();
