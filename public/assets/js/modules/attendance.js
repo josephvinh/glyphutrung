@@ -254,6 +254,21 @@ window.TNTT.attendance = {
         return stats;
     },
 
+    // Số buổi HÔM NAY trong phạm vi còn chưa điểm danh xong — cho chấm nhắc
+    // trên icon Điểm danh (thay cho khối "Việc cần làm" ở Trang chủ).
+    get attendanceTodoCount() {
+        if (!this.canAccess('attendance') || this.isUnderMaintenance('attendance')) return 0;
+        const today = this.toDateInput(new Date());
+        const scope = this.accessibleStudents.filter(s => s.status === 'đang sinh hoạt');
+        if (scope.length === 0) return 0;
+        let n = 0;
+        this.programsOn(today).forEach(p => {
+            const done = scope.filter(s => this.attendanceRecord(s.id, { programId: p.id, date: today })).length;
+            if (done < scope.length) n++;
+        });
+        return n;
+    },
+
     // Tiến độ hiển thị ngay trên thẻ chọn chương trình
     sessionProgress(prog) {
         const scope = this.accessibleStudents.filter(s => s.status === 'đang sinh hoạt');

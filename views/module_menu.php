@@ -6,11 +6,9 @@
      ========================================================== -->
 <div class="mb-10 space-y-5">
 
-    <!-- VIỆC CẦN LÀM — ẩn với Quản trị + Ban Điều Hành ở Trang chính
-         (họ không có việc lớp để nhắc; vẫn nhận nhắc việc cá nhân qua push). -->
-    <template x-if="!['admin','bdh'].includes(user.role)">
-        <?php include __DIR__ . '/partial_my_tasks.php'; ?>
-    </template>
+    <!-- Việc cần làm KHÔNG hiện thành khối ở Trang chủ nữa. Thay vào đó mỗi
+         việc nhắc bằng CHẤM SỐ nhỏ trên icon chức năng tương ứng (điểm danh,
+         xin phép, thông báo, Thiếu Nhi=phiếu liên lạc, lịch) — xem moduleBadge(). -->
 
     <!-- BẢNG THI ĐUA (trang công khai, chỉ xem) — mở tab mới để chia sẻ cho các em -->
     <a href="bxh.php" target="_blank" rel="noopener"
@@ -38,7 +36,7 @@
                         <!-- Chấm đỏ nhắc việc -->
                         <span x-show="!isUnderMaintenance(m.key) && moduleBadge(m.key) > 0" style="display: none;"
                               class="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1 rounded-full bg-rose-500 text-white text-micro font-black flex items-center justify-center border-2 border-white shadow-sm"
-                              x-text="moduleBadge(m.key)"></span>
+                              x-text="moduleBadgeLabel(m.key)"></span>
 
                         <!-- Đang bảo trì -->
                         <span x-show="!moduleEnabled[m.key]" style="display: none;"

@@ -49,7 +49,7 @@
                         <!-- Chấm nhắc việc -->
                         <span x-show="!isUnderMaintenance(m.key) && moduleBadge(m.key) > 0" style="display: none;"
                               class="shrink-0 min-w-[20px] h-5 px-1.5 rounded-full bg-rose-500 text-white text-micro font-black flex items-center justify-center"
-                              x-text="moduleBadge(m.key)"></span>
+                              x-text="moduleBadgeLabel(m.key)"></span>
 
                         <!-- Đang bảo trì -->
                         <i x-show="!moduleEnabled[m.key]" style="display: none;"

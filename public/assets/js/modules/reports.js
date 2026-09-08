@@ -211,6 +211,16 @@ window.TNTT.reports = {
         window.print();
     },
 
+    // Số phiếu liên lạc còn thiếu học kỳ này trong phạm vi (chỉ người ghi
+    // được) — cho chấm nhắc trên icon Thiếu Nhi (lối vào tab Phiếu liên lạc).
+    get reportTodoCount() {
+        if (!this.canWriteReports || this.isUnderMaintenance('reports')) return 0;
+        const term = this.currentTerm;
+        if (!term) return 0;
+        const scope = this.accessibleStudents.filter(s => s.status === 'đang sinh hoạt');
+        return scope.filter(s => !this.reportOf(s.id, term.id)).length;
+    },
+
     get reportProgress() {
         const total = this.reportStudents.length;
         const sent = this.reportStudents.filter(s => this.reportStatus(s.id) === 'đã gửi').length;

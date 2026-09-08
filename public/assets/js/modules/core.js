@@ -580,7 +580,17 @@ window.TNTT.core = {
         // thực sự duyệt được, để GLV thường khỏi thấy chấm đỏ vô nghĩa.
         if (key === 'staff')     return this.canEditModule('staff') ? this.pendingMembers.length : 0;
         if (key === 'notes')     return this.notesBadgeCount;
+        // Việc cần làm -> chấm số trên icon (thay cho khối ở Trang chủ)
+        if (key === 'attendance')    return this.attendanceTodoCount;
+        if (key === 'announcements') return this.unreadAnnouncementCount;
+        if (key === 'students')      return this.reportTodoCount;   // Thiếu Nhi = lối vào Phiếu liên lạc
         return 0;
+    },
+
+    // Nhãn chấm gọn: số lớn thì rút thành "99+" cho khỏi phình icon
+    moduleBadgeLabel(key) {
+        const n = this.moduleBadge(key);
+        return n > 99 ? '99+' : n;
     },
 
     openModule(key) {
