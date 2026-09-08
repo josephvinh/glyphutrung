@@ -15,6 +15,20 @@ require dirname(__DIR__, 2) . '/config/password.php';
 $action = $_GET['action'] ?? 'me';
 $in     = json_input();
 
+/**
+ * Chuẩn hoá số điện thoại về dạng 0xxxxxxxxx: bỏ khoảng trắng/dấu, đổi
+ * +84 / 84 / 0084 ở đầu thành 0. Để tránh hai "phiên bản" cùng một số
+ * gây trùng lặp hoặc đăng nhập không khớp.
+ */
+function chuan_hoa_sdt(string $s): string
+{
+    $s = preg_replace('/[\s.\-()]/u', '', trim($s));
+    if (strncmp($s, '+84', 3) === 0)      $s = '0' . substr($s, 3);
+    elseif (strncmp($s, '0084', 4) === 0) $s = '0' . substr($s, 4);
+    elseif (strncmp($s, '84', 2) === 0 && strlen($s) >= 11) $s = '0' . substr($s, 2);
+    return $s;
+}
+
 /** Gói thông tin tài khoản để trả về cho giao diện */
 function member_payload(array $m): array
 {
@@ -41,7 +55,7 @@ switch ($action) {
     // -------------------------------------------------------------
     case 'login':
         require_post();
-        $phone = trim((string) ($in['phone'] ?? ''));
+        $phone = chuan_hoa_sdt((string) ($in['phone'] ?? ''));
         $pass  = (string) ($in['password'] ?? '');
 
         if ($phone === '' || $pass === '') {
@@ -130,17 +144,22 @@ switch ($action) {
         require_post();
         $holy  = trim((string) ($in['holyName'] ?? ''));
         $name  = trim((string) ($in['fullName'] ?? ''));
-        $phone = trim((string) ($in['phone'] ?? ''));
+        $phone = chuan_hoa_sdt((string) ($in['phone'] ?? ''));
         $pass  = (string) ($in['password'] ?? '');
         $note  = trim((string) ($in['note'] ?? ''));
         $birth = trim((string) ($in['birthDate'] ?? ''));
 
+        // Danh xưng người đăng ký tự khai: chỉ Giáo Lý Viên hoặc Dự Bị.
+        // Đây mới là VAI KHỞI TẠO (còn chờ duyệt); nhiệm vụ thật (Trưởng khối,
+        // BĐH, Chủ nhiệm...) do Ban Điều Hành gán khi duyệt.
+        $danhXung = ($in['danhXung'] ?? 'glv') === 'du_bi' ? 'du_bi' : 'glv';
+
         if ($name === '')  json_fail('Vui lòng nhập họ và tên.');
         if ($birth === '') json_fail('Vui lòng nhập ngày sinh.');
         if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $birth)) json_fail('Ngày sinh không hợp lệ.');
-        // GLV phải đủ tuổi tối thiểu, chặn nhầm ngày kiểu 2020
+        // Chặn nhầm ngày kiểu 2020; thành viên phải đủ tuổi tối thiểu
         $tuoi = (int) ((time() - strtotime($birth)) / 31556952);
-        if ($tuoi < 14 || $tuoi > 90) json_fail('Ngày sinh không hợp lý — Giáo Lý Viên phải từ 14 tuổi trở lên.');
+        if ($tuoi < 13 || $tuoi > 90) json_fail('Ngày sinh không hợp lý — thành viên phải từ 13 tuổi trở lên.');
         if (!preg_match('/^0\d{8,10}$/', $phone)) {
             json_fail('Số điện thoại không hợp lệ. Nhập dạng 09xxxxxxxx.');
         }
@@ -155,7 +174,7 @@ switch ($action) {
                           FROM members WHERE code LIKE 'GLV%'");
         $code = 'GLV' . str_pad((string) ($max['n'] + 1), 3, '0', STR_PAD_LEFT);
 
-        $titleId = db_one("SELECT id FROM titles WHERE role_code='glv' ORDER BY sort_order LIMIT 1")['id'] ?? null;
+        $titleId = db_one("SELECT id FROM titles WHERE role_code=? ORDER BY sort_order LIMIT 1", [$danhXung])['id'] ?? null;
 
         // must_change_pw = 0 vì mật khẩu do chính họ đặt, không phải cấp tạm
         db_insert('INSERT INTO members (code, holy_name, full_name, phone, birth_date, password_hash,
@@ -163,7 +182,7 @@ switch ($action) {
                                         register_note, registered_at)
                    VALUES (?,?,?,?,?,?,?,?,?,0,?,NOW())',
             [$code, $holy, $name, $phone, $birth, password_hash_upgrade($pass),
-             'glv', $titleId, 'chờ duyệt', $note !== '' ? $note : null]);
+             $danhXung, $titleId, 'chờ duyệt', $note !== '' ? $note : null]);
 
         // Báo cho Ban Điều Hành có hồ sơ mới chờ duyệt. Người vừa đăng ký
         // chưa vào được app nên chắc chắn không tự báo cho mình.

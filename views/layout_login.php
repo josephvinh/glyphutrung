@@ -125,6 +125,24 @@
             </p>
         </div>
 
+        <!-- Danh xưng: chỉ Giáo Lý Viên / Dự Bị. Nhiệm vụ cụ thể do BĐH gán sau -->
+        <div>
+            <label class="block text-micro font-bold text-slate-500 uppercase mb-1.5">Bạn đăng ký làm</label>
+            <div class="grid grid-cols-2 gap-3">
+                <button type="button" @click="rDanhXung = 'glv'"
+                        class="py-3 rounded-xl font-bold text-sm border transition-colors"
+                        :class="rDanhXung === 'glv' ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-200' : 'bg-slate-50 text-slate-500 border-slate-200'">
+                    Giáo Lý Viên
+                </button>
+                <button type="button" @click="rDanhXung = 'du_bi'"
+                        class="py-3 rounded-xl font-bold text-sm border transition-colors"
+                        :class="rDanhXung === 'du_bi' ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-200' : 'bg-slate-50 text-slate-500 border-slate-200'">
+                    Dự Bị
+                </button>
+            </div>
+            <p class="text-micro text-slate-500 mt-1 ml-1">Chức vụ cụ thể (Trưởng khối, Chủ nhiệm…) do Ban Điều Hành phân công sau.</p>
+        </div>
+
         <div class="grid grid-cols-3 gap-3">
             <div class="col-span-1">
                 <label class="block text-micro font-bold text-slate-500 uppercase mb-1.5">Tên Thánh</label>
@@ -260,7 +278,17 @@ document.addEventListener('alpine:init', () => {
         phone: '', password: '', showPw: false,
         oldPw: '', newPw: '', newPw2: '',
         rHoly: '', rName: '', rPhone: '', rBirth: '', rPw: '', rPw2: '', rNote: '', rCode: '',
+        rDanhXung: 'glv',
         error: '', busy: false,
+
+        // Chuẩn hoá SĐT: bỏ khoảng trắng/dấu, đổi +84/84/0084 -> 0
+        chuanHoaSdt(s) {
+            s = String(s || '').replace(/[\s.\-()]/g, '').trim();
+            if (s.startsWith('+84'))  s = '0' + s.slice(3);
+            else if (s.startsWith('0084')) s = '0' + s.slice(4);
+            else if (s.startsWith('84') && s.length >= 11) s = '0' + s.slice(2);
+            return s;
+        },
 
         goRegister() { this.error = ''; this.step = 'register'; this.$nextTick(() => lucide.createIcons()); },
         goLogin()    { this.error = ''; this.step = 'login';    this.$nextTick(() => lucide.createIcons()); },
@@ -272,8 +300,9 @@ document.addEventListener('alpine:init', () => {
             try {
                 const r = await this.post('register', {
                     holyName: this.rHoly.trim(), fullName: this.rName.trim(),
-                    phone: this.rPhone.trim(), birthDate: this.rBirth,
-                    password: this.rPw, note: this.rNote.trim()
+                    phone: this.chuanHoaSdt(this.rPhone), birthDate: this.rBirth,
+                    password: this.rPw, note: this.rNote.trim(),
+                    danhXung: this.rDanhXung
                 });
                 if (!r.ok) { this.error = r.error; return; }
                 this.rCode = r.code;
@@ -296,7 +325,7 @@ document.addEventListener('alpine:init', () => {
         async submitLogin() {
             this.error = ''; this.busy = true;
             try {
-                const r = await this.post('login', { phone: this.phone.trim(), password: this.password });
+                const r = await this.post('login', { phone: this.chuanHoaSdt(this.phone), password: this.password });
                 if (!r.ok) { this.error = r.error; return; }
                 // Lần đầu đăng nhập thì bắt đổi mật khẩu ngay, không cho vào thẳng
                 if (r.user.mustChangePw) {

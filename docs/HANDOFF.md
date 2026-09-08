@@ -368,6 +368,21 @@ cần DB/JS riêng: nguồn duy nhất ở **`config/huong_dan.php`** (mảng: `
   tương thích Word (mặc định `docs/Huong-dan-su-dung.doc`). Sửa nội dung 1 chỗ
   (`huong_dan.php`) là cả module lẫn .doc đổi theo.
 
+### 9.10 ✅ ĐÃ XONG — Danh xưng (GLV/Dự bị) + đăng ký + chuẩn hoá SĐT
+Xứ chỉ có **2 danh xưng**: Giáo Lý Viên và Dự Bị. Các vai điều hành (BĐH/Trưởng
+khối/Chủ nhiệm) là **NHIỆM VỤ** chồng lên, người vẫn là GLV.
+- **Danh xưng suy ra** (không thêm bảng): `core.js:danhXung(role)` = `du_bi` →
+  "Dự Bị", còn lại → "Giáo Lý Viên"; getter `myDanhXung`. Hồ sơ (Cá nhân) hiện
+  danh xưng ở eyebrow + dòng "Danh xưng", nhiệm vụ ở badge + "Chức vụ" (roleTitle).
+- **Đăng ký** (`layout_login.php` + `auth.php?action=register`): người tự khai
+  chỉ **Giáo Lý Viên / Dự Bị** → tạo `role=glv`/`du_bi`, **status='chờ duyệt'**.
+  Nhiệm vụ thật (Trưởng khối/BĐH/Chủ nhiệm) do BĐH gán khi duyệt. KHÔNG cho tự
+  chọn vai điều hành (tránh tự nâng quyền).
+- **Chuẩn hoá SĐT** (`auth.php:chuan_hoa_sdt` + `layout_login.php:chuanHoaSdt`):
+  bỏ khoảng trắng/dấu, đổi +84/84/0084 → 0; áp cho cả login lẫn register để khỏi
+  lệch "phiên bản" cùng một số. SĐT vẫn là username.
+- Không cần migration (dùng `role_code`/`titles` sẵn có).
+
 ---
 
 ## 10. Cheat-sheet lệnh

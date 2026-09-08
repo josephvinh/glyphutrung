@@ -739,6 +739,16 @@ window.TNTT.core = {
         return this.user.role === 'admin';
     },
 
+    // Danh xưng thực tế của đoàn: chỉ Giáo Lý Viên / Dự Bị. Các vai điều hành
+    // (BĐH, Trưởng khối, Chủ nhiệm) VẪN là Giáo Lý Viên — đó là NHIỆM VỤ, không
+    // phải danh xưng. Dùng ở chỗ giới thiệu bản thân cho đúng đời thực.
+    danhXung(role) {
+        return role === 'du_bi' ? 'Dự Bị' : 'Giáo Lý Viên';
+    },
+    get myDanhXung() {
+        return this.danhXung(this.user.role);
+    },
+
     // Mặc định vào thẻ Cá nhân: đó là thứ MỌI thành viên đều có.
     // Bốn thẻ quản trị vẫn chỉ Quản Trị Hệ Thống mới thấy.
     // Niên khoá tách khỏi Cài Đặt thành module riêng.

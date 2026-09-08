@@ -12,7 +12,7 @@
                 <i data-lucide="user" class="w-8 h-8"></i>
             </div>
             <div class="flex-1 min-w-0">
-                <p class="text-micro font-bold uppercase tracking-wider text-blue-200" x-text="user.roleTitle"></p>
+                <p class="text-micro font-bold uppercase tracking-wider text-blue-200" x-text="myDanhXung"></p>
                 <h3 class="text-lg font-black leading-tight mt-0.5">
                     <span class="font-normal text-blue-100" x-text="user.holyName"></span>
                     <span x-text="user.fullName"></span>
@@ -264,11 +264,11 @@
                 <!-- Vai trò và phân công không tự sửa được -->
                 <div class="bg-slate-50 border border-slate-100 rounded-2xl p-4 space-y-2">
                     <div class="flex items-center justify-between">
-                        <span class="text-xs font-semibold text-slate-500">Vai trò</span>
-                        <span class="text-xs font-bold text-slate-700" x-text="roleLabel(user.role)"></span>
+                        <span class="text-xs font-semibold text-slate-500">Danh xưng</span>
+                        <span class="text-xs font-bold text-slate-700" x-text="myDanhXung"></span>
                     </div>
                     <div class="flex items-center justify-between">
-                        <span class="text-xs font-semibold text-slate-500">Chức danh</span>
+                        <span class="text-xs font-semibold text-slate-500">Chức vụ</span>
                         <span class="text-xs font-bold text-slate-700" x-text="user.roleTitle"></span>
                     </div>
                     <div class="flex items-center justify-between">
