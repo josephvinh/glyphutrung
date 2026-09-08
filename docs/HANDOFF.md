@@ -316,8 +316,11 @@ khi chưa mở) có sẵn từ trước, vô hại — dọn khi tiện.
   (chỉ người phát/BĐH). `data.php` trả thêm `isMeeting/meetingAt/myRsvp/rsvpYes/rsvpNo`.
 - **Nhắc**: trong app qua `noteTasks` (ghép vào `myTasks` + badge `moduleBadge('notes')`);
   đẩy khi đóng app qua **cron** `config/nhac_lich.php` (CLI-only) gọi `push_bao()`.
-- **Ẩn "Việc cần làm" ở Trang chính** cho admin+bdh: `module_menu.php` bọc
-  `partial_my_tasks.php` trong `<template x-if="!['admin','bdh'].includes(user.role)">`.
+- **Việc cần làm KHÔNG còn là khối ở Trang chủ** (mọi vai): `module_menu.php`
+  đã gỡ `partial_my_tasks`. Thay vào đó mỗi việc nhắc bằng **chấm số trên icon**
+  qua `moduleBadge()` (điểm danh=`attendanceTodoCount`, thông báo=`unreadAnnouncementCount`,
+  Thiếu Nhi/`students`=`reportTodoCount` phiếu còn thiếu, xin phép, lịch=`notesBadgeCount`);
+  `moduleBadgeLabel()` rút số >99 thành "99+". `partial_my_tasks` vẫn còn ở màn Cá nhân.
 
 **Lưu ý kỹ thuật:** audience buổi họp dùng `push_nguoi_nhan()` (lọc members
 `status='đang phục vụ'`) — cùng hàm với gửi thông báo, nên RSVP-list khớp người
