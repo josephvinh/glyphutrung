@@ -264,6 +264,10 @@ Kiểm chứng nhanh: `grep reporthub core.js` (có), thanh dưới 5 tab, `modu
   - `php config/migrate_modules_sync.php` — thêm dòng `reporthub`/`analytics`/
     `calendar` vào bảng `modules` (thiếu là mất icon Báo cáo).
   - `php config/migrate_bdh_view.php` — hạ BĐH xuống `view` cho `scores`+`reports`.
+  - `php config/migrate_lich_hop.php` — bảng `personal_notes`, `meeting_rsvp`,
+    cột họp trên `announcements`, module `notes` + quyền (Lịch cá nhân).
+- **CRON nhắc lịch** (bắt buộc để có push khi đóng app): đặt cron 5 phút/lần
+  gọi `php <đường-dẫn>/config/nhac_lich.php` — xem `docs/DEPLOY-AZDIGI.md`.
 - Thư mục lạ `NGOC VINH/` chưa track — hỏi trước khi làm gì với nó.
 - **`config/config.php` đang trỏ DB `tntt_demo`** để test localhost — KHÔNG commit;
   khi người dùng nói "đổi lại DB thật" thì sửa `name` về `ylcqukhi_glyphutrung`.
@@ -299,6 +303,26 @@ Partial tự `unset` biến sau khi include. Cờ mở panel `showFilter` là st
 (quét `scores`) cho từng em mỗi lần render → ~0.7s cho 120 em; muốn nhanh hơn nữa
 thì đệm nốt phần điểm. Lỗi console `profileStudent.code` (img QR trong modal hồ sơ
 khi chưa mở) có sẵn từ trước, vô hại — dọn khi tiện.
+
+### 9.6 ✅ ĐÃ XONG — Lịch cá nhân + Thông báo họp (RSVP) + nhắc đẩy
+Đã push. Ba phần:
+- **Lịch cá nhân** (module `notes`, RIÊNG TƯ từng người): bảng `personal_notes`,
+  `api/notes.php` (ràng `member_id = người đăng nhập`), `notes.js` + `module_notes.php`
+  (agenda theo ngày). Nạp qua `data.php` (`notes`, chỉ của mình).
+- **Buổi họp**: `announcements` thêm `is_meeting/meeting_at/meeting_place/reminded_at`
+  + bảng `meeting_rsvp`. Tick "buổi họp" khi phát → **ghép động** vào lịch người
+  trong phạm vi (`notes.js:myMeetings` lọc từ `this.announcements`, KHÔNG nhân bản).
+  RSVP: `announcements.php?action=rsvp`; người phát xem `action=rsvpList`
+  (chỉ người phát/BĐH). `data.php` trả thêm `isMeeting/meetingAt/myRsvp/rsvpYes/rsvpNo`.
+- **Nhắc**: trong app qua `noteTasks` (ghép vào `myTasks` + badge `moduleBadge('notes')`);
+  đẩy khi đóng app qua **cron** `config/nhac_lich.php` (CLI-only) gọi `push_bao()`.
+- **Ẩn "Việc cần làm" ở Trang chính** cho admin+bdh: `module_menu.php` bọc
+  `partial_my_tasks.php` trong `<template x-if="!['admin','bdh'].includes(user.role)">`.
+
+**Lưu ý kỹ thuật:** audience buổi họp dùng `push_nguoi_nhan()` (lọc members
+`status='đang phục vụ'`) — cùng hàm với gửi thông báo, nên RSVP-list khớp người
+nhận. `data.php` có Cache 5 phút/người; ghi note/RSVP gọi `Cache::del`, phát họp
+gọi `Cache::flush` để lịch mọi người cập nhật.
 
 ---
 

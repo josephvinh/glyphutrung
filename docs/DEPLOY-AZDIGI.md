@@ -227,3 +227,19 @@ tab **Actions** của repo. Chạy tay: tab Actions → **Deploy AZDIGI → Run 
   push (dùng secret FTP host/user/pass). Nhắn mình để soạn workflow.
 - **Thủ công**: tải ZIP repo từ GitHub → giải nén → upload qua **File Manager**;
   cập nhật thì upload đè. (Chậm và dễ sót, chỉ dùng khi bí.)
+
+## Phụ lục C — Cron nhắc lịch (thông báo đẩy khi đóng app)
+Lịch cá nhân + buổi họp cần một cron chạy nền để gửi push khi tới giờ. Trên
+cPanel: **Cron Jobs** → thêm job **mỗi 5 phút** (Common Settings: "Once per five
+minutes") với lệnh (đổi đường dẫn php + thư mục cho đúng máy chủ):
+
+    /usr/local/bin/php /home/<user>/public_html/config/nhac_lich.php >/dev/null 2>&1
+
+Biểu thức thời gian 5 phút: đặt phút = `*/5`, các ô còn lại = `*`.
+
+Kiểm tra tay (SSH): `php /home/<user>/public_html/config/nhac_lich.php` — in ra
+số mục đã nhắc. Script chỉ chạy bằng CLI (gọi qua trình duyệt bị chặn 403).
+
+Điều kiện: đã khai **khoá VAPID** trong `config/config.php` và người dùng đã
+**bật thông báo** trên máy họ (nút chuông trong app). Không có cron thì lịch vẫn
+chạy, chỉ mất phần nhắc khi app đóng (trong app vẫn nhắc ở "Việc cần làm").
