@@ -119,9 +119,15 @@ php -v                                   # phải 8.2+
 php config/install.php                   # chỉ khi cài DB rỗng (bỏ nếu đã import)
 php config/migrate_roles_du_bi.php        # thêm vai Dự Bị + quyền
 php config/migrate_modules_sync.php       # thêm module Báo cáo/Lịch trình
+php config/migrate_bdh_view.php           # BĐH chỉ XEM điểm số + phiếu liên lạc
+php config/migrate_lich_hop.php           # Lịch cá nhân + thông báo họp (RSVP)
 php config/migrate_student_codes.php      # chuẩn hoá mã (nếu chưa chạy)
-php phpunit10.phar --no-coverage          # 25/25 là OK
+php phpunit10.phar --no-coverage          # 33/33 là OK
 ```
+
+> Các script migrate đều **idempotent** — chạy lại vô hại. Sau khi có
+> `migrate_lich_hop.php`, nhớ đặt **cron nhắc lịch** ở **Phụ lục C** để có
+> thông báo đẩy khi đóng app.
 
 ---
 
@@ -220,7 +226,11 @@ tab **Actions** của repo. Chạy tay: tab Actions → **Deploy AZDIGI → Run 
 - **Trang trắng / thiếu CSS-JS**: docroot chưa trỏ đúng `public/`.
 - **"Access denied for user"**: sai `user`/`pass`/`name` DB ở Bước 5, hoặc chưa
   Add User To Database.
-- **Không thấy module mới**: chưa chạy `php config/migrate_modules_sync.php`.
+- **Không thấy module Báo cáo/Lịch trình**: chưa chạy `php config/migrate_modules_sync.php`.
+- **Không thấy "Lịch của tôi" / không tạo được buổi họp**: chưa chạy
+  `php config/migrate_lich_hop.php`.
+- **Không nhận thông báo nhắc khi đóng app**: chưa đặt **cron** (Phụ lục C),
+  chưa khai khoá VAPID, hoặc người dùng chưa bật chuông thông báo.
 
 ## Phụ lục B — Không có SSH/Git trên hosting
 - **GitHub Actions → FTP**: tạo workflow đẩy thư mục lên hosting qua FTP mỗi lần

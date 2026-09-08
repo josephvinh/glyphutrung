@@ -328,6 +328,33 @@ khi chưa mở) có sẵn từ trước, vô hại — dọn khi tiện.
 nhận. `data.php` có Cache 5 phút/người; ghi note/RSVP gọi `Cache::del`, phát họp
 gọi `Cache::flush` để lịch mọi người cập nhật.
 
+### 9.7 ✅ ĐÃ XONG — Trang chủ phong phú hơn (thẻ tổng quan)
+`6ec1a38`. Sau khi bỏ khối "Việc cần làm", màn PC trống → thêm khối **tổng quan
+2 thẻ** trong `views/module_menu.php` (dưới banner thi đua, trên lưới chức năng):
+- **Sắp tới**: vài việc/họp gần nhất từ hôm nay — `notes.js:homeUpcoming` (5 mục,
+  bỏ việc đã xong + họp đã từ chối).
+- **Thông báo gần đây**: `visibleAnnouncements.slice(0,4)`, có chấm chưa đọc.
+
+Bố cục **2 cột trên PC** qua class **`.home-overview`** trong `app.css`
+(`@media min-width:1024px` → `grid-template-columns:1fr 1fr`). ⚠️ Build Tailwind
+tĩnh **KHÔNG có** `lg:grid-cols-2` (cả họ `lg:` bị purge) — đa cột PC luôn đặt tay
+trong `app.css`, đừng dùng utility responsive của Tailwind.
+
+### 9.8 Tài khoản demo theo vai (chỉ trên DB `tntt_demo`)
+Tạo bằng script tạm (không commit) để test/chụp; mật khẩu chung **`tntt@2026`**:
+
+| Vai | SĐT | Phạm vi |
+|---|---|---|
+| admin | 0901000001 | Toàn đoàn |
+| bdh | 0902000002 | Toàn đoàn |
+| truong_khoi | 0902000003 | Khối Khai Tâm |
+| glv_chu_nhiem | 0902000004 | Lớp Khai Tâm 1 |
+| glv | 0902000005 | Lớp Khai Tâm 1 |
+| du_bi | 0902000006 | Lớp Khai Tâm 1 |
+
+Chỉ là dữ liệu demo (không có trên DB thật). Có ít nội dung mẫu (1 ghi chú,
+1 thông báo, 1 buổi họp) để 2 thẻ Trang chủ có gì hiển thị.
+
 ---
 
 ## 10. Cheat-sheet lệnh
