@@ -164,6 +164,7 @@ window.TNTT.core = {
             this.rebuildAttendanceIndex(); // index O(1) — tránh treo khi đoàn lớn
             this.leaveRequests     = d.leaveRequests;
             this.scores            = d.scores;
+            this.rebuildScoreIndex();   // chỉ số điểm O(1) — tránh treo Lên lớp/ĐTB
             this.reports           = d.reports;
             this.announcements     = d.announcements;
             this.readAnnouncements = d.readAnnouncements;

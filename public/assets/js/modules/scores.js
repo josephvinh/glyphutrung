@@ -20,6 +20,10 @@ window.TNTT.scores = {
     ],
 
     scores: [],
+    // Chỉ số điểm O(1): 'studentId|termId|type' -> bản ghi. Dựng ở loadData,
+    // tránh this.scores.find() quét cả nghìn dòng mỗi lần đọc (ĐTB, Lên lớp
+    // gọi rất nhiều lần/khung hình → treo). Cùng cách với chỉ số điểm danh.
+    scoreIndex: null,
     scoreTab: 'enter',        // 'enter' = nhập theo cột | 'table' = bảng điểm
     scoreTermId: 1,
     scoreClass: '',
@@ -49,8 +53,21 @@ window.TNTT.scores = {
             .sort((a, b) => a.code.localeCompare(b.code));
     },
 
+    scoreKey(studentId, termId, type) { return studentId + '|' + Number(termId) + '|' + type; },
+
+    // Dựng lại chỉ số từ this.scores. Gọi sau loadData.
+    rebuildScoreIndex() {
+        const idx = new Map();
+        for (const s of this.scores) idx.set(this.scoreKey(s.studentId, s.termId, s.type), s);
+        this.scoreIndex = idx;
+    },
+
     scoreOf(studentId, type, termId) {
         const t = Number(termId || this.scoreTermId);
+        if (this.scoreIndex) {
+            const row = this.scoreIndex.get(this.scoreKey(studentId, t, type));
+            return row ? row.value : '';
+        }
         const row = this.scores.find(s => s.studentId === studentId && s.termId === t && s.type === type);
         return row ? row.value : '';
     },
@@ -59,10 +76,12 @@ window.TNTT.scores = {
     setScore(studentId, type, raw, termId) {
         const t = Number(termId || this.scoreTermId);
         const txt = String(raw).trim().replace(',', '.');
+        const key = this.scoreKey(studentId, t, type);
         const i = this.scores.findIndex(s => s.studentId === studentId && s.termId === t && s.type === type);
 
         if (txt === '') {
             if (i !== -1) this.scores.splice(i, 1);
+            if (this.scoreIndex) this.scoreIndex.delete(key);
             this.save('scores', 'set', { studentId: studentId, termId: t, type: type, value: '' });
             return true;
         }
@@ -71,7 +90,11 @@ window.TNTT.scores = {
 
         const value = Math.round(v * 10) / 10;
         if (i !== -1) { this.scores[i].value = value; this.scores[i].at = this.timestamp(); this.scores[i].by = this.user.fullName; }
-        else this.scores.push({ studentId: studentId, termId: t, type: type, value: value, at: this.timestamp(), by: this.user.fullName });
+        else {
+            const rec = { studentId: studentId, termId: t, type: type, value: value, at: this.timestamp(), by: this.user.fullName };
+            this.scores.push(rec);
+            if (this.scoreIndex) this.scoreIndex.set(key, rec);
+        }
         this.save('scores', 'set', { studentId: studentId, termId: t, type: type, value: String(value) });
         return true;
     },
