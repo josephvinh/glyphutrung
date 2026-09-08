@@ -403,6 +403,13 @@ Nguyên nhân treo (đo thực tế demo 600 em / 34.792 điểm danh):
 đã đủ nhẹ. **Bài học:** getter Alpine KHÔNG được nhớ kết quả (memoize) — mỗi lần
 đọc là chạy lại; đừng quét mảng lớn trong getter, hãy tái dùng chỉ số dựng sẵn.
 
+3. **Lên lớp/ĐTB treo** (`e100895`) — `scoreOf()` quét `this.scores.find()` ~2.400
+   dòng mỗi lần; `promoteVerdict`/`yearAverage` gọi rất nhiều lần → promoteSummary
+   718ms/120 em. Sửa: thêm **`scoreIndex`** (Map `studentId|termId|type`) dựng ở
+   `loadData` (`rebuildScoreIndex`), bảo trì ở `setScore`; `scoreOf` tra O(1) →
+   promoteSummary 718ms→12ms. **Cùng mẫu:** `attIndex` (điểm danh) + `scoreIndex`
+   (điểm) — mọi tra cứu nặng đều nên qua chỉ số dựng sẵn ở `loadData`.
+
 ---
 
 ## 10. Cheat-sheet lệnh
