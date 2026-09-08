@@ -319,7 +319,8 @@ khi chưa mở) có sẵn từ trước, vô hại — dọn khi tiện.
 - **Việc cần làm KHÔNG còn là khối ở Trang chủ** (mọi vai): `module_menu.php`
   đã gỡ `partial_my_tasks`. Thay vào đó mỗi việc nhắc bằng **chấm số trên icon**
   qua `moduleBadge()` (điểm danh=`attendanceTodoCount`, thông báo=`unreadAnnouncementCount`,
-  Thiếu Nhi/`students`=`reportTodoCount` phiếu còn thiếu, xin phép, lịch=`notesBadgeCount`);
+  Thiếu Nhi/`students`=`reportTodoCount` phiếu còn thiếu — CHỈ nhắc trong 1 tháng
+  cuối trước ngày kết thúc học kỳ (`term.to`), ngoài khoảng đó =0; xin phép, lịch=`notesBadgeCount`);
   `moduleBadgeLabel()` rút số >99 thành "99+". `partial_my_tasks` vẫn còn ở màn Cá nhân.
 
 **Lưu ý kỹ thuật:** audience buổi họp dùng `push_nguoi_nhan()` (lọc members

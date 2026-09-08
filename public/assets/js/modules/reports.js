@@ -211,11 +211,20 @@ window.TNTT.reports = {
         window.print();
     },
 
-    // Số phiếu liên lạc còn thiếu học kỳ này trong phạm vi (chỉ người ghi
-    // được) — cho chấm nhắc trên icon Thiếu Nhi (lối vào tab Phiếu liên lạc).
+    // Số phiếu liên lạc còn thiếu — cho chấm nhắc trên icon Thiếu Nhi.
+    //
+    // Sổ liên lạc KHÔNG phải làm ngay: chỉ nhắc trong 1 THÁNG CUỐI trước ngày
+    // kết thúc học kỳ (tính đến hết ngày cuối kỳ). Ngoài khoảng đó -> 0, khỏi
+    // treo chấm đỏ suốt kỳ gây phiền.
     get reportTodoCount() {
         if (!this.canWriteReports || this.isUnderMaintenance('reports')) return 0;
-        const term = this.currentTerm;
+        const today = this.toDateInput(new Date());
+        const term = this.terms.find(t => {
+            if (!t.to || today > t.to) return false;         // đã qua ngày cuối kỳ
+            const d = new Date(t.to + 'T00:00:00');
+            d.setMonth(d.getMonth() - 1);                    // lùi đúng 1 tháng
+            return today >= this.toDateInput(d);             // đã vào tháng cuối chưa
+        });
         if (!term) return 0;
         const scope = this.accessibleStudents.filter(s => s.status === 'đang sinh hoạt');
         return scope.filter(s => !this.reportOf(s.id, term.id)).length;
