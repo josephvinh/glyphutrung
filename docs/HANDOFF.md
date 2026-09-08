@@ -383,6 +383,21 @@ khối/Chủ nhiệm) là **NHIỆM VỤ** chồng lên, người vẫn là GLV.
   lệch "phiên bản" cùng một số. SĐT vẫn là username.
 - Không cần migration (dùng `role_code`/`titles` sẵn có).
 
+### 9.11 ✅ ĐÃ XONG — Hết treo khi Admin/BĐH vào (CPU + mạng)
+Nguyên nhân treo (đo thực tế demo 600 em / 34.792 điểm danh):
+1. **CPU** — `statSummary`/`buildAttendanceIndex` (`stats.js`) tự quét lại 34k dòng
+   MỖI lần đọc getter (statSummary phụ thuộc `accessibleStudents`, bị đọc nhiều lần/
+   khung hình). Sửa: tái dùng `this.attIndex` dựng sẵn ở `loadData`, chạm `.length`
+   để vẫn cập nhật. loadData 3.5s→~1s, render hết scale theo số điểm danh (`69baae2`).
+2. **Mạng** — `data.php` ~4.8MB. Sửa: `_bootstrap.php` bật `ob_gzhandler` (gzip mọi
+   API) + `data.php` scope điểm danh theo `allowed_class_ids` (Admin/BĐH toàn đoàn,
+   còn lại chỉ lớp/khối mình). Truyền: Admin 4.8MB→**141KB**, GLV→22KB (`76755b3`).
+
+**Lưu ý:** kế hoạch refactor tổng-hợp-server 6-Task
+(`docs/superpowers/plans/2026-09-07-toi-uu-tai-toan-doan.md`) GIỜ LÀ TUỲ CHỌN —
+đã đủ nhẹ. **Bài học:** getter Alpine KHÔNG được nhớ kết quả (memoize) — mỗi lần
+đọc là chạy lại; đừng quét mảng lớn trong getter, hãy tái dùng chỉ số dựng sẵn.
+
 ---
 
 ## 10. Cheat-sheet lệnh

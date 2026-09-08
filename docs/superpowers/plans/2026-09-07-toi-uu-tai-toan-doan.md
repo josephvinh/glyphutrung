@@ -1,6 +1,15 @@
 # Tối ưu tải cho Admin/BĐH (toàn đoàn) — Kế hoạch
 
-> **Trạng thái:** PLAN — chưa code. Viết sau khi "thử tải" 600 em cho thấy app treo.
+> **Trạng thái:** ✅ ĐÃ GIẢI QUYẾT BẰNG CÁCH NHẸ (không cần refactor 6-Task bên dưới).
+> - CPU freeze: sửa `statSummary`/`buildAttendanceIndex` tái dùng `this.attIndex`
+>   dựng sẵn (commit `69baae2`) → loadData 3.5s→~1s, render hết treo.
+> - Mạng: **bật gzip** mọi API + **scope điểm danh theo phạm vi** (commit `76755b3`)
+>   → data.php truyền: Admin 4.8MB→**141KB**, Trưởng khối→42KB, GLV→22KB.
+>
+> 6 Task refactor tổng-hợp-server bên dưới GIỜ LÀ TUỲ CHỌN (chỉ cần nếu muốn giảm
+> thêm bộ nhớ client cho Admin — hiện đã đủ nhẹ). Giữ lại làm tham chiếu.
+
+> **(Kế hoạch gốc)** Viết sau khi "thử tải" 600 em cho thấy app treo.
 
 **Vấn đề (đo thực tế trên DB demo 600 em):** `api/data.php` trả **~4,9 MB JSON**
 mỗi lần mở, trong đó **~34.792 dòng điểm danh** chiếm ~90%. Trình duyệt tải + parse
