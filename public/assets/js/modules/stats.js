@@ -63,10 +63,17 @@ window.TNTT.stats = {
         return this.sessionsBetween(y + '-' + p(m) + '-01', y + '-' + p(m) + '-' + p(last));
     },
 
-    // Bảng tra cứu nhanh cho việc tính chuyên cần: tránh find() lồng nhau
+    // Bảng tra cứu nhanh cho việc tính chuyên cần: tránh find() lồng nhau.
+    // TÁI DÙNG chỉ số attIndex đã dựng sẵn ở loadData (rebuildAttendanceIndex)
+    // thay vì quét lại vài chục nghìn dòng mỗi lần gọi — vốn làm render treo
+    // vài giây với đoàn lớn. Chạm .length để vẫn nhận thay đổi khi thêm/bớt.
     buildAttendanceIndex() {
-        const att = new Map();
-        this.attendances.forEach(a => att.set(a.programId + '|' + a.date + '|' + a.studentId, a));
+        void this.attendances.length;
+        let att = this.attIndex;
+        if (!att) {
+            att = new Map();
+            this.attendances.forEach(a => att.set(a.programId + '|' + a.date + '|' + a.studentId, a));
+        }
         const leave = new Map();
         this.leaveRequests.filter(r => r.status === 'đã duyệt')
             .forEach(r => leave.set(r.programId + '|' + r.date + '|' + r.studentId, r));
@@ -80,8 +87,14 @@ window.TNTT.stats = {
         const students = this.accessibleStudents.filter(s => s.status === 'đang sinh hoạt');
         const sessions = this.statSessions.filter(s => s.countForAttendance);
 
-        const attIndex = new Map();
-        this.attendances.forEach(a => attIndex.set(a.programId + '|' + a.date + '|' + a.studentId, a));
+        // TÁI DÙNG chỉ số điểm danh dựng sẵn (O(1) tra cứu) thay vì quét lại
+        // cả chục nghìn dòng mỗi lần đọc getter — nguyên nhân render treo.
+        void this.attendances.length;   // vẫn tính lại khi thêm/bớt điểm danh
+        let attIndex = this.attIndex;
+        if (!attIndex) {
+            attIndex = new Map();
+            this.attendances.forEach(a => attIndex.set(a.programId + '|' + a.date + '|' + a.studentId, a));
+        }
         const leaveIndex = new Map();
         this.leaveRequests.filter(r => r.status === 'đã duyệt')
             .forEach(r => leaveIndex.set(r.programId + '|' + r.date + '|' + r.studentId, r));
