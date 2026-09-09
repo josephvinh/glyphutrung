@@ -31,15 +31,6 @@
                 </span>
             </button>
 
-            <!-- Dark mode toggle -->
-            <button @click="toggleDark()" type="button" :aria-label="dark ? 'Chuyển sang chế độ sáng' : 'Chuyển sang chế độ tối'"
-                    class="w-12 h-12 shrink-0 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center border-2 border-white/40 shadow-sm active:scale-90 transition-all">
-                <!-- Sun icon (shown in dark mode) -->
-                <i x-show="dark" data-lucide="sun" class="text-white w-5 h-5 pointer-events-none"></i>
-                <!-- Moon icon (shown in light mode) -->
-                <i x-show="!dark" data-lucide="moon" class="text-white w-5 h-5 pointer-events-none"></i>
-            </button>
-
             <!-- Đăng xuất -->
             <button @click="logout()" type="button" aria-label="Đăng xuất khỏi hệ thống"
                     class="w-12 h-12 shrink-0 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center border-2 border-white/40 shadow-sm active:scale-90 transition-all">

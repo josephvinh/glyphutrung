@@ -45,10 +45,9 @@ window.TNTT.core = {
     assignments: window.TNTT.boot?.assignments || [],
     primaryAssignment: window.TNTT.boot?.primaryAssignment || null,
 
-    // Dark mode support
-    dark: localStorage.getItem('darkMode') === 'true'
-        || (localStorage.getItem('darkMode') === null
-            && window.matchMedia('(prefers-color-scheme: dark)').matches),
+    // Đã bỏ nút chỉnh sáng/tối trên header — app luôn ở chế độ SÁNG.
+    // Giữ 'dark' = false để applyDarkMode() gỡ class .dark nếu máy nào còn sót.
+    dark: false,
 
     init() {
         // Apply saved dark mode state
