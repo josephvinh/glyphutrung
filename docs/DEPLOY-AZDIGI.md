@@ -125,6 +125,7 @@ php config/migrate_modules_sync.php       # thêm module Báo cáo/Lịch trình
 php config/migrate_bdh_view.php           # BĐH chỉ XEM điểm số + phiếu liên lạc
 php config/migrate_lich_hop.php           # Lịch cá nhân + thông báo họp (RSVP)
 php config/migrate_guide.php              # module Hướng dẫn sử dụng
+php config/migrate_modules_dongbo.php     # sửa icon/màu bảng modules (icon trắng)
 php config/migrate_student_codes.php      # chuẩn hoá mã (nếu chưa chạy)
 php phpunit10.phar --no-coverage          # 33/33 là OK
 ```
@@ -248,6 +249,15 @@ tab **Actions** của repo. Chạy tay: tab Actions → **Deploy AZDIGI → Run 
   `php config/migrate_lich_hop.php`.
 - **Không nhận thông báo nhắc khi đóng app**: chưa đặt **cron** (Phụ lục C),
   chưa khai khoá VAPID, hoặc người dùng chưa bật chuông thông báo.
+- **Icon trắng/vô hình ở lưới trên MOBILE** (PC vẫn ổn vì dùng thanh bên): bảng
+  `modules` có `color='text-white'` do dữ liệu cài cũ. Sửa: chạy
+  `php config/migrate_modules_dongbo.php` (có SSH), hoặc dán SQL vào phpMyAdmin:
+  ```sql
+  UPDATE modules SET color='text-violet-600' WHERE module_key='promotion';
+  UPDATE modules SET color='text-amber-600'  WHERE module_key='programs';
+  UPDATE modules SET color='text-rose-500'   WHERE module_key='announcements';
+  UPDATE modules SET color='text-indigo-600' WHERE module_key='years';
+  ```
 
 ## Phụ lục B — Không có SSH/Git trên hosting
 - **GitHub Actions → FTP**: tạo workflow đẩy thư mục lên hosting qua FTP mỗi lần
