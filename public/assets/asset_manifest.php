@@ -23,5 +23,5 @@ return [
         'calendar', 'notes',
     ],
     // Thứ tự CSS = thứ tự cascade: tailwind (nền) trước, phần ghi đè sau.
-    'css' => ['tailwind', 'font', 'app', 'dark', 'skeleton', 'analytics', 'toast'],
+    'css' => ['tailwind', 'font', 'app', 'dark', 'skeleton', 'analytics', 'toast', 'brand'],
 ];

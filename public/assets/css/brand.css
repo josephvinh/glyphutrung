@@ -1,0 +1,54 @@
+/* ==========================================================
+   BRAND — nhuộm tông XANH sang ĐỎ MẬN + vàng gold theo logo
+   "Gia Đình Giáo Lý Phú Trung". Nạp CUỐI CÙNG để ghi đè các lớp
+   blue-* của tailwind.css (cùng độ đặc hiệu, đứng sau -> thắng).
+   CHỈ đổi màu, không đụng layout/logic.
+
+   Thang mận:  50 #fbeaec · 100 #f6d2d7 · 200 #ecaab3 · 300 #dd8793
+               400 #c25667 · 500 #b23048 · 600 #a01b2e (chính)
+               700 #7d1522 · 800 #5f0f1a
+   ========================================================== */
+
+/* --- NỀN --- */
+.bg-blue-50   { background-color: #fbeaec; }
+.bg-blue-100  { background-color: #f6d2d7; }
+.bg-blue-400  { background-color: #c25667; }
+.bg-blue-500  { background-color: #b23048; }
+.bg-blue-600  { background-color: #a01b2e; }
+.bg-blue-800  { background-color: #5f0f1a; }
+.hover\:bg-blue-50:hover  { background-color: #fbeaec; }
+.hover\:bg-blue-100:hover { background-color: #f6d2d7; }
+.hover\:bg-blue-200:hover { background-color: #ecaab3; }
+
+/* --- CHỮ --- */
+.text-blue-50  { color: #fbeaec; }
+.text-blue-100 { color: #f6d2d7; }
+.text-blue-200 { color: #ecaab3; }
+.text-blue-300 { color: #dd8793; }
+.text-blue-400 { color: #c25667; }
+.text-blue-500 { color: #b23048; }
+.text-blue-600 { color: #a01b2e; }
+.text-blue-700 { color: #7d1522; }
+.hover\:text-blue-600:hover { color: #a01b2e; }
+
+/* --- VIỀN --- */
+.border-blue-100 { border-color: #f6d2d7; }
+.border-blue-200 { border-color: #ecaab3; }
+.border-blue-300 { border-color: #dd8793; }
+.border-blue-600 { border-color: #a01b2e; }
+.hover\:border-blue-200:hover { border-color: #ecaab3; }
+.focus\:border-blue-500:focus { border-color: #b23048; }
+
+/* --- RING (viền focus) --- */
+.ring-blue-100 { --tw-ring-color: #f6d2d7; }
+.focus\:ring-blue-500:focus { --tw-ring-color: #b23048; }
+
+/* --- GRADIENT (header, hero, banner thi đua) --- */
+.from-blue-600 { --tw-gradient-from: #a01b2e var(--tw-gradient-from-position); --tw-gradient-to: rgba(160,27,46,0) var(--tw-gradient-to-position); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to); }
+.to-blue-700   { --tw-gradient-to: #7d1522 var(--tw-gradient-to-position); }
+
+/* --- BÓNG MÀU (nút) --- */
+.shadow-blue-200 { --tw-shadow-color: #ecaab3; --tw-shadow: var(--tw-shadow-colored); }
+
+/* --- FILL (icon điện thoại) --- */
+.fill-blue-100 { fill: #f6d2d7; }

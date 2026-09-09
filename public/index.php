@@ -44,7 +44,7 @@ function bundle_v(array $files): int {   // ?v = mtime lớn nhất trong nhóm
     <meta charset="UTF-8">
     <!-- Cho phép phóng to (GLV lớn tuổi đọc chữ nhỏ) + hỗ trợ tai thỏ iPhone -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#2563eb">
+    <meta name="theme-color" content="#8a1c2b">
 
     <!-- BIỂU TƯỢNG APP
          icon.svg   : tab trình duyệt, nét sắc ở mọi cỡ
