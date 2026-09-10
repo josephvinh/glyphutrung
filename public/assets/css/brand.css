@@ -1,54 +1,66 @@
 /* ==========================================================
-   BRAND — nhuộm tông XANH sang ĐỎ CRIMSON (tươi) theo logo
-   "Gia Đình Giáo Lý Phú Trung". Nạp CUỐI CÙNG để ghi đè các lớp
+   BRAND — nhuộm tông XANH sang ĐỎ TƯƠI + điểm nhấn VÀNG GOLD theo
+   logo "Gia Đình Giáo Lý Phú Trung". Nạp CUỐI CÙNG để ghi đè các lớp
    blue-* của tailwind.css (cùng độ đặc hiệu, đứng sau -> thắng).
    CHỈ đổi màu, không đụng layout/logic.
 
-   Thang crimson: 50 #fdecef · 100 #fbdce0 · 200 #f5bcc5 · 300 #ee97a5
-                  400 #e56e82 · 500 #dc4a63 · 600 #d0243f (chính)
-                  700 #a81a31 · 800 #7a1122
+   Thang đỏ tươi: 50 #fdedef · 100 #fcdadf · 200 #f8b3bc · 300 #f28b98
+                  400 #ec6076 · 500 #e73a58 · 600 #e11d36 (chính)
+                  700 #b81528 · 800 #8a1120
+   Vàng gold:     #f2b84e -> #d98f22 (điểm nhấn banner Thi đua)
    ========================================================== */
 
 /* --- NỀN --- */
-.bg-blue-50   { background-color: #fdecef; }
-.bg-blue-100  { background-color: #fbdce0; }
-.bg-blue-400  { background-color: #e56e82; }
-.bg-blue-500  { background-color: #dc4a63; }
-.bg-blue-600  { background-color: #d0243f; }
-.bg-blue-800  { background-color: #7a1122; }
-.hover\:bg-blue-50:hover  { background-color: #fdecef; }
-.hover\:bg-blue-100:hover { background-color: #fbdce0; }
-.hover\:bg-blue-200:hover { background-color: #f5bcc5; }
+.bg-blue-50   { background-color: #fdedef; }
+.bg-blue-100  { background-color: #fcdadf; }
+.bg-blue-400  { background-color: #ec6076; }
+.bg-blue-500  { background-color: #e73a58; }
+.bg-blue-600  { background-color: #e11d36; }
+.bg-blue-800  { background-color: #8a1120; }
+.hover\:bg-blue-50:hover  { background-color: #fdedef; }
+.hover\:bg-blue-100:hover { background-color: #fcdadf; }
+.hover\:bg-blue-200:hover { background-color: #f8b3bc; }
 
 /* --- CHỮ --- */
-.text-blue-50  { color: #fdecef; }
-.text-blue-100 { color: #fbdce0; }
-.text-blue-200 { color: #f5bcc5; }
-.text-blue-300 { color: #ee97a5; }
-.text-blue-400 { color: #e56e82; }
-.text-blue-500 { color: #dc4a63; }
-.text-blue-600 { color: #d0243f; }
-.text-blue-700 { color: #a81a31; }
-.hover\:text-blue-600:hover { color: #d0243f; }
+.text-blue-50  { color: #fdedef; }
+.text-blue-100 { color: #fcdadf; }
+.text-blue-200 { color: #f8b3bc; }
+.text-blue-300 { color: #f28b98; }
+.text-blue-400 { color: #ec6076; }
+.text-blue-500 { color: #e73a58; }
+.text-blue-600 { color: #e11d36; }
+.text-blue-700 { color: #b81528; }
+.hover\:text-blue-600:hover { color: #e11d36; }
 
 /* --- VIỀN --- */
-.border-blue-100 { border-color: #fbdce0; }
-.border-blue-200 { border-color: #f5bcc5; }
-.border-blue-300 { border-color: #ee97a5; }
-.border-blue-600 { border-color: #d0243f; }
-.hover\:border-blue-200:hover { border-color: #f5bcc5; }
-.focus\:border-blue-500:focus { border-color: #dc4a63; }
+.border-blue-100 { border-color: #fcdadf; }
+.border-blue-200 { border-color: #f8b3bc; }
+.border-blue-300 { border-color: #f28b98; }
+.border-blue-600 { border-color: #e11d36; }
+.hover\:border-blue-200:hover { border-color: #f8b3bc; }
+.focus\:border-blue-500:focus { border-color: #e73a58; }
 
 /* --- RING (viền focus) --- */
-.ring-blue-100 { --tw-ring-color: #fbdce0; }
-.focus\:ring-blue-500:focus { --tw-ring-color: #dc4a63; }
+.ring-blue-100 { --tw-ring-color: #fcdadf; }
+.focus\:ring-blue-500:focus { --tw-ring-color: #e73a58; }
 
-/* --- GRADIENT (header, hero, banner thi đua) --- */
-.from-blue-600 { --tw-gradient-from: #d0243f var(--tw-gradient-from-position); --tw-gradient-to: rgba(208,36,63,0) var(--tw-gradient-to-position); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to); }
-.to-blue-700   { --tw-gradient-to: #a81a31 var(--tw-gradient-to-position); }
+/* --- GRADIENT (header, hero, thanh chọn) --- */
+.from-blue-600 { --tw-gradient-from: #e11d36 var(--tw-gradient-from-position); --tw-gradient-to: rgba(225,29,54,0) var(--tw-gradient-to-position); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to); }
+.to-blue-700   { --tw-gradient-to: #b81528 var(--tw-gradient-to-position); }
 
 /* --- BÓNG MÀU (nút) --- */
-.shadow-blue-200 { --tw-shadow-color: #f5bcc5; --tw-shadow: var(--tw-shadow-colored); }
+.shadow-blue-200 { --tw-shadow-color: #f8b3bc; --tw-shadow: var(--tw-shadow-colored); }
 
 /* --- FILL (icon điện thoại) --- */
-.fill-blue-100 { fill: #fbdce0; }
+.fill-blue-100 { fill: #fcdadf; }
+
+/* ==========================================================
+   ĐIỂM NHẤN VÀNG GOLD — dùng cho banner Thi đua (🏆), khớp phần
+   vàng trong logo. Chữ tối cho đọc rõ trên nền vàng.
+   ========================================================== */
+.brand-gold {
+    background-image: linear-gradient(135deg, #f2b84e 0%, #d98f22 100%);
+    color: #5a0f19;
+    box-shadow: 0 6px 16px -6px rgba(217, 143, 34, .55);
+}
+.brand-gold .brand-gold-badge { background-color: rgba(255, 255, 255, .35); }

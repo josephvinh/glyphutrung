@@ -12,13 +12,13 @@
 
     <!-- BẢNG THI ĐUA (trang công khai, chỉ xem) — mở tab mới để chia sẻ cho các em -->
     <a href="bxh.php" target="_blank" rel="noopener"
-       class="flex items-center gap-3 bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-card p-4 shadow-sm active:scale-[0.99] transition-transform">
-        <span class="w-11 h-11 rounded-2xl bg-white/15 flex items-center justify-center text-2xl shrink-0">🏆</span>
+       class="brand-gold flex items-center gap-3 rounded-card p-4 active:scale-[0.99] transition-transform">
+        <span class="brand-gold-badge w-11 h-11 rounded-2xl flex items-center justify-center text-2xl shrink-0">🏆</span>
         <span class="min-w-0">
             <span class="block font-black leading-tight">Bảng thi đua</span>
-            <span class="block text-micro text-white/80">Xếp hạng tự động từ chuyên cần &amp; học tập · mở để khích lệ các em</span>
+            <span class="block text-micro opacity-80">Xếp hạng tự động từ chuyên cần &amp; học tập · mở để khích lệ các em</span>
         </span>
-        <i data-lucide="chevron-right" class="w-5 h-5 ml-auto shrink-0 opacity-80"></i>
+        <i data-lucide="chevron-right" class="w-5 h-5 ml-auto shrink-0 opacity-70"></i>
     </a>
 
     <!-- TỔNG QUAN: hai thẻ "Sắp tới" + "Thông báo gần đây".
