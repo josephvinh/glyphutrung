@@ -35,7 +35,7 @@ body {
 @media (min-width: 640px) {
     body {
         background-image:
-            radial-gradient(1200px 600px at 50% -10%, #f6d2d7 0%, transparent 60%),
+            radial-gradient(1200px 600px at 50% -10%, #fbdce0 0%, transparent 60%),
             linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
         background-attachment: fixed;
     }
@@ -237,14 +237,14 @@ html, body {
    không hiện khi chạm tay — không phá cảm giác native.
    --------------------------------------------------------------- */
 :focus-visible {
-    outline: 2px solid #a01b2e;
+    outline: 2px solid #d0243f;
     outline-offset: 2px;
     border-radius: 4px;
 }
 button:focus-visible,
 a:focus-visible,
 [role="button"]:focus-visible {
-    outline: 3px solid #a01b2e;
+    outline: 3px solid #d0243f;
     outline-offset: 2px;
 }
 
@@ -274,7 +274,7 @@ select:focus-visible:not(:disabled),
 textarea:focus-visible:not(:disabled),
 [role="button"]:focus-visible:not([aria-disabled="true"]),
 [role="switch"]:focus-visible:not([aria-disabled="true"]) {
-    outline: 3px solid #a01b2e;
+    outline: 3px solid #d0243f;
     outline-offset: 2px;
 }
 
@@ -389,8 +389,8 @@ textarea:focus-visible:not(:disabled),
 }
 .nav-item:hover { background-color: #f1f5f9; }
 .nav-item-on {
-    background-color: #fbeaec;
-    color: #a01b2e;
+    background-color: #fdecef;
+    color: #d0243f;
 }
 .nav-item:active { transform: scale(0.97); }
 
@@ -403,9 +403,9 @@ textarea:focus-visible:not(:disabled),
     border: 1px solid #f1f5f9;
 }
 .nav-item-on .nav-ico {
-    background-color: #f6d2d7;
-    border-color: #ecaab3;
-    color: #a01b2e;
+    background-color: #fbdce0;
+    border-color: #f5bcc5;
+    color: #d0243f;
 }
 /* Module của Ban Điều Hành dùng nền đậm, khớp với lưới App Center */
 .nav-ico-dark {
@@ -413,7 +413,7 @@ textarea:focus-visible:not(:disabled),
     border-color: #1e293b;
     color: #fff;
 }
-.nav-ico-dark-on { background-color: #a01b2e; border-color: #a01b2e; }
+.nav-ico-dark-on { background-color: #d0243f; border-color: #d0243f; }
 
 /* ==========================================================
    CHUYỂN MÀN GIỮA CÁC MODULE
