@@ -106,3 +106,8 @@ const Passkey = {
     }
 };
 window.Passkey = Passkey;
+// Cũng khai vào window.TNTT.passkey để app.js (bộ gộp module) không báo
+// "thiếu module passkey" — passkey nằm trong asset_manifest để được NẠP kèm
+// nhưng vốn là API toàn cục (window.Passkey), không phải mảnh của tnttApp.
+window.TNTT = window.TNTT || {};
+window.TNTT.passkey = Passkey;

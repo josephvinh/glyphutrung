@@ -1,6 +1,9 @@
 # PHPUnit runtime cache
 .phpunit.result.cache
 
+# Node (chỉ dùng để build minify — không cần trên host)
+node_modules/
+
 # File-based cache runtime data
 public/cache/*.json
 public/cache/*.txt

@@ -37,6 +37,9 @@ $__cssFiles = array_map(fn($x) => __DIR__ . '/assets/css/' . $x . '.css', $__man
 function bundle_v(array $files): int {   // ?v = mtime lớn nhất trong nhóm
     $m = 0; foreach ($files as $f) $m = max($m, @filemtime($f) ?: 0); return $m;
 }
+// PRODUCTION: gom cả trang rồi xoá comment HTML cho gọn (trông chuyên
+// nghiệp khi mở F12). DEV giữ nguyên comment để dễ đọc lúc sửa.
+if (!$__dev) ob_start();
 ?>
 <!DOCTYPE html>
 <html lang="vi">
@@ -188,3 +191,18 @@ function bundle_v(array $files): int {   // ?v = mtime lớn nhất trong nhóm
     <script>document.addEventListener('DOMContentLoaded', () => { lucide.createIcons(); });</script>
 </body>
 </html>
+<?php
+// Xoá comment HTML ở bản production. Bảo vệ nội dung <script>/<style>
+// (JS/CSS có thể chứa chuỗi giống comment) rồi mới xoá <!-- --> phần còn lại.
+if (!$__dev) {
+    $__html = ob_get_clean();
+    $__keep = [];
+    $__html = preg_replace_callback('#<(script|style)\b[^>]*>.*?</\1>#is', function ($m) use (&$__keep) {
+        $__keep[] = $m[0];
+        return "\x01K" . (count($__keep) - 1) . "\x01";
+    }, $__html);
+    $__html = preg_replace('/<!--(?!\[if).*?-->/s', '', $__html);
+    $__html = preg_replace_callback('/\x01K(\d+)\x01/', fn($m) => $__keep[$m[1]], $__html);
+    echo $__html;
+}
+?>

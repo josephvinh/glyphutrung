@@ -9,10 +9,19 @@ $base = __DIR__ . '/';
 header('Content-Type: text/css; charset=utf-8');
 header('Cache-Control: public, max-age=31536000, immutable');
 
-foreach ($manifest['css'] as $c) {
-    $f = $base . $c . '.css';
+$files = array_map(fn($c) => $base . $c . '.css', $manifest['css']);
+
+/* Bản NÉN — phục vụ nếu mới hơn mọi tệp nguồn; cũ hơn thì nối thô (fallback). */
+$min = $base . 'bundle.min.css';
+if (is_file($min)) {
+    $srcMax = 0;
+    foreach ($files as $f) if (is_file($f)) $srcMax = max($srcMax, (int) filemtime($f));
+    if (filemtime($min) >= $srcMax) { readfile($min); exit; }
+}
+
+foreach ($files as $f) {
     if (!is_file($f)) continue;
-    echo "\n/* === " . $c . ".css === */\n";
+    echo "\n/* === " . basename($f) . " === */\n";
     readfile($f);
     echo "\n";
 }

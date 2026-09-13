@@ -18,6 +18,16 @@ $files = array_merge(
 header('Content-Type: application/javascript; charset=utf-8');
 header('Cache-Control: public, max-age=31536000, immutable');
 
+/* Bản NÉN (build/minify.cjs) — phục vụ nếu nó MỚI HƠN mọi tệp nguồn.
+   Cũ hơn (quên build sau khi sửa code) thì rơi về nối thô bên dưới -> không
+   bao giờ phục vụ code cũ/hỏng. */
+$min = $base . 'bundle.min.js';
+if (is_file($min)) {
+    $srcMax = 0;
+    foreach ($files as $f) if (is_file($f)) $srcMax = max($srcMax, (int) filemtime($f));
+    if (filemtime($min) >= $srcMax) { readfile($min); exit; }
+}
+
 foreach ($files as $f) {
     if (!is_file($f)) continue;
     echo "\n/* === " . basename($f) . " === */\n";
