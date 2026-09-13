@@ -115,6 +115,19 @@ self.addEventListener('push', (e) => {
             // còn hơn im lặng để người ta lỡ việc.
         }
 
+        // Báo cho các tab đang mở tự tải lại dữ liệu
+        let isFocused = false;
+        const ds = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+        for (const c of ds) {
+            if (c.visibilityState === 'visible') {
+                c.postMessage({ action: 'RELOAD_DATA', url: tin.url });
+            }
+            if (c.focused) isFocused = true;
+        }
+
+        // Nếu Admin đang trực tiếp dùng app thì không dội chuông báo hệ thống làm phiền
+        if (isFocused) return;
+
         await self.registration.showNotification(tin.title, {
             body: tin.body,
             icon: 'assets/img/icon.svg',

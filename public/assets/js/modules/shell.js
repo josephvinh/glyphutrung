@@ -217,5 +217,15 @@ window.TNTT.shell = {
                 this.loadData();
             }
         });
+
+        // Nhận lệnh tải lại từ Service Worker (khi có tin báo đẩy tới lúc web đang mở)
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.addEventListener('message', (e) => {
+                if (e.data && e.data.action === 'RELOAD_DATA') {
+                    this._lastLoadAt = 0; // Bỏ qua chặn 45s để tải ngay lập tức
+                    this.loadData();
+                }
+            });
+        }
     }
 };
