@@ -456,16 +456,45 @@ window.TNTT.org = {
         // Mỗi lớp chỉ một chủ nhiệm, mỗi khối chỉ một trưởng khối
         if (f.role === 'glv_chu_nhiem') {
             const cur = this.headOfClass(f.className);
-            if (cur && cur.id !== f.id) { cur.role = 'glv'; cur.title = 'GLV Phụ Tá'; }
+            if (cur && cur.id !== f.id) { 
+                cur.role = 'glv'; cur.title = 'GLV Phụ Tá'; 
+                if (cur.id === this.user.memberId) {
+                    this.user.role = cur.role;
+                    this.user.roleTitle = cur.title;
+                    this.assignments = [];
+                }
+            }
         }
         if (f.role === 'truong_khoi') {
             const cur = this.headOfBlock(f.block);
-            if (cur && cur.id !== f.id) { cur.role = 'glv'; cur.title = 'GLV Phụ Tá'; }
+            if (cur && cur.id !== f.id) { 
+                cur.role = 'glv'; cur.title = 'GLV Phụ Tá'; 
+                if (cur.id === this.user.memberId) {
+                    this.user.role = cur.role;
+                    this.user.roleTitle = cur.title;
+                    this.assignments = [];
+                }
+            }
         }
 
         if (this.isEditingMember) {
             const i = this.members.findIndex(x => x.id === f.id);
-            if (i !== -1) this.members[i] = f;
+            if (i !== -1) {
+                this.members[i] = f;
+                // Nếu sửa tài khoản của CHÍNH MÌNH, cập nhật luôn phiên hiện tại
+                // để thẻ Cá nhân nhận phân công mới ngay lập tức.
+                if (f.id === this.user.memberId) {
+                    this.user.role = f.role;
+                    this.user.roleTitle = f.title;
+                    this.user.managedBlock = f.block;
+                    this.user.assignedClass = f.className;
+                    this.user.holyName = f.holyName;
+                    this.user.fullName = f.fullName;
+                    this.user.phone = f.phone;
+                    this.user.birthDate = f.birthDate;
+                    this.assignments = []; // Ép tính lại nhãn theo phân công mới nhất
+                }
+            }
         } else {
             f.id = Date.now();
             this.members.push(f);

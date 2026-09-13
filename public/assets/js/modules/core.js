@@ -332,6 +332,9 @@ window.TNTT.core = {
         const today = this.toDateInput(new Date());
         const scope = this.accessibleStudents.filter(s => s.status === 'đang sinh hoạt');
 
+        const isMgr = ['admin', 'bdh', 'truong_khoi'].includes(this.user.role);
+        const isBdh = ['admin', 'bdh'].includes(this.user.role);
+
         // Buổi hôm nay còn dang dở
         if (this.canAccess('attendance') && !this.isUnderMaintenance('attendance')) {
             this.programsOn(today).forEach(p => {
@@ -341,8 +344,8 @@ window.TNTT.core = {
                     tasks.push({
                         key: 'att-' + p.id, icon: 'clipboard-check',
                         cls: 'bg-blue-50 text-blue-600 border-blue-100',
-                        text: 'Điểm danh ' + p.name,
-                        detail: 'mới ghi ' + done + '/' + scope.length + ' em · chốt lúc ' + this.cutoffOf(p),
+                        text: isMgr ? 'Đôn đốc điểm danh ' + p.name : 'Điểm danh ' + p.name,
+                        detail: (isMgr ? 'Đã điểm danh ' : 'Mới ghi ') + done + '/' + scope.length + ' em · chốt lúc ' + this.cutoffOf(p),
                         go: 'attendance'
                     });
                 }
@@ -368,10 +371,38 @@ window.TNTT.core = {
                 tasks.push({
                     key: 'report', icon: 'clipboard-list',
                     cls: 'bg-emerald-50 text-emerald-600 border-emerald-100',
-                    text: 'Lập ' + chua + ' phiếu liên lạc',
-                    detail: term.name + ' · còn thiếu',
+                    text: isMgr ? 'Tiến độ Phiếu liên lạc' : 'Lập ' + chua + ' phiếu liên lạc',
+                    detail: isMgr ? ('Còn ' + chua + ' phiếu chưa hoàn tất') : (term.name + ' · còn thiếu'),
                     go: 'reports'
                 });
+            }
+        }
+
+        // CẢNH BÁO / ĐÔN ĐỐC RIÊNG CHO BĐH
+        if (isBdh) {
+            // Duyệt GLV mới
+            if (this.pendingMembers && this.pendingMembers.length > 0) {
+                tasks.push({
+                    key: 'new-staff', icon: 'user-plus',
+                    cls: 'bg-indigo-50 text-indigo-600 border-indigo-100',
+                    text: 'Duyệt ' + this.pendingMembers.length + ' hồ sơ nhân sự',
+                    detail: 'có GLV mới đăng ký chờ duyệt',
+                    go: 'staff'
+                });
+            }
+
+            // Thiếu nhi mồ côi (không có lớp)
+            if (this.students) {
+                const orphans = this.students.filter(s => s.status === 'đang sinh hoạt' && !s.className).length;
+                if (orphans > 0) {
+                    tasks.push({
+                        key: 'orphan-students', icon: 'alert-circle',
+                        cls: 'bg-rose-50 text-rose-600 border-rose-100',
+                        text: 'Xếp lớp cho ' + orphans + ' thiếu nhi',
+                        detail: 'đang sinh hoạt nhưng chưa có lớp',
+                        go: 'students' // Mở danh sách thiếu nhi để lọc
+                    });
+                }
             }
         }
 
