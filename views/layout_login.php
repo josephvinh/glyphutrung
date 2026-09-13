@@ -36,7 +36,6 @@ if (!$__dev) ob_start();
     <?php endif; ?>
     <script defer src="assets/js/vendor/alpine.js?v=<?php echo @filemtime(__DIR__ . '/../public/assets/js/vendor/alpine.js') ?: 0; ?>"></script>
     <script defer src="assets/js/vendor/lucide-icons.js?v=<?php echo @filemtime(__DIR__ . '/../public/assets/js/vendor/lucide-icons.js') ?: 0; ?>"></script>
-    <script defer src="assets/js/modules/passkey.js?v=<?php echo @filemtime(__DIR__ . '/../public/assets/js/modules/passkey.js') ?: 0; ?>"></script>
 </head>
 <body class="text-slate-800 antialiased overflow-x-hidden">
 
@@ -287,106 +286,14 @@ if (!$__dev) ob_start();
     </p>
 </div>
 
-<script>
-document.addEventListener('alpine:init', () => {
-    Alpine.data('loginScreen', () => ({
-        step: 'login',      // login | register | done | changepw
-        phone: '', password: '', showPw: false,
-        oldPw: '', newPw: '', newPw2: '',
-        rHoly: '', rName: '', rPhone: '', rBirth: '', rPw: '', rPw2: '', rNote: '', rCode: '',
-        rDanhXung: 'glv',
-        error: '', busy: false,
-
-        // Chuẩn hoá SĐT: bỏ khoảng trắng/dấu, đổi +84/84/0084 -> 0
-        chuanHoaSdt(s) {
-            s = String(s || '').replace(/[\s.\-()]/g, '').trim();
-            if (s.startsWith('+84'))  s = '0' + s.slice(3);
-            else if (s.startsWith('0084')) s = '0' + s.slice(4);
-            else if (s.startsWith('84') && s.length >= 11) s = '0' + s.slice(2);
-            return s;
-        },
-
-        goRegister() { this.error = ''; this.step = 'register'; this.$nextTick(() => lucide.createIcons()); },
-        goLogin()    { this.error = ''; this.step = 'login';    this.$nextTick(() => lucide.createIcons()); },
-
-        async submitRegister() {
-            this.error = '';
-            if (this.rPw !== this.rPw2) { this.error = 'Hai lần nhập mật khẩu không khớp.'; return; }
-            this.busy = true;
-            try {
-                const r = await this.post('register', {
-                    holyName: this.rHoly.trim(), fullName: this.rName.trim(),
-                    phone: this.chuanHoaSdt(this.rPhone), birthDate: this.rBirth,
-                    password: this.rPw, note: this.rNote.trim(),
-                    danhXung: this.rDanhXung
-                });
-                if (!r.ok) { this.error = r.error; return; }
-                this.rCode = r.code;
-                this.step = 'done';
-                this.$nextTick(() => lucide.createIcons());
-            } catch (e) {
-                this.error = 'Không kết nối được máy chủ. Kiểm tra lại mạng rồi thử lại.';
-            } finally { this.busy = false; }
-        },
-
-        async post(action, body) {
-            const res = await fetch('api/auth.php?action=' + action, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            });
-            return res.json();
-        },
-
-        async submitLogin() {
-            this.error = ''; this.busy = true;
-            try {
-                const r = await this.post('login', { phone: this.chuanHoaSdt(this.phone), password: this.password });
-                if (!r.ok) { this.error = r.error; return; }
-                // Lần đầu đăng nhập thì bắt đổi mật khẩu ngay, không cho vào thẳng
-                if (r.user.mustChangePw) {
-                    this.oldPw = this.password;
-                    this.step = 'changepw';
-                    this.error = '';
-                    this.$nextTick(() => lucide.createIcons());
-                    return;
-                }
-                location.reload();
-            } catch (e) {
-                this.error = 'Không kết nối được máy chủ. Kiểm tra lại mạng rồi thử lại.';
-            } finally { this.busy = false; }
-        },
-
-        async loginPasskey() {
-            this.error = '';
-            this.busy = true;
-            try {
-                const user = await window.Passkey.login();
-                if (user) location.reload();
-            } catch (e) {
-                // lỗi đã được alert trong passkey.js
-            } finally {
-                this.busy = false;
-            }
-        },
-
-        async submitChange() {
-            this.error = '';
-            if (this.newPw !== this.newPw2) { this.error = 'Hai lần nhập mật khẩu mới không khớp.'; return; }
-            this.busy = true;
-            try {
-                const r = await this.post('password', { current: this.oldPw, new: this.newPw });
-                if (!r.ok) { this.error = r.error; return; }
-                location.reload();
-            } catch (e) {
-                this.error = 'Không kết nối được máy chủ.';
-            } finally { this.busy = false; }
-        },
-
-        init() { this.$nextTick(() => lucide.createIcons()); }
-    }));
-});
-</script>
+<?php /* Script THƯỜNG (không defer) ở cuối body: chạy khi parser tới đây,
+         TRƯỚC alpine (defer) -> kịp đăng ký component loginScreen + window.Passkey. */ ?>
+<?php if ($__dev): ?>
+<script src="assets/js/modules/passkey.js?v=<?php echo @filemtime(__DIR__ . '/../public/assets/js/modules/passkey.js') ?: 0; ?>"></script>
+<script src="assets/js/login.js?v=<?php echo @filemtime(__DIR__ . '/../public/assets/js/login.js') ?: 0; ?>"></script>
+<?php else: ?>
+<script src="assets/js/login.min.js?v=<?php echo @filemtime(__DIR__ . '/../public/assets/js/login.min.js') ?: 0; ?>"></script>
+<?php endif; ?>
 </body>
 </html>
 <?php

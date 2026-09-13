@@ -61,5 +61,13 @@ const kb   = n => Math.round(n / 1024) + 'KB';
     fs.writeFileSync(path.join(cssBase, 'bundle.min.css'), cssMin.code);
     console.log('CSS :', kb(cssRaw.length), '->', kb(cssMin.code.length));
 
+    // BUNDLE MÀN ĐĂNG NHẬP: passkey (window.Passkey) + login (component
+    // loginScreen). Trang đăng nhập là trang riêng, chỉ cần 2 mảnh này.
+    const loginFiles = [ path.join(jsBase, 'modules/passkey.js'), path.join(jsBase, 'login.js') ];
+    const loginRaw = loginFiles.map(read).join('\n;\n');
+    const loginMin = await esbuild.transform(loginRaw, { loader: 'js', minify: true, legalComments: 'none' });
+    fs.writeFileSync(path.join(jsBase, 'login.min.js'), loginMin.code);
+    console.log('LOGIN:', kb(loginRaw.length), '->', kb(loginMin.code.length));
+
     console.log('✓ Xong. Nhớ commit bundle.min.js + bundle.min.css.');
 })();
