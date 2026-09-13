@@ -1,5 +1,5 @@
 <!-- MÀN HÌNH LỊCH TRÌNH - Hiển thị chương trình/sự kiện trên lịch tháng -->
-<div data-module="calendar" class="module-panel pt-6 pb-10 relative">
+<div data-module="calendar" class="module-panel pt-6 pb-24 relative">
 
     <!-- 1. THANH ĐIỀU HƯỚNG -->
     <div class="flex items-center justify-between mb-6">
@@ -151,8 +151,8 @@
                     <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
                         <i data-lucide="alarm-clock" class="w-5 h-5 text-slate-400 shrink-0"></i>
                         <div>
-                            <p class="text-micro font-semibold text-slate-500">Giờ chốt sổ</p>
-                            <p class="text-sm font-bold text-rose-500" x-text="selectedEvent?.startTime ? addMinutes(selectedEvent.startTime, CUTOFF_MINUTES) : '--:--'"></p>
+                            <p class="text-micro font-bold text-slate-500 uppercase tracking-wide">Chốt điểm danh</p>
+                            <p class="text-sm font-bold text-rose-500" x-text="selectedEvent?.cutoffTime || (selectedEvent?.startTime ? addMinutes(selectedEvent.startTime, CUTOFF_MINUTES) : '--:--')"></p>
                         </div>
                     </div>
                     <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">

@@ -3,7 +3,7 @@
      nên bỏ thanh điều hướng riêng (màn Cài Đặt đã có nút quay lại).
      Không đặt data-module ở đây: changeModule() sẽ ẩn mọi [data-module]
      không khớp, mà thẻ này do settingsTab điều khiển. -->
-<div class="relative pb-10">
+<div class="relative pb-24">
 
     <!-- 2. THẺ HỒ SƠ -->
     <div class="bg-gradient-to-br from-blue-600 to-blue-700 rounded-card p-5 shadow-lg shadow-blue-200 mb-5 text-white">
@@ -209,6 +209,17 @@
                 <div class="flex-1 min-w-0">
                     <p class="text-sm font-bold text-slate-700">Đổi mật khẩu</p>
                     <p class="text-micro text-slate-500">Nên đổi ngay nếu Ban Điều Hành vừa cấp lại cho bạn</p>
+                </div>
+                <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300 shrink-0"></i>
+            </button>
+
+            <button @click="Passkey.register()" type="button" class="w-full flex items-center gap-3 border-t border-slate-100 pt-3 text-left active:scale-[0.98] transition-transform">
+                <div class="w-10 h-10 shrink-0 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
+                    <i data-lucide="scan-face" class="w-5 h-5"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-bold text-slate-700">Đăng ký Vân tay / FaceID</p>
+                    <p class="text-micro text-slate-500">Đăng nhập nhanh không cần mật khẩu</p>
                 </div>
                 <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300 shrink-0"></i>
             </button>

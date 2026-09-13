@@ -98,7 +98,11 @@ window.TNTT.core = {
                 headers,
                 body: JSON.stringify(body || {})
             });
-            if (res.status === 401) return { ok: false, error: 'Phiên đăng nhập đã hết hạn.' };
+            if (res.status === 401) {
+                if (window.TNTT?.toast) window.TNTT.toast.error('Phiên đăng nhập hết hạn. Đang chuyển ra màn hình đăng nhập...');
+                setTimeout(() => location.reload(), 1500);
+                return { ok: false, error: 'Phiên đăng nhập đã hết hạn.' };
+            }
             if (res.status === 403) return { ok: false, error: 'Yêu cầu không hợp lệ (CSRF). Vui lòng tải lại trang.' };
             return await res.json();
         } catch (e) {
@@ -109,8 +113,7 @@ window.TNTT.core = {
     async save(file, action, body) {
         const r = await this.api(file, action, body);
         if (!r.ok) {
-            window.TNTT.toast.error(r.error || 'Có lỗi xảy ra. Trang sẽ tải lại để đồng bộ dữ liệu.');
-            location.reload();
+            window.TNTT.toast.error(r.error || 'Có lỗi xảy ra khi lưu dữ liệu.');
         }
         return r;
     },
@@ -822,7 +825,8 @@ window.TNTT.core = {
         const old = this.permissions[key][role];
         if (old === level) return;
         this.permissions[key][role] = level;
-        this.save('settings', 'permission', { moduleKey: key, roleCode: role, level: level });
+        this.save('settings', 'permission', { moduleKey: key, roleCode: role, level: level })
+            .then(r => { if (!r || !r.ok) this.loadData(); });
         this.logAction('phanquyen', 'settings',
                        'Đổi quyền ' + this.moduleLabel(key) + ' của ' + this.roleLabel(role),
                        this.permLabel(old) + ' → ' + this.permLabel(level));
@@ -830,7 +834,8 @@ window.TNTT.core = {
 
     toggleModuleEnabled(key) {
         this.moduleEnabled[key] = !this.moduleEnabled[key];
-        this.save('settings', 'module', { moduleKey: key });
+        this.save('settings', 'module', { moduleKey: key })
+            .then(r => { if (!r || !r.ok) this.loadData(); });
         this.logAction('baotri', 'settings',
                        (this.moduleEnabled[key] ? 'Mở lại' : 'Tạm khóa') + ' chức năng ' + this.moduleLabel(key),
                        this.moduleEnabled[key] ? 'hoạt động bình thường' : 'đang bảo trì');
@@ -843,7 +848,8 @@ window.TNTT.core = {
     resetPermissions() {
         if (!confirm('Đưa toàn bộ phân quyền về mặc định ban đầu?')) return;
         this.permissions = JSON.parse(JSON.stringify(this.defaultPermissions));
-        this.save('settings', 'resetPerms', {});
+        this.save('settings', 'resetPerms', {})
+            .then(r => { if (!r || !r.ok) this.loadData(); });
         this.logAction('phanquyen', 'settings', 'Đặt lại toàn bộ phân quyền về mặc định', '');
     },
 

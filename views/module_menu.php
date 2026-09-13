@@ -98,8 +98,9 @@
         <div class="grid grid-cols-4 sm:grid-cols-6 gap-x-3 gap-y-5">
             <template x-for="m in visibleFlat()" :key="m.key">
                 <button @click="openModule(m.key)"
-                        class="flex flex-col items-center group active:scale-90 transition-transform"
-                        :class="isUnderMaintenance(m.key) ? 'opacity-40' : ''">
+                        class="flex-col items-center group active:scale-90 transition-transform"
+                        :class="[isUnderMaintenance(m.key) ? 'opacity-40' : '',
+                                 ['students', 'attendance', 'announcements'].includes(m.key) ? 'hidden md:flex' : 'flex']">
                     <div class="w-14 h-14 bg-slate-50 rounded-field shadow-sm border border-slate-100 flex items-center justify-center mb-2 relative"
                          :class="isUnderMaintenance(m.key) ? 'text-slate-400' : m.color">
                         <i :data-lucide="m.icon" class="w-6 h-6"></i>

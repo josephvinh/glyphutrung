@@ -190,12 +190,12 @@ window.TNTT.org = {
     // chỉ một người giữ chức.
     async setClassHead(className, memberId) {
         await this.save('org', 'setClassHead', { className, memberId: Number(memberId) });
-        await this.loadAllAssignments();
+        await this.loadData();
     },
 
     async setBlockHead(block, memberId) {
         await this.save('org', 'setBlockHead', { block, memberId: Number(memberId) });
-        await this.loadAllAssignments();
+        await this.loadData();
     },
 
     // Thêm một GLV vào lớp (phân công glv, kiêm nhiệm). Vai chính giữ nguyên,
@@ -276,7 +276,7 @@ window.TNTT.org = {
             if (this.filterBlock === old) this.filterBlock = name;
         }
         this.showBlockModal = false;
-        this.save('org', 'saveBlock', { original: old, name: name });
+        this.save('org', 'saveBlock', { original: old, name: name }).then(r => { if (!r || !r.ok) this.loadData(); });
     },
 
     deleteBlock(name) {
@@ -289,7 +289,7 @@ window.TNTT.org = {
             this.blocks = this.blocks.filter(b => b !== name);
             this.logAction('xoa', 'org', 'Xóa khối ' + name, '');
             this.members.forEach(m => { if (m.block === name) m.block = ''; });
-            this.save('org', 'deleteBlock', { name: name });
+            this.save('org', 'deleteBlock', { name: name }).then(r => { if (!r || !r.ok) this.loadData(); });
         }
     },
 
@@ -330,7 +330,7 @@ window.TNTT.org = {
             if (this.attendanceClass === old) this.attendanceClass = name;
         }
         this.showClassModal = false;
-        this.save('org', 'saveClass', { original: old, name: name, block: this.classForm.block });
+        this.save('org', 'saveClass', { original: old, name: name, block: this.classForm.block }).then(r => { if (!r || !r.ok) this.loadData(); });
     },
 
     deleteClass(cls) {
@@ -347,7 +347,7 @@ window.TNTT.org = {
         if (confirm('Xóa lớp "' + cls.name + '"?')) {
             this.classes = this.classes.filter(c => c.name !== cls.name);
             this.logAction('xoa', 'org', 'Xóa lớp ' + cls.name, '');
-            this.save('org', 'deleteClass', { name: cls.name });
+            this.save('org', 'deleteClass', { name: cls.name }).then(r => { if (!r || !r.ok) this.loadData(); });
         }
     },
 
@@ -474,7 +474,10 @@ window.TNTT.org = {
                        (this.isEditingMember ? 'Sửa' : 'Thêm') + ' thành viên ' + f.fullName,
                        this.roleLabel(f.role) + ' · ' + (f.className || f.block || 'toàn đoàn'));
         this.showMemberModal = false;
-        this.save('org', 'saveMember', f).then(r => { if (r.ok && r.id) f.id = r.id; });
+        this.save('org', 'saveMember', f).then(r => { 
+            if (!r || !r.ok) this.loadData();
+            else if (r.id) f.id = r.id; 
+        });
     },
 
     deleteMember(m) {
@@ -485,7 +488,7 @@ window.TNTT.org = {
         if (confirm('Xóa thành viên "' + this.memberFullName(m) + '"?')) {
             this.members = this.members.filter(x => x.id !== m.id);
             this.logAction('xoa', 'org', 'Xóa thành viên ' + m.fullName, this.roleLabel(m.role));
-            this.save('org', 'deleteMember', { id: m.id });
+            this.save('org', 'deleteMember', { id: m.id }).then(r => { if (!r || !r.ok) this.loadData(); });
         }
     },
 

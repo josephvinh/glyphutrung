@@ -25,6 +25,7 @@ window.TNTT.students = {
     showEditModal: false,
     editData: {},
 
+    busy: false,
     displayLimit: 20,
 
     // Chỉ số em theo id — cùng khuôn attIndex/scoreIndex/reportIndex.
@@ -100,20 +101,26 @@ window.TNTT.students = {
         const cls = this.classes.find(c => c.name === e.className);
         if (cls) e.block = cls.block;
 
-        this.showEditModal = false;
-
-        if (e.isNew) {
-            this.logAction('tao', 'students', 'Thêm thiếu nhi ' + e.name, e.code + ' · ' + e.className);
-        } else {
-            const i = this.students.findIndex(s => s.id === e.id);
-            if (i !== -1) this.students[i] = e;
-            if (this.studentIndex) this.studentIndex.set(e.id, e);
-            this.logAction('sua', 'students', 'Sửa hồ sơ ' + e.name, e.code + ' · ' + e.className);
+        this.busy = true;
+        try {
+            const r = await this.save('students', 'save', e);
+            if (r && r.ok) {
+                if (e.isNew) {
+                    // Thêm mới thì phải nạp lại để lấy id thật do máy chủ cấp
+                    await this.loadData();
+                } else {
+                    const i = this.students.findIndex(s => s.id === e.id);
+                    if (i !== -1) this.students[i] = e;
+                    if (this.studentIndex) this.studentIndex.set(e.id, e);
+                }
+                this.showEditModal = false;
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Lưu không thành công. Xin kiểm tra kết nối mạng và thử lại.');
+        } finally {
+            this.busy = false;
         }
-
-        const r = await this.save('students', 'save', e);
-        // Thêm mới thì phải nạp lại để lấy id thật do máy chủ cấp
-        if (r && r.ok && e.isNew) await this.loadData();
     },
 
     // ==========================================
@@ -341,49 +348,16 @@ window.TNTT.students = {
             return;
         }
 
-        let added = 0, updated = 0, skipped = 0;
-
-        rows.slice(1).forEach(row => {
-            const get = key => (colIndex[key] !== undefined ? (row[colIndex[key]] || '').trim() : '');
-            const code = get('code');
-            const name = get('name');
-            if (!name) { skipped++; return; }
-
-            const className = get('className');
-            const cls = this.classes.find(c => c.name === className);
-            const rawStatus = get('status').toLowerCase();
-
-            const record = {
-                code: code,
-                name: name,
-                holyName:    get('holyName'),
-                gender:      this.parseGender(get('gender')),
-                birthDate:   this.parseDate(get('birthDate')),
-                address:     get('address'),
-                fatherName:  get('fatherName'),
-                fatherPhone: get('fatherPhone'),
-                motherName:  get('motherName'),
-                motherPhone: get('motherPhone'),
-                status:      this.statusOptions.includes(rawStatus) ? rawStatus : 'đang sinh hoạt',
-                className:   className,
-                // Ưu tiên khối suy ra từ danh mục lớp: file ghi sai khối cũng không làm lệch dữ liệu
-                block:       cls ? cls.block : get('block')
-            };
-
-            const existing = code ? this.students.findIndex(s => s.code === code) : -1;
-            if (existing !== -1) {
-                this.students[existing] = Object.assign({}, this.students[existing], record);
-                updated++;
-            } else {
-                this.students.push(Object.assign({ id: Date.now() + Math.floor(Math.random() * 10000) }, record));
-                added++;
-            }
-        });
+        // Không cập nhật UI ngay lập tức (optimistic UI) vì Import rất dễ lỗi
+        // (ví dụ sai quyền, sai lớp, lỗi giao dịch). Thay vào đó, gom dữ liệu
+        // gửi lên máy chủ. Nếu thành công, máy chủ sẽ kích hoạt loadData() để
+        // nạp lại danh sách chuẩn nhất.
 
         this.displayLimit = 20;
-        this.logAction('tao', 'students', 'Nhập danh sách từ file ' + fileName,
-                       'thêm ' + added + ', cập nhật ' + updated + ', bỏ qua ' + skipped);
-
-        this.importToServer(rows.slice(1), colIndex, fileName);
+        // Bật trạng thái đang đồng bộ để người dùng biết app đang làm việc
+        this.syncing = true;
+        this.importToServer(rows.slice(1), colIndex, fileName).finally(() => {
+            this.syncing = false;
+        });
     },
 };

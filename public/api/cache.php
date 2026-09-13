@@ -42,5 +42,8 @@ class Cache {
         foreach (glob(self::$dir . '/*.json') as $file) {
             unlink($file);
         }
+        // Ghi lại mốc thời gian để client polling phát hiện thay đổi
+        self::init();
+        file_put_contents(self::$dir . '/sync.txt', time());
     }
 }

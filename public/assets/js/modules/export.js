@@ -91,20 +91,7 @@ window.TNTT.export = {
      * @private
      */
     async _api(file, action, body) {
-        try {
-            const headers = { 'Content-Type': 'application/json' };
-            if (window.TNTT?.csrfToken) {
-                headers['X-CSRF-TOKEN'] = window.TNTT.csrfToken;
-            }
-            const res = await fetch('api/' + file + '.php?action=' + action, {
-                method: 'POST',
-                headers,
-                body: JSON.stringify(body || {})
-            });
-            return await res.json();
-        } catch (e) {
-            return { ok: false, error: 'Mất kết nối máy chủ.' };
-        }
+        return window.TNTT.core.api(file, action, body);
     },
 
     /**

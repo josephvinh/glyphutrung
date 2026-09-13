@@ -1,5 +1,5 @@
 <!-- MÀN ĐIỂM SỐ -->
-<div data-module="scores" class="module-panel pt-6 pb-10 relative">
+<div data-module="scores" class="module-panel pt-6 pb-24 relative">
 <?php include __DIR__ . '/partial_heavy_loading.php'; ?>
 
     <!-- 1. THANH ĐIỀU HƯỚNG GỘP (Thiếu nhi) -->

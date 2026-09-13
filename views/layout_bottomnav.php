@@ -6,7 +6,7 @@
      - Điện thoại : bám đáy, bo tròn 2 góc trên, có safe-area iPhone
      - Tablet trở lên : thanh pill nổi, thụt vào trong khung app
      ========================================================== -->
-<nav class="app-bottomnav">
+<nav class="app-bottomnav select-none">
     <!-- max-w khớp với app-shell trong public/index.php để thanh nav không lệch biên -->
     <div class="nav-outer max-w-md sm:max-w-xl lg:max-w-6xl xl:max-w-7xl">
     <div class="nav-inner">
@@ -26,10 +26,10 @@
             <!-- 2. THIẾU NHI — chỉ ai có quyền students mới thấy -->
             <button x-show="canAccess('students')" @click="changeModule('students')" type="button"
                     class="flex-1 flex flex-col items-center gap-1 py-2 rounded-2xl active:scale-90 transition-transform"
-                    :class="currentModule === 'students' ? 'text-blue-600' : 'text-slate-400'"
+                    :class="(currentModule === 'students' || currentModule === 'student_profile') ? 'text-blue-600' : 'text-slate-400'"
                     style="display: none;">
                 <span class="w-10 h-8 rounded-xl flex items-center justify-center transition-colors"
-                      :class="currentModule === 'students' ? 'bg-blue-50' : 'bg-transparent'">
+                      :class="(currentModule === 'students' || currentModule === 'student_profile') ? 'bg-blue-50' : 'bg-transparent'">
                     <i data-lucide="users" class="w-5 h-5 pointer-events-none"></i>
                 </span>
                 <span class="text-micro font-bold leading-none">Thiếu Nhi</span>

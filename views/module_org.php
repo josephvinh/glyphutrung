@@ -1,5 +1,5 @@
 <!-- MÀN HÌNH KHỐI & LỚP  (Nhân sự đã tách sang module_staff.php) -->
-<div data-module="org" class="module-panel pt-6 pb-10 relative">
+<div data-module="org" class="module-panel pt-6 pb-24 relative">
 
     <!-- 1. THANH ĐIỀU HƯỚNG -->
     <div class="flex items-center mb-5">
@@ -110,7 +110,7 @@
                     </div>
 
                     <!-- Danh sách lớp trong khối -->
-                    <div x-show="expandedBlock === b" x-collapse>
+                    <div x-show="expandedBlock === b" x-collapse style="display: none;">
                         <div class="border-t border-slate-100 bg-slate-50 p-4 space-y-3">
 
                             <template x-for="cls in classesInBlock(b)" :key="cls.name">

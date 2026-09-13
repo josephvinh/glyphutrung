@@ -1,35 +1,40 @@
 <!-- MÀN HÌNH HỒ SƠ THIẾU NHI -->
-<div data-module="student_profile" class="module-panel pt-6 pb-10 relative">
+<div data-module="student_profile" class="module-panel pt-6 pb-24 relative">
 
     <!-- HEADER VỚI THÔNG TIN EM -->
     <?php include __DIR__ . '/partial_student_profile_header.php'; ?>
 
-    <!-- 5 TAB ĐIỀU HƯỚNG -->
-    <div class="bg-white rounded-field p-1.5 shadow-sm border border-slate-100 flex gap-1.5 mb-5 overflow-x-auto hide-scrollbar">
-        <button @click="profileTab = 'info'" type="button"
-                class="shrink-0 whitespace-nowrap px-3 py-2.5 rounded-2xl font-bold text-micro transition-colors flex items-center justify-center gap-1.5"
-                :class="profileTab === 'info' ? 'bg-blue-600 text-white shadow-md shadow-blue-200' : 'text-slate-500'">
-            <i data-lucide="user" class="w-4 h-4"></i> Thông tin
+    <!-- 5 TAB ĐIỀU HƯỚNG (Kiểu dáng Segmented Control / Cuộn ngang mượt) -->
+    <div class="bg-slate-50/80 rounded-[20px] p-1.5 border border-slate-100 flex gap-1.5 mb-5 overflow-x-auto hide-scrollbar scroll-smooth snap-x snap-mandatory">
+        <!-- INFO -->
+        <button @click="profileTab = 'info'; $el.scrollIntoView({behavior: 'smooth', block: 'nearest', inline: 'center'})" type="button"
+                class="shrink-0 snap-start whitespace-nowrap px-4 py-2.5 rounded-2xl font-bold text-sm transition-all duration-200 flex items-center justify-center gap-2"
+                :class="profileTab === 'info' ? 'bg-white text-blue-600 shadow-[0_2px_8px_rgba(0,0,0,0.08)] border border-slate-200/60' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100/50 border border-transparent'">
+            <i data-lucide="user-circle" class="w-4 h-4"></i> Tổng quan
         </button>
-        <button @click="profileTab = 'scores'" type="button"
-                class="shrink-0 whitespace-nowrap px-3 py-2.5 rounded-2xl font-bold text-micro transition-colors flex items-center justify-center gap-1.5"
-                :class="profileTab === 'scores' ? 'bg-blue-600 text-white shadow-md shadow-blue-200' : 'text-slate-500'">
+        <!-- SCORES -->
+        <button @click="profileTab = 'scores'; $el.scrollIntoView({behavior: 'smooth', block: 'nearest', inline: 'center'})" type="button"
+                class="shrink-0 snap-start whitespace-nowrap px-4 py-2.5 rounded-2xl font-bold text-sm transition-all duration-200 flex items-center justify-center gap-2"
+                :class="profileTab === 'scores' ? 'bg-white text-violet-600 shadow-[0_2px_8px_rgba(0,0,0,0.08)] border border-slate-200/60' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100/50 border border-transparent'">
             <i data-lucide="graduation-cap" class="w-4 h-4"></i> Điểm số
         </button>
-        <button @click="profileTab = 'report'" type="button"
-                class="shrink-0 whitespace-nowrap px-3 py-2.5 rounded-2xl font-bold text-micro transition-colors flex items-center justify-center gap-1.5"
-                :class="profileTab === 'report' ? 'bg-blue-600 text-white shadow-md shadow-blue-200' : 'text-slate-500'">
-            <i data-lucide="clipboard-list" class="w-4 h-4"></i> Phiếu LC
-        </button>
-        <button @click="profileTab = 'attendance'" type="button"
-                class="shrink-0 whitespace-nowrap px-3 py-2.5 rounded-2xl font-bold text-micro transition-colors flex items-center justify-center gap-1.5"
-                :class="profileTab === 'attendance' ? 'bg-blue-600 text-white shadow-md shadow-blue-200' : 'text-slate-500'">
+        <!-- ATTENDANCE -->
+        <button @click="profileTab = 'attendance'; $el.scrollIntoView({behavior: 'smooth', block: 'nearest', inline: 'center'})" type="button"
+                class="shrink-0 snap-start whitespace-nowrap px-4 py-2.5 rounded-2xl font-bold text-sm transition-all duration-200 flex items-center justify-center gap-2"
+                :class="profileTab === 'attendance' ? 'bg-white text-emerald-600 shadow-[0_2px_8px_rgba(0,0,0,0.08)] border border-slate-200/60' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100/50 border border-transparent'">
             <i data-lucide="check-circle" class="w-4 h-4"></i> Điểm danh
         </button>
-        <button @click="profileTab = 'qrcard'" type="button"
-                class="shrink-0 whitespace-nowrap px-3 py-2.5 rounded-2xl font-bold text-micro transition-colors flex items-center justify-center gap-1.5"
-                :class="profileTab === 'qrcard' ? 'bg-blue-600 text-white shadow-md shadow-blue-200' : 'text-slate-500'">
-            <i data-lucide="qr-code" class="w-4 h-4"></i> QR Card
+        <!-- REPORT -->
+        <button @click="profileTab = 'report'; $el.scrollIntoView({behavior: 'smooth', block: 'nearest', inline: 'center'})" type="button"
+                class="shrink-0 snap-start whitespace-nowrap px-4 py-2.5 rounded-2xl font-bold text-sm transition-all duration-200 flex items-center justify-center gap-2"
+                :class="profileTab === 'report' ? 'bg-white text-amber-600 shadow-[0_2px_8px_rgba(0,0,0,0.08)] border border-slate-200/60' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100/50 border border-transparent'">
+            <i data-lucide="file-text" class="w-4 h-4"></i> Phiếu Đ.Giá
+        </button>
+        <!-- QRCARD -->
+        <button @click="profileTab = 'qrcard'; $el.scrollIntoView({behavior: 'smooth', block: 'nearest', inline: 'center'})" type="button"
+                class="shrink-0 snap-start whitespace-nowrap px-4 py-2.5 rounded-2xl font-bold text-sm transition-all duration-200 flex items-center justify-center gap-2"
+                :class="profileTab === 'qrcard' ? 'bg-white text-slate-800 shadow-[0_2px_8px_rgba(0,0,0,0.08)] border border-slate-200/60' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100/50 border border-transparent'">
+            <i data-lucide="qr-code" class="w-4 h-4"></i> Thẻ mã QR
         </button>
     </div>
 
@@ -46,28 +51,6 @@
             <div class="space-y-3 mb-6">
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <p class="text-micro font-bold text-slate-500 uppercase tracking-wide mb-1">Mã số</p>
-                        <p class="text-sm font-semibold text-blue-600" x-text="profileStudent ? profileStudent.code : ''"></p>
-                    </div>
-                    <div>
-                        <p class="text-micro font-bold text-slate-500 uppercase tracking-wide mb-1">Tình trạng</p>
-                        <span class="inline-block text-micro font-bold uppercase tracking-wider px-2 py-1 rounded-lg"
-                              :class="{'bg-emerald-50 text-emerald-600': profileStudent && profileStudent.status === 'đang sinh hoạt', 'bg-rose-50 text-rose-600': profileStudent && profileStudent.status === 'dừng sinh hoạt', 'bg-slate-100 text-slate-500': profileStudent && profileStudent.status === 'chuyển xứ'}"
-                              x-text="profileStudent ? profileStudent.status : ''"></span>
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <p class="text-micro font-bold text-slate-500 uppercase tracking-wide mb-1">Tên thánh</p>
-                        <p class="text-sm font-semibold text-slate-700" x-text="profileStudent ? profileStudent.holyName : ''"></p>
-                    </div>
-                    <div>
-                        <p class="text-micro font-bold text-slate-500 uppercase tracking-wide mb-1">Họ và tên</p>
-                        <p class="text-sm font-semibold text-slate-700" x-text="profileStudent ? profileStudent.name : ''"></p>
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
                         <p class="text-micro font-bold text-slate-500 uppercase tracking-wide mb-1">Ngày sinh</p>
                         <p class="text-sm font-semibold text-slate-700" x-text="profileStudent ? formatDate(profileStudent.birthDate) : ''"></p>
                     </div>
@@ -80,16 +63,6 @@
                 <div>
                     <p class="text-micro font-bold text-slate-500 uppercase tracking-wide mb-1">Địa chỉ</p>
                     <p class="text-sm font-semibold text-slate-700" x-text="profileStudent ? profileStudent.address : ''"></p>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <p class="text-micro font-bold text-slate-500 uppercase tracking-wide mb-1">Lớp</p>
-                        <p class="text-sm font-semibold text-slate-700" x-text="profileStudent ? profileStudent.className : ''"></p>
-                    </div>
-                    <div>
-                        <p class="text-micro font-bold text-slate-500 uppercase tracking-wide mb-1">Khối</p>
-                        <p class="text-sm font-semibold text-slate-700" x-text="profileStudent ? profileStudent.block : ''"></p>
-                    </div>
                 </div>
             </div>
 

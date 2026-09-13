@@ -1,5 +1,5 @@
 <!-- HEADER: Đẩy lên z-[100] để chống đè tuyệt đối -->
-<header class="app-header bg-gradient-to-br from-blue-600 to-blue-700 text-white pb-8 sm:pb-10 px-5 sm:px-8 shadow-xl rounded-b-sheet sm:rounded-b-shell relative z-[100]">
+<header class="app-header bg-gradient-to-br from-blue-600 to-blue-700 text-white pb-8 sm:pb-10 px-5 sm:px-8 shadow-xl rounded-b-sheet sm:rounded-b-shell relative z-[100] select-none">
     <div class="flex justify-between items-start">
         
         <!-- Khối thông tin cá nhân -->

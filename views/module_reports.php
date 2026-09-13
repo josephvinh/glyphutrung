@@ -1,19 +1,21 @@
 <!-- MÀN HÌNH SỔ LIÊN LẠC -->
-<div data-module="reports" class="module-panel pt-6 pb-10 relative">
+<div data-module="reports" class="module-panel pt-6 pb-24 relative">
 <?php include __DIR__ . '/partial_heavy_loading.php'; ?>
 
     <!-- 1. THANH ĐIỀU HƯỚNG GỘP (Thiếu nhi) -->
     <?php include __DIR__ . '/partial_children_tabs.php'; ?>
 
-    <div class="flex items-center justify-end gap-2 mb-4">
-        <button @click="exportReport('csv')" class="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-slate-50 text-slate-600 rounded-xl font-bold text-xs active:scale-95 transition-transform border border-slate-200 hover:bg-slate-100">
-            <i data-lucide="file-text" class="w-4 h-4"></i> CSV
-        </button>
-        <button @click="exportReport('excel')" class="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-emerald-50 text-emerald-600 rounded-xl font-bold text-xs active:scale-95 transition-transform border border-emerald-100 hover:bg-emerald-100">
-            <i data-lucide="table" class="w-4 h-4"></i> Excel
-        </button>
-        <button @click="exportReport('pdf')" class="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-blue-50 text-blue-600 rounded-xl font-bold text-xs active:scale-95 transition-transform border border-blue-100 hover:bg-blue-100">
-            <i data-lucide="file-text" class="w-4 h-4"></i> PDF
+    <div class="flex items-center justify-between gap-2 mb-4">
+        <!-- Select All Checkbox -->
+        <label x-show="reportClass !== ''" style="display: none;" class="flex items-center gap-2 text-sm font-semibold text-slate-700 cursor-pointer pl-1">
+            <input type="checkbox" @change="toggleAllReports($event)" :checked="selectedReports.length === reportStudents.length && reportStudents.length > 0" class="w-5 h-5 text-blue-600 rounded border-slate-300 focus:ring-blue-500">
+            Chọn tất cả
+        </label>
+        <div x-show="reportClass === ''"></div>
+
+        <button @click="printClassReports()" class="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-blue-50 text-blue-600 rounded-xl font-bold text-xs active:scale-95 transition-transform border border-blue-100 hover:bg-blue-100">
+            <i data-lucide="printer" class="w-4 h-4"></i>
+            <span x-text="selectedReports.length > 0 ? ('In ' + selectedReports.length + ' phiếu') : 'In PDF cả lớp'"></span>
         </button>
     </div>
 
@@ -77,7 +79,12 @@
             <button @click="canWriteReports ? openReportForm(student) : (reportOf(student.id) && openReportPreview(student.id))"
                     type="button"
                     style="content-visibility: auto; contain-intrinsic-size: auto 92px;"
-                    class="w-full text-left bg-white rounded-field p-4 shadow-sm border border-slate-100 flex items-center gap-3 active:scale-[0.98] transition-transform">
+                    class="w-full text-left bg-white rounded-field p-4 shadow-sm border flex items-center gap-3 active:scale-[0.98] transition-all"
+                    :class="selectedReports.includes(student.id) ? 'border-blue-300 bg-blue-50/30 shadow-md' : 'border-slate-100'">
+
+                <div @click.stop class="shrink-0 flex items-center h-full pr-1">
+                    <input type="checkbox" :value="student.id" x-model="selectedReports" class="w-5 h-5 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer">
+                </div>
 
                 <div class="w-12 h-12 shrink-0 rounded-2xl flex flex-col items-center justify-center border"
                      :class="reportAttendance.byStudent[student.id] && attendRate(reportAttendance.byStudent[student.id]) >= 85

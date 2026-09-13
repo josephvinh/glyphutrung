@@ -3,6 +3,13 @@
 
 # File-based cache runtime data
 public/cache/*.json
+public/cache/*.txt
+
+# Script debug tạm của agent — KHÔNG đưa lên host (chạy shell_exec / lộ mã nguồn)
+public/find_modified*.php
+public/git_check_ai.php
+public/git_diff_sw.php
+public/test_runner_ai.php
 
 # Claude workspace artifacts
 .superpowers/sdd/

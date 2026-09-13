@@ -1,5 +1,5 @@
 <!-- MÀN IN THẺ QR (một thẻ trong module Thiếu Nhi) -->
-<div data-module="qrcard" class="module-panel pt-6 pb-10 relative">
+<div data-module="qrcard" class="module-panel pt-6 pb-24 relative">
 
     <!-- Thanh điều hướng gộp (Thiếu nhi) -->
     <?php include __DIR__ . '/partial_children_tabs.php'; ?>
@@ -20,15 +20,44 @@
                                 x-text="opt.t"></button>
                     </template>
                 </div>
-                <select x-show="qrScopeType === 'class'" x-model="qrScopeValue"
+                <select x-show="qrScopeType === 'class'" x-model="qrScopeValue" @change="qrSyncSelected()"
                         class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800">
                     <template x-for="c in availableClasses" :key="c"><option :value="c" x-text="c"></option></template>
                 </select>
-                <select x-show="qrScopeType === 'block'" style="display:none" x-model="qrScopeValue"
+                <select x-show="qrScopeType === 'block'" style="display:none" x-model="qrScopeValue" @change="qrSyncSelected()"
                         class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800">
                     <template x-for="b in availableBlocks" :key="b"><option :value="b" x-text="b"></option></template>
                 </select>
-                <p class="text-micro text-slate-500 mt-2"><span class="font-bold text-blue-600" x-text="qrPrintStudents.length"></span> em sẽ được in.</p>
+
+                <div class="mt-3 border border-slate-100 rounded-xl overflow-hidden">
+                    <div class="bg-slate-50 px-3 py-2 flex items-center justify-between border-b border-slate-100">
+                        <label class="flex items-center gap-2 text-xs font-bold text-slate-600 cursor-pointer">
+                            <input type="checkbox" 
+                                   :checked="qrSelectedIds.length === qrScopeStudents.length && qrScopeStudents.length > 0"
+                                   @change="$event.target.checked ? (qrSelectedIds = qrScopeStudents.map(s => s.id)) : (qrSelectedIds = [])"
+                                   class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                            Chọn tất cả
+                        </label>
+                        <span class="text-micro font-bold text-blue-600" x-text="qrSelectedIds.length + ' / ' + qrScopeStudents.length"></span>
+                    </div>
+                    <div class="max-h-48 overflow-y-auto bg-white p-2 space-y-1">
+                        <template x-for="s in qrScopeStudents" :key="s.id">
+                            <label class="flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors"
+                                   :class="qrSelectedIds.includes(s.id) ? 'bg-blue-50/50' : ''">
+                                <input type="checkbox" :value="s.id" x-model.number="qrSelectedIds"
+                                       class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 shrink-0">
+                                <div class="min-w-0">
+                                    <p class="text-xs font-bold text-slate-800 leading-tight">
+                                        <span class="font-normal text-slate-500 mr-0.5" x-text="s.holyName"></span>
+                                        <span x-text="s.name"></span>
+                                    </p>
+                                    <p class="text-micro text-slate-500" x-text="s.code + ' • Lớp ' + s.className"></p>
+                                </div>
+                            </label>
+                        </template>
+                        <div x-show="qrScopeStudents.length === 0" class="text-center py-4 text-xs text-slate-400 font-medium">Không có em nào trong phạm vi này.</div>
+                    </div>
+                </div>
             </div>
 
             <!-- Thông tin trên thẻ -->

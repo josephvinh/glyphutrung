@@ -1,5 +1,5 @@
 <!-- MÀN HÌNH QUẢN LÝ CHƯƠNG TRÌNH -->
-<div data-module="programs" class="module-panel pt-6 pb-10 relative">
+<div data-module="programs" class="module-panel pt-6 pb-24 relative">
     
     <!-- 1. THANH ĐIỀU HƯỚNG -->
     <div class="flex items-center justify-between mb-6">
@@ -39,7 +39,7 @@
                             <i data-lucide="clock" class="w-3.5 h-3.5 mr-1.5 text-slate-400 shrink-0"></i>
                             <span class="text-slate-700 font-bold" x-text="prog.startTime"></span>
                             <span class="text-slate-300 mx-1.5">•</span>
-                            <span class="text-micro">chốt <span class="font-bold text-rose-500" x-text="addMinutes(prog.startTime, CUTOFF_MINUTES)"></span></span>
+                            <span class="text-micro">chốt <span class="font-bold text-rose-500" x-text="prog.cutoffTime || addMinutes(prog.startTime, CUTOFF_MINUTES)"></span></span>
                         </p>
                     </div>
 

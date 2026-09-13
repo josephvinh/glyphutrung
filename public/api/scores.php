@@ -45,6 +45,7 @@ if (!can_access_class($me, 'scores', (int) $enr['class_id'], 'edit')) {
 if ($raw === '') {
     db_run('DELETE FROM scores WHERE term_id=? AND student_id=? AND type_code=?',
            [$termId, $studentId, $type]);
+    Cache::flush();
     json_out(['ok' => true, 'removed' => true]);
 }
 
@@ -59,4 +60,5 @@ db_run('INSERT INTO scores (term_id, student_id, type_code, value, updated_by)
         ON DUPLICATE KEY UPDATE value = VALUES(value), updated_by = VALUES(updated_by)',
     [$termId, $studentId, $type, $value, $me['id']]);
 
+Cache::flush();
 json_out(['ok' => true, 'removed' => false, 'value' => $value]);

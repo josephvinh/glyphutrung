@@ -78,13 +78,16 @@ window.TNTT.scores = {
         const txt = String(raw).trim().replace(',', '.');
         const key = this.scoreKey(studentId, t, type);
         const i = this.scores.findIndex(s => s.studentId === studentId && s.termId === t && s.type === type);
+        const oldValue = i !== -1 ? this.scores[i].value : '';
 
         if (txt === '') {
             if (i !== -1) this.scores.splice(i, 1);
             if (this.scoreIndex) this.scoreIndex.delete(key);
-            this.save('scores', 'set', { studentId: studentId, termId: t, type: type, value: '' });
+            this.save('scores', 'set', { studentId: studentId, termId: t, type: type, value: '' })
+                .then(r => { if (!r || !r.ok) this.loadData(); });
             return true;
         }
+        
         const v = Number(txt);
         if (isNaN(v) || v < 0 || v > 10) return false;
 
@@ -95,7 +98,10 @@ window.TNTT.scores = {
             this.scores.push(rec);
             if (this.scoreIndex) this.scoreIndex.set(key, rec);
         }
-        this.save('scores', 'set', { studentId: studentId, termId: t, type: type, value: String(value) });
+        
+        this.save('scores', 'set', { studentId: studentId, termId: t, type: type, value: String(value) })
+            .then(r => { if (!r || !r.ok) this.loadData(); });
+            
         return true;
     },
 

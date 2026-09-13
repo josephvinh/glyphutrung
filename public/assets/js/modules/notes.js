@@ -30,16 +30,32 @@ window.TNTT.notes = {
     // ---- Gộp mọi mục thành một dòng thời gian thống nhất ----
     // kind: 'note' | 'meeting'
     get agendaItems() {
+        const now = this.nowStamp();
+        // Ngưỡng ẩn: việc đã xong quá 1 ngày trước thì ẩn đi cho sạch
+        const hideThreshold = (() => {
+            const d = new Date(); d.setDate(d.getDate() - 1);
+            const p = n => String(n).padStart(2, '0');
+            return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' 00:00';
+        })();
+
         const items = [];
-        this.notes.forEach(n => items.push({
-            kind: 'note', id: n.id, title: n.title, desc: n.note || '',
-            at: n.remindAt, allDay: n.allDay, done: n.done, ref: n
-        }));
-        this.myMeetings.forEach(a => items.push({
-            kind: 'meeting', id: a.id, title: a.title, desc: a.body || '',
-            at: a.meetingAt, allDay: false, place: a.meetingPlace || '',
-            rsvp: a.myRsvp || '', by: a.createdBy || '', ref: a
-        }));
+        this.notes.forEach(n => {
+            // Đã xong + quá hạn hơn 1 ngày → ẩn
+            if (n.done && n.remindAt < hideThreshold) return;
+            items.push({
+                kind: 'note', id: n.id, title: n.title, desc: n.note || '',
+                at: n.remindAt, allDay: n.allDay, done: n.done, ref: n
+            });
+        });
+        this.myMeetings.forEach(a => {
+            // Buổi họp đã qua → ẩn
+            if (a.meetingAt < now) return;
+            items.push({
+                kind: 'meeting', id: a.id, title: a.title, desc: a.body || '',
+                at: a.meetingAt, allDay: false, place: a.meetingPlace || '',
+                rsvp: a.myRsvp || '', by: a.createdBy || '', ref: a
+            });
+        });
         return items.sort((x, y) => x.at.localeCompare(y.at));
     },
 

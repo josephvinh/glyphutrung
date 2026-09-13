@@ -1,5 +1,5 @@
 <!-- MÀN LÊN LỚP CUỐI NĂM -->
-<div data-module="promotion" class="module-panel pt-6 pb-10 relative">
+<div data-module="promotion" class="module-panel pt-6 pb-24 relative">
 <?php include __DIR__ . '/partial_heavy_loading.php'; ?>
 
     <!-- 1. THANH ĐIỀU HƯỚNG -->

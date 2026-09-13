@@ -25,6 +25,9 @@
          ngồi nhìn màn hình trắng. -->
     <script defer src="assets/js/vendor/alpine.js?v=<?php echo @filemtime(__DIR__ . '/../public/assets/js/vendor/alpine.js') ?: 0; ?>"></script>
     <script defer src="assets/js/vendor/lucide-icons.js?v=<?php echo @filemtime(__DIR__ . '/../public/assets/js/vendor/lucide-icons.js') ?: 0; ?>"></script>
+    <!-- Core API for Passkey to use -->
+    <script defer src="assets/js/modules/core.js?v=<?php echo @filemtime(__DIR__ . '/../public/assets/js/modules/core.js') ?: 0; ?>"></script>
+    <script defer src="assets/js/modules/passkey.js?v=<?php echo @filemtime(__DIR__ . '/../public/assets/js/modules/passkey.js') ?: 0; ?>"></script>
     <!-- Phông đặt tại máy chủ mình, không còn gọi fonts.googleapis.com
          và fonts.gstatic.com. Hai tên miền đó mỗi cái bắt điện thoại tra
          DNS rồi bắt tay TLS lại từ đầu, mà thẻ <link> lại chặn hiển thị.
@@ -71,7 +74,7 @@
                        placeholder="••••••••" required
                        class="w-full bg-slate-50 border border-slate-200 rounded-field py-3.5 pl-11 pr-12 text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 transition-all">
                 <button aria-label="Hiện hoặc ẩn mật khẩu" @click="showPw = !showPw" type="button"
-                        class="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-slate-400 active:scale-90 transition-transform">
+                        class="tap-safe absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-slate-400 active:scale-90 transition-transform">
                     <i x-show="!showPw" data-lucide="eye" class="w-4 h-4"></i>
                     <i x-show="showPw" data-lucide="eye-off" class="w-4 h-4"></i>
                 </button>
@@ -91,11 +94,18 @@
             <span x-text="busy ? 'Đang kiểm tra...' : 'Đăng nhập'"></span>
         </button>
 
-        <p class="text-center text-micro text-slate-500 leading-snug pt-1">
+        <!-- Đăng nhập sinh trắc học -->
+        <button type="button" @click="loginPasskey()" :disabled="busy"
+                class="w-full bg-slate-800 text-white font-bold py-3.5 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-slate-200 flex justify-center items-center disabled:opacity-50 mt-3">
+            <i data-lucide="scan-face" class="w-5 h-5 mr-2"></i>
+            <span>Đăng nhập bằng FaceID/Vân tay</span>
+        </button>
+
+        <p class="text-center text-micro text-slate-500 leading-snug pt-3">
             Quên mật khẩu? Liên hệ Ban Điều Hành để được cấp lại.
         </p>
 
-        <div class="border-t border-slate-100 pt-4">
+        <div class="border-t border-slate-100 pt-4 mt-3">
             <button @click="goRegister()" type="button"
                     class="w-full py-3 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-sm text-slate-600 active:scale-[0.98] transition-transform flex items-center justify-center gap-2">
                 <i data-lucide="user-plus" class="w-4 h-4"></i> Đăng ký làm Giáo Lý Viên
@@ -345,6 +355,19 @@ document.addEventListener('alpine:init', () => {
             } catch (e) {
                 this.error = 'Không kết nối được máy chủ. Kiểm tra lại mạng rồi thử lại.';
             } finally { this.busy = false; }
+        },
+
+        async loginPasskey() {
+            this.error = '';
+            this.busy = true;
+            try {
+                const user = await window.Passkey.login();
+                if (user) location.reload();
+            } catch (e) {
+                // lỗi đã được alert trong passkey.js
+            } finally {
+                this.busy = false;
+            }
         },
 
         async submitChange() {

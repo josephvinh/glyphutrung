@@ -28,6 +28,7 @@ window.TNTT.qrcard = {
     qrCutLines: true,          // viền nét đứt để cắt
     qrHeader: true,            // in tiêu đề đoàn
     qrHeaderText: '',
+    qrSelectedIds: [],         // Danh sách ID các em sẽ in
 
     openQrcard() {
         if (this.qrScopeType === 'class' && !this.qrScopeValue) {
@@ -39,6 +40,7 @@ window.TNTT.qrcard = {
         }
         this.qrReady = false;
         this.changeModule('qrcard');
+        this.qrSyncSelected();
         this._qrTaiBoSinh()
             .then(() => { this.qrReady = true; })
             .catch(() => { window.TNTT.toast.error('Không tải được bộ sinh mã QR.'); });
@@ -49,10 +51,15 @@ window.TNTT.qrcard = {
         if (this.qrScopeType === 'class') this.qrScopeValue = this.availableClasses[0] || '';
         else if (this.qrScopeType === 'block') this.qrScopeValue = this.availableBlocks[0] || '';
         else this.qrScopeValue = '';
+        this.qrSyncSelected();
     },
 
-    // Các em sẽ in — theo phạm vi đã chọn, trong quyền của người đăng nhập
-    get qrPrintStudents() {
+    qrSyncSelected() {
+        this.qrSelectedIds = this.qrScopeStudents.map(s => s.id);
+    },
+
+    // Toàn bộ học sinh trong phạm vi lớp/khối/đoàn đã chọn
+    get qrScopeStudents() {
         let list = this.accessibleStudents.filter(s => s.status === 'đang sinh hoạt');
         if (this.qrScopeType === 'class' && this.qrScopeValue) {
             list = list.filter(s => s.className === this.qrScopeValue);
@@ -60,6 +67,11 @@ window.TNTT.qrcard = {
             list = list.filter(s => s.block === this.qrScopeValue);
         }
         return list;
+    },
+
+    // Các em sẽ in — chỉ in những em được tích chọn
+    get qrPrintStudents() {
+        return this.qrScopeStudents.filter(s => this.qrSelectedIds.includes(s.id));
     },
 
     get qrPreviewStudents() {
@@ -234,51 +246,5 @@ window.printSingleQrcard = function(student) {
 /** In phiếu liên lạc của một em */
 window.printReportSingle = function(report, student) {
     if (!report || !student) return;
-    const app = window.TNTT;
-    const term = app.terms.find(t => t.id === report.termId);
-    const html = '<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>Phiếu liên lạc</title>'
-        + '<style>@page{size:A4;margin:15mm}*{box-sizing:border-box}body{font-family:"Be Vietnam Pro",system-ui,sans-serif;margin:0;padding:0}'
-        + '.card{border:2px solid #2563eb;border-radius:8px;padding:20px;max-width:800px;margin:0 auto}'
-        + '.header{text-align:center;border-bottom:2px solid #e2e8f0;padding-bottom:15px;margin-bottom:20px}'
-        + '.header h1{font-size:20px;color:#1e40af;margin:0 0 5px}'
-        + '.header p{font-size:12px;color:#64748b;margin:0}'
-        + '.student-info{margin-bottom:20px}'
-        + '.student-info h2{font-size:18px;color:#1e3a8a;margin:0 0 10px;border-bottom:1px solid #e2e8f0;padding-bottom:5px}'
-        + '.student-info p{margin:5px 0;font-size:14px}'
-        + '.scores{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:20px}'
-        + '.score-item{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:15px;text-align:center}'
-        + '.score-item label{font-size:11px;color:#64748b;text-transform:uppercase;font-weight:bold}'
-        + '.score-item .value{font-size:28px;font-weight:800;color:#1e3a8a;margin:5px 0 0}'
-        + '.attendance{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:15px;margin-bottom:20px}'
-        + '.attendance h3{font-size:14px;color:#166534;margin:0 0 10px}'
-        + '.attendance table{width:100%;font-size:13px;border-collapse:collapse}'
-        + '.attendance td{border:1px solid #bbf7d0;padding:8px;text-align:center}'
-        + '.attendance td:first-child{text-align:left;font-weight:600}'
-        + '.remark{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:15px;margin-bottom:20px}'
-        + '.remark h3{font-size:14px;color:#1e40af;margin:0 0 10px}'
-        + '.remark p{font-size:14px;color:#1e3a8a;margin:0;line-height:1.6}'
-        + '.footer{text-align:center;font-size:11px;color:#94a3b8;margin-top:20px;padding-top:15px;border-top:1px solid #e2e8f0}'
-        + '@media print{.wrapper{display:none}}</style></head><body>'
-        + '<div class="card">'
-        + '<div class="header"><h1>PHIẾU LIÊN LẠC</h1><p>' + (term ? term.name : 'Học kỳ ' + report.termId) + ' · ' + (window.TNTT && window.TNTT.year ? window.TNTT.year.name : '') + '</p></div>'
-        + '<div class="student-info"><h2>' + (student.holyName ? student.holyName + ' ' : '') + student.name + '</h2>'
-        + '<p><strong>Mã số:</strong> ' + student.code + ' &nbsp;|&nbsp; <strong>Lớp:</strong> ' + student.className + '</p></div>'
-        + '<div class="scores">'
-        + '<div class="score-item"><label>Học tập</label><div class="value">' + (report.score !== null ? report.score.toFixed(1) : '-') + '</div></div>'
-        + '<div class="score-item"><label>Xếp loại</label><div class="value" style="font-size:20px">' + (report.rank || '-') + '</div></div>'
-        + '</div>'
-        + '<div class="attendance"><h3>📋 Chuyên cần</h3><table><tr><td>Tổng buổi</td><td>Có mặt</td><td>Đi trễ</td><td>Vắng</td><td>Tỷ lệ</td></tr>'
-        + '<tr><td>' + (report.attendance ? report.attendance.total : 0) + '</td>'
-        + '<td style="color:#166534;font-weight:bold">' + (report.attendance ? report.attendance.present : 0) + '</td>'
-        + '<td style="color:#a16207;font-weight:bold">' + (report.attendance ? report.attendance.late : 0) + '</td>'
-        + '<td style="color:#dc2626;font-weight:bold">' + ((report.attendance ? report.attendance.unexcused : 0) || 0) + '</td>'
-        + '<td>' + (report.attendance && report.attendance.total > 0 ? Math.round((report.attendance.present / report.attendance.total) * 100) : 0) + '%</td></tr></table></div>'
-        + (report.remark ? '<div class="remark"><h3>📝 Nhận xét của Giaovien</h3><p>' + report.remark + '</p></div>' : '')
-        + '<div class="footer">TNTT Phú Trung · In ngày ' + new Date().toLocaleDateString('vi-VN') + '</div>'
-        + '</div>'
-        + '<scr' + 'ipt>window.onload=function(){window.print()};</scr' + 'ipt></body></html>';
-    const win = window.open('', '_blank');
-    if (!win) { alert('Trình duyệt đã chặn cửa sổ in.'); return; }
-    win.document.write(html);
-    win.document.close();
+    window.open('print.php?type=report&termId=' + report.termId + '&studentId=' + student.id, '_blank');
 };

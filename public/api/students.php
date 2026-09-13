@@ -53,13 +53,9 @@ function clean_student(array $s): array
  * Ghi một em: cập nhật nếu đã có mã số, chèn mới nếu chưa.
  * Trả về id của em.
  */
-function upsert_student(array $s, int $yid, int $actorId): int
+function upsert_student(array $s, int $yid, int $classId, ?int $sid = null): int
 {
-    $classId = class_id_by_name($s['className']);
-    $existing = db_one('SELECT id FROM students WHERE code = ?', [$s['code']]);
-
-    if ($existing) {
-        $sid = (int) $existing['id'];
+    if ($sid) {
         db_run('UPDATE students SET holy_name=?, full_name=?, gender=?, birth_date=?, address=?,
                        father_name=?, father_phone=?, mother_name=?, mother_phone=?
                  WHERE id=?',
@@ -107,16 +103,18 @@ switch ($action) {
             json_fail('Thiếu mã số.');
         }
 
+        $classId = class_id_by_name($s['className']);
         // Chỉ được ghi vào lớp thuộc phạm vi mình phụ trách
         $chophep = allowed_class_ids($me);
-        if ($chophep !== null && !in_array(class_id_by_name($s['className']), $chophep, true)) {
+        if ($chophep !== null && !in_array($classId, $chophep, true)) {
             json_fail('Bạn không phụ trách lớp "' . $s['className'] . '".'
                     . ' Bạn chỉ ghi được vào: ' . allowed_class_names($chophep) . '.', 403);
         }
 
         db()->beginTransaction();
         try {
-            $sid = upsert_student($s, $yid, (int) $me['id']);
+            $existing = db_one('SELECT id FROM students WHERE code = ?', [$s['code']]);
+            $sid = upsert_student($s, $yid, $classId, $existing ? (int) $existing['id'] : null);
             db()->commit();
         } catch (Throwable $e) {
             db()->rollBack();
@@ -124,7 +122,9 @@ switch ($action) {
         }
 
         log_action('sua', 'students', 'Sửa hồ sơ ' . $s['name'], $s['code'] . ' · ' . $s['className']);
+        Cache::flush();
         json_out(['ok' => true, 'id' => $sid]);
+        break;
 
     // -------------------------------------------------------------
     case 'import':
@@ -143,30 +143,42 @@ switch ($action) {
                     . ' Vui lòng liên hệ Ban Điều Hành.', 403);
         }
 
+        $classMap = [];
+        $res = db_run('SELECT id, name FROM classes')->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($res as $r) $classMap[$r['name']] = (int) $r['id'];
+
+        $existingCodes = [];
+        $res = db_run('SELECT code, id FROM students')->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($res as $r) $existingCodes[$r['code']] = (int) $r['id'];
+
         db()->beginTransaction();
         try {
             foreach ($rows as $i => $raw) {
                 $s = clean_student($raw);
                 if ($s['name'] === '') { $skipped++; continue; }
-                // Dòng không có mã -> máy chủ tự cấp; dòng có mã (mang dữ liệu
-                // cũ sang) thì giữ nguyên.
                 if ($s['code'] === '') $s['code'] = next_student_code(year_two_digit($year));
-                $lop = $s['className'] === '' ? null
-                     : db_one('SELECT id FROM classes WHERE name=?', [$s['className']]);
-                if (!$lop) {
+
+                $lopId = $classMap[$s['className']] ?? null;
+                if (!$lopId) {
                     $skipped++;
                     $errors[] = 'Dòng ' . ($i + 2) . ': lớp "' . $s['className'] . '" không tồn tại';
                     continue;
                 }
-                if ($chophep !== null && !in_array((int) $lop['id'], $chophep, true)) {
+                if ($chophep !== null && !in_array($lopId, $chophep, true)) {
                     $skipped++;
-                    $errors[] = 'Dòng ' . ($i + 2) . ': bạn không phụ trách lớp "'
-                              . $s['className'] . '"';
+                    $errors[] = 'Dòng ' . ($i + 2) . ': bạn không phụ trách lớp "' . $s['className'] . '"';
                     continue;
                 }
-                $had = db_one('SELECT id FROM students WHERE code = ?', [$s['code']]);
-                upsert_student($s, $yid, (int) $me['id']);
-                $had ? $updated++ : $added++;
+
+                $sid = $existingCodes[$s['code']] ?? null;
+                $newSid = upsert_student($s, $yid, $lopId, $sid);
+                
+                if (!$sid) {
+                    $existingCodes[$s['code']] = $newSid;
+                    $added++;
+                } else {
+                    $updated++;
+                }
             }
             db()->commit();
         } catch (Throwable $e) {
@@ -176,6 +188,7 @@ switch ($action) {
 
         log_action('tao', 'students', 'Nhập danh sách từ file',
                    'thêm ' . $added . ', cập nhật ' . $updated . ', bỏ qua ' . $skipped);
+        Cache::flush();
 
         json_out(['ok' => true, 'added' => $added, 'updated' => $updated,
                   'skipped' => $skipped, 'errors' => array_slice($errors, 0, 10),

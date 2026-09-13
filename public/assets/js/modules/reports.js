@@ -27,6 +27,15 @@ window.TNTT.reports = {
     showReportPreview: false,
     reportForm: {},
     previewStudentId: null,
+    selectedReports: [], // Chứa mảng ID các em được chọn
+
+    toggleAllReports(e) {
+        if (e.target.checked) {
+            this.selectedReports = this.reportStudents.map(s => s.id);
+        } else {
+            this.selectedReports = [];
+        }
+    },
 
     openReports() {
         // Bắt chọn lớp trước khi hiện phiếu (giống Danh sách). Chỉ tự mở khi
@@ -192,7 +201,8 @@ window.TNTT.reports = {
             studentId: f.studentId, termId: f.termId, attendance: f.attendance,
             score: String(f.score), conduct: f.conduct, rank: f.rank,
             remark: f.remark, send: !!send
-        });
+        }).then(r => { if (!r || !r.ok) this.loadData(); });
+        
         const em = this.studentById(f.studentId);
         this.logAction(send ? 'duyet' : 'sua', 'reports',
                        (send ? 'Gửi' : 'Lưu nháp') + ' phiếu liên lạc của ' + (em ? em.name : ''),
@@ -207,7 +217,8 @@ window.TNTT.reports = {
             this.reports = this.reports.filter(x => x.id !== r.id);
             if (this.reportIndex) this.reportIndex.delete(this.reportKey(r.studentId, r.termId));
             this.showReportForm = false;
-            this.save('reports', 'delete', { studentId: r.studentId, termId: r.termId });
+            this.save('reports', 'delete', { studentId: r.studentId, termId: r.termId })
+                .then(res => { if (!res || !res.ok) this.loadData(); });
         }
     },
 
@@ -225,7 +236,20 @@ window.TNTT.reports = {
     },
 
     printReport() {
-        window.print();
+        if (!this.previewStudentId) return;
+        window.open('print.php?type=report&termId=' + this.reportTermId + '&studentId=' + this.previewStudentId, '_blank');
+    },
+
+    printClassReports() {
+        if (this.reportClass === '') {
+            alert('Vui lòng chọn lớp trước.');
+            return;
+        }
+        let url = 'print.php?type=class_reports&termId=' + this.reportTermId + '&className=' + encodeURIComponent(this.reportClass);
+        if (this.selectedReports.length > 0) {
+            url += '&ids=' + this.selectedReports.join(',');
+        }
+        window.open(url, '_blank');
     },
 
     // Số phiếu liên lạc còn thiếu — cho chấm nhắc trên icon Thiếu Nhi.
@@ -252,67 +276,5 @@ window.TNTT.reports = {
         const sent = this.reportStudents.filter(s => this.reportStatus(s.id) === 'đã gửi').length;
         const draft = this.reportStudents.filter(s => this.reportStatus(s.id) === 'nháp').length;
         return { total: total, sent: sent, draft: draft, missing: total - sent - draft };
-    },
-
-    exportReportsCSV() {
-        const list = this.reportStudents.filter(s => this.reportOf(s.id));
-        if (list.length === 0) {
-            alert('Lớp này chưa có phiếu nào để xuất!');
-            return;
-        }
-        const headers = ['Mã số', 'Tên Thánh', 'Họ và Tên', 'Lớp', 'Học kỳ',
-                         'Số buổi', 'Có mặt', 'Đi trễ', 'Vắng có phép', 'Vắng không phép', 'Chuyên cần (%)',
-                         'Điểm học lực', 'Hạnh kiểm', 'Xếp loại', 'Nhận xét', 'Trạng thái'];
-        const lines = [headers.map(h => this.csvCell(h)).join(',')];
-
-        list.forEach(s => {
-            const r = this.reportOf(s.id);
-            const a = r.attendance;
-            lines.push([s.code, s.holyName, s.name, s.className, this.reportTerm.name,
-                        a.total, a.present, a.late, a.excused, a.unexcused, a.rate,
-                        r.score === '' ? '' : r.score, r.conduct, r.rank, r.remark, r.status]
-                       .map(v => this.csvCell(v)).join(','));
-        });
-
-        const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = 'So_Lien_Lac_' + this.reportClass.replace(/\s+/g, '_') + '.csv';
-        link.click();
-        URL.revokeObjectURL(url);
-    },
-
-    /**
-     * Export report cards for current class using the export API
-     * @param {string} format - 'pdf', 'excel', or 'csv'
-     */
-    async exportReport(format = 'csv') {
-        const students = this.reportStudents;
-        if (students.length === 0) {
-            alert('Lớp này chưa có em nào để xuất!');
-            return;
-        }
-
-        const termId = Number(this.reportTermId);
-        let successCount = 0;
-        let errorCount = 0;
-
-        for (const student of students) {
-            const r = await window.TNTT.export.report(termId, student.id, format);
-            if (r.ok && r.url) {
-                successCount++;
-                // Small delay between downloads to prevent browser issues
-                await new Promise(resolve => setTimeout(resolve, 300));
-            } else {
-                errorCount++;
-            }
-        }
-
-        if (errorCount > 0) {
-            alert('Đã xuất ' + successCount + ' phiếu, ' + errorCount + ' phiếu thất bại.');
-        } else if (successCount === 0) {
-            alert('Không có phiếu nào để xuất.');
-        }
-    },
+    }
 };

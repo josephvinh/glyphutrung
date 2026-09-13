@@ -215,19 +215,21 @@ window.TNTT.attendance = {
 
         if (cu) {
             this._attXoa(this.activeSession.programId, this.activeSession.date, student.id);
-            this.save('attendance', 'toggle', {
-                programId: this.activeSession.programId,
-                date: this.activeSession.date,
-                studentId: student.id
-            });
             if (this.isPastCutoff) {
                 this.logAction('diemdanh', 'attendance', 'Gỡ điểm danh của ' + student.name,
                                this.sessionProgram.name + ' · ' + this.formatDate(this.activeSession.date) + ' · đang là ' + cu.status);
             }
+            this.save('attendance', 'toggle', {
+                programId: this.activeSession.programId,
+                date: this.activeSession.date,
+                studentId: student.id
+            }).then(r => {
+                if (!r || !r.ok) this._attThem(cu);
+            });
             return;
         }
 
-        this._attThem({
+        const newRec = {
             programId: this.activeSession.programId,
             date: this.activeSession.date,
             studentId: student.id,
@@ -236,7 +238,8 @@ window.TNTT.attendance = {
             method: 'tay',
             markedBy: this.user.fullName,
             markedAt: this.currentTime()
-        });
+        };
+        this._attThem(newRec);
 
         // Chỉ ghi nhật ký khi sửa sau giờ chốt — lúc đó con số mới
         // ảnh hưởng tới điểm chuyên cần, và đó là thứ cần tra khi có tranh cãi.
@@ -249,6 +252,17 @@ window.TNTT.attendance = {
             programId: this.activeSession.programId,
             date: this.activeSession.date,
             studentId: student.id
+        }).then(r => {
+            if (!r || !r.ok) {
+                this._attXoa(this.activeSession.programId, this.activeSession.date, student.id);
+            } else if (r.status) {
+                // Cập nhật lại chính xác trạng thái từ server (tránh đồng hồ client lệch)
+                this._attXoa(this.activeSession.programId, this.activeSession.date, student.id);
+                newRec.status = r.status;
+                newRec.markedAt = r.markedAt;
+                newRec.markedBy = r.markedBy;
+                this._attThem(newRec);
+            }
         });
     },
 

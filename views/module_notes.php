@@ -1,5 +1,5 @@
 <!-- MÀN LỊCH CỦA TÔI — ghi chú cá nhân + buổi họp được mời -->
-<div data-module="notes" class="module-panel pt-6 pb-10 relative">
+<div data-module="notes" class="module-panel pt-6 pb-24 relative">
 
     <!-- 1. THANH ĐIỀU HƯỚNG -->
     <div class="flex items-center mb-5">

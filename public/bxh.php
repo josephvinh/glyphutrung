@@ -67,23 +67,47 @@ $attRows = db_all(
       WHERE year_id = ? AND session_date BETWEEN ? AND ?",
     [$yearId, $termStart, $termEnd]
 );
+// Lấy thêm đơn xin phép đã duyệt
+$leaveRows = db_all(
+    "SELECT student_id, program_id, session_date FROM leave_requests
+      WHERE year_id = ? AND status = 'đã duyệt' AND session_date BETWEEN ? AND ?",
+    [$yearId, $termStart, $termEnd]
+);
+
 // gộp theo học sinh: đếm cho KỲ + cho TUẦN
-$att = []; // id => ['tCM','tDT','tCP','tTong','wCM','wDT','wCP']
-// Vắng = KHÔNG có dòng điểm danh (enum status chỉ có 'có mặt'/'đi trễ').
-// Nên "tổng số buổi" của kỳ = số buổi ĐÃ DIỄN RA = số (program_id|ngày) khác nhau
-// có ít nhất một em được ghi. Đó là mẫu số để tính tỷ lệ có mặt cho mọi em.
+$att = []; // id => ['tCM','tDT','tCP','wCM','wDT','wCP','dix']
+// Vắng = KHÔNG có dòng điểm danh.
+// Nên "tổng số buổi" của kỳ = số buổi ĐÃ DIỄN RA = số (program_id|ngày) khác nhau có ghi nhận.
 $buoiKy = []; // 'program_id|date' => 1
 foreach ($attRows as $a) {
     $sid = (int) $a['student_id'];
-    if (!isset($att[$sid])) $att[$sid] = ['tCM'=>0,'tDT'=>0,'wCM'=>0,'wDT'=>0];
+    if (!isset($att[$sid])) $att[$sid] = ['tCM'=>0,'tDT'=>0,'tCP'=>0,'wCM'=>0,'wDT'=>0,'wCP'=>0,'dix'=>[]];
     $st = $a['status'];
-    $buoiKy[$a['program_id'] . '|' . $a['session_date']] = 1;
+    $key = $a['program_id'] . '|' . $a['session_date'];
+    $buoiKy[$key] = 1;
+    $att[$sid]['dix'][$key] = 1; // Đánh dấu em này đã có kết quả điểm danh
+    
     if ($st === 'có mặt')      $att[$sid]['tCM']++;
     elseif ($st === 'đi trễ')  $att[$sid]['tDT']++;
     $trongTuan = ($a['session_date'] >= $weekStart && $a['session_date'] <= $weekEnd);
     if ($trongTuan) {
         if ($st === 'có mặt')     $att[$sid]['wCM']++;
         elseif ($st === 'đi trễ') $att[$sid]['wDT']++;
+    }
+}
+
+// Xử lý đơn xin phép
+foreach ($leaveRows as $l) {
+    $sid = (int) $l['student_id'];
+    if (!isset($att[$sid])) $att[$sid] = ['tCM'=>0,'tDT'=>0,'tCP'=>0,'wCM'=>0,'wDT'=>0,'wCP'=>0,'dix'=>[]];
+    $key = $l['program_id'] . '|' . $l['session_date'];
+    // Chỉ tính có phép nếu buổi đó THẬT SỰ CÓ DIỄN RA và em này chưa bị điểm danh đè lên
+    if (isset($buoiKy[$key]) && !isset($att[$sid]['dix'][$key])) {
+        $att[$sid]['tCP']++;
+        $trongTuan = ($l['session_date'] >= $weekStart && $l['session_date'] <= $weekEnd);
+        if ($trongTuan) {
+            $att[$sid]['wCP']++;
+        }
     }
 }
 $soBuoiKy = count($buoiKy); // tổng số buổi đã diễn ra trong kỳ
@@ -111,15 +135,17 @@ foreach ($scoreRows as $r) {
 $rowsEm = [];
 foreach ($students as $s) {
     $sid = (int) $s['id'];
-    $a = $att[$sid] ?? ['tCM'=>0,'tDT'=>0,'wCM'=>0,'wDT'=>0];
+    $a = $att[$sid] ?? ['tCM'=>0,'tDT'=>0,'tCP'=>0,'wCM'=>0,'wDT'=>0,'wCP'=>0];
     if ($period === 'tuan') {
-        $diem = (float) td_diem_tuan($a['wCM'], $a['wDT'], 0);
+        $diem = (float) td_diem_tuan($a['wCM'], $a['wDT'], $a['wCP']);
+        $detail = "CM: {$a['wCM']} · ĐT: {$a['wDT']} · CP: {$a['wCP']}";
     } else {
-        // Mẫu số là TỔNG số buổi đã diễn ra (không phải số dòng của em) ->
-        // em vắng nhiều thì tỷ lệ thấp.
-        $tyLe    = td_ty_le_co_mat($a['tCM'], $a['tDT'], $soBuoiKy);
+        // Mẫu số là TỔNG số buổi đã diễn ra (không phải số dòng của em)
+        $tyLe    = td_ty_le_co_mat($a['tCM'], $a['tDT'], $a['tCP'], $soBuoiKy);
         $hocTap  = td_hoc_tap_100($scoreOf[$sid] ?? []);
         $diem    = td_diem_ky($tyLe, $hocTap);
+        $ht10 = rtrim(rtrim(number_format($hocTap / 10, 1), '0'), '.'); // Thang 10
+        $detail = "Chuyên cần: {$tyLe}% · Học tập: {$ht10}";
     }
     $rowsEm[] = [
         'id'         => $sid,
@@ -127,6 +153,7 @@ foreach ($students as $s) {
         'class_id'   => (int) $s['class_id'],
         'class_name' => $s['class_name'] ?? '',
         'diem'       => $diem,
+        'detail'     => $detail,
     ];
 }
 
@@ -142,15 +169,16 @@ if ($type === 'lop') {
     }
     $rows = [];
     foreach ($agg as $cid => $g) {
-        $rows[] = ['id' => $cid, 'ten' => $g['ten'], 'class_name' => '', 'diem' => $g['n'] ? round($g['tong'] / $g['n'], 1) : 0.0];
+        $rows[] = ['id' => $cid, 'ten' => $g['ten'], 'class_name' => '', 'diem' => $g['n'] ? round($g['tong'] / $g['n'], 1) : 0.0, 'detail' => 'Sĩ số: ' . $g['n'] . ' em'];
     }
 } else {
     $rows = $rowsEm;
 }
 
 $xh = td_xep_hang($rows, 'diem');
+// Giới hạn hiển thị Top 20 em (hoặc Top 20 lớp) để web nhẹ và tập trung vào nhóm dẫn đầu
+$xh = array_slice($xh, 0, 20);
 $top = array_slice($xh, 0, 3);
-$conLai = array_slice($xh, 3);
 
 /* ---------- Nhãn động ---------- */
 $tenChampion = ($type === 'lop') ? 'Lớp xuất sắc' : ($period === 'tuan' ? 'Em của tuần' : 'Quán quân');
@@ -312,7 +340,10 @@ select{border:1px solid #e2e8f0;border-radius:999px;padding:8px 12px;font-size:1
           <div class="ava2"><?= e_(chuDau($d['ten'])) ?></div>
           <div class="main">
             <div class="t"><?= e_($d['ten']) ?></div>
-            <?php if ($type!=='lop'): ?><div class="s"><?= e_($d['class_name']) ?></div><?php endif; ?>
+            <div class="s">
+              <?php if ($type!=='lop'): ?><?= e_($d['class_name']) ?> · <?php endif; ?>
+              <?= e_($d['detail'] ?? '') ?>
+            </div>
           </div>
           <div class="bar"><i style="width:<?= max(3,min(100,round($d['diem']/$maxDiem*100))) ?>%"></i></div>
           <div class="dg"><?= rtrim(rtrim(number_format($d['diem'],1),'0'),'.') ?></div>
@@ -323,13 +354,16 @@ select{border:1px solid #e2e8f0;border-radius:999px;padding:8px 12px;font-size:1
   <?php endif; ?>
 
   <div class="ct">
-    <b>Cách tính điểm (tự động, không ai chỉnh):</b><br>
+    <b>Cách tính điểm minh bạch (tự động 100%):</b><br>
     <?php if ($period==='tuan'): ?>
-      Điểm <b>Tuần</b> theo chuyên cần: Có mặt +10 · Đi trễ +6 · Vắng 0.
+      Điểm <b>Tuần</b> theo chuyên cần: Có mặt +10 · Đi trễ +6 · Vắng có phép +3 · Vắng 0.
     <?php else: ?>
-      Điểm <b>Học kỳ</b> (thang 100) = <b>60%</b> chuyên cần (số buổi có mặt / tổng số buổi đã diễn ra)
-      + <b>40%</b> học tập (điểm trung bình). Xếp hạng <b>lớp</b> = điểm trung bình các em trong lớp.
+      Điểm <b>Học kỳ</b> (thang 100) = <b>60% Chuyên cần</b> + <b>40% Học tập</b>.<br>
+      <i>* Chuyên cần: Có mặt tính 100%, Đi trễ tính 60%, Vắng có phép tính 30%.</i><br>
+      <i>* Điểm của lớp: Lấy trung bình cộng điểm các em trong lớp.</i>
     <?php endif; ?>
+    <br><br>
+    <i>Bảng xếp hạng chỉ hiển thị <b>Top 20</b> dẫn đầu.</i>
   </div>
 
   <div class="foot">Cập nhật theo dữ liệu thật lúc <?= date('H:i · d/m/Y') ?> · Trang chỉ để xem</div>

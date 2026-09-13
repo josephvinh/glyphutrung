@@ -5,52 +5,41 @@
  * (scripts/xuat_huong_dan_doc.php). Sửa nội dung ở ĐÂY là cả hai đổi theo.
  */
 return [
-    'tieu_de' => 'Hướng dẫn sử dụng TNTT Super App',
-    'gioi_thieu' => 'Tài liệu hướng dẫn thao tác cơ bản trên ứng dụng quản lý '
-        . 'Đoàn Thiếu Nhi Thánh Thể. Mỗi vai chỉ thấy các chức năng thuộc quyền của '
-        . 'mình; phần "Dùng chung" áp dụng cho tất cả.',
+    'tieu_de' => 'Cẩm nang sử dụng Ứng dụng TNTT',
+    'gioi_thieu' => 'Chào mừng bạn đến với ứng dụng quản lý Đoàn Thiếu Nhi Thánh Thể! Dưới đây là hướng dẫn các thao tác cơ bản nhất. Tùy vào vai trò của bạn (Ban Điều Hành, Trưởng khối, GLV...), ứng dụng sẽ chỉ hiển thị những chức năng phù hợp.',
 
     // Phần chung cho mọi vai
     'chung' => [
         [
-            'title' => 'Đăng nhập & mật khẩu',
+            'title' => 'Tài khoản & Mật khẩu',
             'steps' => [
-                'Mở app, nhập Số điện thoại và Mật khẩu đã được cấp rồi bấm Đăng nhập.',
-                'Lần đầu nên đổi mật khẩu: vào Cài đặt → Đổi mật khẩu.',
-                'Quên mật khẩu thì liên hệ Ban Điều Hành để cấp lại.',
+                'Đăng nhập bằng Số điện thoại của bạn.',
+                'Nên đổi mật khẩu ngay trong lần đăng nhập đầu tiên (Vào Cài đặt → Đổi mật khẩu).',
+                'Nếu lỡ quên mật khẩu, đừng lo! Hãy nhờ Ban Điều Hành đặt lại mật khẩu mới giùm bạn.',
             ],
         ],
         [
-            'title' => 'Màn hình Trang chủ',
+            'title' => 'Màn hình Trang chủ có gì?',
             'steps' => [
-                'Ba thẻ trên cùng: Thông báo mới, Sĩ số phạm vi của bạn, Sinh nhật trong tháng.',
-                'Thẻ "Sắp tới": các việc và buổi họp gần nhất của bạn.',
-                'Thẻ "Thông báo gần đây": các thông báo mới từ Ban Điều Hành.',
-                'Chấm đỏ nhỏ trên icon là việc cần làm (VD: số buổi chưa điểm danh, thông báo chưa đọc).',
+                'Hãy để ý các "Chấm đỏ" 🔴 — đó là lời nhắc việc (VD: thông báo chưa đọc, buổi học chưa điểm danh, đơn xin phép chờ duyệt).',
+                'Phần "Sắp tới" sẽ nhắc bạn các công việc hoặc lịch họp sắp diễn ra.',
+                'Phần "Thông báo" hiển thị các tin tức mới nhất từ Ban Điều Hành hoặc Trưởng khối.',
             ],
         ],
         [
-            'title' => 'Lịch của tôi (ghi chú & nhắc việc)',
+            'title' => 'Lịch cá nhân & Nhắc việc',
             'steps' => [
-                'Bấm "Lịch của tôi" → "Thêm việc" để ghi việc cần nhớ kèm ngày giờ nhắc.',
-                'Đến gần giờ, app nhắc bằng chấm đỏ và thông báo đẩy (nếu đã bật chuông).',
-                'Buổi họp bạn được mời sẽ TỰ hiện trong lịch; bấm "Tham gia" hoặc "Không".',
-                'Bấm "Xong" để đánh dấu việc đã hoàn thành.',
+                'Vào "Lịch của tôi" để tự tạo ghi chú việc cần làm. Ứng dụng sẽ tự động nhắc khi đến hạn.',
+                'Khi BĐH mời họp, lịch họp sẽ tự động bay vào đây! Bạn chỉ việc bấm "Tham gia" hoặc "Không" để báo lại.',
+                'Việc nào làm xong rồi thì bấm nút "Xong" để gạch bỏ nhé.',
             ],
         ],
         [
-            'title' => 'Thông báo',
+            'title' => 'Cài App ra màn hình điện thoại',
             'steps' => [
-                'Vào "Thông báo" để đọc tin từ Ban Điều Hành / Trưởng khối.',
-                'Với buổi họp: xem giờ, địa điểm và chọn Tham gia / Không tham gia.',
-            ],
-        ],
-        [
-            'title' => 'Tiện ích khác',
-            'steps' => [
-                'Nút mặt trời trên đầu: đổi giao diện Sáng / Tối.',
-                'Nút mũi tên: Đăng xuất. Nút vòng tròn: làm mới dữ liệu.',
-                'Nên "Thêm vào màn hình chính" để dùng như một ứng dụng (PWA).',
+                'Bạn KHÔNG cần tải App từ Store. Chỉ cần mở web bằng Safari (iPhone) hoặc Chrome (Android).',
+                'Chọn menu của trình duyệt, bấm "Thêm vào màn hình chính" (Add to Home Screen).',
+                'Từ giờ bạn có thể mở ứng dụng bằng Icon trên điện thoại cực mượt mà!',
             ],
         ],
     ],
@@ -59,95 +48,84 @@ return [
     'vai' => [
         'admin' => [
             'label' => 'Quản Trị Hệ Thống',
-            'mo_ta' => 'Toàn quyền trên toàn đoàn, kể cả cấu hình hệ thống.',
+            'mo_ta' => 'Nắm toàn bộ quyền lực, cài đặt sâu vào hệ thống.',
             'items' => [
-                ['title' => 'Phân quyền', 'steps' => [
-                    'Cài đặt → Phân quyền: chọn vai, đặt mỗi chức năng là Không thấy / Chỉ xem / Toàn quyền.',
-                    'Thay đổi áp dụng ngay cho cả app.',
+                ['title' => 'Quản lý Phân quyền', 'steps' => [
+                    'Vào Cài đặt → Phân quyền: Cấu hình chi tiết ai được xem, ai được sửa tính năng nào.',
                 ]],
-                ['title' => 'Bảo trì & hệ thống', 'steps' => [
-                    'Cài đặt → Bảo trì: tạm khoá một chức năng khi cần (Quản trị vẫn vào được để kiểm tra).',
-                    'Xem Nhật ký thao tác để tra cứu ai làm gì.',
+                ['title' => 'Chế độ Bảo trì', 'steps' => [
+                    'Vào Cài đặt → Bảo trì: Tạm khóa một chức năng để sửa chữa. Người khác sẽ thấy chữ "Bảo trì", riêng Quản trị vẫn vào dùng được để test.',
                 ]],
-                ['title' => 'Làm được mọi việc của Ban Điều Hành', 'steps' => [
-                    'Phát thông báo, tạo buổi họp, nhân sự, niên khoá, lên lớp, giám sát điểm số/phiếu.',
+                ['title' => 'Nhật ký hệ thống', 'steps' => [
+                    'Kiểm soát mọi hành động: Ai làm gì, xóa gì, sửa gì đều được hệ thống ghi lại chi tiết.',
                 ]],
             ],
         ],
         'bdh' => [
             'label' => 'Ban Điều Hành',
-            'mo_ta' => 'Quản lý toàn đoàn: điều hành, thông báo, nhân sự, giám sát.',
+            'mo_ta' => 'Điều phối toàn đoàn: báo tin, nhân sự, năm học.',
             'items' => [
-                ['title' => 'Phát thông báo & tạo buổi họp', 'steps' => [
-                    'Thông báo → "Phát mới": nhập tiêu đề, nội dung, chọn phạm vi (toàn đoàn / khối / lớp).',
-                    'Tick "Đây là buổi họp" + chọn thời gian, địa điểm → buổi họp tự vào lịch người nhận.',
-                    'Mở "Kết quả họp" để xem ai Tham gia / Không / Chưa trả lời.',
+                ['title' => 'Thông báo & Mời họp', 'steps' => [
+                    'Vào Thông báo → "Phát mới": Chọn gửi cho cả đoàn, hoặc gửi riêng từng khối/lớp.',
+                    'Tick chọn "Đây là buổi họp" để ứng dụng tự lên lịch cho người nhận. Xem được ngay ai đi họp, ai vắng!',
                 ]],
-                ['title' => 'Nhân sự & Niên khoá', 'steps' => [
-                    'Nhân sự: duyệt GLV đăng ký mới, phân công khối/lớp, đổi vai.',
-                    'Niên khoá: mở/khoá niên khoá, đặt học kỳ.',
-                ]],
-                ['title' => 'Giám sát (chỉ xem)', 'steps' => [
-                    'Điểm số và Phiếu liên lạc: Ban Điều Hành CHỈ XEM để giám sát, việc nhập là của GLV lớp.',
-                    'Báo cáo: xem thống kê chuyên cần, học lực toàn đoàn.',
+                ['title' => 'Nhân sự & Năm học', 'steps' => [
+                    'Nhân sự: Duyệt tài khoản cho GLV mới, phân công GLV vào lớp, cấp quyền Trưởng khối.',
+                    'Niên khóa: Khởi tạo năm học mới, chia thời gian Học kỳ 1 và Học kỳ 2.',
                 ]],
                 ['title' => 'Lên lớp cuối năm', 'steps' => [
-                    'Lên lớp: chọn khối → xét kết quả → khai sơ đồ lớp kế tiếp → chuyển sang niên khoá mới.',
+                    'Chốt sổ cực nhanh: Chọn khối → Xét kết quả → Chuyển các em sang sơ đồ lớp mới hàng loạt chỉ với vài nút bấm.',
                 ]],
             ],
         ],
         'truong_khoi' => [
             'label' => 'Trưởng Khối',
-            'mo_ta' => 'Quản lý trong phạm vi khối mình phụ trách.',
+            'mo_ta' => 'Theo dõi và quản lý khối mình phụ trách.',
             'items' => [
-                ['title' => 'Xem & điều hành khối', 'steps' => [
-                    'Danh sách/Điểm danh/Báo cáo giới hạn trong khối của bạn.',
-                    'Phát thông báo cho khối; tạo buổi họp cho khối (tick "Đây là buổi họp").',
+                ['title' => 'Bao quát toàn khối', 'steps' => [
+                    'Dễ dàng xem danh sách, kết quả điểm danh, và điểm số của tất cả các lớp trong khối.',
                 ]],
-                ['title' => 'Theo dõi lên lớp', 'steps' => [
-                    'Xem kết quả xét lên lớp của khối (việc chuyển do Ban Điều Hành thực hiện).',
+                ['title' => 'Thông báo nội bộ', 'steps' => [
+                    'Gửi thông báo hoặc gọi họp riêng các GLV trong khối của mình một cách nhanh chóng.',
                 ]],
             ],
         ],
         'glv_chu_nhiem' => [
             'label' => 'GLV Chủ Nhiệm',
-            'mo_ta' => 'Phụ trách chính một lớp: điểm danh, chấm điểm, lập phiếu liên lạc.',
+            'mo_ta' => 'Nắm lớp trực tiếp: điểm danh, chấm điểm, đánh giá.',
             'items' => [
-                ['title' => 'Điểm danh', 'steps' => [
-                    'Điểm danh → chọn ngày → chọn buổi → Bắt đầu điểm danh.',
-                    'Chọn lớp (nếu phụ trách nhiều lớp), chạm tên em để ghi Có mặt / Đi trễ.',
-                    'Hoặc "Quét QR" để điểm danh nhanh bằng thẻ.',
+                ['title' => 'Điểm danh siêu tốc', 'steps' => [
+                    'Vào "Điểm danh" → Chọn ngày → Chạm tên các em để đánh dấu Có mặt/Đi trễ/Vắng.',
+                    'Hoặc chọn "Quét QR" dùng Camera quét thẻ để điểm danh nhanh như siêu thị!',
                 ]],
-                ['title' => 'Nhập điểm số', 'steps' => [
-                    'Thiếu Nhi → Điểm số → chọn lớp, học kỳ, đầu điểm → gõ điểm từng em.',
-                    'Điểm trung bình tự tính; để trống ô là xoá điểm.',
+                ['title' => 'Sổ điểm thông minh', 'steps' => [
+                    'Vào "Thiếu Nhi" → "Điểm số": Nhập điểm theo từng cột, ứng dụng sẽ tự động tính điểm Trung bình.',
+                    'Gõ sai? Cứ để trống ô đó là hệ thống tự xóa điểm.',
                 ]],
-                ['title' => 'Lập phiếu liên lạc', 'steps' => [
-                    'Thiếu Nhi → Phiếu liên lạc → chọn lớp → chạm từng em để lập/gửi phiếu.',
-                    'Hệ thống nhắc lập phiếu trong 1 tháng cuối trước khi kết thúc học kỳ.',
+                ['title' => 'Phiếu liên lạc điện tử', 'steps' => [
+                    'Tạo và gửi phiếu liên lạc cho phụ huynh dễ dàng. Hệ thống sẽ tự động nhắc nhở bạn khi sắp hết học kỳ!',
                 ]],
             ],
         ],
         'glv' => [
             'label' => 'Giáo Lý Viên',
-            'mo_ta' => 'Phụ tá lớp: điểm danh, tra cứu; điểm số/phiếu tuỳ quyền được cấp.',
+            'mo_ta' => 'Phụ tá lớp: điểm danh, tra cứu thông tin.',
             'items' => [
-                ['title' => 'Điểm danh', 'steps' => [
-                    'Điểm danh → chọn buổi → chọn lớp → chạm tên hoặc quét QR.',
+                ['title' => 'Điểm danh phụ', 'steps' => [
+                    'Hỗ trợ GLV Chủ nhiệm điểm danh tay hoặc quét mã QR khi được phân công.',
                 ]],
                 ['title' => 'Tra cứu thiếu nhi', 'steps' => [
-                    'Danh sách: chọn khối/lớp hoặc gõ tên để tìm; bấm "Xem hồ sơ" để xem chi tiết.',
-                    'Tuỳ quyền, có thể chỉ xem (không sửa) danh sách và phiếu liên lạc.',
+                    'Mở "Danh sách" để xem hồ sơ, số điện thoại phụ huynh của các em trong lớp để tiện liên lạc.',
                 ]],
             ],
         ],
         'du_bi' => [
             'label' => 'Dự Bị',
-            'mo_ta' => 'Đang tập sự: xem là chính, hỗ trợ điểm danh.',
+            'mo_ta' => 'Đang học việc, làm quen với hệ thống.',
             'items' => [
-                ['title' => 'Việc thường làm', 'steps' => [
-                    'Xem danh sách, thông báo, lịch; hỗ trợ điểm danh khi được phân công.',
-                    'Chưa có quyền chấm điểm/lập phiếu/lên lớp; các mục đó chỉ để tham khảo.',
+                ['title' => 'Hỗ trợ lớp', 'steps' => [
+                    'Chủ yếu xem danh sách lớp, đọc thông báo và theo dõi lịch họp.',
+                    'Có thể giúp các trưởng quét mã QR điểm danh. Chưa có quyền sửa điểm hay lập phiếu.',
                 ]],
             ],
         ],

@@ -146,6 +146,7 @@ if (($_GET['action'] ?? '') === 'scan') {
                    $prog['name'] . ' · ' . $date . ' · ' . $status);
     }
 
+    Cache::flush();
     json_out(['ok' => true, 'added' => $them, 'already' => $daCo,
               'skipped' => $bo, 'status' => $status]);
 }
@@ -178,6 +179,7 @@ if ($existing) {
         log_action('diemdanh', 'attendance', 'Gỡ điểm danh của ' . $st['full_name'],
                    $prog['name'] . ' · ' . $date . ' · đang là ' . $existing['status']);
     }
+    Cache::flush();
     json_out(['ok' => true, 'removed' => true]);
 }
 
@@ -191,6 +193,7 @@ if ($pastCutoff) {
                $prog['name'] . ' · ' . $date . ' · ' . $status);
 }
 
+Cache::flush();
 json_out([
     'ok'       => true,
     'removed'  => false,

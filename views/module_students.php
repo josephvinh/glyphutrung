@@ -1,5 +1,5 @@
 <!-- MÀN HÌNH DANH SÁCH LỚP -->
-<div data-module="students" class="module-panel pt-6 pb-10 relative">
+<div data-module="students" class="module-panel pt-6 pb-24 relative">
 
     <!-- 1. THANH ĐIỀU HƯỚNG GỘP (Thiếu nhi) -->
     <?php include __DIR__ . '/partial_children_tabs.php'; ?>
@@ -7,10 +7,10 @@
     <!-- 2. THANH TÌM KIẾM & BỘ LỌC -->
     <div class="mb-4 sticky top-0 z-10 bg-slate-50/95 backdrop-blur-sm -mx-4 px-4 pt-2 pb-3 sm:bg-transparent sm:backdrop-blur-none sm:-mx-0 sm:px-0 sm:pt-0 sm:pb-0 sm:static sm:z-auto">
         <div class="relative flex gap-2">
-            <div class="relative flex-1">
-                <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
-                <input x-model="searchQuery" type="text" placeholder="Tìm tên, tên thánh, mã số..." class="w-full bg-white border border-slate-200 rounded-field py-3.5 pl-12 pr-10 text-sm font-medium text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
-                <button aria-label="Xóa ô tìm kiếm" x-show="searchQuery !== ''" @click="searchQuery = ''" style="display: none;" class="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 active:scale-90 transition-transform">
+            <div class="relative flex-1 min-w-0">
+                <i data-lucide="search" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                <input x-model="searchQuery" type="text" placeholder="Tìm tên, mã số..." class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-10 pr-10 text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder:font-normal">
+                <button aria-label="Xóa ô tìm kiếm" x-show="searchQuery !== ''" @click="searchQuery = ''" style="display: none;" class="tap-safe absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 active:scale-90 transition-transform">
                     <i data-lucide="x" class="w-3.5 h-3.5"></i>
                 </button>
             </div>
@@ -23,9 +23,9 @@
         </div>
 
         <!-- BẢNG LỌC -->
-        <div x-show="showFilter" x-collapse class="mt-3 bg-white p-4 rounded-card shadow-sm border border-slate-100 border-t-4 border-t-blue-500">
-            <div class="flex flex-col gap-4">
-                <div x-show="availableBlocks.length > 1">
+        <div x-show="showFilter" style="display: none;" x-collapse class="mt-3 bg-white p-4 rounded-card shadow-sm border border-slate-100 border-t-4 border-t-blue-500">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+                <div x-show="availableBlocks.length > 1" style="display: none;">
                     <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Khối</label>
                     <select x-model="filterBlock" @change="filterClass = ''" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700">
                         <option value="">Tất cả các khối</option>
@@ -34,7 +34,7 @@
                         </template>
                     </select>
                 </div>
-                <div x-show="availableClasses.length > 1">
+                <div x-show="availableClasses.length > 1" style="display: none;">
                     <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Lớp</label>
                     <select x-model="filterClass" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700">
                         <option value="">Tất cả các lớp</option>
@@ -52,8 +52,10 @@
                         <option value="chuyển xứ">Chuyển xứ</option>
                     </select>
                 </div>
-
-                <button x-show="hasActiveFilter" style="display: none;" @click="clearFilters()" class="flex items-center justify-center gap-1.5 py-2.5 bg-slate-100 text-slate-600 rounded-xl font-bold text-xs active:scale-95 transition-transform border border-slate-200">
+            </div>
+            
+            <div class="mt-4 flex justify-end" x-show="hasActiveFilter" style="display: none;">
+                <button @click="clearFilters()" class="flex items-center justify-center gap-1.5 px-4 py-2 bg-slate-100 text-slate-600 rounded-xl font-bold text-xs active:scale-95 transition-transform border border-slate-200">
                     <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Xóa bộ lọc
                 </button>
             </div>
@@ -125,39 +127,7 @@
 
     <!-- 3. DANH SÁCH THIẾU NHI -->
     <!-- Skeleton loading state - chỉ hiện khi đang sync và chưa có dữ liệu -->
-    <div x-show="syncing && students.length === 0" style="display: none;" class="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-2 xl:grid-cols-3 xl:gap-4 xl:items-start">
-        <template x-for="i in 5" :key="'sk-' + i">
-            <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100">
-                <div class="flex items-center gap-3 mb-4">
-                    <div class="skeleton skeleton-avatar"></div>
-                    <div class="flex-1">
-                        <div class="skeleton skeleton-title"></div>
-                        <div class="skeleton skeleton-text w-40"></div>
-                    </div>
-                </div>
-                <div class="space-y-2 mb-4 bg-slate-50 p-3.5 rounded-2xl">
-                    <div class="skeleton skeleton-text-sm w-full"></div>
-                    <div class="skeleton skeleton-text-sm w-3/4"></div>
-                </div>
-                <div class="space-y-3 border-t border-slate-100 pt-4">
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <div class="skeleton skeleton-text-sm w-16 mb-1"></div>
-                            <div class="skeleton skeleton-text w-24"></div>
-                        </div>
-                        <div class="skeleton w-10 h-10 rounded-full"></div>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <div class="skeleton skeleton-text-sm w-16 mb-1"></div>
-                            <div class="skeleton skeleton-text w-24"></div>
-                        </div>
-                        <div class="skeleton w-10 h-10 rounded-full"></div>
-                    </div>
-                </div>
-            </div>
-        </template>
-    </div>
+    <?php include __DIR__ . '/partial_students_skeleton.php'; ?>
 
     <!-- Actual student list - hiện khi KHÔNG sync HOẶC đã có dữ liệu -->
     <div x-show="!syncing || students.length > 0" style="display: none;" class="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-2 xl:grid-cols-3 xl:gap-4 xl:items-start">
@@ -166,20 +136,22 @@
             <!-- content-visibility: bỏ qua việc dựng hình các thẻ ngoài màn hình.
                  contain-intrinsic-size: báo trước chiều cao ước lượng để thanh cuộn khỏi giật. -->
             <div style="content-visibility: auto; contain-intrinsic-size: auto 420px;" class="bg-white rounded-card p-5 shadow-sm border border-slate-100 relative overflow-hidden group">
-                <button aria-label="Sửa hồ sơ thiếu nhi" x-show="canEditModule('students')" style="display: none;" @click="openEdit(student)" class="absolute top-4 right-4 w-8 h-8 bg-slate-50 hover:bg-blue-50 rounded-full flex items-center justify-center text-slate-400 hover:text-blue-600 border border-slate-200 transition-colors z-10">
-                    <i data-lucide="pencil" class="w-4 h-4"></i>
-                </button>
-                <div class="absolute top-4 right-14">
-                    <span class="text-micro font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg" :class="{'bg-emerald-50 text-emerald-600': student.status === 'đang sinh hoạt', 'bg-rose-50 text-rose-600': student.status === 'dừng sinh hoạt', 'bg-slate-100 text-slate-500': student.status === 'chuyển xứ'}" x-text="student.status"></span>
-                </div>
-                <div class="mb-4 pr-32">
-                    <p class="text-xs font-bold text-blue-600 mb-1">
-                        <span x-text="student.code"></span> <span class="text-slate-300 mx-1">•</span> <span class="text-slate-500" x-text="student.className"></span>
-                    </p>
-                    <h3 class="text-base font-black text-slate-800 leading-tight">
-                        <span x-text="student.holyName" class="font-normal text-slate-500 block mb-0.5"></span>
-                        <span x-text="student.name"></span>
-                    </h3>
+                <div class="flex items-start justify-between gap-3 mb-4">
+                    <div class="min-w-0">
+                        <h3 class="text-base font-black text-slate-800 leading-tight">
+                            <span x-text="student.holyName" class="font-normal text-slate-500 block mb-0.5"></span>
+                            <span x-text="student.name"></span>
+                        </h3>
+                        <p class="text-xs font-bold text-blue-600 mt-1.5">
+                            <span x-text="student.code"></span> <span class="text-slate-400 mx-1">•</span> <span class="text-slate-500" x-text="student.className"></span>
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <span class="text-micro font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg" :class="{'bg-emerald-50 text-emerald-600': student.status === 'đang sinh hoạt', 'bg-rose-50 text-rose-600': student.status === 'dừng sinh hoạt', 'bg-slate-100 text-slate-500': student.status === 'chuyển xứ'}" x-text="student.status"></span>
+                        <button aria-label="Sửa hồ sơ thiếu nhi" x-show="canEditModule('students')" style="display: none;" @click="openEdit(student)" class="tap-safe w-8 h-8 bg-slate-50 hover:bg-blue-50 rounded-full flex items-center justify-center text-slate-400 hover:text-blue-600 border border-slate-200 transition-colors">
+                            <i data-lucide="pencil" class="w-4 h-4"></i>
+                        </button>
+                    </div>
                 </div>
                 <div class="space-y-2 mb-4 bg-slate-50 p-3.5 rounded-2xl">
                     <div class="flex items-center text-sm">
@@ -266,8 +238,8 @@
                     <span x-show="editData.isNew" class="text-micro text-slate-400">(tự cấp)</span>
                 </div>
                 <div class="grid grid-cols-3 gap-3">
-                    <div><label class="block text-micro font-bold text-slate-500 uppercase mb-1">Tên Thánh</label><input x-model="editData.holyName" type="text" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"></div>
-                    <div class="col-span-2"><label class="block text-micro font-bold text-slate-500 uppercase mb-1">Họ và Tên</label><input x-model="editData.name" type="text" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"></div>
+                    <div><label class="block text-micro font-bold text-slate-500 uppercase mb-1">Tên Thánh</label><input x-model="editData.holyName" type="text" autocomplete="off" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"></div>
+                    <div class="col-span-2"><label class="block text-micro font-bold text-slate-500 uppercase mb-1">Họ và Tên</label><input x-model="editData.name" type="text" autocomplete="off" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"></div>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div><label class="block text-micro font-bold text-slate-500 uppercase mb-1">Ngày Sinh</label><input x-model="editData.birthDate" type="date" min="1900-01-01" max="<?php echo date('Y-m-d'); ?>" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"></div>
@@ -279,14 +251,14 @@
                         </select>
                     </div>
                 </div>
-                <div><label class="block text-micro font-bold text-slate-500 uppercase mb-1">Địa chỉ</label><input x-model="editData.address" type="text" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"></div>
+                <div><label class="block text-micro font-bold text-slate-500 uppercase mb-1">Địa chỉ</label><input x-model="editData.address" type="text" autocomplete="off" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"></div>
                 <div class="grid grid-cols-2 gap-3 border-t border-slate-100 pt-4">
-                    <div><label class="block text-micro font-bold text-slate-500 uppercase mb-1">Tên Cha</label><input x-model="editData.fatherName" type="text" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800"></div>
-                    <div><label class="block text-micro font-bold text-slate-500 uppercase mb-1">SĐT Cha</label><input x-model="editData.fatherPhone" type="tel" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800"></div>
+                    <div><label class="block text-micro font-bold text-slate-500 uppercase mb-1">Tên Cha</label><input x-model="editData.fatherName" type="text" autocomplete="off" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800"></div>
+                    <div><label class="block text-micro font-bold text-slate-500 uppercase mb-1">SĐT Cha</label><input x-model="editData.fatherPhone" type="tel" autocomplete="off" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800"></div>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
-                    <div><label class="block text-micro font-bold text-slate-500 uppercase mb-1">Tên Mẹ</label><input x-model="editData.motherName" type="text" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800"></div>
-                    <div><label class="block text-micro font-bold text-slate-500 uppercase mb-1">SĐT Mẹ</label><input x-model="editData.motherPhone" type="tel" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800"></div>
+                    <div><label class="block text-micro font-bold text-slate-500 uppercase mb-1">Tên Mẹ</label><input x-model="editData.motherName" type="text" autocomplete="off" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800"></div>
+                    <div><label class="block text-micro font-bold text-slate-500 uppercase mb-1">SĐT Mẹ</label><input x-model="editData.motherPhone" type="tel" autocomplete="off" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800"></div>
                 </div>
                 <div class="grid grid-cols-2 gap-3 border-t border-slate-100 pt-4 pb-6">
                     <div>
@@ -309,9 +281,13 @@
                     </div>
                 </div>
             </div>
-            <div class="p-4 border-t border-slate-100 bg-white">
-                <button @click="saveEdit()" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-blue-200 flex justify-center items-center">
-                    <i data-lucide="save" class="w-5 h-5 mr-2"></i> Lưu thay đổi
+            <div class="shrink-0 p-4 border-t border-slate-100 flex gap-3 bg-white"
+                 style="padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px))">
+                <button @click="showEditModal = false" type="button" class="flex-1 py-3.5 bg-slate-100 text-slate-700 font-bold rounded-2xl active:scale-[0.98] transition-transform">
+                    Hủy
+                </button>
+                <button @click="saveEdit()" type="button" :disabled="busy" class="flex-1 py-3.5 bg-blue-600 text-white font-bold rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-blue-200 disabled:opacity-50">
+                    <span x-text="busy ? 'Đang lưu...' : 'Lưu thay đổi'"></span>
                 </button>
             </div>
         </div>

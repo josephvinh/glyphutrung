@@ -56,7 +56,7 @@ window.TNTT.push = {
 
     async _pushDongBo(endpoint) {
         try {
-            const res = await fetch('api/push.php?action=status&endpoint=' + encodeURIComponent(endpoint));
+            const res = await window.TNTT.csrfFetch('api/push.php?action=status&endpoint=' + encodeURIComponent(endpoint));
             const d = await res.json();
             if (!d.ok) return;
             this.tbSoMay = d.devices || 0;
@@ -93,7 +93,7 @@ window.TNTT.push = {
             return;
         }
 
-        const r = await fetch('api/push.php?action=key');
+        const r = await window.TNTT.csrfFetch('api/push.php?action=key');
         const k = await r.json();
         if (!k.ok || !k.key) {
             alert('Máy chủ chưa cấu hình khoá thông báo.\n\n'

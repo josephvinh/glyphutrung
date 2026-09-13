@@ -192,7 +192,10 @@ window.TNTT.announcements = {
             audienceType: f.audienceType, audienceValue: f.audienceValue,
             status: f.status, expiresAt: f.expiresAt,
             isMeeting: f.isMeeting, meetingAt: f.meetingAt, meetingPlace: f.meetingPlace
-        }).then(r => { if (r.ok && r.id) f.id = r.id; });
+        }).then(r => { 
+            if (!r || !r.ok) this.loadData();
+            else if (r.id) f.id = r.id; 
+        });
     },
 
     deleteAnnouncement(id) {
@@ -201,13 +204,12 @@ window.TNTT.announcements = {
         if (confirm('Xóa thông báo "' + a.title + '"?')) {
             this.announcements = this.announcements.filter(x => x.id !== id);
             this.logAction('xoa', 'announcements', 'Xóa thông báo "' + a.title + '"', '');
-            this.save('announcements', 'delete', { id: id });
+            this.save('announcements', 'delete', { id: id }).then(r => { if (!r || !r.ok) this.loadData(); });
         }
     },
 
     // Thu hồi = đưa về nháp, ai đã đọc rồi thì cũng không thấy nữa
     toggleAnnouncementStatus(a) {
-        this.save('announcements', 'toggle', { id: a.id });
         if (a.status === 'đã phát') {
             a.status = 'nháp';
             a.publishedAt = '';
@@ -217,6 +219,7 @@ window.TNTT.announcements = {
             a.publishedAt = this.timestamp();
             this.logAction('tao', 'announcements', 'Phát thông báo "' + a.title + '"', this.audienceLabel(a));
         }
+        this.save('announcements', 'toggle', { id: a.id }).then(r => { if (!r || !r.ok) this.loadData(); });
     },
 
     announcementLevelClass(level) {

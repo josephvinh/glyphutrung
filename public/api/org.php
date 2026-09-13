@@ -32,11 +32,34 @@ function is_protected(array $m): bool
     return in_array($m['role_code'], ['admin', 'bdh'], true);
 }
 
-/** Người đang giữ chức phải hạ xuống trước khi nhấc người mới lên */
 function demote(int $memberId): void
 {
-    $t = db_one("SELECT id FROM titles WHERE role_code='glv' AND label='GLV Phụ Tá' LIMIT 1");
-    db_run("UPDATE members SET role_code='glv', title_id=? WHERE id=?", [$t['id'] ?? null, $memberId]);
+    // Tìm chức vụ cao nhất CÒN LẠI của người này (trừ các chức vụ đã kết thúc)
+    $activeRoles = db_all(
+        "SELECT role_code, block_id, class_id FROM member_assignments 
+         WHERE member_id = ? AND to_date IS NULL",
+        [$memberId]
+    );
+
+    $levels = ['admin' => 50, 'bdh' => 40, 'truong_khoi' => 30, 'glv_chu_nhiem' => 20, 'glv' => 10];
+    $highestLvl = 10;
+    $highestRole = 'glv';
+    $bestBlockId = null;
+    $bestClassId = null;
+
+    foreach ($activeRoles as $r) {
+        $lvl = $levels[$r['role_code']] ?? 10;
+        if ($lvl > $highestLvl) {
+            $highestLvl = $lvl;
+            $highestRole = $r['role_code'];
+            $bestBlockId = $r['block_id'];
+            $bestClassId = $r['class_id'];
+        }
+    }
+
+    $t = db_one("SELECT id FROM titles WHERE role_code=? ORDER BY sort_order LIMIT 1", [$highestRole]);
+    db_run("UPDATE members SET role_code=?, title_id=?, block_id=?, class_id=? WHERE id=?", 
+           [$highestRole, $t['id'] ?? null, $bestBlockId, $bestClassId, $memberId]);
 }
 
 switch ($action) {
@@ -148,7 +171,7 @@ switch ($action) {
         if ($name === '')  json_fail('Vui lòng nhập họ và tên.');
         if ($phone === '') json_fail('Vui lòng nhập số điện thoại — đây cũng là tên đăng nhập.');
 
-        $old = $id ? db_one('SELECT * FROM members WHERE id=?', [$id]) : null;
+        $old = $id ? db_one('SELECT id, role_code, full_name FROM members WHERE id=?', [$id]) : null;
         if ($id && !$old) json_fail('Không tìm thấy thành viên.', 404);
 
         // Vai trò của BĐH/Quản trị bị khoá
@@ -226,7 +249,7 @@ switch ($action) {
         require_post();
         require_csrf();
         $id = (int) ($in['id'] ?? 0);
-        $m  = db_one('SELECT * FROM members WHERE id=?', [$id]);
+        $m  = db_one('SELECT id, role_code, full_name FROM members WHERE id=?', [$id]);
         if (!$m) json_fail('Không tìm thấy thành viên.', 404);
         if (is_protected($m)) json_fail('Không thể xóa thành viên Ban Điều Hành hoặc Quản trị từ màn này.', 403);
         if ((int) $m['id'] === (int) $me['id']) json_fail('Không thể tự xóa tài khoản của chính mình.', 403);
@@ -241,7 +264,7 @@ switch ($action) {
         require_post();
         require_csrf();
         $id = (int) ($in['id'] ?? 0);
-        $m  = db_one('SELECT * FROM members WHERE id=?', [$id]);
+        $m  = db_one('SELECT id, role_code, full_name FROM members WHERE id=?', [$id]);
         if (!$m) json_fail('Không tìm thấy thành viên.', 404);
         if ($m['status'] !== 'chờ duyệt') json_fail('Tài khoản này đã được duyệt rồi.');
 
@@ -291,7 +314,7 @@ switch ($action) {
         require_post();
         require_csrf();
         $id = (int) ($in['id'] ?? 0);
-        $m  = db_one('SELECT * FROM members WHERE id=?', [$id]);
+        $m  = db_one('SELECT id, role_code, full_name FROM members WHERE id=?', [$id]);
         if (!$m) json_fail('Không tìm thấy thành viên.', 404);
         if ($m['status'] !== 'chờ duyệt') json_fail('Chỉ từ chối được tài khoản đang chờ duyệt.');
 
@@ -305,7 +328,7 @@ switch ($action) {
         require_post();
         require_csrf();
         $id = (int) ($in['id'] ?? 0);
-        $m  = db_one('SELECT * FROM members WHERE id=?', [$id]);
+        $m  = db_one('SELECT id, role_code, full_name FROM members WHERE id=?', [$id]);
         if (!$m) json_fail('Không tìm thấy thành viên.', 404);
 
         // Chỉ Quản trị mới cấp lại được cho Ban Điều Hành
@@ -345,19 +368,29 @@ switch ($action) {
             // Mỗi lớp 1 chủ nhiệm, mỗi khối 1 trưởng khối: kết thúc phân công
             // cũ của NGƯỜI KHÁC (giữ nếu vẫn là người này). memberId = 0 nghĩa
             // là gỡ hẳn chức, khi đó kết thúc tất cả.
+            $oldAssigns = db_all(
+                "SELECT member_id FROM member_assignments 
+                  WHERE role_code = ? AND $scopeCol = ? AND to_date IS NULL AND member_id != ?",
+                [$roleCode, $target['id'], $memberId]
+            );
             db_run(
                 "UPDATE member_assignments SET to_date = CURDATE()
                   WHERE role_code = ? AND $scopeCol = ? AND to_date IS NULL AND member_id != ?",
                 [$roleCode, $target['id'], $memberId]
             );
+            foreach ($oldAssigns as $old) {
+                $oldM = db_one('SELECT id, role_code, full_name FROM members WHERE id=?', [$old['member_id']]);
+                if ($oldM && !is_protected($oldM)) {
+                    demote((int) $old['member_id']);
+                }
+            }
 
             if ($memberId) {
-                $m = db_one('SELECT * FROM members WHERE id=?', [$memberId]);
+                $m = db_one('SELECT id, role_code, full_name FROM members WHERE id=?', [$memberId]);
                 if (!$m) json_fail('Không tìm thấy thành viên.', 404);
 
                 if ($isClass) {
-                    // Thêm phân công kiêm nhiệm, KHÔNG thay đổi vai trò chính
-                    // Kiểm tra đã có phân công chưa
+                    // Thêm phân công kiêm nhiệm
                     $existing = db_one(
                         "SELECT id FROM member_assignments WHERE member_id = ? AND class_id = ? AND role_code = ? AND to_date IS NULL",
                         [$memberId, $target['id'], $roleCode]
@@ -369,8 +402,6 @@ switch ($action) {
                             [$memberId, $roleCode, $target['id'], $target['block_id'], $me['id'], 'Phân công chủ nhiệm lớp']
                         );
                     }
-                    // Gộp: nếu người này đang là GLV thường của lớp thì kết thúc
-                    // phân công 'glv' để không hiện hai dòng (glv + chủ nhiệm).
                     db_run(
                         "UPDATE member_assignments SET to_date = CURDATE()
                           WHERE member_id = ? AND class_id = ? AND role_code = 'glv' AND to_date IS NULL",
@@ -390,6 +421,22 @@ switch ($action) {
                         );
                     }
                 }
+
+                // Cập nhật vai trò chính (bảng members) nếu được thăng cấp hoặc đổi lớp/khối ngang hàng
+                if (!is_protected($m)) {
+                    $levels = ['admin' => 50, 'bdh' => 40, 'truong_khoi' => 30, 'glv_chu_nhiem' => 20, 'glv' => 10];
+                    $curLvl = $levels[$m['role_code']] ?? 0;
+                    $newLvl = $levels[$roleCode] ?? 0;
+                    if ($newLvl > $curLvl) {
+                        $t = db_one('SELECT id FROM titles WHERE role_code=? ORDER BY sort_order LIMIT 1', [$roleCode]);
+                        db_run('UPDATE members SET role_code=?, title_id=?, block_id=?, class_id=? WHERE id=?',
+                               [$roleCode, $t['id'] ?? null, $target['block_id'] ?? $target['id'], $isClass ? $target['id'] : null, $memberId]);
+                    } elseif ($newLvl === $curLvl) {
+                        db_run('UPDATE members SET block_id=?, class_id=? WHERE id=?',
+                               [$target['block_id'] ?? $target['id'], $isClass ? $target['id'] : null, $memberId]);
+                    }
+                }
+
                 log_action('sua', 'org', 'Phân công ' . ($isClass ? 'chủ nhiệm lớp' : 'trưởng khối'),
                            $m['full_name']);
             }

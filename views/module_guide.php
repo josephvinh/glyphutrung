@@ -1,6 +1,6 @@
 <?php $HD = require __DIR__ . '/../config/huong_dan.php'; ?>
 <!-- MÀN HƯỚNG DẪN SỬ DỤNG — nội dung từ config/huong_dan.php -->
-<div data-module="guide" class="module-panel pt-6 pb-10 relative">
+<div data-module="guide" class="module-panel pt-6 pb-24 relative">
 
     <!-- 1. THANH ĐIỀU HƯỚNG -->
     <div class="flex items-center mb-5">

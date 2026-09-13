@@ -26,10 +26,7 @@ window.TNTT.student_profile = {
     openStudentProfile(student) {
         this.profileStudent = student;
         this.profileTab = 'info';
-        // Thao tác DOM trực tiếp thay vì gọi changeModule
-        document.querySelectorAll('[data-module]').forEach(el => {
-            el.style.display = el.dataset.module === 'student_profile' ? '' : 'none';
-        });
+        this.changeModule('student_profile');
         window.scrollTo({ top: 0, behavior: 'instant' });
         // Nạp sẵn bộ sinh mã QR để tab "QR Card" hiển thị được ngay cả khi
         // người dùng chưa từng mở module In thẻ QR. qrReady là cờ dùng chung.

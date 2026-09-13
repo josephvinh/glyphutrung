@@ -85,6 +85,7 @@ switch ($action) {
         push_bao(array_diff($duyet, [(int) $me['id']]), 'Đơn xin phép chờ duyệt',
                  $st['full_name'] . ' — ' . $prog['name'] . ' ngày ' . $date,
                  '/#leave', 'tntt-phep');
+        Cache::flush();
         json_out(['ok' => true, 'id' => $id]);
 
     // -------------------------------------------------------------
@@ -131,6 +132,7 @@ switch ($action) {
                      '/#leave', 'tntt-phep-kq');
         }
 
+        Cache::flush();
         json_out(['ok' => true, 'approvedBy' => $me['full_name'], 'approvedAt' => date('Y-m-d H:i')]);
 
     // -------------------------------------------------------------

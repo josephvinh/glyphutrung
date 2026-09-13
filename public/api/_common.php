@@ -194,6 +194,24 @@ function can_access_class(array $me, string $moduleKey, int $classId, string $ne
     return false;
 }
 
+/** Lấy danh sách ID lớp dựa trên phân công (null = toàn đoàn) */
+function resolve_class_ids_from_scope(array $a): ?array
+{
+    switch ($a['role_scope'] ?? '') {
+        case 'toàn đoàn':
+            return null;
+        case 'khối':
+            if (!empty($a['block_id'])) {
+                return array_column(
+                    db_all('SELECT id FROM classes WHERE block_id = ?', [$a['block_id']]), 'id');
+            }
+            return [];
+        case 'lớp':
+            return !empty($a['class_id']) ? [(int) $a['class_id']] : [];
+    }
+    return [];
+}
+
 /** Tập lớp được (need) trên module — null nghĩa là không giới hạn (toàn đoàn) */
 function accessible_class_ids(array $me, string $moduleKey, string $need = 'view'): ?array
 {
@@ -201,19 +219,9 @@ function accessible_class_ids(array $me, string $moduleKey, string $need = 'view
     $ids = [];
     foreach (member_scopes($me) as $a) {
         if (level_rank(permission_of_role($a['role_code'], $moduleKey)) < $needRank) continue;
-        switch ($a['role_scope'] ?? '') {
-            case 'toàn đoàn':
-                return null;
-            case 'khối':
-                if (!empty($a['block_id'])) {
-                    $ids = array_merge($ids, array_column(
-                        db_all('SELECT id FROM classes WHERE block_id = ?', [$a['block_id']]), 'id'));
-                }
-                break;
-            case 'lớp':
-                if (!empty($a['class_id'])) $ids[] = (int) $a['class_id'];
-                break;
-        }
+        $scopeIds = resolve_class_ids_from_scope($a);
+        if ($scopeIds === null) return null;
+        $ids = array_merge($ids, $scopeIds);
     }
     return array_values(array_unique(array_map('intval', $ids)));
 }
@@ -223,19 +231,9 @@ function responsible_class_ids(array $me): ?array
 {
     $ids = [];
     foreach (member_scopes($me) as $a) {
-        switch ($a['role_scope'] ?? '') {
-            case 'toàn đoàn':
-                return null;
-            case 'khối':
-                if (!empty($a['block_id'])) {
-                    $ids = array_merge($ids, array_column(
-                        db_all('SELECT id FROM classes WHERE block_id = ?', [$a['block_id']]), 'id'));
-                }
-                break;
-            case 'lớp':
-                if (!empty($a['class_id'])) $ids[] = (int) $a['class_id'];
-                break;
-        }
+        $scopeIds = resolve_class_ids_from_scope($a);
+        if ($scopeIds === null) return null;
+        $ids = array_merge($ids, $scopeIds);
     }
     return array_values(array_unique(array_map('intval', $ids)));
 }

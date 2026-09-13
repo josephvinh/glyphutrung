@@ -124,7 +124,7 @@ switch ($action) {
         }
 
         if ($id) {
-            $old = db_one('SELECT * FROM announcements WHERE id=? AND year_id=?', [$id, $yid]);
+            $old = db_one('SELECT id, title, status, audience_type, audience_block, audience_class, created_by, level, published_at FROM announcements WHERE id=? AND year_id=?', [$id, $yid]);
             if (!$old) json_fail('Không tìm thấy thông báo.', 404);
             if (!can_edit_announcement($me, $old)) json_fail('Bạn chỉ sửa được thông báo của khối mình.', 403);
 
@@ -169,7 +169,7 @@ switch ($action) {
         require_post();
         require_csrf();
         $me = require_permission('announcements', 'edit');
-        $a  = db_one('SELECT * FROM announcements WHERE id=? AND year_id=?', [(int) ($in['id'] ?? 0), $yid]);
+        $a  = db_one('SELECT id, title, status, audience_type, audience_block, audience_class, created_by, level, published_at FROM announcements WHERE id=? AND year_id=?', [(int) ($in['id'] ?? 0), $yid]);
         if (!$a) json_fail('Không tìm thấy thông báo.', 404);
         if (!can_edit_announcement($me, $a)) json_fail('Bạn chỉ sửa được thông báo của khối mình.', 403);
 
@@ -192,7 +192,7 @@ switch ($action) {
         require_post();
         require_csrf();
         $me = require_permission('announcements', 'edit');
-        $a  = db_one('SELECT * FROM announcements WHERE id=? AND year_id=?', [(int) ($in['id'] ?? 0), $yid]);
+        $a  = db_one('SELECT id, title, status, audience_type, audience_block, audience_class, created_by, level, published_at FROM announcements WHERE id=? AND year_id=?', [(int) ($in['id'] ?? 0), $yid]);
         if (!$a) json_fail('Không tìm thấy thông báo.', 404);
         if (!can_edit_announcement($me, $a)) json_fail('Bạn chỉ xóa được thông báo của khối mình.', 403);
 
@@ -248,7 +248,7 @@ switch ($action) {
     case 'rsvpList':
         $me = require_login();
         $id = (int) ($in['id'] ?? 0);
-        $a  = db_one('SELECT * FROM announcements WHERE id=? AND year_id=?', [$id, $yid]);
+        $a  = db_one('SELECT id, title, status, audience_type, audience_block, audience_class, created_by, level, published_at, is_meeting FROM announcements WHERE id=? AND year_id=?', [$id, $yid]);
         if (!$a || !$a['is_meeting']) json_fail('Không tìm thấy buổi họp.', 404);
         if ((int) $a['created_by'] !== (int) $me['id'] && !in_array($me['role_code'], ['admin', 'bdh'], true)) {
             json_fail('Chỉ người phát mới xem được kết quả.', 403);

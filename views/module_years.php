@@ -6,7 +6,7 @@
      phép, điểm số — nên ai cũng nên xem được mình đang ở niên khoá
      nào; chỉ Ban Điều Hành trở lên mới sửa.
      ========================================================== -->
-<div data-module="years" class="module-panel pt-6 pb-10 relative">
+<div data-module="years" class="module-panel pt-6 pb-24 relative">
 
     <!-- THANH ĐIỀU HƯỚNG -->
     <div class="flex items-center mb-5">

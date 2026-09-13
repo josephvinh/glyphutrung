@@ -39,9 +39,9 @@
                 <template x-for="m in visibleModules('glv')" :key="'sb-' + m.key">
                     <button @click="openModule(m.key)" type="button"
                             class="nav-item w-full"
-                            :class="[ currentModule === m.key ? 'nav-item-on' : '',
+                            :class="[ (currentModule === m.key || (m.key === 'students' && currentModule === 'student_profile')) ? 'nav-item-on' : '',
                                       isUnderMaintenance(m.key) ? 'opacity-50' : '' ]">
-                        <span class="nav-ico" :class="currentModule === m.key ? '' : m.color">
+                        <span class="nav-ico" :class="(currentModule === m.key || (m.key === 'students' && currentModule === 'student_profile')) ? '' : m.color">
                             <i :data-lucide="m.icon" class="w-[18px] h-[18px]"></i>
                         </span>
                         <span class="flex-1 text-left truncate" x-text="m.label"></span>

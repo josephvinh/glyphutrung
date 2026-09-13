@@ -49,12 +49,14 @@ function td_diem_ky(float $tyLeCoMat100, float $hocTap100): float
 }
 
 /**
- * Tỷ lệ có mặt (%) cả kỳ: (có mặt + đi trễ) / tổng buổi đã điểm danh.
+ * Tỷ lệ có mặt (%) cả kỳ: tính theo trọng số để công bằng.
+ * Có mặt = 1 buổi, Đi trễ = 0.6 buổi, Có phép = 0.3 buổi.
  */
-function td_ty_le_co_mat(int $coMat, int $diTre, int $tongBuoiDaDiemDanh): float
+function td_ty_le_co_mat(int $coMat, int $diTre, int $coPhep, int $tongBuoiDaDiemDanh): float
 {
     if ($tongBuoiDaDiemDanh <= 0) return 0.0;
-    return round(($coMat + $diTre) / $tongBuoiDaDiemDanh * 100, 1);
+    $diemQuyDoi = $coMat + ($diTre * 0.6) + ($coPhep * 0.3);
+    return round(($diemQuyDoi / $tongBuoiDaDiemDanh) * 100, 1);
 }
 
 /**

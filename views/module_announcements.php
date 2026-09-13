@@ -1,5 +1,5 @@
 <!-- MÀN HÌNH THÔNG BÁO -->
-<div data-module="announcements" class="module-panel pt-6 pb-10 relative">
+<div data-module="announcements" class="module-panel pt-6 pb-24 relative">
 
     <!-- 1. THANH ĐIỀU HƯỚNG -->
     <div class="flex items-center justify-between mb-5">

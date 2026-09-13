@@ -142,6 +142,26 @@ ALTER TABLE programs ADD COLUMN cutoff_time TIME NULL AFTER start_time;
 ```
 > Nếu báo "Duplicate column name 'cutoff_time'" nghĩa là đã chạy rồi — bỏ qua.
 
+**Đăng nhập sinh trắc học / Passkey** (`migrate_passkey.php`) — bắt buộc nếu
+dùng đăng nhập Vân tay/FaceID, nếu không màn đăng nhập/hồ sơ sẽ báo lỗi bảng:
+```sql
+CREATE TABLE IF NOT EXISTS member_passkeys (
+    id            INT AUTO_INCREMENT PRIMARY KEY,
+    member_id     INT          NOT NULL,
+    credential_id VARCHAR(255) NOT NULL,
+    public_key    TEXT         NOT NULL,
+    user_handle   VARCHAR(255) NOT NULL,
+    sign_count    INT          DEFAULT 0,
+    created_at    DATETIME     DEFAULT CURRENT_TIMESTAMP,
+    last_used_at  DATETIME     NULL,
+    UNIQUE KEY uq_credential (credential_id),
+    INDEX idx_pk_member (member_id),
+    CONSTRAINT fk_pk_member FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+> Passkey chỉ chạy trên **HTTPS** (chuẩn WebAuthn bắt buộc). Thư mục
+> `public/cache/` phải ghi được (đã có sẵn vì cache cũ dùng chung).
+
 Các migration cũ (chỉ chạy nếu chưa từng chạy trên host): vai Dự Bị, đồng bộ
 module Báo cáo/Phân tích/Lịch, hạ quyền BĐH, Lịch cá nhân + họp, Hướng dẫn.
 Cần câu SQL cụ thể của cái nào thì mở file `config/migrate_*.php` tương ứng

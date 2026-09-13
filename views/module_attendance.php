@@ -1,5 +1,5 @@
 <!-- MÀN HÌNH ĐIỂM DANH -->
-<div data-module="attendance" class="module-panel pt-6 pb-10 relative">
+<div data-module="attendance" class="module-panel pt-6 pb-24 relative">
 <?php include __DIR__ . '/partial_heavy_loading.php'; ?>
 
     <!-- ==========================================================
@@ -99,7 +99,7 @@
                             <i data-lucide="lock" class="w-4 h-4 text-slate-400 mr-2"></i>
                             <div>
                                 <p class="text-micro font-bold text-slate-500 uppercase tracking-wide">Chốt sổ</p>
-                                <p class="text-sm font-black text-rose-500" x-text="addMinutes(prog.startTime, CUTOFF_MINUTES)"></p>
+                                <p class="text-sm font-black text-rose-500" x-text="cutoffOf(prog)"></p>
                             </div>
                         </div>
                         <div class="w-px h-8 bg-slate-200"></div>
@@ -175,7 +175,7 @@
             </div>
             <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-100 text-center">
                 <p class="text-2xl font-black text-slate-400" x-text="sessionStats.absent"></p>
-                <p class="text-micro font-bold text-slate-500 uppercase tracking-wide">Chưa có</p>
+                <p class="text-micro font-bold text-slate-500 uppercase tracking-wide">Vắng</p>
             </div>
         </div>
 
@@ -236,7 +236,7 @@
                     <div class="flex-1 min-w-0">
                         <p class="text-micro font-bold text-blue-600 leading-tight">
                             <span x-text="student.code"></span>
-                            <span class="text-slate-300 mx-1">•</span>
+                            <span class="text-slate-400 mx-1">•</span>
                             <span class="text-slate-400 font-medium" x-text="student.className"></span>
                         </p>
                         <p class="text-sm font-black text-slate-800 leading-snug">

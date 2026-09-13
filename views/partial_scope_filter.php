@@ -38,9 +38,9 @@ $__nhan   = $__blockMode ? 'khối' : 'lớp';
         </div>
         <?php else: ?>
         <!-- Không có ô tìm: thanh cho biết đang chọn gì -->
-        <div class="flex-1 flex items-center px-4 rounded-field bg-white border border-slate-200 shadow-sm">
+        <div class="flex-1 flex items-center h-[50px] px-4 rounded-field bg-white border border-slate-200 shadow-sm">
             <i data-lucide="layers" class="w-4 h-4 text-slate-400 mr-2.5 shrink-0"></i>
-            <span class="text-sm font-semibold" :class="<?= $__blockMode ? $__blk : $__cls ?> === '' ? 'text-slate-400' : 'text-slate-700'"
+            <span class="text-sm font-semibold truncate" :class="<?= $__blockMode ? $__blk : $__cls ?> === '' ? 'text-slate-400' : 'text-slate-700'"
                   x-text="<?= $__blockMode ? $__blk : $__cls ?> === '' ? 'Chưa chọn <?= $__nhan ?>' : <?= $__blockMode ? $__blk : $__cls ?>"></span>
         </div>
         <?php endif; ?>
@@ -55,9 +55,9 @@ $__nhan   = $__blockMode ? 'khối' : 'lớp';
 
     <!-- BẢNG LỌC -->
     <div x-show="showFilter" x-collapse style="display: none;" class="mt-3 bg-white p-4 rounded-card shadow-sm border border-slate-100 border-t-4 border-t-blue-500">
-        <div class="flex flex-col gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
             <?php if ($__blockMode): ?>
-            <div>
+            <div class="sm:col-span-2">
                 <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Khối</label>
                 <select x-model="<?= $__blk ?>" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700">
                     <option value="">— Chọn khối —</option>
@@ -86,8 +86,10 @@ $__nhan   = $__blockMode ? 'khối' : 'lớp';
                 </select>
             </div>
             <?php endif; ?>
-
-            <button x-show="<?= $__active ?>" style="display: none;" @click="<?= $__clear ?>" class="flex items-center justify-center gap-1.5 py-2.5 bg-slate-100 text-slate-600 rounded-xl font-bold text-xs active:scale-95 transition-transform border border-slate-200">
+        </div>
+        
+        <div class="mt-4 flex justify-end" x-show="<?= $__active ?>" style="display: none;">
+            <button @click="<?= $__clear ?>" class="flex items-center justify-center gap-1.5 px-4 py-2 bg-slate-100 text-slate-600 rounded-xl font-bold text-xs active:scale-95 transition-transform border border-slate-200">
                 <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Xóa bộ lọc
             </button>
         </div>

@@ -5,7 +5,7 @@
      thành module riêng để vào thẳng từ Trang chủ, và để chấm nhắc
      "có người chờ duyệt" hiện được ngay ngoài lưới chức năng.
      ========================================================== -->
-<div data-module="staff" class="module-panel pt-6 pb-10 relative">
+<div data-module="staff" class="module-panel pt-6 pb-24 relative">
 
     <!-- THANH ĐIỀU HƯỚNG -->
     <div class="flex items-center mb-5">

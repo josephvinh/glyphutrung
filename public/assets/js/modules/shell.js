@@ -98,12 +98,27 @@ window.TNTT.shell = {
     },
 
     changeModule(moduleName) {
-        this.currentModule = moduleName;
-        // Pure JavaScript module switching - no Alpine x-show dependency
-        document.querySelectorAll('[data-module]').forEach(el => {
-            el.style.display = el.dataset.module === moduleName ? '' : 'none';
-        });
-        window.scrollTo({ top: 0, behavior: 'instant' });
+        // Bấm vào tab đang mở -> cuộn vút lên đầu trang (UX Facebook/Tiktok)
+        if (this.currentModule === moduleName) {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+        }
+
+        const updateDOM = () => {
+            this.currentModule = moduleName;
+            // Pure JavaScript module switching - no Alpine x-show dependency
+            document.querySelectorAll('[data-module]').forEach(el => {
+                el.style.display = el.dataset.module === moduleName ? '' : 'none';
+            });
+            window.scrollTo({ top: 0, behavior: 'instant' });
+        };
+
+        // Trình duyệt hỗ trợ View Transitions API -> dùng hiệu ứng mờ chéo Native
+        if (document.startViewTransition) {
+            document.startViewTransition(updateDOM);
+        } else {
+            updateDOM();
+        }
     },
 
     // ==========================================
@@ -227,5 +242,20 @@ window.TNTT.shell = {
                 }
             });
         }
+
+        // Short Polling 10s/lần: Cập nhật dữ liệu nếu Server có thay đổi (sync.txt)
+        this._syncVersion = null;
+        setInterval(async () => {
+            if (this.syncing || document.visibilityState !== 'visible') return;
+            try {
+                const r = await window.TNTT.csrfFetch('api/sync.php', { cache: 'no-store' });
+                const ts = await r.text();
+                if (this._syncVersion && ts !== '0' && ts !== this._syncVersion) {
+                    this._lastLoadAt = 0;
+                    this.loadData();
+                }
+                this._syncVersion = ts;
+            } catch (e) { }
+        }, 10000);
     }
 };
