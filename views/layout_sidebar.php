@@ -19,9 +19,9 @@
             class="bg-white rounded-card border shadow-sm px-4 py-4 text-left transition-colors hover:bg-slate-50"
             :class="currentModule === 'dashboard' ? 'border-blue-300 ring-2 ring-blue-100' : 'border-slate-100'">
         <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-field bg-gradient-to-br from-blue-600 to-blue-700 text-white flex items-center justify-center shrink-0 shadow-md shadow-blue-200">
-                <i data-lucide="church" class="w-5 h-5"></i>
-            </div>
+            <img src="assets/img/icon-192.png" alt="Logo Gia Đình Giáo Lý Phú Trung"
+                 class="rounded-field shrink-0" style="width:40px;height:40px;object-fit:contain">
+
             <div class="min-w-0">
                 <p class="text-sm font-black text-slate-800 leading-tight truncate">GLY PHÚ TRUNG</p>
                 <p class="text-micro font-semibold text-slate-400 truncate" x-text="year ? year.name : ''"></p>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#2563eb">
+    <meta name="theme-color" content="#c8203a">
 
     <!-- BIỂU TƯỢNG APP
          icon.svg   : tab trình duyệt, nét sắc ở mọi cỡ
@@ -16,7 +16,7 @@
     <link rel="manifest" href="/manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <title>Đăng nhập · TNTT Super App</title>
+    <title>Đăng nhập · GIA ĐÌNH GIÁO LÝ PHÚ TRUNG</title>
 
     <link rel="stylesheet" href="assets/css/tailwind.css?v=<?php echo @filemtime(__DIR__ . '/../public/assets/css/tailwind.css') ?: 0; ?>">
     <!-- Thư viện lấy từ máy chủ mình, không từ CDN ngoài. Đây là màn
@@ -31,6 +31,9 @@
          Dựng lại bằng:  node build/tao_font.cjs -->
     <link rel="stylesheet" href="assets/css/font.css?v=<?php echo @filemtime(__DIR__ . '/../public/assets/css/font.css') ?: 0; ?>">
     <link rel="stylesheet" href="assets/css/app.css?v=<?php echo @filemtime(__DIR__ . '/../public/assets/css/app.css') ?: 0; ?>">
+    <!-- Nhuộm tông xanh -> đỏ theo logo giáo xứ. Nạp CUỐI để ghi đè blue-* của tailwind
+         (màn đăng nhập là trang riêng nên phải tự nạp, không dùng chung asset_manifest). -->
+    <link rel="stylesheet" href="assets/css/brand.css?v=<?php echo @filemtime(__DIR__ . '/../public/assets/css/brand.css') ?: 0; ?>">
 </head>
 <body class="text-slate-800 antialiased overflow-x-hidden">
 
@@ -38,10 +41,9 @@
 
     <!-- Nhãn hiệu -->
     <div class="text-center mb-8">
-        <div class="w-20 h-20 mx-auto bg-gradient-to-br from-blue-600 to-blue-700 rounded-panel shadow-lg shadow-blue-200 flex items-center justify-center mb-5">
-            <i data-lucide="church" class="w-10 h-10 text-white"></i>
-        </div>
-        <h1 class="text-2xl font-black text-slate-800 tracking-tight">TNTT Super App</h1>
+        <img src="assets/img/icon-192.png" alt="Logo Gia Đình Giáo Lý Phú Trung"
+             class="mx-auto mb-5 rounded-panel" style="width:96px;height:96px;object-fit:contain">
+        <h1 class="text-2xl font-black text-slate-800 tracking-tight">Gia Đình Giáo Lý Phú Trung</h1>
         <p class="text-sm text-slate-400 mt-1">Đoàn Thiếu Nhi Thánh Thể</p>
     </div>
 
@@ -183,6 +185,10 @@
                        class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30">
             </div>
         </div>
+        <p class="text-micro text-slate-500 ml-1 flex items-start gap-1.5" style="margin-top:-0.25rem">
+            <i data-lucide="info" class="w-3.5 h-3.5 shrink-0 mt-0.5 text-slate-400"></i>
+            Đây là mật khẩu bạn sẽ dùng để đăng nhập sau khi được duyệt — hãy nhớ kỹ, không bị bắt đổi lại.
+        </p>
 
         <div>
             <label class="block text-micro font-bold text-slate-500 uppercase mb-1.5">Lời nhắn cho Ban Điều Hành</label>

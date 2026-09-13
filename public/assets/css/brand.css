@@ -43,6 +43,8 @@
 /* --- RING (viền focus) --- */
 .ring-blue-100 { --tw-ring-color: #fcdadf; }
 .focus\:ring-blue-500:focus { --tw-ring-color: #e73a58; }
+/* Biến thể có độ mờ /30 — dùng ở các ô nhập màn đăng nhập/đăng ký */
+.focus\:ring-blue-500\/30:focus { --tw-ring-color: rgba(231, 58, 88, .3); }
 
 /* --- GRADIENT (header, hero, thanh chọn) --- */
 .from-blue-600 { --tw-gradient-from: #e11d36 var(--tw-gradient-from-position); --tw-gradient-to: rgba(225,29,54,0) var(--tw-gradient-to-position); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to); }
