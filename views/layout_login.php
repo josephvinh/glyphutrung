@@ -1,3 +1,11 @@
+<?php
+// Trang đăng nhập là trang RIÊNG (không đi qua bundling của index.php) nên
+// tự tính dev/production: bản thật dùng CSS đã nén + xoá comment cho gọn.
+$__dev = in_array(explode(':', $_SERVER['HTTP_HOST'] ?? '')[0], ['localhost', '127.0.0.1'], true);
+$__cssV = @filemtime(__DIR__ . '/../public/assets/css/bundle.min.css')
+       ?: @filemtime(__DIR__ . '/../public/assets/css/app.css') ?: 0;
+if (!$__dev) ob_start();
+?>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -18,25 +26,17 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <title>Đăng nhập · GIA ĐÌNH GIÁO LÝ PHÚ TRUNG</title>
 
+    <?php if ($__dev): ?>
     <link rel="stylesheet" href="assets/css/tailwind.css?v=<?php echo @filemtime(__DIR__ . '/../public/assets/css/tailwind.css') ?: 0; ?>">
-    <!-- Thư viện lấy từ máy chủ mình, không từ CDN ngoài. Đây là màn
-         hiện ra ĐẦU TIÊN khi mở app từ màn hình chính điện thoại, nên
-         mỗi tên miền lạ phải tra DNS ở đây đều là thời gian người dùng
-         ngồi nhìn màn hình trắng. -->
-    <script defer src="assets/js/vendor/alpine.js?v=<?php echo @filemtime(__DIR__ . '/../public/assets/js/vendor/alpine.js') ?: 0; ?>"></script>
-    <script defer src="assets/js/vendor/lucide-icons.js?v=<?php echo @filemtime(__DIR__ . '/../public/assets/js/vendor/lucide-icons.js') ?: 0; ?>"></script>
-    <!-- Core API for Passkey to use -->
-    <script defer src="assets/js/modules/core.js?v=<?php echo @filemtime(__DIR__ . '/../public/assets/js/modules/core.js') ?: 0; ?>"></script>
-    <script defer src="assets/js/modules/passkey.js?v=<?php echo @filemtime(__DIR__ . '/../public/assets/js/modules/passkey.js') ?: 0; ?>"></script>
-    <!-- Phông đặt tại máy chủ mình, không còn gọi fonts.googleapis.com
-         và fonts.gstatic.com. Hai tên miền đó mỗi cái bắt điện thoại tra
-         DNS rồi bắt tay TLS lại từ đầu, mà thẻ <link> lại chặn hiển thị.
-         Dựng lại bằng:  node build/tao_font.cjs -->
     <link rel="stylesheet" href="assets/css/font.css?v=<?php echo @filemtime(__DIR__ . '/../public/assets/css/font.css') ?: 0; ?>">
     <link rel="stylesheet" href="assets/css/app.css?v=<?php echo @filemtime(__DIR__ . '/../public/assets/css/app.css') ?: 0; ?>">
-    <!-- Nhuộm tông xanh -> đỏ theo logo giáo xứ. Nạp CUỐI để ghi đè blue-* của tailwind
-         (màn đăng nhập là trang riêng nên phải tự nạp, không dùng chung asset_manifest). -->
     <link rel="stylesheet" href="assets/css/brand.css?v=<?php echo @filemtime(__DIR__ . '/../public/assets/css/brand.css') ?: 0; ?>">
+    <?php else: ?>
+    <link rel="stylesheet" href="assets/css/bundle.php?v=<?php echo $__cssV; ?>">
+    <?php endif; ?>
+    <script defer src="assets/js/vendor/alpine.js?v=<?php echo @filemtime(__DIR__ . '/../public/assets/js/vendor/alpine.js') ?: 0; ?>"></script>
+    <script defer src="assets/js/vendor/lucide-icons.js?v=<?php echo @filemtime(__DIR__ . '/../public/assets/js/vendor/lucide-icons.js') ?: 0; ?>"></script>
+    <script defer src="assets/js/modules/passkey.js?v=<?php echo @filemtime(__DIR__ . '/../public/assets/js/modules/passkey.js') ?: 0; ?>"></script>
 </head>
 <body class="text-slate-800 antialiased overflow-x-hidden">
 
@@ -389,3 +389,17 @@ document.addEventListener('alpine:init', () => {
 </script>
 </body>
 </html>
+<?php
+// Xoá comment HTML ở bản production (bảo vệ <script>/<style>).
+if (!$__dev) {
+    $__html = ob_get_clean();
+    $__keep = [];
+    $__html = preg_replace_callback('#<(script|style)\b[^>]*>.*?</\1>#is', function ($m) use (&$__keep) {
+        $__keep[] = $m[0];
+        return "\x01K" . (count($__keep) - 1) . "\x01";
+    }, $__html);
+    $__html = preg_replace('/<!--(?!\[if).*?-->/s', '', $__html);
+    $__html = preg_replace_callback('/\x01K(\d+)\x01/', fn($m) => $__keep[$m[1]], $__html);
+    echo $__html;
+}
+?>
