@@ -1,21 +1,35 @@
+/* ==========================================================
+   PASSKEY — đăng nhập sinh trắc học (WebAuthn: vân tay / FaceID)
+   Global window.Passkey. Dùng ở màn đăng nhập (login) và Hồ sơ (register).
+   Các endpoint ở api/passkey.php KHÔNG cần CSRF (login chưa có token).
+   ========================================================== */
 const Passkey = {
+    // POST JSON tới api/passkey.php, trả JSON. Tự thân, không phụ thuộc
+    // component Alpine (vì màn đăng nhập không có tnttApp).
+    async _post(url, body) {
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body || {})
+        });
+        return res.json();
+    },
+
     bufferToBase64(buffer) {
         let binary = '';
-        let bytes = new Uint8Array(buffer);
-        let len = bytes.byteLength;
-        for (let i = 0; i < len; i++) {
-            binary += String.fromCharCode(bytes[i]);
-        }
+        const bytes = new Uint8Array(buffer);
+        for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
         return window.btoa(binary);
     },
 
+    // Thư viện lbuchs bọc field nhị phân dạng "=?BINARY?B?<base64>?=" để máy
+    // khách nhận ra đây là dữ liệu nhị phân — phải gỡ vỏ đó trước khi giải mã.
     base64ToBuffer(base64) {
-        let binary_string = window.atob(base64.replace(/-/g, '+').replace(/_/g, '/'));
-        let len = binary_string.length;
-        let bytes = new Uint8Array(len);
-        for (let i = 0; i < len; i++) {
-            bytes[i] = binary_string.charCodeAt(i);
-        }
+        const m = /^=\?BINARY\?B\?(.*)\?=$/.exec(base64);
+        if (m) base64 = m[1];
+        const bin = window.atob(base64.replace(/-/g, '+').replace(/_/g, '/'));
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
         return bytes.buffer;
     },
 
@@ -26,37 +40,27 @@ const Passkey = {
                 return false;
             }
 
-            const res = await API.post('api/passkey.php?action=getRegisterArgs');
-            if (!res.ok) {
-                alert(res.error || 'Lỗi server');
-                return false;
-            }
+            const res = await this._post('api/passkey.php?action=getRegisterArgs');
+            if (!res.ok) { alert(res.error || 'Lỗi server'); return false; }
 
-            let args = res.args;
+            // Server trả { publicKey: {...} } (chuẩn WebAuthn). Gỡ vỏ nếu có.
+            const args = res.args.publicKey || res.args;
             args.challenge = this.base64ToBuffer(args.challenge);
-            args.user.id = this.base64ToBuffer(args.user.id);
+            args.user.id   = this.base64ToBuffer(args.user.id);
             if (args.excludeCredentials) {
-                for (let cred of args.excludeCredentials) {
-                    cred.id = this.base64ToBuffer(cred.id);
-                }
+                args.excludeCredentials.forEach(c => { c.id = this.base64ToBuffer(c.id); });
             }
 
             const cred = await navigator.credentials.create({ publicKey: args });
 
-            const data = {
+            const verifyRes = await this._post('api/passkey.php?action=processRegister', {
                 id: cred.id,
-                clientDataJSON: this.bufferToBase64(cred.response.clientDataJSON),
+                clientDataJSON:    this.bufferToBase64(cred.response.clientDataJSON),
                 attestationObject: this.bufferToBase64(cred.response.attestationObject)
-            };
-
-            const verifyRes = await API.post('api/passkey.php?action=processRegister', data);
-            if (verifyRes.ok) {
-                alert('Đăng ký Vân tay / FaceID thành công!');
-                return true;
-            } else {
-                alert(verifyRes.error || 'Xác thực thất bại.');
-                return false;
-            }
+            });
+            if (verifyRes.ok) { alert('Đăng ký Vân tay / FaceID thành công!'); return true; }
+            alert(verifyRes.error || 'Xác thực thất bại.');
+            return false;
 
         } catch (e) {
             console.error(e);
@@ -72,42 +76,31 @@ const Passkey = {
                 return null;
             }
 
-            const res = await API.post('api/passkey.php?action=getLoginArgs');
-            if (!res.ok) {
-                alert(res.error || 'Lỗi server');
-                return null;
-            }
+            const res = await this._post('api/passkey.php?action=getLoginArgs');
+            if (!res.ok) { alert(res.error || 'Lỗi server'); return null; }
 
-            let args = res.args;
+            const args = res.args.publicKey || res.args;
             args.challenge = this.base64ToBuffer(args.challenge);
             if (args.allowCredentials) {
-                for (let cred of args.allowCredentials) {
-                    cred.id = this.base64ToBuffer(cred.id);
-                }
+                args.allowCredentials.forEach(c => { c.id = this.base64ToBuffer(c.id); });
             }
 
             const cred = await navigator.credentials.get({ publicKey: args });
 
-            const data = {
+            const verifyRes = await this._post('api/passkey.php?action=processLogin', {
                 id: cred.id,
-                clientDataJSON: this.bufferToBase64(cred.response.clientDataJSON),
+                clientDataJSON:    this.bufferToBase64(cred.response.clientDataJSON),
                 authenticatorData: this.bufferToBase64(cred.response.authenticatorData),
-                signature: this.bufferToBase64(cred.response.signature),
-                userHandle: cred.response.userHandle ? this.bufferToBase64(cred.response.userHandle) : null
-            };
+                signature:         this.bufferToBase64(cred.response.signature),
+                userHandle:        cred.response.userHandle ? this.bufferToBase64(cred.response.userHandle) : null
+            });
+            if (verifyRes.ok) return verifyRes.user;
+            alert(verifyRes.error || 'Đăng nhập sinh trắc học thất bại.');
+            return null;
 
-            const verifyRes = await API.post('api/passkey.php?action=processLogin', data);
-            if (verifyRes.ok) {
-                return verifyRes.user;
-            } else {
-                alert(verifyRes.error || 'Đăng nhập sinh trắc học thất bại.');
-                return null;
-            }
         } catch (e) {
             console.error(e);
-            if (e.name !== 'NotAllowedError') {
-                alert('Lỗi đăng nhập sinh trắc học: ' + e.message);
-            }
+            if (e.name !== 'NotAllowedError') alert('Lỗi đăng nhập sinh trắc học: ' + e.message);
             return null;
         }
     }

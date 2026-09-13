@@ -2,7 +2,11 @@
 require __DIR__ . '/_bootstrap.php';
 require_once __DIR__ . '/webauthn/WebAuthn.php';
 
-$WebAuthn = new \lbuchs\WebAuthn\WebAuthn('TNTT Super App', $_SERVER['HTTP_HOST'] ?? 'localhost');
+// rpId PHẢI là tên miền THUẦN, không kèm cổng/scheme (chuẩn WebAuthn).
+// $_SERVER['HTTP_HOST'] có thể kèm cổng (vd 'localhost:8888') -> tách bỏ cổng,
+// nếu không trình duyệt từ chối với SecurityError "rpId not a registrable domain".
+$rpId = explode(':', $_SERVER['HTTP_HOST'] ?? 'localhost')[0];
+$WebAuthn = new \lbuchs\WebAuthn\WebAuthn('TNTT Super App', $rpId);
 
 $action = $_GET['action'] ?? '';
 $in = json_input();
