@@ -123,10 +123,29 @@ bạn) → thấy đủ module, icon không trống. Xong.
 1. Tải ZIP mới từ GitHub → **Upload** vào `tntt` → **Extract** đè.
 2. **ĐỪNG đè** `config/config.local.php` và thư mục `config/backup/`
    (chúng KHÔNG có trong ZIP nên extract sẽ không xoá — cứ để yên).
-3. Nếu bản mới có **migration** (thêm bảng/cột — VD Lịch cá nhân, Hướng dẫn):
-   vì không có SSH, **nhắn mình đưa câu lệnh SQL** để bạn dán vào phpMyAdmin →
-   tab **SQL** → chạy. (Các migration đều là `CREATE TABLE`/`ALTER`/`INSERT`
-   đơn giản, chạy một lần.)
+3. **Chạy migration** (nếu bản mới thêm bảng/cột). Không có SSH thì dán SQL
+   vào phpMyAdmin → chọn DB → tab **SQL** → **Go**. Chạy trên **cả DB thật
+   lẫn DB demo**. Các câu SQL này an toàn chạy lại (idempotent theo cách viết).
+4. **Không cần đụng gì thêm cho JS/CSS.** Mỗi file có `?v=<thời điểm sửa>` nên
+   trình duyệt tự lấy bản mới; Service Worker dọn kho cũ khi đổi `PHIEN_BAN`
+   trong `public/sw.js`. Nếu người dùng vẫn thấy bản cũ: bảo họ mở lại app
+   (PWA) một lần, hoặc tăng số trong `sw.js` (`tntt-sw-5` → `tntt-sw-6`).
+5. **Xoá mọi file debug tạm nếu có** trong `public/` trước khi deploy —
+   `test_runner_*.php`, `find_modified*.php`, `git_*.php`, `kiem-tra*.php`…
+   Chúng chạy lệnh hệ thống / lộ mã nguồn, **tuyệt đối không để trên host**.
+
+### SQL migration đã có (dán khi cần, mỗi câu chạy một lần)
+
+**Giờ chốt riêng cho chương trình** (`migrate_program_cutoff.php`):
+```sql
+ALTER TABLE programs ADD COLUMN cutoff_time TIME NULL AFTER start_time;
+```
+> Nếu báo "Duplicate column name 'cutoff_time'" nghĩa là đã chạy rồi — bỏ qua.
+
+Các migration cũ (chỉ chạy nếu chưa từng chạy trên host): vai Dự Bị, đồng bộ
+module Báo cáo/Phân tích/Lịch, hạ quyền BĐH, Lịch cá nhân + họp, Hướng dẫn.
+Cần câu SQL cụ thể của cái nào thì mở file `config/migrate_*.php` tương ứng
+hoặc nhắn mình trích ra.
 
 ---
 
