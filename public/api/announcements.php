@@ -158,9 +158,8 @@ switch ($action) {
             bao_thong_bao_moi($id, $title, $level, $aType, $blockId, $classId, (int) $me['id']);
         }
 
-        // Buổi họp vừa đổi -> xoá cache để lịch của mọi người trong phạm vi
-        // cập nhật buổi họp mới ở lần nạp sau.
-        if ($isMeeting) Cache::flush();
+        // Bất kỳ thay đổi thông báo nào cũng cần xoá cache để mọi người thấy ngay
+        Cache::flush();
 
         json_out(['ok' => true, 'id' => $id, 'createdBy' => $me['full_name'],
                   'publishedAt' => $stt === 'đã phát' ? date('Y-m-d H:i') : '']);
@@ -185,6 +184,7 @@ switch ($action) {
                           $a['audience_block'] !== null ? (int) $a['audience_block'] : null,
                           $a['audience_class'] !== null ? (int) $a['audience_class'] : null,
                           (int) $me['id']);
+        Cache::flush();
         json_out(['ok' => true, 'status' => 'đã phát', 'publishedAt' => date('Y-m-d H:i')]);
 
     // -------------------------------------------------------------
@@ -198,6 +198,7 @@ switch ($action) {
 
         db_run('DELETE FROM announcements WHERE id=?', [$a['id']]);
         log_action('xoa', 'announcements', 'Xóa thông báo "' . $a['title'] . '"', '');
+        Cache::flush();
         json_out(['ok' => true]);
 
     // -------------------------------------------------------------
@@ -234,9 +235,12 @@ switch ($action) {
                 VALUES (?,?,?,?)
                 ON DUPLICATE KEY UPDATE status = VALUES(status), responded_at = VALUES(responded_at)',
                [$id, $me['id'], $status, date('Y-m-d H:i:s')]);
-        // Cập nhật cache của người trả lời + người phát (để họ thấy số mới)
-        Cache::del('data_' . $yid . '_' . (int) $me['id']);
-        Cache::del('data_' . $yid . '_' . (int) $a['created_by']);
+        // Cập nhật cache của người trả lời + người phát (để họ thấy số mới).
+        // Xoá cả 3 part vì cache nay tách theo core/heavy/all.
+        foreach (['_core', '_heavy', '_all'] as $p) {
+            Cache::del('data_' . $yid . '_' . (int) $me['id'] . $p);
+            Cache::del('data_' . $yid . '_' . (int) $a['created_by'] . $p);
+        }
         json_out(['ok' => true, 'status' => $status]);
 
     // -------------------------------------------------------------

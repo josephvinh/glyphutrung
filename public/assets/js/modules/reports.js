@@ -20,6 +20,7 @@ window.TNTT.reports = {
     rankOptions: ['Giỏi', 'Khá', 'Trung bình', 'Yếu'],
 
     reports: [],
+    reportIndex: null,   // Map 'studentId|termId' -> phiếu, dựng ở loadData (tra O(1))
     reportTermId: 1,
     reportClass: '',
     showReportForm: false,
@@ -83,8 +84,22 @@ window.TNTT.reports = {
         return result;
     },
 
+    // Khoá + chỉ số phiếu O(1). Cùng mẫu với attIndex (điểm danh) và
+    // scoreIndex (điểm): reportOf bị gọi cho TỪNG em ở nhiều đường render
+    // nóng (myTasks trên thanh dưới/sidebar, danh sách Phiếu liên lạc) nên
+    // find() tuyến tính làm chậm mọi thao tác. Tra Map thay cho quét mảng.
+    reportKey(studentId, termId) { return studentId + '|' + Number(termId); },
+
+    rebuildReportIndex() {
+        const idx = new Map();
+        for (const r of this.reports) idx.set(this.reportKey(r.studentId, r.termId), r);
+        this.reportIndex = idx;
+    },
+
     reportOf(studentId, termId) {
-        return this.reports.find(r => r.studentId === studentId && r.termId === Number(termId || this.reportTermId)) || null;
+        const t = Number(termId || this.reportTermId);
+        if (this.reportIndex) return this.reportIndex.get(this.reportKey(studentId, t)) || null;
+        return this.reports.find(r => r.studentId === studentId && r.termId === t) || null;
     },
 
     reportStatus(studentId) {
@@ -172,6 +187,7 @@ window.TNTT.reports = {
             f.id = Date.now();
             this.reports.push(f);
         }
+        if (this.reportIndex) this.reportIndex.set(this.reportKey(f.studentId, f.termId), f);
         this.save('reports', 'save', {
             studentId: f.studentId, termId: f.termId, attendance: f.attendance,
             score: String(f.score), conduct: f.conduct, rank: f.rank,
@@ -189,6 +205,7 @@ window.TNTT.reports = {
         if (!r) return;
         if (confirm('Xóa phiếu liên lạc của em này?')) {
             this.reports = this.reports.filter(x => x.id !== r.id);
+            if (this.reportIndex) this.reportIndex.delete(this.reportKey(r.studentId, r.termId));
             this.showReportForm = false;
             this.save('reports', 'delete', { studentId: r.studentId, termId: r.termId });
         }

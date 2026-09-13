@@ -76,6 +76,7 @@ window.TNTT.core = {
     profileForm: {},
     year: null,              // niên khoá đang mở
     syncing: false,          // đang nạp dữ liệu
+    heavyLoaded: false,      // đã tải xong BƯỚC 2 (điểm danh + điểm) chưa
 
     // ==========================================
     // LỚP GỌI MÁY CHỦ
@@ -147,29 +148,41 @@ window.TNTT.core = {
     },
 
     // Nạp toàn bộ dữ liệu nghiệp vụ của niên khoá đang mở
+    // TẢI 2 BƯỚC (cho nhẹ máy yếu lúc mở app):
+    //   Bước 1 (core): mọi thứ TRỪ điểm danh/điểm -> app dùng được NGAY
+    //                  (trang chủ, danh sách, thông báo, lịch...).
+    //   Bước 2 (heavy): điểm danh + điểm, tải NỀN ngay sau, không chặn màn.
+    // Nhờ vậy 5MB JSON điểm danh không còn parse chặn màn đầu trên điện thoại.
     async loadData() {
         this.syncing = true;
         try {
-            const res = await fetch('api/data.php');
+            const res = await fetch('api/data.php?part=core');
             const d = await res.json();
             if (!d.ok) { window.TNTT.toast.error(d.error || 'Không nạp được dữ liệu.'); return false; }
 
             this.students          = d.students;
+            this.rebuildStudentIndex();  // chỉ số em O(1) — studentById nhanh ở màn Xin phép
             // Sĩ số mọi lớp, đếm ở máy chủ. Cần vì this.students nay chỉ
             // gồm phạm vi mình được xem, không đếm được lớp ngoài phạm vi.
             this.classCounts       = d.classCounts || {};
             this.programs          = d.programs;
-            this.attendances       = d.attendances;
-            this.rebuildAttendanceIndex(); // index O(1) — tránh treo khi đoàn lớn
             this.leaveRequests     = d.leaveRequests;
-            this.scores            = d.scores;
-            this.rebuildScoreIndex();   // chỉ số điểm O(1) — tránh treo Lên lớp/ĐTB
             this.reports           = d.reports;
+            this.rebuildReportIndex();  // chỉ số phiếu O(1) — tránh chậm thao tác (myTasks + danh sách Phiếu LC)
             this.announcements     = d.announcements;
             this.readAnnouncements = d.readAnnouncements;
             this.members           = d.members;
             this.logs              = d.logs;
             this.notes             = d.notes || [];
+
+            // Điểm danh/điểm sẽ đổ vào ở bước 2. Đặt rỗng + index rỗng để
+            // các getter chạy an toàn (trả 0) trong lúc chờ.
+            this.attendances = []; this.rebuildAttendanceIndex();
+            this.scores      = []; this.rebuildScoreIndex();
+            this.heavyLoaded = false;
+
+            this._lastLoadAt = Date.now();  // mốc để auto-đồng-bộ khi mở lại app khỏi nạp dồn
+            this.loadHeavy();               // BƯỚC 2 — tải nền, KHÔNG await
             return true;
         } catch (e) {
             window.TNTT.toast.error('Không nạp được dữ liệu từ máy chủ.');
@@ -177,6 +190,24 @@ window.TNTT.core = {
         } finally {
             this.syncing = false;
             this.$nextTick(() => lucide.createIcons());
+        }
+    },
+
+    // BƯỚC 2: điểm danh + điểm. Chạy nền, không chặn giao diện. Xong thì
+    // dựng lại chỉ số và bật cờ heavyLoaded để các màn cần số liệu sáng lên.
+    async loadHeavy() {
+        try {
+            const res = await fetch('api/data.php?part=heavy');
+            const d = await res.json();
+            if (!d.ok) return;
+            this.attendances = d.attendances || [];
+            this.rebuildAttendanceIndex(); // index O(1) — tránh treo khi đoàn lớn
+            this.scores      = d.scores || [];
+            this.rebuildScoreIndex();      // chỉ số điểm O(1) — tránh treo Lên lớp/ĐTB
+            this.heavyLoaded = true;
+            this.$nextTick(() => lucide.createIcons());
+        } catch (e) {
+            // Im lặng: lần đồng bộ sau (bấm Làm mới / mở lại app) sẽ tải lại.
         }
     },
 

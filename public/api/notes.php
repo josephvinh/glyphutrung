@@ -22,7 +22,10 @@ $in     = json_input();
 function xoa_cache_cua(int $mid): void
 {
     $y = current_year();
-    if ($y) Cache::del('data_' . (int) $y['id'] . '_' . $mid);
+    // Xoá cả 3 part (core/heavy/all) vì cache data.php nay tách theo part
+    if ($y) foreach (['_core', '_heavy', '_all'] as $p) {
+        Cache::del('data_' . (int) $y['id'] . '_' . $mid . $p);
+    }
 }
 
 /** Gộp ngày + giờ thành DATETIME; việc cả ngày thì nhắc 07:00 */

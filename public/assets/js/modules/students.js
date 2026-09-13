@@ -11,6 +11,7 @@ window.TNTT.students = {
     // Chỉ gồm các em trong phạm vi mình được XEM (GLV: lớp mình,
     // Trưởng Khối: khối mình, Ban Điều Hành: toàn đoàn).
     students: [],   // máy chủ nạp qua loadData()
+    studentIndex: null,   // Map id -> em, dựng ở loadData (studentById O(1))
 
     // Sĩ số MỌI lớp, đếm sẵn ở máy chủ: { "Khai Tâm 1A": 7, ... }
     // Dùng cho màn Khối & Lớp, vì students ở trên không đủ để đếm.
@@ -25,6 +26,15 @@ window.TNTT.students = {
     editData: {},
 
     displayLimit: 20,
+
+    // Chỉ số em theo id — cùng khuôn attIndex/scoreIndex/reportIndex.
+    // studentById() bị gọi cho TỪNG dòng ở danh sách Xin phép nên find()
+    // tuyến tính làm chậm màn đó khi nhiều đơn.
+    rebuildStudentIndex() {
+        const idx = new Map();
+        for (const s of this.students) idx.set(s.id, s);
+        this.studentIndex = idx;
+    },
 
     get displayedStudents() {
         return this.filteredStudents.slice(0, this.displayLimit);
@@ -97,6 +107,7 @@ window.TNTT.students = {
         } else {
             const i = this.students.findIndex(s => s.id === e.id);
             if (i !== -1) this.students[i] = e;
+            if (this.studentIndex) this.studentIndex.set(e.id, e);
             this.logAction('sua', 'students', 'Sửa hồ sơ ' + e.name, e.code + ' · ' + e.className);
         }
 
@@ -209,7 +220,7 @@ window.TNTT.students = {
             address: '12 Nguyễn Trãi'
         };
 
-        const bat = this.importColumns.filter(c => ['code', 'name'].includes(c.key))
+        const bat = this.importColumns.filter(c => ['name'].includes(c.key))
                                       .map(c => c.header).join(', ');
 
         const lines = [];
@@ -230,6 +241,7 @@ window.TNTT.students = {
         ghi('kể cả dòng ví dụ bên dưới — cứ để nguyên, không cần xoá.');
         ghi('');
         ghi('BẮT BUỘC   : ' + bat + '  (thiếu là bỏ qua dòng đó)');
+        ghi('Mã số      : để trống nếu nhập mới (hệ thống tự cấp). Ghi mã đã có để CẬP NHẬT.');
         ghi('Giới tính  : Nam | Nữ');
         ghi('Ngày sinh  : dd/mm/yyyy   ví dụ 05/09/2017');
         ghi('Tình trạng : ' + this.statusOptions.join(' | '));
@@ -243,7 +255,6 @@ window.TNTT.students = {
             ghi('             (chưa khai lớp nào — hãy vào Khối & Lớp tạo trước)');
         }
         ghi('');
-        ghi('Mã số đã có sẵn thì hồ sơ được CẬP NHẬT, chưa có thì THÊM MỚI.');
         lines.push('# ' + '='.repeat(58));
 
         // Hàng tiêu đề thật — chính là hàng mà applyImport() dò cột
@@ -325,8 +336,8 @@ window.TNTT.students = {
             if (i !== -1) colIndex[c.key] = i;
         });
 
-        if (colIndex.name === undefined || colIndex.code === undefined) {
-            alert('File thiếu cột bắt buộc "Mã số" hoặc "Họ và Tên".\nHãy bấm nút Xuất để lấy file mẫu đúng định dạng.');
+        if (colIndex.name === undefined) {
+            alert('File thiếu cột bắt buộc "Họ và Tên".\nHãy bấm nút Xuất để lấy file mẫu đúng định dạng.');
             return;
         }
 
@@ -336,7 +347,7 @@ window.TNTT.students = {
             const get = key => (colIndex[key] !== undefined ? (row[colIndex[key]] || '').trim() : '');
             const code = get('code');
             const name = get('name');
-            if (!code || !name) { skipped++; return; }
+            if (!name) { skipped++; return; }
 
             const className = get('className');
             const cls = this.classes.find(c => c.name === className);
@@ -359,7 +370,7 @@ window.TNTT.students = {
                 block:       cls ? cls.block : get('block')
             };
 
-            const existing = this.students.findIndex(s => s.code === code);
+            const existing = code ? this.students.findIndex(s => s.code === code) : -1;
             if (existing !== -1) {
                 this.students[existing] = Object.assign({}, this.students[existing], record);
                 updated++;

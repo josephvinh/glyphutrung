@@ -59,8 +59,8 @@ function bundle_v(array $files): int {   // ?v = mtime lớn nhất trong nhóm
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="TNTT">
-    <title>TNTT Super App</title>
+    <meta name="apple-mobile-web-app-title" content="GĐGLPT">
+    <title>GIA ĐÌNH GIÁO LÝ PHÚ TRUNG</title>
 
     <!-- Tailwind biên dịch sẵn. Token thiết kế khai trong tailwind.config.js
          ở gốc dự án; chạy `npm run css` sau khi thêm lớp mới.
@@ -120,32 +120,43 @@ function bundle_v(array $files): int {   // ?v = mtime lớn nhất trong nhóm
         <main class="app-main px-4 sm:px-6 flex-1 overflow-y-auto">
 
 
+            <!-- ==========================================================
+                 LAZY-MOUNT: mỗi màn chỉ NẰM TRONG DOM khi đang mở, nhờ
+                 <template x-if>. Trước đây cả ~21 màn đều render sẵn (DOM
+                 ~9.300 node / 623 icon) rồi ẩn bằng display:none, khiến máy
+                 yếu chậm mọi thao tác và mở app khựng. Bọc trong một <div>
+                 để panel nào có kèm modal (vd điểm danh có popup quét QR)
+                 vẫn hợp lệ "một gốc duy nhất" mà x-if yêu cầu.
+                 ========================================================== -->
+
             <!-- TRANG CHỦ -->
-            <div data-module="dashboard" class="module-panel">
-                <?php include __DIR__ . '/../views/layout_hero.php'; ?>
-                <?php include __DIR__ . '/../views/module_menu.php'; ?>
-            </div>
+            <template x-if="currentModule==='dashboard'"><div>
+                <div data-module="dashboard" class="module-panel">
+                    <?php include __DIR__ . '/../views/layout_hero.php'; ?>
+                    <?php include __DIR__ . '/../views/module_menu.php'; ?>
+                </div>
+            </div></template>
 
             <!-- MODULE DANH SÁCH & CHƯƠNG TRÌNH -->
-            <?php include __DIR__ . '/../views/module_students.php'; ?>
-            <?php include __DIR__ . '/../views/module_attendance.php'; ?>
-            <?php include __DIR__ . '/../views/module_leave.php'; ?>
-            <?php include __DIR__ . '/../views/module_birthdays.php'; ?>
-            <?php include __DIR__ . '/../views/module_announcements.php'; ?>
-            <?php include __DIR__ . '/../views/module_reporthub.php'; ?>
-            <?php include __DIR__ . '/../views/module_org.php'; ?>
-            <?php include __DIR__ . '/../views/module_staff.php'; ?>
-            <?php include __DIR__ . '/../views/module_years.php'; ?>
-            <?php include __DIR__ . '/../views/module_reports.php'; ?>
-            <?php include __DIR__ . '/../views/module_qrcard.php'; ?>
-            <?php include __DIR__ . '/../views/module_settings.php'; ?>
-            <?php include __DIR__ . '/../views/module_scores.php'; ?>
-            <?php include __DIR__ . '/../views/module_student_profile.php'; ?>
-            <?php include __DIR__ . '/../views/module_promotion.php'; ?>
-            <?php include __DIR__ . '/../views/module_programs.php'; ?>
-            <?php include __DIR__ . '/../views/module_calendar.php'; ?>
-            <?php include __DIR__ . '/../views/module_notes.php'; ?>
-            <?php include __DIR__ . '/../views/module_guide.php'; ?>
+            <template x-if="currentModule==='students'"><div><?php include __DIR__ . '/../views/module_students.php'; ?></div></template>
+            <template x-if="currentModule==='attendance'"><div><?php include __DIR__ . '/../views/module_attendance.php'; ?></div></template>
+            <template x-if="currentModule==='leave'"><div><?php include __DIR__ . '/../views/module_leave.php'; ?></div></template>
+            <template x-if="currentModule==='birthdays'"><div><?php include __DIR__ . '/../views/module_birthdays.php'; ?></div></template>
+            <template x-if="currentModule==='announcements'"><div><?php include __DIR__ . '/../views/module_announcements.php'; ?></div></template>
+            <template x-if="currentModule==='reporthub'"><div><?php include __DIR__ . '/../views/module_reporthub.php'; ?></div></template>
+            <template x-if="currentModule==='org'"><div><?php include __DIR__ . '/../views/module_org.php'; ?></div></template>
+            <template x-if="currentModule==='staff'"><div><?php include __DIR__ . '/../views/module_staff.php'; ?></div></template>
+            <template x-if="currentModule==='years'"><div><?php include __DIR__ . '/../views/module_years.php'; ?></div></template>
+            <template x-if="currentModule==='reports'"><div><?php include __DIR__ . '/../views/module_reports.php'; ?></div></template>
+            <template x-if="currentModule==='qrcard'"><div><?php include __DIR__ . '/../views/module_qrcard.php'; ?></div></template>
+            <template x-if="currentModule==='settings'"><div><?php include __DIR__ . '/../views/module_settings.php'; ?></div></template>
+            <template x-if="currentModule==='scores'"><div><?php include __DIR__ . '/../views/module_scores.php'; ?></div></template>
+            <template x-if="currentModule==='student_profile'"><div><?php include __DIR__ . '/../views/module_student_profile.php'; ?></div></template>
+            <template x-if="currentModule==='promotion'"><div><?php include __DIR__ . '/../views/module_promotion.php'; ?></div></template>
+            <template x-if="currentModule==='programs'"><div><?php include __DIR__ . '/../views/module_programs.php'; ?></div></template>
+            <template x-if="currentModule==='calendar'"><div><?php include __DIR__ . '/../views/module_calendar.php'; ?></div></template>
+            <template x-if="currentModule==='notes'"><div><?php include __DIR__ . '/../views/module_notes.php'; ?></div></template>
+            <template x-if="currentModule==='guide'"><div><?php include __DIR__ . '/../views/module_guide.php'; ?></div></template>
 
         </main>
 

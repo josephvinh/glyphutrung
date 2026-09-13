@@ -1,5 +1,6 @@
 <!-- MÀN HÌNH ĐIỂM DANH -->
 <div data-module="attendance" class="module-panel pt-6 pb-10 relative">
+<?php include __DIR__ . '/partial_heavy_loading.php'; ?>
 
     <!-- ==========================================================
          BƯỚC 1: CHỌN BUỔI (chưa vào phiên điểm danh)
@@ -113,7 +114,7 @@
                         </div>
                     </div>
 
-                    <button @click="startSession(prog)" class="w-full bg-blue-600 text-white font-bold py-3 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-blue-200 flex justify-center items-center">
+                    <button @click="startSession(prog)" :disabled="!heavyLoaded" :class="!heavyLoaded ? 'opacity-50' : ''" class="w-full bg-blue-600 text-white font-bold py-3 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-blue-200 flex justify-center items-center">
                         <i data-lucide="clipboard-check" class="w-5 h-5 mr-2"></i> Bắt đầu điểm danh
                     </button>
                 </div>

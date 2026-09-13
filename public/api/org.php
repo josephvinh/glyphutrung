@@ -60,6 +60,7 @@ switch ($action) {
             db_run('UPDATE blocks SET name=? WHERE name=?', [$name, $old]);
             log_action('sua', 'org', 'Đổi tên khối ' . $old . ' thành ' . $name, '');
         }
+        Cache::flush();
         json_out(['ok' => true]);
 
     case 'deleteBlock':
@@ -74,6 +75,7 @@ switch ($action) {
 
         db_run('DELETE FROM blocks WHERE id=?', [$b['id']]);
         log_action('xoa', 'org', 'Xóa khối ' . $name, '');
+        Cache::flush();
         json_out(['ok' => true]);
 
     // ============================= LỚP ==============================
@@ -114,6 +116,7 @@ switch ($action) {
                 db_run('UPDATE classes SET next_class_id=?, is_final=0 WHERE name=?', [$t['id'], $name]);
             }
         }
+        Cache::flush();
         json_out(['ok' => true]);
 
     case 'deleteClass':
@@ -131,6 +134,7 @@ switch ($action) {
 
         db_run('DELETE FROM classes WHERE id=?', [$c['id']]);
         log_action('xoa', 'org', 'Xóa lớp ' . $name, '');
+        Cache::flush();
         json_out(['ok' => true]);
 
     // ============================ NHÂN SỰ ===========================
@@ -215,6 +219,7 @@ switch ($action) {
             json_fail(safe_error($e, 'Không lưu được: '), 500);
         }
 
+        Cache::flush();
         json_out(['ok' => true, 'id' => $id]);
 
     case 'deleteMember':
@@ -228,6 +233,7 @@ switch ($action) {
 
         db_run('DELETE FROM members WHERE id=?', [$id]);
         log_action('xoa', 'org', 'Xóa thành viên ' . $m['full_name'], $m['role_code']);
+        Cache::flush();
         json_out(['ok' => true]);
 
     // ==================== DUYỆT TÀI KHOẢN TỰ ĐĂNG KÝ =================
@@ -278,6 +284,7 @@ switch ($action) {
 
         log_action('duyet', 'org', 'Duyệt tài khoản ' . $m['full_name'],
                    $role . ' · ' . ($in['className'] ?? $in['block'] ?? 'toàn đoàn'));
+        Cache::flush();
         json_out(['ok' => true]);
 
     case 'rejectMember':
@@ -290,6 +297,7 @@ switch ($action) {
 
         db_run('DELETE FROM members WHERE id=?', [$id]);
         log_action('tuchoi', 'org', 'Từ chối đăng ký của ' . $m['full_name'], $m['phone']);
+        Cache::flush();
         json_out(['ok' => true]);
 
     // ==================== CẤP LẠI MẬT KHẨU ===========================
@@ -390,6 +398,7 @@ switch ($action) {
             db()->rollBack();
             json_fail(safe_error($e, 'Không phân công được: '), 500);
         }
+        Cache::flush();
         json_out(['ok' => true]);
 
     // -------------------------------------------------------------

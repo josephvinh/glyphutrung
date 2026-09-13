@@ -205,5 +205,17 @@ window.TNTT.shell = {
         // Nhịp đồng hồ: để badge "đã quá giờ chốt" tự bật khi tới 07:30
         // mà GLV không phải tải lại trang.
         setInterval(() => { this.nowTs = Date.now(); }, 30000);
+
+        // Tự đồng bộ khi MỞ LẠI app (chuyển tab về / mở PWA từ nền). Nhờ vậy
+        // thay đổi của người khác hiện ra mà không cần bấm Làm mới — bớt cảm
+        // giác "không realtime". Chỉ nạp lại nếu đã hơn 45s từ lần nạp trước
+        // (tránh nạp dồn khi bật/tắt nhanh); nạp NGẦM, không hiện toast.
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible'
+                && !this.syncing
+                && Date.now() - (this._lastLoadAt || 0) > 45000) {
+                this.loadData();
+            }
+        });
     }
 };

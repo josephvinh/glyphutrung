@@ -190,6 +190,9 @@ switch ($action) {
                  $name . ($note !== '' ? ' — ' . mb_substr($note, 0, 80) : ''),
                  '/#members', 'tntt-tv-moi');
 
+        // Xoá cache để Admin/BĐH thấy ngay hồ sơ mới mà không phải chờ 5 phút
+        Cache::flush();
+
         json_out(['ok' => true, 'code' => $code]);
 
     // -------------------------------------------------------------

@@ -193,6 +193,7 @@ window.TNTT.leave = {
 
     // ---- Tiện ích hiển thị ----
     studentById(id) {
+        if (this.studentIndex) return this.studentIndex.get(id) || null;
         return this.students.find(s => s.id === id) || null;
     },
 

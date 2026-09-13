@@ -1,5 +1,6 @@
 <!-- MÀN HÌNH SỔ LIÊN LẠC -->
 <div data-module="reports" class="module-panel pt-6 pb-10 relative">
+<?php include __DIR__ . '/partial_heavy_loading.php'; ?>
 
     <!-- 1. THANH ĐIỀU HƯỚNG GỘP (Thiếu nhi) -->
     <?php include __DIR__ . '/partial_children_tabs.php'; ?>

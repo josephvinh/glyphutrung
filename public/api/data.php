@@ -21,8 +21,15 @@ if (!$year) json_fail('Chưa có niên khoá nào đang mở.', 409);
 
 $yid = (int) $year['id'];
 
-// Check cache first
-$cacheKey = "data_{$yid}_{$me['id']}";
+// Tải 2 BƯỚC cho nhẹ máy yếu:
+//   'core'  = mọi thứ TRỪ điểm danh/điểm  -> app dùng được ngay lúc mở
+//   'heavy' = CHỈ điểm danh/điểm          -> tải NỀN ngay sau đó
+//   'all'   = cả gói (tương thích các nơi gọi cũ, vd nhập CSV)
+$part = $_GET['part'] ?? 'all';
+if (!in_array($part, ['core', 'heavy', 'all'], true)) $part = 'all';
+
+// Check cache first — khoá theo part để 3 loại không đè lên nhau
+$cacheKey = "data_{$yid}_{$me['id']}_{$part}";
 if ($cached = Cache::get($cacheKey)) {
     json_out($cached);
 }
@@ -113,25 +120,27 @@ $programs = array_map(fn($p) => [
 // Admin/BĐH (phạm vi null) vẫn nhận toàn đoàn (họ cần thống kê cả đoàn);
 // GLV/Trưởng khối chỉ nhận lớp/khối mình -> payload nhẹ hẳn.
 // ---------------------------------------------------------------
-$attScopeIds = allowed_class_ids($me);          // null = toàn đoàn
 $attRows = [];
-if ($attScopeIds === null) {
-    $attRows = db_all(
-        'SELECT a.*, m.full_name AS marked_by_name
-           FROM attendances a
-           LEFT JOIN members m ON m.id = a.marked_by
-          WHERE a.year_id = ?', [$yid]);
-} else {
-    // Chỉ điểm danh của các em trong phạm vi (dùng lại danh sách $students)
-    $stuIds = array_map(fn($s) => (int) $s['id'], $students);
-    if ($stuIds) {
-        $ph = implode(',', array_fill(0, count($stuIds), '?'));
+if ($part !== 'core') {                          // bước 'core' bỏ qua điểm danh
+    $attScopeIds = allowed_class_ids($me);        // null = toàn đoàn
+    if ($attScopeIds === null) {
         $attRows = db_all(
-            "SELECT a.*, m.full_name AS marked_by_name
+            'SELECT a.*, m.full_name AS marked_by_name
                FROM attendances a
                LEFT JOIN members m ON m.id = a.marked_by
-              WHERE a.year_id = ? AND a.student_id IN ($ph)",
-            array_merge([$yid], $stuIds));
+              WHERE a.year_id = ?', [$yid]);
+    } else {
+        // Chỉ điểm danh của các em trong phạm vi (dùng lại danh sách $students)
+        $stuIds = array_map(fn($s) => (int) $s['id'], $students);
+        if ($stuIds) {
+            $ph = implode(',', array_fill(0, count($stuIds), '?'));
+            $attRows = db_all(
+                "SELECT a.*, m.full_name AS marked_by_name
+                   FROM attendances a
+                   LEFT JOIN members m ON m.id = a.marked_by
+                  WHERE a.year_id = ? AND a.student_id IN ($ph)",
+                array_merge([$yid], $stuIds));
+        }
     }
 }
 $attendances = array_map(fn($a) => [
@@ -170,7 +179,7 @@ $leaves = array_map(fn($l) => [
 // ---------------------------------------------------------------
 // Điểm số & sổ liên lạc — theo học kỳ của năm nay
 // ---------------------------------------------------------------
-$scores = array_map(fn($s) => [
+$scores = $part === 'core' ? [] : array_map(fn($s) => [
     'studentId' => (int) $s['student_id'],
     'termId'    => (int) $s['term_id'],
     'type'      => $s['type_code'],
@@ -183,6 +192,14 @@ $scores = array_map(fn($s) => [
        JOIN terms t ON t.id = sc.term_id
        LEFT JOIN members m ON m.id = sc.updated_by
       WHERE t.year_id = ?', [$yid]));
+
+// BƯỚC 2 (tải nền): chỉ cần điểm danh + điểm -> trả sớm, khỏi tính phần
+// còn lại (thông báo/RSVP, nhân sự, nhật ký...). Nhẹ và nhanh hơn hẳn.
+if ($part === 'heavy') {
+    $heavy = ['ok' => true, 'attendances' => $attendances, 'scores' => $scores];
+    Cache::set($cacheKey, $heavy, 60);
+    json_out($heavy);
+}
 
 $reports = array_map(fn($r) => [
     'id'         => (int) $r['id'],
@@ -325,6 +342,10 @@ $result = [
     'logs'          => $logs,
 ];
 
-// Cache result
-Cache::set($cacheKey, $result, 300); // 5 minutes
+// Cache result. Để 60s (trước là 300s) cho "tươi" hơn: thay đổi của người
+// khác hiện ra trong vòng ~1 phút thay vì tới 5 phút. Người GHI vẫn được
+// xoá cache ngay khi ghi nên luôn thấy mới; đây chỉ ảnh hưởng khung nhìn
+// của người khác. Kết hợp auto-đồng-bộ khi mở lại app (shell.js) để bớt
+// cảm giác "không realtime".
+Cache::set($cacheKey, $result, 60);
 json_out($result);
