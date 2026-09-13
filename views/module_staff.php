@@ -282,7 +282,7 @@
                 </div>
                 <div>
                     <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Ngày sinh</label>
-                    <input x-model="memberForm.birthDate" type="date" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                    <input x-model="memberForm.birthDate" type="date" min="1900-01-01" max="<?php echo date('Y-m-d'); ?>" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                 </div>
             </div>
 

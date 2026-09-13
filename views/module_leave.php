@@ -37,7 +37,7 @@
         <div class="bg-white rounded-card p-4 shadow-sm border border-slate-100 mb-4 space-y-3">
             <div>
                 <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Ngày xin phép</label>
-                <input x-model="leaveDate" type="date" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                <input x-model="leaveDate" type="date" min="2000-01-01" max="2100-12-31" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                 <p class="text-xs font-medium text-slate-500 mt-1.5 ml-1" x-text="formatFullDate(leaveDate)"></p>
             </div>
             <div>
