@@ -105,14 +105,8 @@ window.TNTT.students = {
         try {
             const r = await this.save('students', 'save', e);
             if (r && r.ok) {
-                if (e.isNew) {
-                    // Thêm mới thì phải nạp lại để lấy id thật do máy chủ cấp
-                    await this.loadData();
-                } else {
-                    const i = this.students.findIndex(s => s.id === e.id);
-                    if (i !== -1) this.students[i] = e;
-                    if (this.studentIndex) this.studentIndex.set(e.id, e);
-                }
+                // Luôn nạp lại dữ liệu từ server sau khi lưu để lấy bản đã được chuẩn hóa (In hoa, số 0 đầu điện thoại...)
+                await this.loadData();
                 this.showEditModal = false;
             }
         } catch (err) {

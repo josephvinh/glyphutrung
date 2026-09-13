@@ -27,7 +27,10 @@ const Passkey = {
     base64ToBuffer(base64) {
         const m = /^=\?BINARY\?B\?(.*)\?=$/.exec(base64);
         if (m) base64 = m[1];
-        const bin = window.atob(base64.replace(/-/g, '+').replace(/_/g, '/'));
+        let str = base64.replace(/-/g, '+').replace(/_/g, '/');
+        str = str.replace(/[^A-Za-z0-9\+\/]/g, '');
+        while (str.length % 4 !== 0) str += '=';
+        const bin = window.atob(str);
         const bytes = new Uint8Array(bin.length);
         for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
         return bytes.buffer;
