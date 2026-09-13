@@ -204,7 +204,7 @@ CREATE TABLE IF NOT EXISTS enrollments (
 --  6. CHƯƠNG TRÌNH
 --  bắt buộc  -> lặp theo thứ (day_of_week)
 --  chiến dịch -> một ngày cụ thể (event_date)
---  Giờ chốt = start_time + 30 phút, tính lúc đọc nên không lưu.
+--  Giờ chốt: nhập riêng ở cutoff_time; để NULL thì mặc định start_time + 30 phút.
 -- =====================================================================
 CREATE TABLE IF NOT EXISTS programs (
     id                   INT AUTO_INCREMENT PRIMARY KEY,
@@ -214,6 +214,7 @@ CREATE TABLE IF NOT EXISTS programs (
     status               ENUM('kích hoạt','đã đóng')   NOT NULL DEFAULT 'kích hoạt',
     count_for_attendance TINYINT(1)   NOT NULL DEFAULT 1,
     start_time           TIME         NOT NULL,
+    cutoff_time          TIME         NULL COMMENT 'Giờ chốt sổ; NULL = start_time + 30 phút',
     day_of_week          TINYINT      NULL COMMENT '0 Chúa Nhật ... 6 Thứ Bảy',
     event_date           DATE         NULL,
     CONSTRAINT fk_prog_year FOREIGN KEY (year_id) REFERENCES school_years(id) ON DELETE CASCADE,

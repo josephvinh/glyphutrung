@@ -110,6 +110,7 @@ $programs = array_map(fn($p) => [
     'status'             => $p['status'],
     'countForAttendance' => (bool) $p['count_for_attendance'],
     'startTime'          => substr($p['start_time'], 0, 5),
+    'cutoffTime'         => !empty($p['cutoff_time']) ? substr($p['cutoff_time'], 0, 5) : '',
     'dayOfWeek'          => $p['day_of_week'] === null ? null : (int) $p['day_of_week'],
     'eventDate'          => $p['event_date'] ?? '',
 ], db_all('SELECT * FROM programs WHERE year_id = ? ORDER BY start_time', [$yid]));

@@ -121,10 +121,15 @@
                     <input x-model="programForm.eventDate" type="date" min="2000-01-01" max="2100-12-31" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                 </div>
 
-                <!-- Giờ chốt là hệ quả của giờ bắt đầu, hiện ra để BĐH biết chứ không sửa được -->
-                <div class="bg-slate-50 rounded-xl px-3 py-2.5 flex items-center justify-between border border-slate-100">
-                    <span class="text-micro font-bold text-slate-500 uppercase">Giờ chốt sổ</span>
-                    <span class="text-sm font-black text-rose-500" x-text="programForm.startTime ? addMinutes(programForm.startTime, CUTOFF_MINUTES) : '--:--'"></span>
+                <!-- Giờ chốt sổ: BĐH nhập trực tiếp. Để trống thì mặc định
+                     giờ bắt đầu + CUTOFF_MINUTES phút (hiện gợi ý bên dưới). -->
+                <div>
+                    <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Giờ chốt sổ</label>
+                    <input x-model="programForm.cutoffTime" type="time" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                    <p class="text-micro text-slate-500 mt-1 ml-1">
+                        Để trống = giờ bắt đầu + <span x-text="CUTOFF_MINUTES"></span> phút
+                        <span x-show="programForm.startTime && !programForm.cutoffTime">(<span class="font-bold text-rose-500" x-text="addMinutes(programForm.startTime, CUTOFF_MINUTES)"></span>)</span>
+                    </p>
                 </div>
             </div>
             <div class="p-4 border-t border-slate-100">

@@ -88,7 +88,10 @@ window.TNTT.attendance = {
     },
 
     cutoffOf(prog) {
-        return prog ? this.addMinutes(prog.startTime, this.CUTOFF_MINUTES) : '';
+        if (!prog) return '';
+        // Có nhập giờ chốt riêng thì dùng đúng giờ đó; không thì mặc định
+        // giờ bắt đầu + CUTOFF_MINUTES (tương thích chương trình cũ chưa nhập).
+        return prog.cutoffTime ? prog.cutoffTime : this.addMinutes(prog.startTime, this.CUTOFF_MINUTES);
     },
 
     get sessionCutoff() {
