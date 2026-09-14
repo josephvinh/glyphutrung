@@ -58,7 +58,7 @@ switch ($action) {
                 [$me['id'], $credentialId, $publicKey, $userHandle]);
             
             json_out(['ok' => true]);
-        } catch (Exception $ex) {
+        } catch (\Throwable $ex) {
             json_fail('Lỗi đăng ký vân tay: ' . $ex->getMessage());
         }
         break;
@@ -114,7 +114,7 @@ switch ($action) {
 
             json_out(['ok' => true, 'user' => passkey_member_payload($m)]);
 
-        } catch (Exception $ex) {
+        } catch (\Throwable $ex) {
             json_fail('Lỗi xác thực vân tay: ' . $ex->getMessage());
         }
         break;

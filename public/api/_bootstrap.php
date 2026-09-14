@@ -6,6 +6,14 @@
  * quyền. Mọi file trong api/ đều bắt đầu bằng require file này.
  */
 
+// API LUÔN trả JSON. Tuyệt đối không để warning/notice/deprecation của PHP
+// lọt vào thân phản hồi: trên iOS/WebKit, res.json() sẽ ném SyntaxError
+// "The string did not match the expected pattern." (Chrome nói "Unexpected
+// token"). Thư viện lbuchs (WebAuthn) trên PHP 8.2 hay sinh deprecation —
+// đủ một dòng là hỏng cả JSON. Ẩn hiển thị, vẫn ghi vào error_log để dò.
+ini_set('display_errors', '0');
+ini_set('log_errors', '1');
+
 require_once __DIR__ . '/_common.php';
 require_once __DIR__ . '/csrf.php';
 require_once __DIR__ . '/cache.php';
