@@ -93,14 +93,15 @@ if (!$__dev) ob_start();
             <span x-text="busy ? 'Đang kiểm tra...' : 'Đăng nhập'"></span>
         </button>
 
-        <!-- Đăng nhập sinh trắc học -->
-        <button type="button" @click="loginPasskey()" :disabled="busy"
-                class="w-full bg-slate-800 text-white font-bold py-3.5 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-slate-200 flex justify-center items-center disabled:opacity-50 mt-3">
-            <i data-lucide="scan-face" class="w-5 h-5 mr-2"></i>
-            <span>Đăng nhập bằng FaceID/Vân tay</span>
+        <!-- Đăng nhập sinh trắc học — lối phụ, nhẹ nhàng dưới divider "hoặc" -->
+        <div class="login-or"><span>hoặc</span></div>
+
+        <button type="button" @click="loginPasskey()" :disabled="busy" class="btn-bio">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></svg>
+            <span>Đăng nhập bằng Face&nbsp;ID / Vân tay</span>
         </button>
 
-        <p class="text-center text-micro text-slate-500 leading-snug pt-3">
+        <p class="text-center text-micro text-slate-500 leading-snug pt-2">
             Quên mật khẩu? Liên hệ Ban Điều Hành để được cấp lại.
         </p>
 

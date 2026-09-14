@@ -505,3 +505,67 @@ a,
 .app-main {
     touch-action: manipulation;
 }
+
+/* ==========================================================
+   MÀN ĐĂNG NHẬP — lựa chọn đăng nhập sinh trắc (Face ID / Vân tay)
+
+   Trước đây là một khối đặc màu đen to bằng nút chính, đứng cạnh nút đỏ
+   trông nặng và "quê". Thiết kế lại theo phân cấp rõ ràng: nút đỏ là hành
+   động chính, sinh trắc là lối phụ — một divider "hoặc" rồi nút viền nhẹ
+   nhàng, icon nhấn màu chàm cho cảm giác "khoá sinh trắc" hiện đại.
+   ========================================================== */
+.login-or {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    margin: .1rem 0;
+}
+.login-or::before,
+.login-or::after {
+    content: "";
+    flex: 1 1 0;
+    height: 1px;
+    background: #e5e7eb;
+}
+.login-or > span {
+    font-size: .68rem;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: #9ca3af;
+}
+
+.btn-bio {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .6rem;
+    padding: .8rem 1rem;
+    border-radius: 1rem;
+    background: #fff;
+    border: 1.5px solid #e5e7eb;
+    color: #1e293b;
+    font-weight: 700;
+    font-size: .85rem;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: transform .12s ease, border-color .2s ease, box-shadow .2s ease;
+}
+.btn-bio:hover {
+    border-color: #c7d2fe;
+    box-shadow: 0 8px 22px -14px rgba(79, 70, 229, .55);
+}
+.btn-bio:active {
+    transform: scale(.98);
+}
+.btn-bio:disabled {
+    opacity: .5;
+    pointer-events: none;
+}
+.btn-bio svg {
+    width: 1.2rem;
+    height: 1.2rem;
+    color: #4f46e5;   /* chàm — gợi "Face ID / sinh trắc" */
+    flex-shrink: 0;
+}
