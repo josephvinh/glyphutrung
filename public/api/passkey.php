@@ -34,7 +34,12 @@ switch ($action) {
     case 'getRegisterArgs':
         $me = require_login();
         $createArgs = $WebAuthn->getCreateArgs((string)$me['id'], $me['phone'], $me['full_name'], 60*4, true);
-        $_SESSION['webauthn_challenge'] = $WebAuthn->getChallenge();
+        // Lưu challenge dạng CHUỖI nhị phân, KHÔNG lưu object ByteBuffer.
+        // session_start() (trong _common.php) chạy trước khi class ByteBuffer
+        // được nạp, nên nếu lưu object thì request sau bung ra thành
+        // __PHP_Incomplete_Class -> "could not be converted to string".
+        // processCreate/processGet nhận chuỗi nhị phân và tự bọc lại ByteBuffer.
+        $_SESSION['webauthn_challenge'] = $WebAuthn->getChallenge()->getBinaryString();
         json_out(['ok' => true, 'args' => json_decode(json_encode($createArgs), true)]);
         break;
 
@@ -65,7 +70,12 @@ switch ($action) {
 
     case 'getLoginArgs':
         $getArgs = $WebAuthn->getGetArgs([], 60*4, true, true, true, true);
-        $_SESSION['webauthn_challenge'] = $WebAuthn->getChallenge();
+        // Lưu challenge dạng CHUỖI nhị phân, KHÔNG lưu object ByteBuffer.
+        // session_start() (trong _common.php) chạy trước khi class ByteBuffer
+        // được nạp, nên nếu lưu object thì request sau bung ra thành
+        // __PHP_Incomplete_Class -> "could not be converted to string".
+        // processCreate/processGet nhận chuỗi nhị phân và tự bọc lại ByteBuffer.
+        $_SESSION['webauthn_challenge'] = $WebAuthn->getChallenge()->getBinaryString();
         json_out(['ok' => true, 'args' => json_decode(json_encode($getArgs), true)]);
         break;
 
