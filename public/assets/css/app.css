@@ -569,3 +569,34 @@ a,
     color: #4f46e5;   /* chàm — gợi "Face ID / sinh trắc" */
     flex-shrink: 0;
 }
+
+/* Nút icon-only kiểu native: chỉ hình khuôn mặt, bấm là quét luôn.
+   Vòng tròn nền chàm nhạt, icon chàm — đồng bộ với nút gạt ở Hồ sơ. */
+.btn-face {
+    width: 60px;
+    height: 60px;
+    border-radius: 9999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #eef2ff;               /* indigo-50 */
+    border: 1.5px solid #e0e7ff;       /* indigo-100 */
+    color: #4f46e5;                    /* indigo-600 */
+    cursor: pointer;
+    transition: transform .12s ease, box-shadow .25s ease, background .2s ease, border-color .2s ease;
+}
+.btn-face:hover {
+    background: #e0e7ff;
+    box-shadow: 0 10px 26px -12px rgba(79, 70, 229, .6);
+}
+.btn-face:active {
+    transform: scale(.93);
+}
+.btn-face:disabled {
+    opacity: .5;
+    pointer-events: none;
+}
+.btn-face svg {
+    width: 30px;
+    height: 30px;
+}
