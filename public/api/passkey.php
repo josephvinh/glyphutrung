@@ -68,6 +68,21 @@ switch ($action) {
         }
         break;
 
+    // Cho nút gạt ở Hồ sơ biết tài khoản này đã bật sinh trắc chưa.
+    case 'status':
+        $me = require_login();
+        $n = (int) (db_one('SELECT COUNT(*) n FROM member_passkeys WHERE member_id = ?', [$me['id']])['n'] ?? 0);
+        json_out(['ok' => true, 'hasPasskey' => $n > 0]);
+        break;
+
+    // Gạt TẮT: gỡ mọi khoá sinh trắc của tài khoản này khỏi thiết bị-hệ thống.
+    case 'delete':
+        $me = require_login();
+        require_post();
+        db_run('DELETE FROM member_passkeys WHERE member_id = ?', [$me['id']]);
+        json_out(['ok' => true]);
+        break;
+
     case 'getLoginArgs':
         $getArgs = $WebAuthn->getGetArgs([], 60*4, true, true, true, true);
         // Lưu challenge dạng CHUỖI nhị phân, KHÔNG lưu object ByteBuffer.

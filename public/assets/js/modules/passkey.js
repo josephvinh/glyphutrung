@@ -62,19 +62,21 @@ const Passkey = {
     },
 
     // Đăng ký khoá sinh trắc cho tài khoản đang đăng nhập (gọi từ màn Hồ sơ).
-    // Trả true nếu thành công. Tự báo kết quả cho người dùng bằng toast.
-    async register() {
+    // Trả true nếu thành công. opts.silent = true: KHÔNG hiện toast nào (dùng
+    // cho nút gạt kiểu iOS — trạng thái nút gạt tự nói lên kết quả).
+    async register(opts) {
+        const silent = !!(opts && opts.silent);
         // buoc: chỉ để ghi console cho lập trình viên, KHÔNG hiện cho người dùng.
         let buoc = 'bắt đầu';
         try {
             if (!window.PublicKeyCredential) {
-                this._bao('Thiết bị của bạn chưa hỗ trợ FaceID / Vân tay.', 'warning');
+                if (!silent) this._bao('Thiết bị của bạn chưa hỗ trợ FaceID / Vân tay.', 'warning');
                 return false;
             }
 
             buoc = 'lấy tham số từ máy chủ';
             const res = await this._post('api/passkey.php?action=getRegisterArgs');
-            if (!res.ok) { this._bao(res.error || 'Máy chủ đang bận, vui lòng thử lại sau.', 'error'); return false; }
+            if (!res.ok) { if (!silent) this._bao(res.error || 'Máy chủ đang bận, vui lòng thử lại sau.', 'error'); return false; }
 
             // Server trả { publicKey: {...} } (chuẩn WebAuthn). Gỡ vỏ nếu có.
             const args = res.args.publicKey || res.args;
@@ -95,18 +97,39 @@ const Passkey = {
                 attestationObject: this.bufferToBase64(cred.response.attestationObject)
             });
             if (verifyRes.ok) {
-                this._bao('Đã đăng ký thành công! Lần sau bạn có thể đăng nhập chỉ bằng khuôn mặt hoặc vân tay.', 'success');
+                if (!silent) this._bao('Đã đăng ký thành công! Lần sau bạn có thể đăng nhập chỉ bằng khuôn mặt hoặc vân tay.', 'success');
                 return true;
             }
-            this._bao(verifyRes.error || 'Đăng ký chưa thành công, vui lòng thử lại.', 'error');
+            if (!silent) this._bao(verifyRes.error || 'Đăng ký chưa thành công, vui lòng thử lại.', 'error');
             return false;
 
         } catch (e) {
             console.error('[Passkey] Đăng ký lỗi ở bước:', buoc, e);
-            const msg = this._loiThanThien(e, 'Chưa đăng ký được FaceID / Vân tay. Vui lòng thử lại.');
-            if (msg) this._bao(msg, 'error');
+            if (!silent) {
+                const msg = this._loiThanThien(e, 'Chưa đăng ký được FaceID / Vân tay. Vui lòng thử lại.');
+                if (msg) this._bao(msg, 'error');
+            }
             return false;
         }
+    },
+
+    // Kiểm tra tài khoản đã bật sinh trắc chưa (cho nút gạt ở Hồ sơ).
+    async status() {
+        try {
+            const r = await this._post('api/passkey.php?action=status');
+            return !!(r && r.ok && r.hasPasskey);
+        } catch (e) { console.error('[Passkey] status:', e); return false; }
+    },
+
+    // Gỡ khoá sinh trắc của tài khoản (gạt TẮT). opts.silent như register().
+    async remove(opts) {
+        const silent = !!(opts && opts.silent);
+        try {
+            const r = await this._post('api/passkey.php?action=delete');
+            if (r && r.ok) { if (!silent) this._bao('Đã tắt đăng nhập sinh trắc.', 'info'); return true; }
+            if (!silent) this._bao((r && r.error) || 'Không tắt được, vui lòng thử lại.', 'error');
+            return false;
+        } catch (e) { console.error('[Passkey] remove:', e); return false; }
     },
 
     // Đăng nhập bằng khoá sinh trắc (gọi từ màn Đăng nhập).

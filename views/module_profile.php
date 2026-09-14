@@ -213,21 +213,40 @@
                 <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300 shrink-0"></i>
             </button>
 
-            <button x-data="{ pkBusy: false }" type="button" :disabled="pkBusy"
-                    @click="if (pkBusy) return; pkBusy = true; await window.Passkey.register(); pkBusy = false"
-                    class="w-full flex items-center gap-3 border-t border-slate-100 pt-3 text-left active:scale-[0.98] transition-transform disabled:opacity-60">
+            <!-- Đăng nhập sinh trắc: nút gạt kiểu iOS, tự bật/tắt, không popup.
+                 Gạt BẬT -> hỏi FaceID/vân tay rồi đăng ký; gạt TẮT -> gỡ khoá.
+                 Trạng thái nút gạt chính là phản hồi (thành công thì xanh, huỷ
+                 thì bật lại). x-data cục bộ, không đụng component chính. -->
+            <div class="w-full flex items-center gap-3 border-t border-slate-100 pt-3"
+                 x-data="{
+                    on: false, busy: false, ho_tro: (typeof window.PublicKeyCredential !== 'undefined'),
+                    async init() { if (this.ho_tro) this.on = await window.Passkey.status(); },
+                    async gat() {
+                        if (this.busy || !this.ho_tro) return;
+                        this.busy = true;
+                        const muonBat = !this.on;
+                        if (muonBat) this.on = await window.Passkey.register({ silent: true });
+                        else         this.on = !(await window.Passkey.remove({ silent: true }));
+                        this.busy = false;
+                    }
+                 }">
                 <div class="w-10 h-10 shrink-0 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
-                    <span x-show="!pkBusy" class="inline-flex items-center justify-center"><i data-lucide="scan-face" class="w-5 h-5"></i></span>
-                    <span x-show="pkBusy" style="display:none" class="inline-flex items-center justify-center">
-                        <svg class="w-5 h-5 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2.5" stroke-opacity=".25"/><path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
-                    </span>
+                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></svg>
                 </div>
                 <div class="flex-1 min-w-0">
-                    <p class="text-sm font-bold text-slate-700">Đăng ký Vân tay / FaceID</p>
-                    <p class="text-micro text-slate-500" x-text="pkBusy ? 'Đang chờ xác thực…' : 'Đăng nhập nhanh không cần mật khẩu'">Đăng nhập nhanh không cần mật khẩu</p>
+                    <p class="text-sm font-bold text-slate-700">Đăng nhập bằng Vân tay / Face ID</p>
+                    <p class="text-micro font-medium"
+                       :class="on ? 'text-emerald-600' : 'text-slate-500'"
+                       x-text="!ho_tro ? 'Thiết bị không hỗ trợ' : (busy ? 'Đang xử lý…' : (on ? 'Đang bật' : 'Đang tắt'))">Đang tắt</p>
                 </div>
-                <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300 shrink-0"></i>
-            </button>
+                <button @click="gat()" type="button" role="switch" aria-label="Bật hoặc tắt đăng nhập sinh trắc"
+                        :aria-checked="on ? 'true' : 'false'" :disabled="busy || !ho_tro"
+                        class="w-11 h-6 shrink-0 rounded-full relative transition-colors duration-200 ease-in-out disabled:opacity-50"
+                        :class="on ? 'bg-emerald-500' : 'bg-slate-300'">
+                    <div class="w-4 h-4 bg-white rounded-full absolute top-1 shadow-sm transition-transform duration-200 ease-in-out"
+                         :class="on ? 'translate-x-6' : 'translate-x-1'"></div>
+                </button>
+            </div>
 
             <button @click="logout()" type="button" class="w-full flex items-center gap-3 border-t border-slate-100 pt-3 text-left active:scale-[0.98] transition-transform">
                 <div class="w-10 h-10 shrink-0 rounded-2xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-500">
