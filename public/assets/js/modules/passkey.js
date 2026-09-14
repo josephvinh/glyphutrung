@@ -36,79 +36,104 @@ const Passkey = {
         return bytes.buffer;
     },
 
+    // Báo cho người dùng: ưu tiên toast của app (đẹp, không chặn thao tác).
+    // Màn đăng nhập không nạp toast thì mới rơi về alert.
+    _bao(message, type = 'info') {
+        if (window.TNTT && window.TNTT.toast) window.TNTT.toast.show(message, type, 4500);
+        else alert(message);
+    },
+
+    // Dịch lỗi kỹ thuật của WebAuthn sang câu thuần Việt người dùng hiểu.
+    // Trả '' nghĩa là KHÔNG cần báo (người dùng tự bấm huỷ hoặc hết giờ).
+    _loiThanThien(e, macDinh) {
+        switch (e && e.name) {
+            case 'NotAllowedError':
+            case 'AbortError':
+                return '';   // huỷ / hết giờ — im lặng, không doạ người dùng
+            case 'InvalidStateError':
+                return 'Thiết bị này đã được đăng ký trước đó rồi.';
+            case 'NotSupportedError':
+                return 'Thiết bị hoặc trình duyệt chưa hỗ trợ FaceID / Vân tay.';
+            case 'SecurityError':
+                return 'Không thiết lập được vì lý do bảo mật. Hãy chắc chắn đang mở bằng HTTPS.';
+            default:
+                return macDinh;
+        }
+    },
+
+    // Đăng ký khoá sinh trắc cho tài khoản đang đăng nhập (gọi từ màn Hồ sơ).
+    // Trả true nếu thành công. Tự báo kết quả cho người dùng bằng toast.
     async register() {
-        // Ghi rõ đang ở bước nào — nếu lỗi, alert nói đúng chỗ hỏng
-        // (đặc biệt hữu ích trên iPhone không mở được F12 để xem console).
+        // buoc: chỉ để ghi console cho lập trình viên, KHÔNG hiện cho người dùng.
         let buoc = 'bắt đầu';
         try {
             if (!window.PublicKeyCredential) {
-                alert('Trình duyệt của bạn không hỗ trợ sinh trắc học / FaceID.');
+                this._bao('Thiết bị của bạn chưa hỗ trợ FaceID / Vân tay.', 'warning');
                 return false;
             }
 
-            buoc = 'gọi server lấy tham số (getRegisterArgs)';
+            buoc = 'lấy tham số từ máy chủ';
             const res = await this._post('api/passkey.php?action=getRegisterArgs');
-            if (!res.ok) { alert(res.error || 'Lỗi server'); return false; }
+            if (!res.ok) { this._bao(res.error || 'Máy chủ đang bận, vui lòng thử lại sau.', 'error'); return false; }
 
             // Server trả { publicKey: {...} } (chuẩn WebAuthn). Gỡ vỏ nếu có.
             const args = res.args.publicKey || res.args;
-
-            buoc = 'giải mã challenge';
+            buoc = 'chuẩn bị dữ liệu';
             args.challenge = this.base64ToBuffer(args.challenge);
-            buoc = 'giải mã user.id';
             args.user.id   = this.base64ToBuffer(args.user.id);
-            buoc = 'giải mã excludeCredentials';
             if (args.excludeCredentials) {
                 args.excludeCredentials.forEach(c => { c.id = this.base64ToBuffer(c.id); });
             }
 
-            buoc = 'tạo khoá (navigator.credentials.create)';
+            buoc = 'chờ xác thực khuôn mặt / vân tay';
             const cred = await navigator.credentials.create({ publicKey: args });
 
-            buoc = 'mã hoá kết quả trả về';
-            const payload = {
+            buoc = 'lưu lên máy chủ';
+            const verifyRes = await this._post('api/passkey.php?action=processRegister', {
                 id: cred.id,
                 clientDataJSON:    this.bufferToBase64(cred.response.clientDataJSON),
                 attestationObject: this.bufferToBase64(cred.response.attestationObject)
-            };
-
-            buoc = 'lưu lên server (processRegister)';
-            const verifyRes = await this._post('api/passkey.php?action=processRegister', payload);
-            if (verifyRes.ok) { alert('Đăng ký Vân tay / FaceID thành công!'); return true; }
-            alert(verifyRes.error || 'Xác thực thất bại.');
+            });
+            if (verifyRes.ok) {
+                this._bao('Đã đăng ký thành công! Lần sau bạn có thể đăng nhập chỉ bằng khuôn mặt hoặc vân tay.', 'success');
+                return true;
+            }
+            this._bao(verifyRes.error || 'Đăng ký chưa thành công, vui lòng thử lại.', 'error');
             return false;
 
         } catch (e) {
-            console.error(e);
-            alert('Lỗi ở bước: ' + buoc + '\n[' + (e.name || 'Error') + '] ' + e.message);
+            console.error('[Passkey] Đăng ký lỗi ở bước:', buoc, e);
+            const msg = this._loiThanThien(e, 'Chưa đăng ký được FaceID / Vân tay. Vui lòng thử lại.');
+            if (msg) this._bao(msg, 'error');
             return false;
         }
     },
 
+    // Đăng nhập bằng khoá sinh trắc (gọi từ màn Đăng nhập).
+    // Trả { user, message }: user có giá trị khi thành công; message là câu
+    // báo lỗi thân thiện để màn login hiện ô đỏ (null = im lặng, người dùng huỷ).
     async login() {
         let buoc = 'bắt đầu';
         try {
             if (!window.PublicKeyCredential) {
-                alert('Trình duyệt của bạn không hỗ trợ sinh trắc học / FaceID.');
-                return null;
+                return { user: null, message: 'Thiết bị của bạn chưa hỗ trợ FaceID / Vân tay.' };
             }
 
-            buoc = 'gọi server lấy tham số (getLoginArgs)';
+            buoc = 'lấy tham số từ máy chủ';
             const res = await this._post('api/passkey.php?action=getLoginArgs');
-            if (!res.ok) { alert(res.error || 'Lỗi server'); return null; }
+            if (!res.ok) return { user: null, message: res.error || 'Máy chủ đang bận, vui lòng thử lại sau.' };
 
             const args = res.args.publicKey || res.args;
-            buoc = 'giải mã challenge';
+            buoc = 'chuẩn bị dữ liệu';
             args.challenge = this.base64ToBuffer(args.challenge);
-            buoc = 'giải mã allowCredentials';
             if (args.allowCredentials) {
                 args.allowCredentials.forEach(c => { c.id = this.base64ToBuffer(c.id); });
             }
 
-            buoc = 'lấy khoá (navigator.credentials.get)';
+            buoc = 'chờ xác thực khuôn mặt / vân tay';
             const cred = await navigator.credentials.get({ publicKey: args });
 
-            buoc = 'lưu lên server (processLogin)';
+            buoc = 'xác minh trên máy chủ';
             const verifyRes = await this._post('api/passkey.php?action=processLogin', {
                 id: cred.id,
                 clientDataJSON:    this.bufferToBase64(cred.response.clientDataJSON),
@@ -116,15 +141,14 @@ const Passkey = {
                 signature:         this.bufferToBase64(cred.response.signature),
                 userHandle:        cred.response.userHandle ? this.bufferToBase64(cred.response.userHandle) : null
             });
-            if (verifyRes.ok) return verifyRes.user;
-            alert(verifyRes.error || 'Đăng nhập sinh trắc học thất bại.');
-            return null;
+            if (verifyRes.ok) return { user: verifyRes.user, message: null };
+            return { user: null, message: verifyRes.error || 'Đăng nhập bằng FaceID / Vân tay chưa thành công.' };
 
         } catch (e) {
-            console.error(e);
-            // NotAllowedError = người dùng bấm huỷ / hết giờ, không cần báo lỗi.
-            if (e.name !== 'NotAllowedError') alert('Lỗi ở bước: ' + buoc + '\n[' + (e.name || 'Error') + '] ' + e.message);
-            return null;
+            console.error('[Passkey] Đăng nhập lỗi ở bước:', buoc, e);
+            // NotAllowedError / AbortError = người dùng huỷ hoặc hết giờ -> im lặng.
+            const msg = this._loiThanThien(e, 'Đăng nhập bằng FaceID / Vân tay chưa thành công.');
+            return { user: null, message: msg || null };
         }
     }
 };

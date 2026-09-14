@@ -213,13 +213,18 @@
                 <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300 shrink-0"></i>
             </button>
 
-            <button @click="Passkey.register()" type="button" class="w-full flex items-center gap-3 border-t border-slate-100 pt-3 text-left active:scale-[0.98] transition-transform">
+            <button x-data="{ pkBusy: false }" type="button" :disabled="pkBusy"
+                    @click="if (pkBusy) return; pkBusy = true; await window.Passkey.register(); pkBusy = false"
+                    class="w-full flex items-center gap-3 border-t border-slate-100 pt-3 text-left active:scale-[0.98] transition-transform disabled:opacity-60">
                 <div class="w-10 h-10 shrink-0 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
-                    <i data-lucide="scan-face" class="w-5 h-5"></i>
+                    <span x-show="!pkBusy" class="inline-flex items-center justify-center"><i data-lucide="scan-face" class="w-5 h-5"></i></span>
+                    <span x-show="pkBusy" style="display:none" class="inline-flex items-center justify-center">
+                        <svg class="w-5 h-5 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2.5" stroke-opacity=".25"/><path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+                    </span>
                 </div>
                 <div class="flex-1 min-w-0">
                     <p class="text-sm font-bold text-slate-700">Đăng ký Vân tay / FaceID</p>
-                    <p class="text-micro text-slate-500">Đăng nhập nhanh không cần mật khẩu</p>
+                    <p class="text-micro text-slate-500" x-text="pkBusy ? 'Đang chờ xác thực…' : 'Đăng nhập nhanh không cần mật khẩu'">Đăng nhập nhanh không cần mật khẩu</p>
                 </div>
                 <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300 shrink-0"></i>
             </button>
@@ -360,8 +365,8 @@
 
             <button @click="pwShow = !pwShow" type="button"
                     class="flex items-center gap-2 text-micro font-bold text-slate-500 active:scale-95 transition-transform">
-                <i x-show="!pwShow" data-lucide="eye" class="w-4 h-4"></i>
-                <i x-show="pwShow" style="display: none;" data-lucide="eye-off" class="w-4 h-4"></i>
+                <svg x-show="!pwShow" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                <svg x-show="pwShow" style="display:none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
                 <span x-text="pwShow ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'"></span>
             </button>
 

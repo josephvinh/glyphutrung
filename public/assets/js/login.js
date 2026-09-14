@@ -76,10 +76,12 @@ document.addEventListener('alpine:init', () => {
             this.error = '';
             this.busy = true;
             try {
-                const user = await window.Passkey.login();
-                if (user) location.reload();
+                const res = await window.Passkey.login();
+                if (res && res.user) { location.reload(); return; }
+                // Người dùng huỷ -> message rỗng -> im lặng. Lỗi thật -> hiện ô đỏ.
+                if (res && res.message) this.error = res.message;
             } catch (e) {
-                // lỗi đã được alert trong passkey.js
+                this.error = 'Đăng nhập bằng FaceID / Vân tay chưa thành công. Vui lòng thử lại.';
             } finally {
                 this.busy = false;
             }
