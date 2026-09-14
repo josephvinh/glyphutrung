@@ -12,7 +12,7 @@
    payload, vốn là phần dài và dễ sai nhất của Web Push.
    ========================================================== */
 
-const PHIEN_BAN = 'tntt-sw-6';
+const PHIEN_BAN = 'tntt-sw-7';
 const KHO      = 'tntt-tinh-' + PHIEN_BAN;
 
 self.addEventListener('install', () => self.skipWaiting());

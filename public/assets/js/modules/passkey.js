@@ -37,59 +37,78 @@ const Passkey = {
     },
 
     async register() {
+        // Ghi rõ đang ở bước nào — nếu lỗi, alert nói đúng chỗ hỏng
+        // (đặc biệt hữu ích trên iPhone không mở được F12 để xem console).
+        let buoc = 'bắt đầu';
         try {
             if (!window.PublicKeyCredential) {
                 alert('Trình duyệt của bạn không hỗ trợ sinh trắc học / FaceID.');
                 return false;
             }
 
+            buoc = 'gọi server lấy tham số (getRegisterArgs)';
             const res = await this._post('api/passkey.php?action=getRegisterArgs');
             if (!res.ok) { alert(res.error || 'Lỗi server'); return false; }
 
             // Server trả { publicKey: {...} } (chuẩn WebAuthn). Gỡ vỏ nếu có.
             const args = res.args.publicKey || res.args;
+
+            buoc = 'giải mã challenge';
             args.challenge = this.base64ToBuffer(args.challenge);
+            buoc = 'giải mã user.id';
             args.user.id   = this.base64ToBuffer(args.user.id);
+            buoc = 'giải mã excludeCredentials';
             if (args.excludeCredentials) {
                 args.excludeCredentials.forEach(c => { c.id = this.base64ToBuffer(c.id); });
             }
 
+            buoc = 'tạo khoá (navigator.credentials.create)';
             const cred = await navigator.credentials.create({ publicKey: args });
 
-            const verifyRes = await this._post('api/passkey.php?action=processRegister', {
+            buoc = 'mã hoá kết quả trả về';
+            const payload = {
                 id: cred.id,
                 clientDataJSON:    this.bufferToBase64(cred.response.clientDataJSON),
                 attestationObject: this.bufferToBase64(cred.response.attestationObject)
-            });
+            };
+
+            buoc = 'lưu lên server (processRegister)';
+            const verifyRes = await this._post('api/passkey.php?action=processRegister', payload);
             if (verifyRes.ok) { alert('Đăng ký Vân tay / FaceID thành công!'); return true; }
             alert(verifyRes.error || 'Xác thực thất bại.');
             return false;
 
         } catch (e) {
             console.error(e);
-            alert('Quá trình đăng ký bị hủy hoặc lỗi: ' + e.message);
+            alert('Lỗi ở bước: ' + buoc + '\n[' + (e.name || 'Error') + '] ' + e.message);
             return false;
         }
     },
 
     async login() {
+        let buoc = 'bắt đầu';
         try {
             if (!window.PublicKeyCredential) {
                 alert('Trình duyệt của bạn không hỗ trợ sinh trắc học / FaceID.');
                 return null;
             }
 
+            buoc = 'gọi server lấy tham số (getLoginArgs)';
             const res = await this._post('api/passkey.php?action=getLoginArgs');
             if (!res.ok) { alert(res.error || 'Lỗi server'); return null; }
 
             const args = res.args.publicKey || res.args;
+            buoc = 'giải mã challenge';
             args.challenge = this.base64ToBuffer(args.challenge);
+            buoc = 'giải mã allowCredentials';
             if (args.allowCredentials) {
                 args.allowCredentials.forEach(c => { c.id = this.base64ToBuffer(c.id); });
             }
 
+            buoc = 'lấy khoá (navigator.credentials.get)';
             const cred = await navigator.credentials.get({ publicKey: args });
 
+            buoc = 'lưu lên server (processLogin)';
             const verifyRes = await this._post('api/passkey.php?action=processLogin', {
                 id: cred.id,
                 clientDataJSON:    this.bufferToBase64(cred.response.clientDataJSON),
@@ -103,7 +122,8 @@ const Passkey = {
 
         } catch (e) {
             console.error(e);
-            if (e.name !== 'NotAllowedError') alert('Lỗi đăng nhập sinh trắc học: ' + e.message);
+            // NotAllowedError = người dùng bấm huỷ / hết giờ, không cần báo lỗi.
+            if (e.name !== 'NotAllowedError') alert('Lỗi ở bước: ' + buoc + '\n[' + (e.name || 'Error') + '] ' + e.message);
             return null;
         }
     }

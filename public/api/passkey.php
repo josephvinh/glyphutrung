@@ -47,7 +47,8 @@ switch ($action) {
         $challenge = $_SESSION['webauthn_challenge'] ?? '';
 
         try {
-            $data = $WebAuthn->processCreate($clientDataJSON, $attestationObject, $challenge, true, true, false);
+            // Arg 4 is requireUserVerification. Set to false to match getCreateArgs (which defaults to false).
+            $data = $WebAuthn->processCreate($clientDataJSON, $attestationObject, $challenge, false, true, false);
             
             $credentialId = base64_encode($data->credentialId);
             $publicKey = $data->credentialPublicKey;
