@@ -22,7 +22,7 @@ if (!$__dev) ob_start();
     <link rel="icon" href="/assets/img/icon-32.png" sizes="32x32" type="image/png">
     <link rel="apple-touch-icon" href="/assets/img/icon-180.png">
     <link rel="manifest" href="/manifest.json">
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <title>Đăng nhập · GIA ĐÌNH GIÁO LÝ PHÚ TRUNG</title>
 
@@ -73,9 +73,9 @@ if (!$__dev) ob_start();
                        placeholder="••••••••" required
                        class="w-full bg-slate-50 border border-slate-200 rounded-field py-3.5 pl-11 pr-12 text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 transition-all">
                 <button aria-label="Hiện hoặc ẩn mật khẩu" @click="showPw = !showPw" type="button"
-                        class="tap-safe absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-slate-400 active:scale-90 transition-transform">
-                    <i x-show="!showPw" data-lucide="eye" class="w-4 h-4"></i>
-                    <i x-show="showPw" data-lucide="eye-off" class="w-4 h-4"></i>
+                        class="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center text-slate-400 active:scale-90 transition-transform">
+                    <svg x-show="!showPw" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <svg x-show="showPw" style="display:none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
                 </button>
             </div>
         </div>
@@ -89,7 +89,7 @@ if (!$__dev) ob_start();
 
         <button type="submit" :disabled="busy"
                 class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-blue-200 flex justify-center items-center disabled:opacity-50">
-            <i x-show="!busy" data-lucide="log-in" class="w-5 h-5 mr-2"></i>
+            <span x-show="!busy" class="inline-flex items-center justify-center"><i data-lucide="log-in" class="w-5 h-5 mr-2"></i></span>
             <span x-text="busy ? 'Đang kiểm tra...' : 'Đăng nhập'"></span>
         </button>
 
@@ -213,7 +213,7 @@ if (!$__dev) ob_start();
 
         <button type="submit" :disabled="busy"
                 class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-blue-200 flex justify-center items-center disabled:opacity-50">
-            <i x-show="!busy" data-lucide="send" class="w-5 h-5 mr-2"></i>
+            <span x-show="!busy" class="inline-flex items-center justify-center"><i data-lucide="send" class="w-5 h-5 mr-2"></i></span>
             <span x-text="busy ? 'Đang gửi...' : 'Gửi đăng ký'"></span>
         </button>
     </form>
