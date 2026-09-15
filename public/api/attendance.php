@@ -114,30 +114,44 @@ if (($_GET['action'] ?? '') === 'scan') {
 
     $them = 0; $daCo = 0; $bo = [];
 
-    db()->beginTransaction();
-    try {
-        foreach ($codes as $ma) {
-            $ma = trim((string) $ma);
-            $em = $theoMa[$ma] ?? null;
+    // Lọc trước các em hợp lệ (bỏ ra ngoài vòng ghi để chèn HÀNG LOẠT một
+    // lượt, thay vì mỗi em một câu INSERT — trước đây là N+1).
+    $hopLe = [];
+    foreach ($codes as $ma) {
+        $ma = trim((string) $ma);
+        $em = $theoMa[$ma] ?? null;
 
-            if (!$em)                                   { $bo[] = [$ma, 'không có em nào mang mã này']; continue; }
-            if ($em['status'] !== 'đang sinh hoạt')      { $bo[] = [$ma, $em['full_name'] . ' không còn sinh hoạt']; continue; }
-            if ($chophep !== null && !in_array((int) $em['class_id'], $chophep, true)) {
-                $bo[] = [$ma, $em['full_name'] . ' không thuộc khối bạn phụ trách']; continue;
-            }
-
-            // INSERT IGNORE dựa vào khoá duy nhất (program, date, student).
-            // Quét trùng chỉ tốn một lệnh không làm gì, không đè bản ghi cũ.
-            $n = db_run('INSERT IGNORE INTO attendances
-                            (year_id, program_id, session_date, student_id, status, method, marked_by)
-                         VALUES (?,?,?,?,?,?,?)',
-                 [$year['id'], $programId, $date, (int) $em['id'], $status, 'qr', $me['id']]);
-            $n > 0 ? $them++ : $daCo++;
+        if (!$em)                                   { $bo[] = [$ma, 'không có em nào mang mã này']; continue; }
+        if ($em['status'] !== 'đang sinh hoạt')      { $bo[] = [$ma, $em['full_name'] . ' không còn sinh hoạt']; continue; }
+        if ($chophep !== null && !in_array((int) $em['class_id'], $chophep, true)) {
+            $bo[] = [$ma, $em['full_name'] . ' không thuộc khối bạn phụ trách']; continue;
         }
-        db()->commit();
-    } catch (Throwable $e) {
-        db()->rollBack();
-        json_fail(safe_error($e, 'Ghi điểm danh thất bại, đã hoàn tác: '), 500);
+        $hopLe[] = (int) $em['id'];
+    }
+
+    if ($hopLe) {
+        db()->beginTransaction();
+        try {
+            // INSERT IGNORE nhiều dòng trong MỘT câu. Khoá duy nhất
+            // (program, date, student) khiến bản ghi trùng bị bỏ qua, không
+            // đè bản cũ. rowCount() trả về SỐ DÒNG THẬT SỰ CHÈN -> "thêm mới";
+            // phần còn lại là "đã có". Chia lô 200 (đã giới hạn từ trên).
+            foreach (array_chunk($hopLe, 200) as $lo) {
+                $vals   = implode(',', array_fill(0, count($lo), '(?,?,?,?,?,?,?)'));
+                $params = [];
+                foreach ($lo as $sid) {
+                    array_push($params, $year['id'], $programId, $date, $sid, $status, 'qr', $me['id']);
+                }
+                $them += db_run("INSERT IGNORE INTO attendances
+                                    (year_id, program_id, session_date, student_id, status, method, marked_by)
+                                 VALUES $vals", $params);
+            }
+            db()->commit();
+        } catch (Throwable $e) {
+            db()->rollBack();
+            json_fail(safe_error($e, 'Ghi điểm danh thất bại, đã hoàn tác: '), 500);
+        }
+        $daCo = count($hopLe) - $them;
     }
 
     // Một dòng nhật ký cho cả lô, không phải 500 dòng
