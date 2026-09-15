@@ -58,8 +58,6 @@ if (!$__dev) ob_start();
     <link rel="icon" href="assets/img/icon-32.png" sizes="32x32" type="image/png">
     <link rel="apple-touch-icon" href="assets/img/icon-180.png">
     <link rel="manifest" href="manifest.json">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="GĐGLPT">
@@ -160,6 +158,7 @@ if (!$__dev) ob_start();
             <template x-if="currentModule==='calendar'"><div><?php include __DIR__ . '/../views/module_calendar.php'; ?></div></template>
             <template x-if="currentModule==='notes'"><div><?php include __DIR__ . '/../views/module_notes.php'; ?></div></template>
             <template x-if="currentModule==='guide'"><div><?php include __DIR__ . '/../views/module_guide.php'; ?></div></template>
+            <template x-if="currentModule==='thu_vien'"><div><?php include __DIR__ . '/../views/module_library.php'; ?></div></template>
 
         </main>
 
@@ -177,6 +176,15 @@ if (!$__dev) ob_start();
     <script>window.TNTT_MODULES = <?php echo json_encode($__manifest['js_modules']); ?>;</script>
     <!-- Các mảnh của component tnttApp. Phải nạp TRƯỚC app.js vì
          app.js chỉ làm nhiệm vụ gộp chúng lại. -->
+    <?php if (!$__dev): ?>
+    <script>
+        // PRODUCTION: Tắt các log không cần thiết để giữ Console sạch sẽ
+        console.log = function() {};
+        console.warn = function() {};
+        console.info = function() {};
+    </script>
+    <?php endif; ?>
+
     <?php if ($__dev): ?>
     <!-- DEV (localhost): nạp lẻ từng mảnh để sửa file nào thấy ngay file đó -->
     <script src="assets/js/modules/toast.js?v=<?php echo asset_v(__DIR__ . '/assets/js/modules/toast.js'); ?>"></script>
