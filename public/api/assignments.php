@@ -74,7 +74,7 @@ switch ($action) {
 
     // -------------------------------------------------------------
     case 'create':
-        require_csrf();
+        require_write();   // hành động ghi: bắt buộc POST + CSRF
         $meEditor = require_permission('org', 'edit');
         $in = json_input();
 
@@ -127,7 +127,7 @@ switch ($action) {
 
     // -------------------------------------------------------------
     case 'end':
-        require_csrf();
+        require_write();   // hành động ghi: bắt buộc POST + CSRF
         $meEditor = require_permission('org', 'edit');
         $in = json_input();
 
@@ -159,7 +159,7 @@ switch ($action) {
 
     // -------------------------------------------------------------
     case 'set_primary':
-        require_csrf();
+        require_write();   // hành động ghi: bắt buộc POST + CSRF
         $meEditor = require_permission('org', 'edit');
         $in = json_input();
 
@@ -175,7 +175,7 @@ switch ($action) {
 
     // -------------------------------------------------------------
     case 'delete':
-        require_csrf();
+        require_write();   // hành động ghi: bắt buộc POST + CSRF
         $meEditor = require_permission('org', 'edit');
         $in = json_input();
 
