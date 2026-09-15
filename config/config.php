@@ -38,6 +38,18 @@ $config = [
         'subject' => 'mailto:tuongngocvinh@gmail.com',
     ],
 
+    // THƯ VIỆN TÀI LIỆU — nơi lưu file + giới hạn.
+    'library' => [
+        // Thư mục lưu file NGOÀI web (không gọi URL trực tiếp được). Nếu host
+        // không ghi được ngoài docroot, đổi sang một thư mục trong public có
+        // .htaccess chặn (xem docs/thiet-ke-thu-vien-tai-lieu.md) rồi ghi đè
+        // giá trị này trong config.local.php.
+        'storage_path'     => __DIR__ . '/../storage/library',
+        'max_size_mb'      => 15,
+        'allowed_view'     => ['pdf', 'jpg', 'jpeg', 'png', 'webp'],   // xem trực tiếp
+        'allowed_download' => ['doc', 'docx', 'ppt', 'pptx'],          // chỉ tải về
+    ],
+
     // ĐỂ NGUYÊN true trên máy chủ thật: cấm install.php/seed_demo.php qua trình
     // duyệt + không lộ lỗi CSDL cho người dùng. Máy nhà đặt false qua config.local.php.
     'production' => true,
