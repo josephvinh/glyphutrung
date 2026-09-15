@@ -23,15 +23,32 @@ $action = $_GET['action'] ?? 'list';
 if ($action !== 'list') require_permission('years', 'edit');
 $in     = json_input();
 
-/** Đếm dữ liệu đang gắn vào một niên khoá, để cảnh báo trước khi khoá */
-function year_usage(int $yearId): array
+/** Đếm dữ liệu gắn vào MỌI niên khoá trong 4 câu GROUP BY (tránh N+1 khi
+ *  liệt kê: trước đây gọi 4 COUNT cho từng năm -> 4×N câu).
+ *  Trả [year_id => ['enrollments'=>n,'programs'=>n,'attendances'=>n,'leaves'=>n]]. */
+function year_usage_all(): array
 {
-    return [
-        'enrollments' => (int) db_one('SELECT COUNT(*) n FROM enrollments WHERE year_id=?', [$yearId])['n'],
-        'programs'    => (int) db_one('SELECT COUNT(*) n FROM programs    WHERE year_id=?', [$yearId])['n'],
-        'attendances' => (int) db_one('SELECT COUNT(*) n FROM attendances WHERE year_id=?', [$yearId])['n'],
-        'leaves'      => (int) db_one('SELECT COUNT(*) n FROM leave_requests WHERE year_id=?', [$yearId])['n'],
-    ];
+    $map = [];
+    $gop = function (string $bang, string $khoa) use (&$map) {
+        foreach (db_all("SELECT year_id, COUNT(*) n FROM $bang GROUP BY year_id") as $r) {
+            $yid = (int) $r['year_id'];
+            if (!isset($map[$yid])) {
+                $map[$yid] = ['enrollments' => 0, 'programs' => 0, 'attendances' => 0, 'leaves' => 0];
+            }
+            $map[$yid][$khoa] = (int) $r['n'];
+        }
+    };
+    $gop('enrollments',    'enrollments');
+    $gop('programs',       'programs');
+    $gop('attendances',    'attendances');
+    $gop('leave_requests', 'leaves');
+    return $map;
+}
+
+/** Số 0 cho năm chưa có dữ liệu nào */
+function year_usage_rong(): array
+{
+    return ['enrollments' => 0, 'programs' => 0, 'attendances' => 0, 'leaves' => 0];
 }
 
 switch ($action) {
@@ -39,12 +56,22 @@ switch ($action) {
     // -------------------------------------------------------------
     case 'list':
         $rows = db_all('SELECT * FROM school_years ORDER BY start_date DESC');
-        $out  = [];
+
+        // Nạp GỘP thay vì hỏi từng năm (tránh N+1):
+        //   - usage: 4 câu GROUP BY cho mọi năm.
+        //   - terms: 1 câu lấy hết học kỳ rồi nhóm theo năm trong PHP.
+        $usageMap = year_usage_all();
+        $termsByYear = [];
+        foreach (db_all('SELECT id, year_id, name, start_date, end_date FROM terms ORDER BY sort_order') as $t) {
+            $termsByYear[(int) $t['year_id']][] = $t;
+        }
+
+        $out = [];
         foreach ($rows as $y) {
-            $terms = db_all('SELECT id, name, start_date, end_date FROM terms
-                              WHERE year_id = ? ORDER BY sort_order', [$y['id']]);
+            $yid   = (int) $y['id'];
+            $terms = $termsByYear[$yid] ?? [];
             $out[] = [
-                'id'        => (int) $y['id'],
+                'id'        => $yid,
                 'name'      => $y['name'],
                 'startDate' => $y['start_date'],
                 'endDate'   => $y['end_date'],
@@ -54,7 +81,7 @@ switch ($action) {
                     'id' => (int) $t['id'], 'name' => $t['name'],
                     'from' => $t['start_date'], 'to' => $t['end_date'],
                 ], $terms),
-                'usage'     => year_usage((int) $y['id']),
+                'usage'     => $usageMap[$yid] ?? year_usage_rong(),
             ];
         }
         json_out(['ok' => true, 'years' => $out]);
