@@ -81,14 +81,14 @@
                     <p class="text-micro text-slate-500 mb-3 ml-1" x-text="yearUsageLabel(y.usage)"></p>
 
                     <div class="grid grid-cols-2 gap-3">
-                        <button @click="toggleYearLock(y)"
-                                class="py-2.5 rounded-xl font-bold text-xs border active:scale-95 transition-transform flex items-center justify-center gap-1.5"
+                        <button @click="toggleYearLock(y)" :disabled="yearBusy"
+                                class="py-2.5 rounded-xl font-bold text-xs border active:scale-95 transition-transform flex items-center justify-center gap-1.5 disabled:opacity-50"
                                 :class="y.status === 'đang mở' ? 'bg-slate-100 text-slate-600 border-slate-200' : 'bg-emerald-50 text-emerald-600 border-emerald-100'">
-                            <i x-show="y.status === 'đang mở'" data-lucide="lock" class="w-3.5 h-3.5"></i>
-                            <i x-show="y.status !== 'đang mở'" data-lucide="lock-open" class="w-3.5 h-3.5"></i>
+                            <span x-show="y.status === 'đang mở'" class="inline-flex items-center justify-center"><i data-lucide="lock" class="w-3.5 h-3.5"></i></span>
+                            <span x-show="y.status !== 'đang mở'" class="inline-flex items-center justify-center"><i data-lucide="lock-open" class="w-3.5 h-3.5"></i></span>
                             <span x-text="y.status === 'đang mở' ? 'Khoá sổ' : 'Mở lại'"></span>
                         </button>
-                        <button @click="activateYear(y)" :disabled="y.isCurrent || y.status === 'đã khóa'"
+                        <button @click="activateYear(y)" :disabled="yearBusy || y.isCurrent || y.status === 'đã khóa'"
                                 class="py-2.5 rounded-xl font-bold text-xs border active:scale-95 transition-transform flex items-center justify-center gap-1.5 bg-blue-600 text-white border-blue-600 disabled:opacity-30 disabled:cursor-not-allowed">
                             <i data-lucide="check" class="w-3.5 h-3.5"></i>
                             <span x-text="y.isCurrent ? 'Đang dùng' : 'Chuyển sang'"></span>
@@ -133,9 +133,9 @@
                 </p>
             </div>
             <div class="p-4 border-t border-slate-100">
-                <button @click="saveYear()" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-blue-200 flex justify-center items-center">
+                <button @click="saveYear()" :disabled="yearBusy" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-blue-200 flex justify-center items-center disabled:opacity-50">
                     <i data-lucide="save" class="w-5 h-5 mr-2"></i>
-                        <span x-text="yearForm.id ? 'Lưu thay đổi' : 'Mở niên khoá'"></span>
+                        <span x-text="yearBusy ? 'Đang lưu…' : (yearForm.id ? 'Lưu thay đổi' : 'Mở niên khoá')"></span>
                 </button>
             </div>
         </div>

@@ -704,12 +704,15 @@ window.TNTT.core = {
     yearForm: { id: null, name: '', startDate: '', endDate: '' },
 
     async apiYear(action, body) {
-        const res = await fetch('api/years.php?action=' + action, {
-            method: body ? 'POST' : 'GET',
-            headers: { 'Content-Type': 'application/json' },
-            body: body ? JSON.stringify(body) : undefined
-        });
-        return res.json();
+        try {
+            return await (await fetch('api/years.php?action=' + action, {
+                method: body ? 'POST' : 'GET',
+                headers: { 'Content-Type': 'application/json' },
+                body: body ? JSON.stringify(body) : undefined
+            })).json();
+        } catch (e) {
+            return { ok: false, error: 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng.' };
+        }
     },
 
     async loadYears() {
@@ -742,6 +745,7 @@ window.TNTT.core = {
     },
 
     async saveYear() {
+        if (this.yearBusy) return;   // chặn bấm Lưu nhiều lần -> tránh tạo trùng
         const f = this.yearForm;
         if (!f.name.trim() || !f.startDate || !f.endDate) {
             window.TNTT.toast.warning('Vui lòng nhập đủ tên niên khoá và hai mốc ngày.');
@@ -755,43 +759,66 @@ window.TNTT.core = {
         const body = { name: f.name.trim(), startDate: f.startDate, endDate: f.endDate };
         if (f.id) body.id = f.id;
 
-        const r = await this.apiYear(f.id ? 'update' : 'create', body);
-        if (!r.ok) { window.TNTT.toast.error(r.error); return; }
+        this.yearBusy = true;
+        try {
+            const r = await this.apiYear(f.id ? 'update' : 'create', body);
+            if (!r.ok) { window.TNTT.toast.error(r.error); return; }
 
-        this.showYearModal = false;
-        await this.loadYears();
+            this.showYearModal = false;
+            await this.loadYears();
 
-        // Học kỳ bị co lại cho vừa khoảng mới thì phải nói rõ, đừng đổi ngầm
-        if (r.termsAdjusted && r.termsAdjusted.length) {
-            window.TNTT.toast.info('Đã sửa niên khoá. Học kỳ được chỉnh cho vừa khoảng mới: ' + r.termsAdjusted.join(', '));
-        }
+            // Học kỳ bị co lại cho vừa khoảng mới thì phải nói rõ, đừng đổi ngầm
+            if (r.termsAdjusted && r.termsAdjusted.length) {
+                window.TNTT.toast.info('Đã sửa niên khoá. Học kỳ được chỉnh cho vừa khoảng mới: ' + r.termsAdjusted.join(', '));
+            }
 
-        // Sửa chính niên khoá đang dùng thì mọi số liệu trên màn hình
-        // đang dựa vào khoảng cũ -> nạp lại cho khớp
-        if (f.id && this.year && this.year.id === f.id) {
-            this.year.name = body.name;
-            await this.loadData();
+            // Sửa chính niên khoá đang dùng thì mọi số liệu trên màn hình
+            // đang dựa vào khoảng cũ -> nạp lại cho khớp
+            if (f.id && this.year && this.year.id === f.id) {
+                this.year.name = body.name;
+                await this.loadData();
+            }
+        } catch (e) {
+            window.TNTT.toast.error('Lỗi khi lưu niên khoá.');
+        } finally {
+            this.yearBusy = false;
         }
     },
 
     // Đổi niên khoá đang dùng thì phải tải lại trang: mọi số liệu
     // trên màn hình đều thuộc về năm cũ.
     async activateYear(y) {
+        if (this.yearBusy) return;
         if (!confirm('Chuyển sang niên khoá ' + y.name + '?\n\nToàn bộ dữ liệu hiển thị sẽ đổi theo năm này.')) return;
-        const r = await this.apiYear('activate', { id: y.id });
-        if (!r.ok) { window.TNTT.toast.error(r.error); return; }
-        location.reload();
+        this.yearBusy = true;
+        try {
+            const r = await this.apiYear('activate', { id: y.id });
+            if (!r.ok) { window.TNTT.toast.error(r.error); return; }
+            location.reload();
+        } catch (e) {
+            window.TNTT.toast.error('Lỗi khi đổi niên khoá.');
+        } finally {
+            this.yearBusy = false;
+        }
     },
 
     async toggleYearLock(y) {
+        if (this.yearBusy) return;
         const locking = y.status === 'đang mở';
         const msg = locking
             ? 'Khoá sổ niên khoá ' + y.name + '?\n\nDữ liệu năm này chuyển sang chỉ đọc.'
             : 'Mở lại niên khoá ' + y.name + '?';
         if (!confirm(msg)) return;
-        const r = await this.apiYear(locking ? 'lock' : 'unlock', { id: y.id });
-        if (!r.ok) { window.TNTT.toast.error(r.error); return; }
-        await this.loadYears();
+        this.yearBusy = true;
+        try {
+            const r = await this.apiYear(locking ? 'lock' : 'unlock', { id: y.id });
+            if (!r.ok) { window.TNTT.toast.error(r.error); return; }
+            await this.loadYears();
+        } catch (e) {
+            window.TNTT.toast.error('Lỗi khi khoá/mở niên khoá.');
+        } finally {
+            this.yearBusy = false;
+        }
     },
 
     yearUsageLabel(u) {
