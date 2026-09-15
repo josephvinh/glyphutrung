@@ -145,6 +145,8 @@ Với một app **một người bảo trì**, cỡ vài chục endpoint, cấu 
 
 ### 2.5. Nếu muốn "bớt lặp" mà KHÔNG đại phẫu
 
+> ✅ **ĐÃ THỰC HIỆN** (commit `bf58797`). Xem tóm tắt cuối phần này.
+
 Có thể tỉa dần, an toàn, không cần Router:
 
 1. **Gói phần đầu lặp lại** thành 1 helper, ví dụ trong `_bootstrap.php`:
@@ -163,7 +165,14 @@ Có thể tỉa dần, an toàn, không cần Router:
    ```
    Dùng: `trong_giao_dich(fn() => /* các lệnh ghi */);`
 
-→ Giảm lặp **ngay**, giữ nguyên cấu trúc phẳng dễ hiểu, không rủi ro viết lại toàn hệ thống. Làm **khi rảnh**, không gấp.
+→ Giảm lặp **ngay**, giữ nguyên cấu trúc phẳng dễ hiểu, không rủi ro viết lại toàn hệ thống.
+
+**Đã làm gì (commit `bf58797`):**
+- Thêm `require_write()` và `trong_giao_dich()` vào `public/api/_bootstrap.php`.
+- Gộp **44 cặp** `require_post()+require_csrf()` → `require_write()` ở 14 file.
+- Áp `trong_giao_dich()` cho **4 khối transaction ngắn** (years create/activate, settings resetPerms, org duyệt).
+- **Cố ý GIỮ NGUYÊN:** các khối transaction lớn (import ~80 dòng, org 82 dòng, years update có rollBack lồng, promotion) và `assignments.php` (dùng CSRF không kèm POST). Bọc closure những chỗ này chỉ làm **rối hơn** và **thêm rủi ro** — trái mục tiêu.
+- Đã test `trong_giao_dich()` trên DB thật: commit lưu, exception rollback + ném lại, transaction đóng đúng.
 
 ---
 
