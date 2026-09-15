@@ -116,7 +116,7 @@ switch ($action) {
 
     // -------------------------------------------------------------
     case 'password':
-        require_post();
+        require_write();
         $me      = require_login();
         $current = (string) ($in['current'] ?? '');
         $new     = (string) ($in['new'] ?? '');
@@ -142,8 +142,8 @@ switch ($action) {
     // nhà và số điện thoại phụ huynh — không thể để ai đăng ký cũng xem.
     case 'register':
         require_post();
-        $holy  = trim((string) ($in['holyName'] ?? ''));
-        $name  = trim((string) ($in['fullName'] ?? ''));
+        $holy  = mb_convert_case(preg_replace('/\s+/', ' ', trim((string) ($in['holyName'] ?? ''))), MB_CASE_TITLE, 'UTF-8');
+        $name  = mb_convert_case(preg_replace('/\s+/', ' ', trim((string) ($in['fullName'] ?? ''))), MB_CASE_TITLE, 'UTF-8');
         $phone = chuan_hoa_sdt((string) ($in['phone'] ?? ''));
         $pass  = (string) ($in['password'] ?? '');
         $note  = trim((string) ($in['note'] ?? ''));
@@ -199,7 +199,7 @@ switch ($action) {
     // Tự sửa thông tin của chính mình. Vai trò, chức danh và phân công
     // KHÔNG nhận từ đây — đó là việc của Ban Điều Hành bên api/org.php.
     case 'profile':
-        require_post();
+        require_write();
         $me    = require_login();
         $name  = trim((string) ($in['fullName'] ?? ''));
         $phone = trim((string) ($in['phone'] ?? ''));

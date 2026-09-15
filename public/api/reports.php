@@ -39,8 +39,7 @@ switch ($action) {
 
     // -------------------------------------------------------------
     case 'save':
-        require_post();
-        require_csrf();
+        require_write();
         $send   = (bool) ($in['send'] ?? false);
         $remark = trim((string) ($in['remark'] ?? ''));
         $rawSc  = trim((string) ($in['score'] ?? ''));
@@ -56,6 +55,7 @@ switch ($action) {
         }
 
         $a = $in['attendance'] ?? [];
+        if (!is_array($a)) $a = [];
         $conduct = (string) ($in['conduct'] ?? 'tốt');
         $rank    = (string) ($in['rank'] ?? 'Trung bình');
 
@@ -88,8 +88,7 @@ switch ($action) {
 
     // -------------------------------------------------------------
     case 'delete':
-        require_post();
-        require_csrf();
+        require_write();
         db_run('DELETE FROM reports WHERE term_id=? AND student_id=?', [$termId, $studentId]);
         log_action('xoa', 'reports', 'Xóa phiếu liên lạc của ' . $st['full_name'], '');
         json_out(['ok' => true]);

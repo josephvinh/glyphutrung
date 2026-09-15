@@ -11,8 +11,7 @@
 
 require __DIR__ . '/_bootstrap.php';
 
-require_post();          // hành động ghi — chặn CSRF qua GET
-require_csrf();
+require_write();  // hành động ghi: bắt buộc POST + CSRF
 $me   = require_permission('promotion', 'edit');
 $year = current_year();
 if (!$year) json_fail('Chưa có niên khoá nào đang mở.', 409);
@@ -21,6 +20,7 @@ $in     = json_input();
 $block  = trim((string) ($in['block'] ?? ''));
 $target = (int) ($in['targetYearId'] ?? 0);
 $results = $in['results'] ?? [];
+if (!is_array($results)) $results = [];
 
 if ($block === '') json_fail('Vui lòng chọn khối.');
 if (!$target)      json_fail('Vui lòng chọn niên khoá đích để chuyển các em sang.');

@@ -66,8 +66,7 @@ switch ($action) {
 
     // ============================= KHỐI =============================
     case 'saveBlock':
-        require_post();
-        require_csrf();
+        require_write();
         $name = trim((string) ($in['name'] ?? ''));
         $old  = trim((string) ($in['original'] ?? ''));
         if ($name === '') json_fail('Vui lòng nhập tên khối.');
@@ -87,8 +86,7 @@ switch ($action) {
         json_out(['ok' => true]);
 
     case 'deleteBlock':
-        require_post();
-        require_csrf();
+        require_write();
         $name = trim((string) ($in['name'] ?? ''));
         $b = db_one('SELECT id FROM blocks WHERE name=?', [$name]);
         if (!$b) json_fail('Không tìm thấy khối.', 404);
@@ -103,8 +101,7 @@ switch ($action) {
 
     // ============================= LỚP ==============================
     case 'saveClass':
-        require_post();
-        require_csrf();
+        require_write();
         $name  = trim((string) ($in['name'] ?? ''));
         $old   = trim((string) ($in['original'] ?? ''));
         $block = trim((string) ($in['block'] ?? ''));
@@ -143,8 +140,7 @@ switch ($action) {
         json_out(['ok' => true]);
 
     case 'deleteClass':
-        require_post();
-        require_csrf();
+        require_write();
         $name = trim((string) ($in['name'] ?? ''));
         $c = db_one('SELECT id FROM classes WHERE name=?', [$name]);
         if (!$c) json_fail('Không tìm thấy lớp.', 404);
@@ -162,11 +158,16 @@ switch ($action) {
 
     // ============================ NHÂN SỰ ===========================
     case 'saveMember':
-        require_post();
-        require_csrf();
+        require_write();
         $id    = (int) ($in['id'] ?? 0);
-        $name  = trim((string) ($in['fullName'] ?? ''));
-        $phone = trim((string) ($in['phone'] ?? ''));
+        
+        $holyName = mb_convert_case(preg_replace('/\s+/', ' ', trim((string) ($in['holyName'] ?? ''))), MB_CASE_TITLE, 'UTF-8');
+        $name     = mb_convert_case(preg_replace('/\s+/', ' ', trim((string) ($in['fullName'] ?? ''))), MB_CASE_TITLE, 'UTF-8');
+        
+        $phone = preg_replace('/[^\d]/', '', (string) ($in['phone'] ?? ''));
+        if (strpos($phone, '84') === 0 && strlen($phone) >= 11) $phone = '0' . substr($phone, 2);
+        if ($phone !== '' && $phone[0] !== '0') $phone = '0' . $phone;
+
         $role  = (string) ($in['role'] ?? 'glv');
         if ($name === '')  json_fail('Vui lòng nhập họ và tên.');
         if ($phone === '') json_fail('Vui lòng nhập số điện thoại — đây cũng là tên đăng nhập.');
@@ -217,7 +218,7 @@ switch ($action) {
             if ($id) {
                 db_run('UPDATE members SET holy_name=?, full_name=?, phone=?, birth_date=?,
                                role_code=?, title_id=?, block_id=?, class_id=?, status=? WHERE id=?',
-                    [trim((string) ($in['holyName'] ?? '')), $name, $phone,
+                    [$holyName, $name, $phone,
                      ($in['birthDate'] ?? '') ?: null, $role,
                      $titleId, $blockId, $classId, $status, $id]);
                 log_action('sua', 'org', 'Sửa thành viên ' . $name, $role);
@@ -229,7 +230,7 @@ switch ($action) {
                                         password_hash, role_code, title_id, block_id, class_id,
                                         status, must_change_pw)
                                  VALUES (?,?,?,?,?,?,?,?,?,?,?,1)',
-                    [$code, trim((string) ($in['holyName'] ?? '')), $name, $phone,
+                    [$code, $holyName, $name, $phone,
                      ($in['birthDate'] ?? '') ?: null,
                      password_hash(app_config('default_password'), PASSWORD_DEFAULT),
                      $role, $titleId, $blockId, $classId, $status]);
@@ -246,8 +247,7 @@ switch ($action) {
         json_out(['ok' => true, 'id' => $id]);
 
     case 'deleteMember':
-        require_post();
-        require_csrf();
+        require_write();
         $id = (int) ($in['id'] ?? 0);
         $m  = db_one('SELECT id, role_code, full_name FROM members WHERE id=?', [$id]);
         if (!$m) json_fail('Không tìm thấy thành viên.', 404);
@@ -261,8 +261,7 @@ switch ($action) {
 
     // ==================== DUYỆT TÀI KHOẢN TỰ ĐĂNG KÝ =================
     case 'approveMember':
-        require_post();
-        require_csrf();
+        require_write();
         $id = (int) ($in['id'] ?? 0);
         $m  = db_one('SELECT id, role_code, full_name FROM members WHERE id=?', [$id]);
         if (!$m) json_fail('Không tìm thấy thành viên.', 404);
@@ -290,18 +289,17 @@ switch ($action) {
 
         $titleId = db_one('SELECT id FROM titles WHERE role_code=? ORDER BY sort_order LIMIT 1', [$role])['id'] ?? null;
 
-        db()->beginTransaction();
         try {
-            if ($role === 'glv_chu_nhiem' && $classId) {
-                foreach (db_all("SELECT id FROM members WHERE role_code='glv_chu_nhiem' AND class_id=? AND id<>?",
-                                [$classId, $id]) as $cur) demote((int) $cur['id']);
-            }
-            db_run("UPDATE members SET status='đang phục vụ', role_code=?, title_id=?,
-                           block_id=?, class_id=?, register_note=NULL WHERE id=?",
-                   [$role, $titleId, $blockId, $classId, $id]);
-            db()->commit();
-        } catch (Throwable $e) {
-            db()->rollBack();
+            trong_giao_dich(function () use ($role, $classId, $blockId, $titleId, $id) {
+                if ($role === 'glv_chu_nhiem' && $classId) {
+                    foreach (db_all("SELECT id FROM members WHERE role_code='glv_chu_nhiem' AND class_id=? AND id<>?",
+                                    [$classId, $id]) as $cur) demote((int) $cur['id']);
+                }
+                db_run("UPDATE members SET status='đang phục vụ', role_code=?, title_id=?,
+                               block_id=?, class_id=?, register_note=NULL WHERE id=?",
+                       [$role, $titleId, $blockId, $classId, $id]);
+            });
+        } catch (\Throwable $e) {
             json_fail(safe_error($e, 'Không duyệt được: '), 500);
         }
 
@@ -311,8 +309,7 @@ switch ($action) {
         json_out(['ok' => true]);
 
     case 'rejectMember':
-        require_post();
-        require_csrf();
+        require_write();
         $id = (int) ($in['id'] ?? 0);
         $m  = db_one('SELECT id, role_code, full_name FROM members WHERE id=?', [$id]);
         if (!$m) json_fail('Không tìm thấy thành viên.', 404);
@@ -325,8 +322,7 @@ switch ($action) {
 
     // ==================== CẤP LẠI MẬT KHẨU ===========================
     case 'resetPassword':
-        require_post();
-        require_csrf();
+        require_write();
         $id = (int) ($in['id'] ?? 0);
         $m  = db_one('SELECT id, role_code, full_name FROM members WHERE id=?', [$id]);
         if (!$m) json_fail('Không tìm thấy thành viên.', 404);
@@ -350,8 +346,7 @@ switch ($action) {
     // ======================= CHỦ NHIỆM / TRƯỞNG KHỐI =================
     case 'setClassHead':
     case 'setBlockHead':
-        require_post();
-        require_csrf();
+        require_write();
         $isClass  = $action === 'setClassHead';
         $memberId = (int) ($in['memberId'] ?? 0);
 

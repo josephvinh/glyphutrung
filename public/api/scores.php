@@ -11,8 +11,7 @@
 
 require __DIR__ . '/_bootstrap.php';
 
-require_post();          // hành động ghi — chặn CSRF qua GET
-require_csrf();
+require_write();  // hành động ghi: bắt buộc POST + CSRF
 $me   = require_permission('scores', 'edit');
 $year = current_year();
 if (!$year) json_fail('Chưa có niên khoá nào đang mở.', 409);

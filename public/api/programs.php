@@ -24,8 +24,7 @@ switch ($action) {
 
     // -------------------------------------------------------------
     case 'save':
-        require_post();
-        require_csrf();
+        require_write();
         require_permission('programs', 'edit');
 
         $id      = (int) ($in['id'] ?? 0);
@@ -82,8 +81,7 @@ switch ($action) {
 
     // -------------------------------------------------------------
     case 'delete':
-        require_post();
-        require_csrf();
+        require_write();
         require_permission('programs', 'edit');
 
         $id   = (int) ($in['id'] ?? 0);

@@ -206,6 +206,38 @@ function require_post(): void
 }
 
 /**
+ * Cổng chung cho MỌI hành động GHI: bắt buộc POST + CSRF token hợp lệ.
+ * Gộp cặp require_post()+require_csrf() vốn lặp ở hàng chục endpoint.
+ * (require_login/require_permission vẫn gọi riêng vì mỗi endpoint có
+ *  mức quyền khác nhau — cố ý không nhét vào đây.)
+ */
+function require_write(): void
+{
+    require_post();
+    require_csrf();
+}
+
+/**
+ * Chạy một khối lệnh GHI trong giao dịch: tự beginTransaction, commit khi
+ * xong, rollBack rồi NÉM LẠI lỗi nếu hỏng. Ném lại (không tự json_fail) để
+ * nơi gọi giữ được thông điệp lỗi riêng của mình.
+ *
+ *   trong_giao_dich(function () use ($x) { ... các lệnh ghi ... });
+ */
+function trong_giao_dich(callable $fn)
+{
+    db()->beginTransaction();
+    try {
+        $kq = $fn();
+        db()->commit();
+        return $kq;
+    } catch (\Throwable $e) {
+        if (db()->inTransaction()) db()->rollBack();
+        throw $e;
+    }
+}
+
+/**
  * Thông điệp lỗi cho client.
  * Trên máy chủ thật, không đưa nội dung lỗi gốc của CSDL ra ngoài —
  * nó lộ tên bảng, tên cột và cấu trúc ràng buộc.

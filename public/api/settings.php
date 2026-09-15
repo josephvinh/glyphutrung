@@ -40,8 +40,7 @@ switch ($action) {
 
     // -------------------------------------------------------------
     case 'permission':
-        require_post();
-        require_csrf();
+        require_write();
         $mod   = (string) ($in['moduleKey'] ?? '');
         $role  = (string) ($in['roleCode'] ?? '');
         $level = (string) ($in['level'] ?? '');
@@ -72,8 +71,7 @@ switch ($action) {
 
     // -------------------------------------------------------------
     case 'module':
-        require_post();
-        require_csrf();
+        require_write();
         $mod = (string) ($in['moduleKey'] ?? '');
         $m = db_one('SELECT * FROM modules WHERE module_key=?', [$mod]);
         if (!$m) json_fail('Không tìm thấy chức năng.', 404);
@@ -88,20 +86,18 @@ switch ($action) {
 
     // -------------------------------------------------------------
     case 'resetPerms':
-        require_post();
-        require_csrf();
+        require_write();
         $order = ['admin', 'bdh', 'truong_khoi', 'glv_chu_nhiem', 'glv'];
-        db()->beginTransaction();
         try {
-            foreach (default_permissions() as $mod => $levels) {
-                foreach ($order as $i => $role) {
-                    db_run('INSERT INTO permissions (module_key, role_code, level) VALUES (?,?,?)
-                            ON DUPLICATE KEY UPDATE level = VALUES(level)', [$mod, $role, $levels[$i]]);
+            trong_giao_dich(function () use ($order) {
+                foreach (default_permissions() as $mod => $levels) {
+                    foreach ($order as $i => $role) {
+                        db_run('INSERT INTO permissions (module_key, role_code, level) VALUES (?,?,?)
+                                ON DUPLICATE KEY UPDATE level = VALUES(level)', [$mod, $role, $levels[$i]]);
+                    }
                 }
-            }
-            db()->commit();
-        } catch (Throwable $e) {
-            db()->rollBack();
+            });
+        } catch (\Throwable $e) {
             json_fail(safe_error($e, 'Không đặt lại được: '), 500);
         }
         log_action('phanquyen', 'settings', 'Đặt lại toàn bộ phân quyền về mặc định', '');
@@ -109,8 +105,7 @@ switch ($action) {
 
     // -------------------------------------------------------------
     case 'clearLogs':
-        require_post();
-        require_csrf();
+        require_write();
         db_run('DELETE FROM activity_logs');
         log_action('xoa', 'settings', 'Xóa toàn bộ nhật ký thao tác', '');
         json_out(['ok' => true]);

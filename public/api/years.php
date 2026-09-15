@@ -88,8 +88,7 @@ switch ($action) {
 
     // -------------------------------------------------------------
     case 'create':
-        require_post();
-        require_csrf();
+        require_write();
         $name  = trim((string) ($in['name'] ?? ''));
         $start = (string) ($in['startDate'] ?? '');
         $end   = (string) ($in['endDate'] ?? '');
@@ -102,21 +101,21 @@ switch ($action) {
             json_fail('Niên khoá "' . $name . '" đã tồn tại.');
         }
 
-        db()->beginTransaction();
         try {
-            $yearId = db_insert('INSERT INTO school_years (name, start_date, end_date, is_current, status)
-                                 VALUES (?,?,?,0,?)', [$name, $start, $end, 'đang mở']);
+            $yearId = trong_giao_dich(function () use ($name, $start, $end) {
+                $yid = db_insert('INSERT INTO school_years (name, start_date, end_date, is_current, status)
+                                  VALUES (?,?,?,0,?)', [$name, $start, $end, 'đang mở']);
 
-            // Chia đôi thành hai học kỳ theo mốc giữa, Ban Điều Hành sửa lại sau nếu cần
-            $mid = date('Y-m-d', (int) ((strtotime($start) + strtotime($end)) / 2));
-            $midNext = date('Y-m-d', strtotime($mid . ' +1 day'));
-            db_run('INSERT INTO terms (year_id, name, start_date, end_date, sort_order)
-                    VALUES (?,?,?,?,1), (?,?,?,?,2)',
-                   [$yearId, 'Học kỳ I',  $start,   $mid,
-                    $yearId, 'Học kỳ II', $midNext, $end]);
-            db()->commit();
-        } catch (Throwable $e) {
-            db()->rollBack();
+                // Chia đôi thành hai học kỳ theo mốc giữa, Ban Điều Hành sửa lại sau nếu cần
+                $mid     = date('Y-m-d', (int) ((strtotime($start) + strtotime($end)) / 2));
+                $midNext = date('Y-m-d', strtotime($mid . ' +1 day'));
+                db_run('INSERT INTO terms (year_id, name, start_date, end_date, sort_order)
+                        VALUES (?,?,?,?,1), (?,?,?,?,2)',
+                       [$yid, 'Học kỳ I',  $start,   $mid,
+                        $yid, 'Học kỳ II', $midNext, $end]);
+                return $yid;
+            });
+        } catch (\Throwable $e) {
             json_fail(safe_error($e, 'Không tạo được niên khoá: '), 500);
         }
 
@@ -135,8 +134,7 @@ switch ($action) {
     //      ngoài khoảng mới -> từ chối, nêu rõ ngày nào vướng
     // -------------------------------------------------------------
     case 'update':
-        require_post();
-        require_csrf();
+        require_write();
         $id    = (int) ($in['id'] ?? 0);
         $name  = trim((string) ($in['name'] ?? ''));
         $start = (string) ($in['startDate'] ?? '');
@@ -225,21 +223,19 @@ switch ($action) {
 
     // -------------------------------------------------------------
     case 'activate':
-        require_post();
-        require_csrf();
+        require_write();
         $id = (int) ($in['id'] ?? 0);
         $y  = db_one('SELECT * FROM school_years WHERE id = ?', [$id]);
         if (!$y) json_fail('Không tìm thấy niên khoá.', 404);
         if ($y['status'] === 'đã khóa') json_fail('Niên khoá đã khoá sổ, phải mở lại trước khi dùng.');
 
         // Chỉ một niên khoá được bật tại một thời điểm
-        db()->beginTransaction();
         try {
-            db_run('UPDATE school_years SET is_current = 0');
-            db_run('UPDATE school_years SET is_current = 1 WHERE id = ?', [$id]);
-            db()->commit();
-        } catch (Throwable $e) {
-            db()->rollBack();
+            trong_giao_dich(function () use ($id) {
+                db_run('UPDATE school_years SET is_current = 0');
+                db_run('UPDATE school_years SET is_current = 1 WHERE id = ?', [$id]);
+            });
+        } catch (\Throwable $e) {
             json_fail('Không đổi được niên khoá đang dùng.', 500);
         }
 
@@ -248,8 +244,7 @@ switch ($action) {
 
     // -------------------------------------------------------------
     case 'lock':
-        require_post();
-        require_csrf();
+        require_write();
         $id = (int) ($in['id'] ?? 0);
         $y  = db_one('SELECT * FROM school_years WHERE id = ?', [$id]);
         if (!$y) json_fail('Không tìm thấy niên khoá.', 404);
@@ -263,8 +258,7 @@ switch ($action) {
 
     // -------------------------------------------------------------
     case 'unlock':
-        require_post();
-        require_csrf();
+        require_write();
         $id = (int) ($in['id'] ?? 0);
         $y  = db_one('SELECT * FROM school_years WHERE id = ?', [$id]);
         if (!$y) json_fail('Không tìm thấy niên khoá.', 404);

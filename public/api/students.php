@@ -33,17 +33,36 @@ function class_id_by_name(string $name): int
 /** Chuẩn hoá một bản ghi em từ giao diện gửi lên */
 function clean_student(array $s): array
 {
+    $holyName = preg_replace('/\s+/', ' ', trim((string) ($s['holyName'] ?? '')));
+    $name = preg_replace('/\s+/', ' ', trim((string) ($s['name'] ?? '')));
+    $fatherName = preg_replace('/\s+/', ' ', trim((string) ($s['fatherName'] ?? '')));
+    $motherName = preg_replace('/\s+/', ' ', trim((string) ($s['motherName'] ?? '')));
+    $address = preg_replace('/\s+/', ' ', trim((string) ($s['address'] ?? '')));
+
+    $holyName = mb_strtoupper($holyName, 'UTF-8');
+    $name = mb_strtoupper($name, 'UTF-8');
+    $fatherName = mb_convert_case($fatherName, MB_CASE_TITLE, 'UTF-8');
+    $motherName = mb_convert_case($motherName, MB_CASE_TITLE, 'UTF-8');
+
+    $clean_phone = function($phone) {
+        $p = preg_replace('/[^\d]/', '', $phone);
+        if ($p === '') return '';
+        if (strpos($p, '84') === 0 && strlen($p) >= 11) $p = '0' . substr($p, 2);
+        if ($p[0] !== '0') $p = '0' . $p;
+        return $p;
+    };
+
     return [
         'code'        => trim((string) ($s['code'] ?? '')),
-        'holyName'    => trim((string) ($s['holyName'] ?? '')),
-        'name'        => trim((string) ($s['name'] ?? '')),
+        'holyName'    => $holyName,
+        'name'        => $name,
         'gender'      => (int) ($s['gender'] ?? 1) === 0 ? 0 : 1,
         'birthDate'   => ($s['birthDate'] ?? '') ?: null,
-        'address'     => trim((string) ($s['address'] ?? '')),
-        'fatherName'  => trim((string) ($s['fatherName'] ?? '')),
-        'fatherPhone' => trim((string) ($s['fatherPhone'] ?? '')),
-        'motherName'  => trim((string) ($s['motherName'] ?? '')),
-        'motherPhone' => trim((string) ($s['motherPhone'] ?? '')),
+        'address'     => $address,
+        'fatherName'  => $fatherName,
+        'fatherPhone' => $clean_phone((string) ($s['fatherPhone'] ?? '')),
+        'motherName'  => $motherName,
+        'motherPhone' => $clean_phone((string) ($s['motherPhone'] ?? '')),
         'className'   => trim((string) ($s['className'] ?? '')),
         'status'      => trim((string) ($s['status'] ?? 'đang sinh hoạt')),
     ];
@@ -88,8 +107,7 @@ switch ($action) {
 
     // -------------------------------------------------------------
     case 'save':
-        require_post();
-        require_csrf();
+        require_write();
         $s = clean_student($in);
         if ($s['name'] === '') json_fail('Thiếu họ tên.');
         if ($s['className'] === '') json_fail('Vui lòng chọn lớp cho em.');
@@ -128,8 +146,7 @@ switch ($action) {
 
     // -------------------------------------------------------------
     case 'import':
-        require_post();
-        require_csrf();
+        require_write();
         $rows = $in['rows'] ?? [];
         if (!is_array($rows) || count($rows) === 0) json_fail('Không có dòng nào để nhập.');
 
@@ -151,12 +168,28 @@ switch ($action) {
         $res = db_run('SELECT code, id FROM students')->fetchAll(PDO::FETCH_ASSOC);
         foreach ($res as $r) $existingCodes[$r['code']] = (int) $r['id'];
 
+        $year2 = year_two_digit($year);
+        $prefix = STUDENT_CODE_PREFIX . sprintf('%02d', $year2);
+        $row = db_one(
+            "SELECT MAX(CAST(SUBSTRING(code, ?) AS UNSIGNED)) AS mx
+               FROM students WHERE code LIKE ?",
+            [strlen($prefix) + 1, $prefix . '%']
+        );
+        $nextNum = ((int) ($row['mx'] ?? 0)) + 1;
+
+        $upsert_students = [];
+        $upsert_params = [];
+        $enrollment_data = [];
+
         db()->beginTransaction();
         try {
             foreach ($rows as $i => $raw) {
                 $s = clean_student($raw);
                 if ($s['name'] === '') { $skipped++; continue; }
-                if ($s['code'] === '') $s['code'] = next_student_code(year_two_digit($year));
+                if ($s['code'] === '') {
+                    $s['code'] = $prefix . sprintf('%04d', $nextNum);
+                    $nextNum++;
+                }
 
                 $lopId = $classMap[$s['className']] ?? null;
                 if (!$lopId) {
@@ -171,13 +204,61 @@ switch ($action) {
                 }
 
                 $sid = $existingCodes[$s['code']] ?? null;
-                $newSid = upsert_student($s, $yid, $lopId, $sid);
+                $upsert_students[] = '(?,?,?,?,?,?,?,?,?,?,?)';
+                array_push($upsert_params,
+                    $sid, $s['code'], $s['holyName'], $s['name'], $s['gender'], $s['birthDate'], $s['address'],
+                    $s['fatherName'], $s['fatherPhone'], $s['motherName'], $s['motherPhone']
+                );
                 
+                $enrollment_data[] = [
+                    'code' => $s['code'],
+                    'class_id' => $lopId,
+                    'status' => $s['status']
+                ];
+
                 if (!$sid) {
-                    $existingCodes[$s['code']] = $newSid;
+                    $existingCodes[$s['code']] = -1; // temp mark to avoid duplicate counts if duplicate in same batch
                     $added++;
                 } else {
                     $updated++;
+                }
+            }
+            
+            if ($upsert_students) {
+                // Break into chunks of 500 to avoid packet size issues if file is huge
+                $chunk_size = 500;
+                $total_students = count($upsert_students);
+                for ($ci = 0; $ci < $total_students; $ci += $chunk_size) {
+                    $chunk_upsert = array_slice($upsert_students, $ci, $chunk_size);
+                    $chunk_params = array_slice($upsert_params, $ci * 11, $chunk_size * 11);
+                    $sql = 'INSERT INTO students (id, code, holy_name, full_name, gender, birth_date, address, father_name, father_phone, mother_name, mother_phone) VALUES ' 
+                         . implode(',', $chunk_upsert) 
+                         . ' ON DUPLICATE KEY UPDATE holy_name=VALUES(holy_name), full_name=VALUES(full_name), gender=VALUES(gender), birth_date=VALUES(birth_date), address=VALUES(address), father_name=VALUES(father_name), father_phone=VALUES(father_phone), mother_name=VALUES(mother_name), mother_phone=VALUES(mother_phone)';
+                    db_run($sql, $chunk_params);
+                }
+
+                $res = db_run('SELECT code, id FROM students')->fetchAll(PDO::FETCH_ASSOC);
+                $finalCodes = [];
+                foreach ($res as $r) $finalCodes[$r['code']] = (int) $r['id'];
+
+                $upsert_enrollments = [];
+                $enroll_params = [];
+                foreach ($enrollment_data as $e) {
+                    $sid = $finalCodes[$e['code']] ?? null;
+                    if ($sid) {
+                        $upsert_enrollments[] = '(?,?,?,?)';
+                        array_push($enroll_params, $yid, $sid, $e['class_id'], $e['status']);
+                    }
+                }
+                
+                $total_enrolls = count($upsert_enrollments);
+                for ($ci = 0; $ci < $total_enrolls; $ci += $chunk_size) {
+                    $chunk_upsert = array_slice($upsert_enrollments, $ci, $chunk_size);
+                    $chunk_params = array_slice($enroll_params, $ci * 4, $chunk_size * 4);
+                    $sql_e = 'INSERT INTO enrollments (year_id, student_id, class_id, status) VALUES '
+                           . implode(',', $chunk_upsert)
+                           . ' ON DUPLICATE KEY UPDATE class_id=VALUES(class_id), status=VALUES(status)';
+                    db_run($sql_e, $chunk_params);
                 }
             }
             db()->commit();

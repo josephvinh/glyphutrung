@@ -68,8 +68,7 @@ switch ($action) {
 
     // -------------------------------------------------------------
     case 'save':
-        require_post();
-        require_csrf();
+        require_write();
         $me = require_permission('announcements', 'edit');
         if ($year['status'] === 'đã khóa') json_fail('Niên khoá đã khoá sổ.', 409);
 
@@ -166,8 +165,7 @@ switch ($action) {
 
     // -------------------------------------------------------------
     case 'toggle':
-        require_post();
-        require_csrf();
+        require_write();
         $me = require_permission('announcements', 'edit');
         $a  = db_one('SELECT id, title, status, audience_type, audience_block, audience_class, created_by, level, published_at FROM announcements WHERE id=? AND year_id=?', [(int) ($in['id'] ?? 0), $yid]);
         if (!$a) json_fail('Không tìm thấy thông báo.', 404);
@@ -189,8 +187,7 @@ switch ($action) {
 
     // -------------------------------------------------------------
     case 'delete':
-        require_post();
-        require_csrf();
+        require_write();
         $me = require_permission('announcements', 'edit');
         $a  = db_one('SELECT id, title, status, audience_type, audience_block, audience_class, created_by, level, published_at FROM announcements WHERE id=? AND year_id=?', [(int) ($in['id'] ?? 0), $yid]);
         if (!$a) json_fail('Không tìm thấy thông báo.', 404);
@@ -203,16 +200,14 @@ switch ($action) {
 
     // -------------------------------------------------------------
     case 'read':
-        require_post();
-        require_csrf();
+        require_write();
         $me = require_permission('announcements', 'view');
         db_run('INSERT IGNORE INTO announcement_reads (member_id, announcement_id) VALUES (?,?)',
                [$me['id'], (int) ($in['id'] ?? 0)]);
         json_out(['ok' => true]);
 
     case 'readall':
-        require_post();
-        require_csrf();
+        require_write();
         $me = require_permission('announcements', 'view');
         db_run('INSERT IGNORE INTO announcement_reads (member_id, announcement_id)
                 SELECT ?, id FROM announcements WHERE year_id = ? AND status = ?',
@@ -222,8 +217,7 @@ switch ($action) {
     // -------------------------------------------------------------
     // Trả lời họp (tham gia / không) — bất kỳ thành viên nào được mời
     case 'rsvp':
-        require_post();
-        require_csrf();
+        require_write();
         $me     = require_login();
         $id     = (int) ($in['id'] ?? 0);
         $status = (string) ($in['status'] ?? '');

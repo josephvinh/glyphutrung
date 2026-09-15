@@ -26,8 +26,7 @@ switch ($action) {
 
     // -------------------------------------------------------------
     case 'create':
-        require_post();
-        require_csrf();
+        require_write();
         // Quyền 'view' đủ để nộp đơn; 'edit' mới được duyệt
         $me = require_permission('leave', 'view');
 
@@ -91,8 +90,7 @@ switch ($action) {
     // -------------------------------------------------------------
     case 'approve':
     case 'reject':
-        require_post();
-        require_csrf();
+        require_write();
         $me = require_permission('leave', 'edit');
         $id = (int) ($in['id'] ?? 0);
 

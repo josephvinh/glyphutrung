@@ -58,8 +58,7 @@ switch ($action) {
 
     // -------------------------------------------------------------
     case 'save':
-        require_post();
-        require_csrf();
+        require_write();
 
         $id     = (int) ($in['id'] ?? 0);
         $title  = trim((string) ($in['title'] ?? ''));
@@ -95,8 +94,7 @@ switch ($action) {
 
     // -------------------------------------------------------------
     case 'toggle':
-        require_post();
-        require_csrf();
+        require_write();
         $id = (int) ($in['id'] ?? 0);
         $n  = db_one('SELECT done FROM personal_notes WHERE id = ? AND member_id = ?', [$id, $mid]);
         if (!$n) json_fail('Không tìm thấy ghi chú.', 404);
@@ -108,8 +106,7 @@ switch ($action) {
 
     // -------------------------------------------------------------
     case 'delete':
-        require_post();
-        require_csrf();
+        require_write();
         $id = (int) ($in['id'] ?? 0);
         db_run('DELETE FROM personal_notes WHERE id = ? AND member_id = ?', [$id, $mid]);
         xoa_cache_cua($mid);

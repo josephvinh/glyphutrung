@@ -45,8 +45,7 @@ switch ($action) {
 
     case 'processRegister':
         $me = require_login();
-        require_post();
-        require_csrf();
+        require_write();
         
         $clientDataJSON = base64_decode($in['clientDataJSON']);
         $attestationObject = base64_decode($in['attestationObject']);
@@ -79,8 +78,7 @@ switch ($action) {
     // Gạt TẮT: gỡ mọi khoá sinh trắc của tài khoản này khỏi thiết bị-hệ thống.
     case 'delete':
         $me = require_login();
-        require_post();
-        require_csrf();
+        require_write();
         db_run('DELETE FROM member_passkeys WHERE member_id = ?', [$me['id']]);
         json_out(['ok' => true]);
         break;
