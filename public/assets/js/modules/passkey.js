@@ -7,9 +7,16 @@ const Passkey = {
     // POST JSON tới api/passkey.php, trả JSON. Tự thân, không phụ thuộc
     // component Alpine (vì màn đăng nhập không có tnttApp).
     async _post(url, body) {
+        const headers = { 'Content-Type': 'application/json' };
+        // Gửi kèm CSRF token khi có (app chính đã đăng nhập -> processRegister/
+        // delete yêu cầu require_csrf). Màn đăng nhập chưa có token, nhưng các
+        // endpoint login (getLoginArgs/processLogin) không yêu cầu CSRF nên
+        // không ảnh hưởng.
+        const token = (window.TNTT && window.TNTT.csrfToken) || '';
+        if (token) headers['X-CSRF-TOKEN'] = token;
         const res = await fetch(url, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers,
             body: JSON.stringify(body || {})
         });
         return res.json();

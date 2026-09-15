@@ -46,6 +46,7 @@ switch ($action) {
     case 'processRegister':
         $me = require_login();
         require_post();
+        require_csrf();
         
         $clientDataJSON = base64_decode($in['clientDataJSON']);
         $attestationObject = base64_decode($in['attestationObject']);
@@ -79,6 +80,7 @@ switch ($action) {
     case 'delete':
         $me = require_login();
         require_post();
+        require_csrf();
         db_run('DELETE FROM member_passkeys WHERE member_id = ?', [$me['id']]);
         json_out(['ok' => true]);
         break;
