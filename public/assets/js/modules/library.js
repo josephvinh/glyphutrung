@@ -3,6 +3,9 @@
 
    view = xem + đăng (chờ duyệt); edit = duyệt/gỡ bất kỳ (BĐH/Admin).
    Upload dùng FormData riêng (không qua api() vì api() gửi JSON).
+
+   libViewer dùng Alpine store ($store.libViewer) để bottom sheet bên
+   ngoài component có thể truy cập trạng thái mà không phụ thuộc scope.
    ========================================================== */
 window.TNTT = window.TNTT || {};
 window.TNTT.library = {
@@ -18,12 +21,18 @@ window.TNTT.library = {
     },
     // Modal soạn: 2 chế độ — 'file' (đăng tệp) hoặc 'article' (viết bài sổ tay).
     libCompose: { open: false, mode: 'article', id: 0, title: '', categoryId: '', description: '', body: '', fileName: '', busy: false },
-    libViewer: { open: false, item: null },
     _libFile: null,          // File thô, KHÔNG để Alpine theo dõi
 
     get libCanEdit() { return this.canEditModule('thu_vien'); },
+    get libItemIcon() { return (it) => this._libItemIcon(it); },
+
+    // Alpine store cho libViewer (dùng chung bởi bottom sheet bên ngoài component)
+    initLibViewer() {
+        Alpine.store('libViewer', { open: false, item: null });
+    },
 
     async loadLibrary() {
+        this.initLibViewer();
         this.lib.loading = true;
         try {
             const cat = await this.api('library', 'categories');
@@ -72,7 +81,7 @@ window.TNTT.library = {
     },
 
     editArticle(item) {
-        this.libViewer.open = false;
+        Alpine.store('libViewer').open = false;
         this.libCompose = {
             open: true, mode: 'article', id: item.id, title: item.title,
             categoryId: item.categoryId || '', description: item.description || '',
@@ -138,7 +147,7 @@ window.TNTT.library = {
 
     // ---------- Xem ----------
     openLibItem(item) {
-        this.libViewer = { open: true, item };
+        Alpine.store('libViewer', { open: true, item });
         this.$nextTick(() => window.lucide && lucide.createIcons());
     },
 
@@ -158,7 +167,7 @@ window.TNTT.library = {
         const r = await this.save('library', 'delete', { id: item.id });
         if (r.ok) {
             window.TNTT.toast.success('Đã gỡ tài liệu.');
-            this.libViewer.open = false;
+            Alpine.store('libViewer').open = false;
             await this.libRefresh();
             if (this.lib.tab === 'mine') this.libLoadMine();
         }

@@ -60,20 +60,20 @@
         </div>
 
         <!-- Lưới thẻ -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
             <template x-for="it in lib.items" :key="it.id">
-                <button @click="openLibItem(it)" class="text-left bg-white rounded-card p-4 shadow-sm border border-slate-100 active:scale-[0.98] transition-transform flex gap-3">
+                <button @click="openLibItem(it)" class="min-w-0 text-left bg-white rounded-card p-4 shadow-sm border border-slate-100 active:scale-[0.98] transition-transform flex gap-3 overflow-hidden">
                     <div class="w-11 h-11 shrink-0 rounded-2xl flex items-center justify-center border"
                          :class="it.type==='article' ? 'bg-sky-50 border-sky-200 text-sky-600' : 'bg-amber-50 border-amber-100 text-amber-600'">
                         <i :data-lucide="libItemIcon(it)" class="w-5 h-5"></i>
                     </div>
-                    <div class="flex-1 min-w-0">
+                    <div class="flex-1 min-w-0" style="max-width:100%;overflow:hidden">
                         <p class="text-sm font-bold text-slate-800 truncate" x-text="it.title"></p>
                         <p class="text-micro text-slate-400 truncate">
                             <span x-show="it.categoryName" x-text="it.categoryName + ' · '"></span>
                             <span x-text="it.type==='article' ? 'Sổ tay' : (it.ext.toUpperCase() + ' · ' + libSizeLabel(it.sizeKb))"></span>
                         </p>
-                        <p class="text-xs text-slate-500 truncate mt-0.5" x-show="it.type==='article' && it.body" x-text="it.body"></p>
+                        <p class="text-xs text-slate-500 truncate mt-0.5" style="max-width:100%" x-show="it.type==='article' && it.body" x-text="it.body"></p>
                     </div>
                 </button>
             </template>
@@ -89,7 +89,7 @@
                     <div class="w-11 h-11 shrink-0 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500">
                         <i :data-lucide="libItemIcon(it)" class="w-5 h-5"></i>
                     </div>
-                    <div class="flex-1 min-w-0">
+                    <div class="flex-1 min-w-0" style="max-width:100%;overflow:hidden">
                         <p class="text-sm font-bold text-slate-800 truncate" x-text="it.title"></p>
                         <span class="inline-block mt-1 text-micro font-bold px-2 py-0.5 rounded-full"
                               :class="it.status==='da_duyet' ? 'bg-emerald-50 text-emerald-600' : (it.status==='cho_duyet' ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-rose-600')"
@@ -116,11 +116,11 @@
                         <div class="w-11 h-11 shrink-0 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
                             <i :data-lucide="libItemIcon(it)" class="w-5 h-5"></i>
                         </div>
-                        <div class="flex-1 min-w-0">
+                        <div class="flex-1 min-w-0" style="max-width:100%;overflow:hidden">
                             <p class="text-sm font-bold text-slate-800 truncate" x-text="it.title"></p>
                             <p class="text-micro text-slate-400 truncate" x-text="(it.categoryName ? it.categoryName + ' · ' : '') + (it.type==='article' ? 'Sổ tay' : it.ext.toUpperCase() + ' · ' + libSizeLabel(it.sizeKb))"></p>
                             <p class="text-micro text-slate-400 truncate" x-show="it.uploaderName" x-text="'Đăng bởi ' + it.uploaderName"></p>
-                            <p x-show="(it.description || it.body)" style="display:none" class="text-xs text-slate-500 mt-1 truncate" x-text="it.body || it.description"></p>
+                            <p x-show="(it.description || it.body)" style="display:none;max-width:100%" class="text-xs text-slate-500 mt-1 truncate" x-text="it.body || it.description"></p>
                         </div>
                         <button @click="openLibItem(it)" class="shrink-0 text-xs font-bold text-blue-600 px-2 py-1">Xem trước</button>
                     </div>
@@ -195,48 +195,4 @@
                 <span x-text="libCompose.busy ? 'Đang gửi…' : (libCompose.mode==='article' ? (libCompose.id ? 'Lưu' : 'Đăng bài') : 'Gửi tệp (chờ duyệt)')"></span>
             </button>
         </div>
-    </div>
-
-    <!-- ================= MODAL: XEM TÀI LIỆU ================= -->
-    <div x-show="libViewer.open" style="display:none" class="fixed inset-0 z-[300] flex flex-col bg-slate-900/95">
-        <div class="flex items-center gap-3 p-3 text-white shrink-0">
-            <button aria-label="Đóng" @click="libViewer.open=false" class="tap-safe w-9 h-9 bg-white/15 rounded-full flex items-center justify-center active:scale-90"><i data-lucide="x" class="w-5 h-5"></i></button>
-            <p class="flex-1 min-w-0 truncate font-bold text-sm" x-text="libViewer.item && libViewer.item.title"></p>
-            <a x-show="libViewer.item && libViewer.item.type==='file'" style="display:none" :href="libViewer.item && (libViewer.item.fileUrl + '&mode=download')"
-               class="shrink-0 w-9 h-9 bg-white/15 rounded-full flex items-center justify-center active:scale-90" aria-label="Tải về"><i data-lucide="file-down" class="w-5 h-5"></i></a>
-            <button x-show="libViewer.item && libViewer.item.type==='article' && (libCanEdit || lib.tab==='mine')" style="display:none" @click="editArticle(libViewer.item)" class="shrink-0 w-9 h-9 bg-white/15 rounded-full flex items-center justify-center active:scale-90" aria-label="Sửa"><i data-lucide="pencil" class="w-5 h-5"></i></button>
-            <button x-show="libViewer.item && (libCanEdit || lib.tab==='mine')" style="display:none" @click="libDelete(libViewer.item)" class="shrink-0 w-9 h-9 bg-rose-500/80 rounded-full flex items-center justify-center active:scale-90" aria-label="Gỡ"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
-        </div>
-        <div class="flex-1 min-h-0 bg-white sm:m-4 sm:rounded-2xl overflow-hidden">
-            <!-- BÀI VIẾT sổ tay: đọc thẳng -->
-            <template x-if="libViewer.item && libViewer.item.type==='article'">
-                <div class="w-full h-full overflow-auto p-5 sm:p-8">
-                    <p class="text-micro font-bold uppercase text-sky-600 mb-2" x-show="libViewer.item.categoryName" x-text="libViewer.item.categoryName"></p>
-                    <h1 class="text-xl font-black text-slate-800 mb-4" x-text="libViewer.item.title"></h1>
-                    <div class="text-slate-700 text-base leading-relaxed" style="white-space:pre-wrap" x-text="libViewer.item.body"></div>
-                </div>
-            </template>
-            <!-- PDF: nhúng trực tiếp -->
-            <template x-if="libViewer.item && libViewer.item.type==='file' && libViewer.item.ext==='pdf'">
-                <iframe :src="libViewer.item.fileUrl + '&mode=view'" class="w-full h-full border-0"></iframe>
-            </template>
-            <!-- Ảnh: hiện thẳng -->
-            <template x-if="libViewer.item && libViewer.item.type==='file' && libViewer.item.viewable && libViewer.item.ext!=='pdf'">
-                <div class="w-full h-full overflow-auto flex items-center justify-center p-4 bg-slate-50">
-                    <img :src="libViewer.item.fileUrl + '&mode=view'" class="max-w-full h-auto" alt="">
-                </div>
-            </template>
-            <!-- Tệp không xem trực tiếp: mời tải về -->
-            <template x-if="libViewer.item && libViewer.item.type==='file' && !libViewer.item.viewable">
-                <div class="w-full h-full flex flex-col items-center justify-center text-center p-6">
-                    <i data-lucide="file-down" class="w-14 h-14 text-slate-300 mb-4"></i>
-                    <p class="text-slate-700 font-bold mb-1">Tài liệu này cần tải về để xem</p>
-                    <p class="text-slate-400 text-sm mb-4" x-text="libViewer.item && (libViewer.item.ext.toUpperCase() + ' · ' + libSizeLabel(libViewer.item.sizeKb))"></p>
-                    <a :href="libViewer.item && (libViewer.item.fileUrl + '&mode=download')"
-                       class="bg-blue-600 text-white font-bold px-5 py-3 rounded-2xl active:scale-95 transition-transform inline-flex items-center gap-2"><i data-lucide="file-down" class="w-4 h-4"></i> Tải về</a>
-                </div>
-            </template>
-        </div>
-    </div>
-
 </div>

@@ -169,6 +169,74 @@ if (!$__dev) ob_start();
 
     </div>
 
+    <!-- ================= BOTTOM SHEET: XEM TÀI LIỆU THƯ VIỆN ================= -->
+    <div x-data="tnttApp"
+         x-show="$store.libViewer.open"
+         x-transition:enter="transition ease-out duration-300" x-transition:enter-start="translate-y-full" x-transition:enter-end="translate-y-0"
+         x-transition:leave="transition ease-in duration-200" x-transition:leave-start="translate-y-0" x-transition:leave-end="translate-y-full"
+         style="display:none" class="fixed inset-x-0 bottom-0 z-[301] bg-white rounded-t-3xl shadow-2xl max-h-[85dvh] flex flex-col">
+
+        <!-- Handle bar -->
+        <div class="shrink-0 flex justify-center pt-3 pb-1">
+            <div class="w-10 h-1 bg-slate-300 rounded-full"></div>
+        </div>
+
+        <!-- Header -->
+        <div class="flex items-center gap-3 px-4 pb-3 border-b border-slate-100 shrink-0">
+            <button aria-label="Đóng" @click="$store.libViewer.open=false" class="tap-safe w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center active:scale-90 shrink-0">
+                <i data-lucide="x" class="w-4 h-4 text-slate-500"></i>
+            </button>
+            <p class="flex-1 min-w-0 truncate font-bold text-sm text-slate-800" x-text="($store.libViewer.item || {}).title || ''"></p>
+            <a x-show="($store.libViewer.item || {}).type==='file'" style="display:none" :href="($store.libViewer.item || {}).fileUrl + '&mode=download'"
+               class="shrink-0 w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center active:scale-90" aria-label="Tải về">
+                <i data-lucide="file-down" class="w-4 h-4 text-slate-500"></i>
+            </a>
+            <button x-show="($store.libViewer.item || {}).type==='article' && libCanEdit" style="display:none"
+                    @click="openLibArticle($store.libViewer.item)" class="shrink-0 w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center active:scale-90" aria-label="Sửa">
+                <i data-lucide="pencil" class="w-4 h-4 text-slate-500"></i>
+            </button>
+        </div>
+
+        <!-- Content -->
+        <div class="flex-1 overflow-y-auto">
+            <!-- BÀI VIẾT sổ tay -->
+            <div x-show="($store.libViewer.item || {}).type==='article'" class="p-5">
+                <p class="text-micro font-bold uppercase tracking-wide text-sky-600 mb-1" x-text="($store.libViewer.item || {}).categoryName || ''"></p>
+                <h1 class="text-lg font-black text-slate-800 mb-4" x-text="($store.libViewer.item || {}).title || ''"></h1>
+                <div class="text-slate-700 text-sm leading-relaxed" style="white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word" x-text="($store.libViewer.item || {}).body || ''"></div>
+            </div>
+            <!-- PDF -->
+            <iframe x-show="($store.libViewer.item || {}).type==='file' && (($store.libViewer.item || {}).ext || '')==='pdf'"
+                    :src="($store.libViewer.item || {}).fileUrl + '&mode=view'" class="w-full h-64 sm:h-80 border-0"></iframe>
+            <!-- Tệp không xem được -->
+            <div x-show="($store.libViewer.item || {}).type==='file' && !($store.libViewer.item || {}).viewable" class="flex flex-col items-center justify-center text-center p-8">
+                <i data-lucide="file-down" class="w-12 h-12 text-slate-300 mb-3"></i>
+                <p class="text-slate-700 font-bold mb-1">Tài liệu này cần tải về để xem</p>
+                <p class="text-slate-400 text-xs mb-4" x-text="(($store.libViewer.item || {}).ext || '').toUpperCase() + ' · ' + libSizeLabel(($store.libViewer.item || {}).sizeKb || 0)"></p>
+                <a :href="($store.libViewer.item || {}).fileUrl + '&mode=download'"
+                   class="bg-blue-600 text-white font-bold px-5 py-2.5 rounded-2xl active:scale-95 transition-transform inline-flex items-center gap-2 text-sm">
+                    <i data-lucide="file-down" class="w-4 h-4"></i> Tải về
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Backdrop cho bottom sheet -->
+    <div x-show="$store.libViewer.open"
+         x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+         style="display:none" class="fixed inset-0 z-[300] bg-slate-900/40 backdrop-blur-sm" @click="$store.libViewer.open=false"></div>
+
+    <!-- JS: đăng ký Alpine store + function toàn cục cho click handlers -->
+    <script>
+    document.addEventListener('alpine:init', function() {
+        Alpine.store('libViewer', { open: false, item: null });
+    });
+    function openLibArticle(item) {
+        window.TNTT && window.TNTT.library && window.TNTT.library.editArticle && window.TNTT.library.editArticle(item);
+    }
+    </script>
+
     <!-- Link file JS (Có Phá Cache để điện thoại luôn load mới) -->
     <!-- Dữ liệu phiên và cấu hình, nhúng sẵn để app.js không phải chờ thêm một vòng mạng -->
     <script>window.TNTT_BOOT = <?php echo json_encode($bootData, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP); ?>;</script>
