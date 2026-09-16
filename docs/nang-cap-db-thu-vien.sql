@@ -42,8 +42,9 @@ INSERT IGNORE INTO library_categories (id, name, sort_order) VALUES
     (5, 'Sinh hoạt',            5);
 
 -- Đăng ký module (khu 'glv')
+-- icon 'scroll-text' (bản lucide rút gọn của app không có 'library')
 INSERT IGNORE INTO modules (module_key, label, icon, color, area, sort_order)
-VALUES ('thu_vien', 'Thư viện', 'library', 'text-amber-600', 'glv', 7);
+VALUES ('thu_vien', 'Thư viện', 'scroll-text', 'text-amber-600', 'glv', 7);
 
 -- Quyền: view = xem + đăng (chờ duyệt); edit = duyệt/gỡ/quản chủ đề.
 -- Thứ tự vai: admin, bdh, truong_khoi, glv_chu_nhiem, glv, du_bi

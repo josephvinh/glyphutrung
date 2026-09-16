@@ -165,15 +165,14 @@ window.TNTT.library = {
     },
 
     // ---------- Tiện ích hiển thị ----------
+    // Chỉ dùng icon CÓ trong bản lucide rút gọn của app (93 icon).
     libItemIcon(item) {
-        return item.type === 'article' ? 'book-open' : this.libIcon(item.ext);
+        return item.type === 'article' ? 'scroll-text' : this.libIcon(item.ext);
     },
     libIcon(ext) {
-        if (ext === 'pdf') return 'file-text';
-        if (['jpg', 'jpeg', 'png', 'webp'].includes(ext)) return 'image';
-        if (['doc', 'docx'].includes(ext)) return 'file-type';
-        if (['ppt', 'pptx'].includes(ext)) return 'monitor-play';
-        return 'file';
+        if (['pdf', 'doc', 'docx'].includes(ext)) return 'file-text';
+        if (['ppt', 'pptx', 'jpg', 'jpeg', 'png', 'webp'].includes(ext)) return 'file-up';
+        return 'file-text';
     },
     libSizeLabel(kb) {
         return kb >= 1024 ? (kb / 1024).toFixed(1) + ' MB' : kb + ' KB';

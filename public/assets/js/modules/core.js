@@ -545,7 +545,7 @@ window.TNTT.core = {
         { key: 'analytics',     label: 'Phân tích',    icon: 'bar-chart-2',     color: 'text-purple-600', area: 'glv', group: 'Theo dõi', hidden: true },
         { key: 'org',           label: 'Khối lớp',     icon: 'layers',          color: 'text-indigo-600', area: 'glv', group: 'Quản lý' },
         { key: 'guide',         label: 'Hướng dẫn',    icon: 'info',            color: 'text-sky-600',    area: 'glv', group: 'Theo dõi' },
-        { key: 'thu_vien',      label: 'Thư viện',     icon: 'library',         color: 'text-amber-600',  area: 'glv', group: 'Theo dõi' },
+        { key: 'thu_vien',      label: 'Thư viện',     icon: 'scroll-text',     color: 'text-amber-600',  area: 'glv', group: 'Theo dõi' },
         // reports + scores gộp vào tile "Thiếu Nhi" (mở qua thẻ), ẩn khỏi lưới
         { key: 'reports',       label: 'Sổ liên lạc',  icon: 'clipboard-list',  color: 'text-amber-600',  area: 'glv', group: 'Hằng ngày', hidden: true },
         { key: 'scores',        label: 'Điểm số',      icon: 'graduation-cap',  color: 'text-violet-600', area: 'glv', group: 'Hằng ngày', hidden: true },

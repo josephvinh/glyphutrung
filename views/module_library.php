@@ -146,11 +146,11 @@
             <div x-show="!libCompose.id" class="flex gap-2 mb-4">
                 <button @click="libCompose.mode='article'" type="button" class="flex-1 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-transform"
                         :class="libCompose.mode==='article' ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-500'">
-                    <i data-lucide="book-open" class="w-4 h-4"></i> Viết bài
+                    <i data-lucide="scroll-text" class="w-4 h-4"></i> Viết bài
                 </button>
                 <button @click="libCompose.mode='file'" type="button" class="flex-1 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-transform"
                         :class="libCompose.mode==='file' ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-500'">
-                    <i data-lucide="paperclip" class="w-4 h-4"></i> Đăng tệp
+                    <i data-lucide="file-up" class="w-4 h-4"></i> Đăng tệp
                 </button>
             </div>
 
@@ -183,7 +183,7 @@
                               class="w-full bg-slate-50 border border-slate-200 rounded-field py-3 px-3 text-sm text-slate-700 mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
                     <label class="block text-micro font-bold text-slate-500 uppercase mb-1.5">File (PDF, ảnh, Word, PowerPoint · tối đa 15MB)</label>
                     <label class="flex items-center gap-2 w-full bg-slate-50 border border-dashed border-slate-300 rounded-field py-3 px-3 text-sm text-slate-500 cursor-pointer active:scale-[0.99] transition-transform mb-4">
-                        <i data-lucide="paperclip" class="w-4 h-4 shrink-0"></i>
+                        <i data-lucide="file-up" class="w-4 h-4 shrink-0"></i>
                         <span class="truncate" x-text="libCompose.fileName || 'Chọn file…'"></span>
                         <input type="file" class="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.ppt,.pptx" @change="libPickFile($event)">
                     </label>
@@ -203,7 +203,7 @@
             <button aria-label="Đóng" @click="libViewer.open=false" class="tap-safe w-9 h-9 bg-white/15 rounded-full flex items-center justify-center active:scale-90"><i data-lucide="x" class="w-5 h-5"></i></button>
             <p class="flex-1 min-w-0 truncate font-bold text-sm" x-text="libViewer.item && libViewer.item.title"></p>
             <a x-show="libViewer.item && libViewer.item.type==='file'" style="display:none" :href="libViewer.item && (libViewer.item.fileUrl + '&mode=download')"
-               class="shrink-0 w-9 h-9 bg-white/15 rounded-full flex items-center justify-center active:scale-90" aria-label="Tải về"><i data-lucide="download" class="w-5 h-5"></i></a>
+               class="shrink-0 w-9 h-9 bg-white/15 rounded-full flex items-center justify-center active:scale-90" aria-label="Tải về"><i data-lucide="file-down" class="w-5 h-5"></i></a>
             <button x-show="libViewer.item && libViewer.item.type==='article' && (libCanEdit || lib.tab==='mine')" style="display:none" @click="editArticle(libViewer.item)" class="shrink-0 w-9 h-9 bg-white/15 rounded-full flex items-center justify-center active:scale-90" aria-label="Sửa"><i data-lucide="pencil" class="w-5 h-5"></i></button>
             <button x-show="libViewer.item && (libCanEdit || lib.tab==='mine')" style="display:none" @click="libDelete(libViewer.item)" class="shrink-0 w-9 h-9 bg-rose-500/80 rounded-full flex items-center justify-center active:scale-90" aria-label="Gỡ"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
         </div>
@@ -233,7 +233,7 @@
                     <p class="text-slate-700 font-bold mb-1">Tài liệu này cần tải về để xem</p>
                     <p class="text-slate-400 text-sm mb-4" x-text="libViewer.item && (libViewer.item.ext.toUpperCase() + ' · ' + libSizeLabel(libViewer.item.sizeKb))"></p>
                     <a :href="libViewer.item && (libViewer.item.fileUrl + '&mode=download')"
-                       class="bg-blue-600 text-white font-bold px-5 py-3 rounded-2xl active:scale-95 transition-transform inline-flex items-center gap-2"><i data-lucide="download" class="w-4 h-4"></i> Tải về</a>
+                       class="bg-blue-600 text-white font-bold px-5 py-3 rounded-2xl active:scale-95 transition-transform inline-flex items-center gap-2"><i data-lucide="file-down" class="w-4 h-4"></i> Tải về</a>
                 </div>
             </template>
         </div>

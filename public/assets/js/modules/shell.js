@@ -113,9 +113,21 @@ window.TNTT.shell = {
             window.scrollTo({ top: 0, behavior: 'instant' });
         };
 
-        // Trình duyệt hỗ trợ View Transitions API -> dùng hiệu ứng mờ chéo Native
-        if (document.startViewTransition) {
-            document.startViewTransition(updateDOM);
+        // View Transitions API cho hiệu ứng mờ chéo. Nhưng đổi tab NHANH: gọi
+        // transition mới khi cái cũ chưa xong sẽ HỦY nó -> "InvalidStateError"
+        // và lần đổi đó bị rớt (kẹt ở tab cũ). Nên: đang có transition chạy dở
+        // thì đổi THẲNG (không hiệu ứng), và luôn nuốt lỗi để không bao giờ kẹt.
+        if (document.startViewTransition && !this._vtBusy) {
+            this._vtBusy = true;
+            let vt;
+            try {
+                vt = document.startViewTransition(updateDOM);
+            } catch (e) {
+                this._vtBusy = false;
+                updateDOM();
+                return;
+            }
+            vt.finished.catch(() => {}).finally(() => { this._vtBusy = false; });
         } else {
             updateDOM();
         }
