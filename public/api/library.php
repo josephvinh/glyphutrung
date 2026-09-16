@@ -33,11 +33,13 @@ switch ($action) {
             'SELECT id, name, is_active FROM library_categories ORDER BY sort_order, name')]);
 
     case 'list':
+        // Filter đọc từ body (helper api() ở frontend luôn gửi POST kèm JSON).
         $where = ["i.status = 'da_duyet'"];
         $params = [];
-        if ($cat = (int) ($_GET['category'] ?? 0)) { $where[] = 'i.category_id = ?'; $params[] = $cat; }
-        $q = trim((string) ($_GET['q'] ?? ''));
-        if ($q !== '') { $where[] = 'i.title LIKE ?'; $params[] = '%' . $q . '%'; }
+        if ($cat = (int) ($in['category'] ?? 0)) { $where[] = 'i.category_id = ?'; $params[] = $cat; }
+        // Tra cứu: khớp tiêu đề HOẶC nội dung bài viết (sổ tay).
+        $q = trim((string) ($in['q'] ?? ''));
+        if ($q !== '') { $where[] = '(i.title LIKE ? OR i.body LIKE ?)'; $params[] = '%' . $q . '%'; $params[] = '%' . $q . '%'; }
         $rows = db_all(
             'SELECT i.*, c.name AS category_name, m.full_name AS uploader_name
                FROM library_items i
@@ -92,6 +94,40 @@ switch ($action) {
         log_action('tao', 'thu_vien', 'Đăng tài liệu: ' . $title);
         json_out(['ok' => true]);
 
+    // Viết/sửa BÀI VIẾT sổ tay (nội dung chữ, không có file).
+    case 'saveArticle':
+        require_write();
+        $title = trim((string) ($in['title'] ?? ''));
+        $body  = trim((string) ($in['body'] ?? ''));
+        if ($title === '') json_fail('Vui lòng nhập tiêu đề.');
+        if ($body === '')  json_fail('Vui lòng nhập nội dung.');
+        $catId = (int) ($in['category_id'] ?? 0) ?: null;
+        if ($catId && !db_one('SELECT id FROM library_categories WHERE id = ?', [$catId])) $catId = null;
+        $desc  = trim((string) ($in['description'] ?? '')) ?: null;
+        $id    = (int) ($in['id'] ?? 0);
+
+        if ($id) {
+            $it = db_one('SELECT * FROM library_items WHERE id = ? AND item_type = "article"', [$id]);
+            if (!$it) json_fail('Không tìm thấy bài viết.', 404);
+            if ((int) $it['uploaded_by'] !== (int) $me['id'] && !$canEdit) {
+                json_fail('Bạn chỉ sửa được bài của mình.', 403);
+            }
+            // GLV thường sửa -> quay lại chờ duyệt; BĐH sửa -> giữ nguyên trạng thái.
+            $status = $canEdit ? $it['status'] : 'cho_duyet';
+            db_run('UPDATE library_items SET title=?, description=?, body=?, category_id=?, status=? WHERE id=?',
+                   [$title, $desc, $body, $catId, $status, $id]);
+            log_action('sua', 'thu_vien', 'Sửa bài sổ tay: ' . $title);
+        } else {
+            // BĐH/Admin soạn sổ tay -> duyệt luôn; GLV thường -> chờ duyệt.
+            $status = $canEdit ? 'da_duyet' : 'cho_duyet';
+            db_run('INSERT INTO library_items
+                      (title, item_type, description, body, category_id, status, uploaded_by, approved_by, created_at, approved_at)
+                    VALUES (?, "article", ?, ?, ?, ?, ?, ?, NOW(), ' . ($canEdit ? 'NOW()' : 'NULL') . ')',
+                   [$title, $desc, $body, $catId, $status, $me['id'], $canEdit ? $me['id'] : null]);
+            log_action('tao', 'thu_vien', 'Viết bài sổ tay: ' . $title);
+        }
+        json_out(['ok' => true, 'autoApproved' => $canEdit]);
+
     case 'approve':
         require_write();
         library_need_edit($canEdit);
@@ -107,7 +143,7 @@ switch ($action) {
         library_need_edit($canEdit);
         $it = db_one('SELECT * FROM library_items WHERE id = ?', [(int) ($in['id'] ?? 0)]);
         if (!$it) json_fail('Không tìm thấy tài liệu.', 404);
-        @unlink(library_storage_dir() . '/' . $it['stored_name']);   // xoá file khỏi host
+        if (!empty($it['stored_name'])) @unlink(library_storage_dir() . '/' . $it['stored_name']);   // xoá file khỏi host (bài viết không có file)
         db_run('UPDATE library_items SET status="tu_choi", reject_reason=?, approved_by=?,
                        approved_at=NOW() WHERE id=?',
                [trim((string) ($in['reason'] ?? '')) ?: null, $me['id'], $it['id']]);
@@ -121,7 +157,7 @@ switch ($action) {
         if ((int) $it['uploaded_by'] !== (int) $me['id'] && !$canEdit) {
             json_fail('Bạn chỉ gỡ được tài liệu của mình.', 403);
         }
-        @unlink(library_storage_dir() . '/' . $it['stored_name']);
+        if (!empty($it['stored_name'])) @unlink(library_storage_dir() . '/' . $it['stored_name']);
         db_run('DELETE FROM library_items WHERE id = ?', [$it['id']]);
         log_action('xoa', 'thu_vien', 'Gỡ tài liệu: ' . $it['title']);
         json_out(['ok' => true]);

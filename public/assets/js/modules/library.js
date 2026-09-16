@@ -16,7 +16,8 @@ window.TNTT.library = {
         loading: false,
         tab: 'all',          // 'all' | 'mine' | 'pending'
     },
-    libUpload: { open: false, title: '', categoryId: '', description: '', fileName: '', busy: false },
+    // Modal soạn: 2 chế độ — 'file' (đăng tệp) hoặc 'article' (viết bài sổ tay).
+    libCompose: { open: false, mode: 'article', id: 0, title: '', categoryId: '', description: '', body: '', fileName: '', busy: false },
     libViewer: { open: false, item: null },
     _libFile: null,          // File thô, KHÔNG để Alpine theo dõi
 
@@ -59,56 +60,79 @@ window.TNTT.library = {
         this.$nextTick(() => window.lucide && lucide.createIcons());
     },
 
-    // ---------- Đăng tài liệu ----------
-    openLibUpload() {
-        this.libUpload = {
-            open: true, title: '',
+    // ---------- Soạn (đăng tệp / viết bài sổ tay) ----------
+    openCompose(mode) {
+        this.libCompose = {
+            open: true, mode: mode || 'article', id: 0, title: '',
             categoryId: (this.lib.categories[0] && this.lib.categories[0].id) || '',
-            description: '', fileName: '', busy: false,
+            description: '', body: '', fileName: '', busy: false,
         };
         this._libFile = null;
         this.$nextTick(() => window.lucide && lucide.createIcons());
     },
 
+    editArticle(item) {
+        this.libViewer.open = false;
+        this.libCompose = {
+            open: true, mode: 'article', id: item.id, title: item.title,
+            categoryId: item.categoryId || '', description: item.description || '',
+            body: item.body || '', fileName: '', busy: false,
+        };
+        this.$nextTick(() => window.lucide && lucide.createIcons());
+    },
+
     libPickFile(e) {
         const f = e.target.files && e.target.files[0];
-        if (!f) { this._libFile = null; this.libUpload.fileName = ''; return; }
+        if (!f) { this._libFile = null; this.libCompose.fileName = ''; return; }
         if (f.size > 15 * 1024 * 1024) {
             window.TNTT.toast.error('File quá lớn (tối đa 15MB).');
-            e.target.value = ''; this._libFile = null; this.libUpload.fileName = '';
+            e.target.value = ''; this._libFile = null; this.libCompose.fileName = '';
             return;
         }
         this._libFile = f;
-        this.libUpload.fileName = f.name;
+        this.libCompose.fileName = f.name;
     },
 
-    async submitLibUpload() {
-        if (this.libUpload.busy) return;
-        if (!this.libUpload.title.trim()) { window.TNTT.toast.warning('Vui lòng nhập tiêu đề.'); return; }
-        if (!this._libFile) { window.TNTT.toast.warning('Vui lòng chọn file.'); return; }
-        this.libUpload.busy = true;
+    async submitCompose() {
+        const c = this.libCompose;
+        if (c.busy) return;
+        if (!c.title.trim()) { window.TNTT.toast.warning('Vui lòng nhập tiêu đề.'); return; }
+        if (c.mode === 'article' && !c.body.trim()) { window.TNTT.toast.warning('Vui lòng nhập nội dung.'); return; }
+        if (c.mode === 'file' && !this._libFile && !c.id) { window.TNTT.toast.warning('Vui lòng chọn file.'); return; }
+        c.busy = true;
         try {
-            const fd = new FormData();
-            fd.append('title', this.libUpload.title.trim());
-            fd.append('category_id', this.libUpload.categoryId || '');
-            fd.append('description', this.libUpload.description || '');
-            fd.append('file', this._libFile);
-            // KHÔNG tự đặt Content-Type: để trình duyệt tự sinh boundary multipart.
-            const res = await fetch('api/library.php?action=upload', {
-                method: 'POST',
-                headers: (window.TNTT && window.TNTT.csrfToken) ? { 'X-CSRF-TOKEN': window.TNTT.csrfToken } : {},
-                body: fd,
-            });
-            const r = await res.json();
-            if (!r.ok) { window.TNTT.toast.error(r.error || 'Đăng thất bại, thử lại.'); return; }
-            window.TNTT.toast.success('Đã gửi tài liệu, chờ Ban Điều Hành duyệt.');
-            this.libUpload.open = false;
+            if (c.mode === 'article') {
+                const r = await this.save('library', 'saveArticle', {
+                    id: c.id || 0, title: c.title.trim(), category_id: c.categoryId || '',
+                    description: c.description || '', body: c.body,
+                });
+                if (!r.ok) return;
+                window.TNTT.toast.success(r.autoApproved ? 'Đã đăng bài sổ tay.' : 'Đã gửi, chờ Ban Điều Hành duyệt.');
+            } else {
+                const fd = new FormData();
+                fd.append('title', c.title.trim());
+                fd.append('category_id', c.categoryId || '');
+                fd.append('description', c.description || '');
+                fd.append('file', this._libFile);
+                // KHÔNG tự đặt Content-Type: để trình duyệt tự sinh boundary multipart.
+                const res = await fetch('api/library.php?action=upload', {
+                    method: 'POST',
+                    headers: (window.TNTT && window.TNTT.csrfToken) ? { 'X-CSRF-TOKEN': window.TNTT.csrfToken } : {},
+                    body: fd,
+                });
+                const r = await res.json();
+                if (!r.ok) { window.TNTT.toast.error(r.error || 'Đăng thất bại, thử lại.'); return; }
+                window.TNTT.toast.success('Đã gửi tài liệu, chờ Ban Điều Hành duyệt.');
+            }
+            c.open = false;
             this._libFile = null;
+            await this.libRefresh();
             if (this.lib.tab === 'mine') this.libLoadMine();
+            if (this.libCanEdit) this.libLoadPending();
         } catch (e) {
             window.TNTT.toast.error('Mất kết nối máy chủ. Kiểm tra lại mạng.');
         } finally {
-            this.libUpload.busy = false;
+            c.busy = false;
         }
     },
 
@@ -141,6 +165,9 @@ window.TNTT.library = {
     },
 
     // ---------- Tiện ích hiển thị ----------
+    libItemIcon(item) {
+        return item.type === 'article' ? 'book-open' : this.libIcon(item.ext);
+    },
     libIcon(ext) {
         if (ext === 'pdf') return 'file-text';
         if (['jpg', 'jpeg', 'png', 'webp'].includes(ext)) return 'image';

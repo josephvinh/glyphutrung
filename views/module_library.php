@@ -8,12 +8,12 @@
             <i data-lucide="chevron-left" class="w-5 h-5 text-slate-600"></i>
         </button>
         <div class="flex-1 min-w-0">
-            <h2 class="text-lg font-black text-slate-800">Thư viện tài liệu</h2>
-            <p class="text-micro text-slate-400">Giáo án · đào tạo · bài hát · văn kiện · sinh hoạt</p>
+            <h2 class="text-lg font-black text-slate-800">Thư viện &amp; Sổ tay</h2>
+            <p class="text-micro text-slate-400">Tài liệu để tải · bài viết tra cứu nhanh</p>
         </div>
-        <button @click="openLibUpload()"
+        <button @click="openCompose('article')"
                 class="shrink-0 bg-blue-600 text-white font-bold text-sm px-4 py-2.5 rounded-2xl active:scale-95 transition-transform shadow-md shadow-blue-200 flex items-center gap-2">
-            <i data-lucide="upload" class="w-4 h-4"></i> Đăng
+            <i data-lucide="plus" class="w-4 h-4"></i> Soạn
         </button>
     </div>
 
@@ -55,25 +55,25 @@
         <div x-show="!lib.loading && lib.items.length===0" style="display:none"
              class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
             <i data-lucide="folder-open" class="w-12 h-12 mx-auto text-slate-300 mb-3"></i>
-            <p class="text-slate-600 font-semibold">Chưa có tài liệu nào</p>
-            <p class="text-slate-400 text-sm">Bấm "Đăng" để đóng góp tài liệu đầu tiên.</p>
+            <p class="text-slate-600 font-semibold">Chưa có gì ở đây</p>
+            <p class="text-slate-400 text-sm">Bấm "Soạn" để viết bài tra cứu hoặc đăng tệp đầu tiên.</p>
         </div>
 
         <!-- Lưới thẻ -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <template x-for="it in lib.items" :key="it.id">
                 <button @click="openLibItem(it)" class="text-left bg-white rounded-card p-4 shadow-sm border border-slate-100 active:scale-[0.98] transition-transform flex gap-3">
-                    <div class="w-11 h-11 shrink-0 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
-                        <i :data-lucide="libIcon(it.ext)" class="w-5 h-5"></i>
+                    <div class="w-11 h-11 shrink-0 rounded-2xl flex items-center justify-center border"
+                         :class="it.type==='article' ? 'bg-sky-50 border-sky-200 text-sky-600' : 'bg-amber-50 border-amber-100 text-amber-600'">
+                        <i :data-lucide="libItemIcon(it)" class="w-5 h-5"></i>
                     </div>
                     <div class="flex-1 min-w-0">
                         <p class="text-sm font-bold text-slate-800 truncate" x-text="it.title"></p>
                         <p class="text-micro text-slate-400 truncate">
-                            <span x-show="it.categoryName" x-text="it.categoryName"></span>
-                            <span x-show="it.categoryName"> · </span>
-                            <span x-text="it.ext.toUpperCase() + ' · ' + libSizeLabel(it.sizeKb)"></span>
+                            <span x-show="it.categoryName" x-text="it.categoryName + ' · '"></span>
+                            <span x-text="it.type==='article' ? 'Sổ tay' : (it.ext.toUpperCase() + ' · ' + libSizeLabel(it.sizeKb))"></span>
                         </p>
-                        <p class="text-micro text-slate-400 truncate mt-0.5" x-show="it.uploaderName" x-text="'Đăng bởi ' + it.uploaderName"></p>
+                        <p class="text-xs text-slate-500 truncate mt-0.5" x-show="it.type==='article' && it.body" x-text="it.body"></p>
                     </div>
                 </button>
             </template>
@@ -87,7 +87,7 @@
             <template x-for="it in lib.mineItems" :key="it.id">
                 <div class="bg-white rounded-card p-4 shadow-sm border border-slate-100 flex gap-3 items-start">
                     <div class="w-11 h-11 shrink-0 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500">
-                        <i :data-lucide="libIcon(it.ext)" class="w-5 h-5"></i>
+                        <i :data-lucide="libItemIcon(it)" class="w-5 h-5"></i>
                     </div>
                     <div class="flex-1 min-w-0">
                         <p class="text-sm font-bold text-slate-800 truncate" x-text="it.title"></p>
@@ -97,7 +97,8 @@
                         <p x-show="it.status==='tu_choi' && it.rejectReason" style="display:none" class="text-micro text-rose-500 mt-1" x-text="'Lý do: ' + it.rejectReason"></p>
                     </div>
                     <div class="flex flex-col gap-1.5 shrink-0">
-                        <button x-show="it.status==='da_duyet'" style="display:none" @click="openLibItem(it)" class="text-xs font-bold text-blue-600 px-2 py-1">Xem</button>
+                        <button @click="openLibItem(it)" class="text-xs font-bold text-blue-600 px-2 py-1">Xem</button>
+                        <button x-show="it.type==='article'" style="display:none" @click="editArticle(it)" class="text-xs font-bold text-slate-500 px-2 py-1">Sửa</button>
                         <button @click="libDelete(it)" class="text-xs font-bold text-rose-500 px-2 py-1">Gỡ</button>
                     </div>
                 </div>
@@ -113,13 +114,13 @@
                 <div class="bg-white rounded-card p-4 shadow-sm border border-amber-100">
                     <div class="flex gap-3 items-start">
                         <div class="w-11 h-11 shrink-0 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
-                            <i :data-lucide="libIcon(it.ext)" class="w-5 h-5"></i>
+                            <i :data-lucide="libItemIcon(it)" class="w-5 h-5"></i>
                         </div>
                         <div class="flex-1 min-w-0">
                             <p class="text-sm font-bold text-slate-800 truncate" x-text="it.title"></p>
-                            <p class="text-micro text-slate-400 truncate" x-text="(it.categoryName ? it.categoryName + ' · ' : '') + it.ext.toUpperCase() + ' · ' + libSizeLabel(it.sizeKb)"></p>
+                            <p class="text-micro text-slate-400 truncate" x-text="(it.categoryName ? it.categoryName + ' · ' : '') + (it.type==='article' ? 'Sổ tay' : it.ext.toUpperCase() + ' · ' + libSizeLabel(it.sizeKb))"></p>
                             <p class="text-micro text-slate-400 truncate" x-show="it.uploaderName" x-text="'Đăng bởi ' + it.uploaderName"></p>
-                            <p x-show="it.description" style="display:none" class="text-xs text-slate-500 mt-1" x-text="it.description"></p>
+                            <p x-show="(it.description || it.body)" style="display:none" class="text-xs text-slate-500 mt-1 truncate" x-text="it.body || it.description"></p>
                         </div>
                         <button @click="openLibItem(it)" class="shrink-0 text-xs font-bold text-blue-600 px-2 py-1">Xem trước</button>
                     </div>
@@ -132,41 +133,66 @@
         </div>
     </div>
 
-    <!-- ================= MODAL: ĐĂNG TÀI LIỆU ================= -->
-    <div x-show="libUpload.open" style="display:none" class="fixed inset-0 z-[200] flex items-end justify-center sm:items-center sm:p-6">
-        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" @click="libUpload.open=false"></div>
+    <!-- ================= MODAL: SOẠN (bài viết sổ tay / đăng tệp) ================= -->
+    <div x-show="libCompose.open" style="display:none" class="fixed inset-0 z-[200] flex items-end justify-center sm:items-center sm:p-6">
+        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" @click="libCompose.open=false"></div>
         <div class="relative w-full max-w-md bg-white rounded-t-sheet sm:rounded-sheet shadow-2xl p-5 max-h-[92dvh] overflow-y-auto">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="text-base font-black text-slate-800">Đăng tài liệu</h3>
-                <button aria-label="Đóng" @click="libUpload.open=false" class="tap-safe w-8 h-8 bg-slate-100 rounded-full text-slate-500 active:scale-90 flex items-center justify-center"><i data-lucide="x" class="w-4 h-4"></i></button>
+                <h3 class="text-base font-black text-slate-800" x-text="libCompose.id ? 'Sửa bài sổ tay' : 'Soạn mới'"></h3>
+                <button aria-label="Đóng" @click="libCompose.open=false" class="tap-safe w-8 h-8 bg-slate-100 rounded-full text-slate-500 active:scale-90 flex items-center justify-center"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+
+            <!-- Chọn chế độ (ẩn khi đang sửa bài) -->
+            <div x-show="!libCompose.id" class="flex gap-2 mb-4">
+                <button @click="libCompose.mode='article'" type="button" class="flex-1 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-transform"
+                        :class="libCompose.mode==='article' ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-500'">
+                    <i data-lucide="book-open" class="w-4 h-4"></i> Viết bài
+                </button>
+                <button @click="libCompose.mode='file'" type="button" class="flex-1 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-transform"
+                        :class="libCompose.mode==='file' ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-500'">
+                    <i data-lucide="paperclip" class="w-4 h-4"></i> Đăng tệp
+                </button>
             </div>
 
             <label class="block text-micro font-bold text-slate-500 uppercase mb-1.5">Tiêu đề</label>
-            <input x-model="libUpload.title" type="text" placeholder="VD: Giáo án Khai Tâm bài 5"
+            <input x-model="libCompose.title" type="text" :placeholder="libCompose.mode==='article' ? 'VD: Kinh Sáng Danh' : 'VD: Giáo án Khai Tâm bài 5'"
                    class="w-full bg-slate-50 border border-slate-200 rounded-field py-3 px-3 text-sm font-semibold text-slate-800 mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
 
             <label class="block text-micro font-bold text-slate-500 uppercase mb-1.5">Chủ đề</label>
-            <select x-model="libUpload.categoryId"
+            <select x-model="libCompose.categoryId"
                     class="w-full bg-slate-50 border border-slate-200 rounded-field py-3 px-3 text-sm font-semibold text-slate-800 mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <template x-for="c in lib.categories" :key="c.id">
                     <option :value="c.id" x-text="c.name"></option>
                 </template>
             </select>
 
-            <label class="block text-micro font-bold text-slate-500 uppercase mb-1.5">Mô tả (không bắt buộc)</label>
-            <textarea x-model="libUpload.description" rows="2" placeholder="Vài dòng giới thiệu…"
-                      class="w-full bg-slate-50 border border-slate-200 rounded-field py-3 px-3 text-sm text-slate-700 mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+            <!-- Chế độ BÀI VIẾT: nội dung tra cứu -->
+            <template x-if="libCompose.mode==='article'">
+                <div>
+                    <label class="block text-micro font-bold text-slate-500 uppercase mb-1.5">Nội dung (đọc thẳng, tra cứu nhanh)</label>
+                    <textarea x-model="libCompose.body" rows="8" placeholder="Nhập nội dung: kinh, nghi thức, quy trình, lời bài hát…"
+                              class="w-full bg-slate-50 border border-slate-200 rounded-field py-3 px-3 text-sm text-slate-700 mb-4 leading-relaxed focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+            </template>
 
-            <label class="block text-micro font-bold text-slate-500 uppercase mb-1.5">File (PDF, ảnh, Word, PowerPoint · tối đa 15MB)</label>
-            <label class="flex items-center gap-2 w-full bg-slate-50 border border-dashed border-slate-300 rounded-field py-3 px-3 text-sm text-slate-500 cursor-pointer active:scale-[0.99] transition-transform mb-4">
-                <i data-lucide="paperclip" class="w-4 h-4 shrink-0"></i>
-                <span class="truncate" x-text="libUpload.fileName || 'Chọn file…'"></span>
-                <input type="file" class="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.ppt,.pptx" @change="libPickFile($event)">
-            </label>
+            <!-- Chế độ TỆP: mô tả + file -->
+            <template x-if="libCompose.mode==='file'">
+                <div>
+                    <label class="block text-micro font-bold text-slate-500 uppercase mb-1.5">Mô tả (không bắt buộc)</label>
+                    <textarea x-model="libCompose.description" rows="2" placeholder="Vài dòng giới thiệu…"
+                              class="w-full bg-slate-50 border border-slate-200 rounded-field py-3 px-3 text-sm text-slate-700 mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    <label class="block text-micro font-bold text-slate-500 uppercase mb-1.5">File (PDF, ảnh, Word, PowerPoint · tối đa 15MB)</label>
+                    <label class="flex items-center gap-2 w-full bg-slate-50 border border-dashed border-slate-300 rounded-field py-3 px-3 text-sm text-slate-500 cursor-pointer active:scale-[0.99] transition-transform mb-4">
+                        <i data-lucide="paperclip" class="w-4 h-4 shrink-0"></i>
+                        <span class="truncate" x-text="libCompose.fileName || 'Chọn file…'"></span>
+                        <input type="file" class="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.ppt,.pptx" @change="libPickFile($event)">
+                    </label>
+                </div>
+            </template>
 
-            <button @click="submitLibUpload()" :disabled="libUpload.busy"
+            <button @click="submitCompose()" :disabled="libCompose.busy"
                     class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-blue-200 disabled:opacity-50 flex justify-center items-center gap-2">
-                <span x-text="libUpload.busy ? 'Đang gửi…' : 'Gửi (chờ duyệt)'"></span>
+                <span x-text="libCompose.busy ? 'Đang gửi…' : (libCompose.mode==='article' ? (libCompose.id ? 'Lưu' : 'Đăng bài') : 'Gửi tệp (chờ duyệt)')"></span>
             </button>
         </div>
     </div>
@@ -176,23 +202,32 @@
         <div class="flex items-center gap-3 p-3 text-white shrink-0">
             <button aria-label="Đóng" @click="libViewer.open=false" class="tap-safe w-9 h-9 bg-white/15 rounded-full flex items-center justify-center active:scale-90"><i data-lucide="x" class="w-5 h-5"></i></button>
             <p class="flex-1 min-w-0 truncate font-bold text-sm" x-text="libViewer.item && libViewer.item.title"></p>
-            <a x-show="libViewer.item" :href="libViewer.item && (libViewer.item.fileUrl + '&mode=download')"
+            <a x-show="libViewer.item && libViewer.item.type==='file'" style="display:none" :href="libViewer.item && (libViewer.item.fileUrl + '&mode=download')"
                class="shrink-0 w-9 h-9 bg-white/15 rounded-full flex items-center justify-center active:scale-90" aria-label="Tải về"><i data-lucide="download" class="w-5 h-5"></i></a>
+            <button x-show="libViewer.item && libViewer.item.type==='article' && (libCanEdit || lib.tab==='mine')" style="display:none" @click="editArticle(libViewer.item)" class="shrink-0 w-9 h-9 bg-white/15 rounded-full flex items-center justify-center active:scale-90" aria-label="Sửa"><i data-lucide="pencil" class="w-5 h-5"></i></button>
             <button x-show="libViewer.item && (libCanEdit || lib.tab==='mine')" style="display:none" @click="libDelete(libViewer.item)" class="shrink-0 w-9 h-9 bg-rose-500/80 rounded-full flex items-center justify-center active:scale-90" aria-label="Gỡ"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
         </div>
         <div class="flex-1 min-h-0 bg-white sm:m-4 sm:rounded-2xl overflow-hidden">
+            <!-- BÀI VIẾT sổ tay: đọc thẳng -->
+            <template x-if="libViewer.item && libViewer.item.type==='article'">
+                <div class="w-full h-full overflow-auto p-5 sm:p-8">
+                    <p class="text-micro font-bold uppercase text-sky-600 mb-2" x-show="libViewer.item.categoryName" x-text="libViewer.item.categoryName"></p>
+                    <h1 class="text-xl font-black text-slate-800 mb-4" x-text="libViewer.item.title"></h1>
+                    <div class="text-slate-700 text-base leading-relaxed" style="white-space:pre-wrap" x-text="libViewer.item.body"></div>
+                </div>
+            </template>
             <!-- PDF: nhúng trực tiếp -->
-            <template x-if="libViewer.item && libViewer.item.ext==='pdf'">
+            <template x-if="libViewer.item && libViewer.item.type==='file' && libViewer.item.ext==='pdf'">
                 <iframe :src="libViewer.item.fileUrl + '&mode=view'" class="w-full h-full border-0"></iframe>
             </template>
             <!-- Ảnh: hiện thẳng -->
-            <template x-if="libViewer.item && libViewer.item.viewable && libViewer.item.ext!=='pdf'">
+            <template x-if="libViewer.item && libViewer.item.type==='file' && libViewer.item.viewable && libViewer.item.ext!=='pdf'">
                 <div class="w-full h-full overflow-auto flex items-center justify-center p-4 bg-slate-50">
                     <img :src="libViewer.item.fileUrl + '&mode=view'" class="max-w-full h-auto" alt="">
                 </div>
             </template>
-            <!-- Không xem trực tiếp: mời tải về -->
-            <template x-if="libViewer.item && !libViewer.item.viewable">
+            <!-- Tệp không xem trực tiếp: mời tải về -->
+            <template x-if="libViewer.item && libViewer.item.type==='file' && !libViewer.item.viewable">
                 <div class="w-full h-full flex flex-col items-center justify-center text-center p-6">
                     <i data-lucide="file-down" class="w-14 h-14 text-slate-300 mb-4"></i>
                     <p class="text-slate-700 font-bold mb-1">Tài liệu này cần tải về để xem</p>

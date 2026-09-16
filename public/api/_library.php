@@ -124,20 +124,24 @@ function library_download_filename(string $name): string
 /** Định dạng một dòng library_items để trả cho client. KHÔNG lộ stored_name. */
 function library_row_out(array $r): array
 {
-    $ext = strtolower(pathinfo($r['stored_name'] ?? '', PATHINFO_EXTENSION));
+    $type   = $r['item_type'] ?? 'file';
+    $isFile = $type === 'file';
+    $ext    = $isFile ? strtolower(pathinfo($r['stored_name'] ?? '', PATHINFO_EXTENSION)) : '';
     return [
         'id'           => (int) $r['id'],
+        'type'         => $type,                        // 'file' | 'article'
         'title'        => $r['title'],
         'description'  => $r['description'] ?? null,
+        'body'         => $type === 'article' ? ($r['body'] ?? '') : null,  // sổ tay: nội dung chữ
         'categoryId'   => $r['category_id'] ? (int) $r['category_id'] : null,
         'categoryName' => $r['category_name'] ?? null,
         'ext'          => $ext,
-        'viewable'     => library_is_viewable($ext),
+        'viewable'     => $isFile && library_is_viewable($ext),
         'sizeKb'       => (int) round(((int) ($r['size_bytes'] ?? 0)) / 1024),
         'status'       => $r['status'],
         'rejectReason' => $r['reject_reason'] ?? null,
         'uploaderName' => $r['uploader_name'] ?? null,
         'createdAt'    => $r['created_at'] ?? null,
-        'fileUrl'      => 'api/library_file.php?id=' . (int) $r['id'],
+        'fileUrl'      => $isFile ? ('api/library_file.php?id=' . (int) $r['id']) : null,
     ];
 }
