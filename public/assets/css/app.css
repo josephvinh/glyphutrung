@@ -600,3 +600,18 @@ a,
     width: 30px;
     height: 30px;
 }
+
+/* ==========================================================
+   BỔ SUNG UTILITY cho module Thư viện & Sổ tay.
+   Vài class Tailwind này KHÔNG có trong tailwind.css tạo sẵn
+   (chỉ dùng ở module thư viện) nên khai bù ở đây. Giá trị chuẩn
+   Tailwind, cascade sau tailwind.css nên không phá gì.
+   ========================================================== */
+.max-w-3xl    { max-width: 48rem; }
+.grid-cols-1  { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+.cursor-pointer { cursor: pointer; }
+.inline-block { display: inline-block; }
+.active\:scale-\[0\.99\]:active { transform: scale(.99); }
+@media (min-width: 640px) {
+    .sm\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
