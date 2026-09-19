@@ -84,8 +84,10 @@
                 <div x-show="!isLeaveExpired" style="display: none;" class="relative mb-4">
                     <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
                     <input x-model="leaveSearch" type="text" placeholder="Tìm tên em cần xin phép..." class="w-full bg-white border border-slate-200 rounded-field py-3.5 pl-12 pr-10 text-sm font-medium text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
-                    <button aria-label="Xóa ô tìm kiếm" x-show="leaveSearch !== ''" @click="leaveSearch = ''" style="display: none;" class="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 active:scale-90 transition-transform">
-                        <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                    <button aria-label="Xóa ô tìm kiếm" x-show="leaveSearch !== ''" @click="leaveSearch = ''" style="display: none;" class="absolute right-1 top-1/2 -translate-y-1/2 p-2 flex items-center justify-center text-slate-400 active:scale-90 transition-transform">
+                        <div class="w-6 h-6 bg-slate-100 rounded-full flex items-center justify-center">
+                            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                        </div>
                     </button>
                 </div>
 

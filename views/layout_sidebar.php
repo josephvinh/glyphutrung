@@ -52,8 +52,7 @@
                               x-text="moduleBadgeLabel(m.key)"></span>
 
                         <!-- Đang bảo trì -->
-                        <i x-show="!moduleEnabled[m.key]" style="display: none;"
-                           data-lucide="wrench" class="w-3.5 h-3.5 shrink-0 text-slate-400"></i>
+                        <span x-show="!moduleEnabled[m.key]" style="display: none;" class="inline-flex items-center justify-center"><i data-lucide="wrench" class="w-3.5 h-3.5 shrink-0 text-slate-400"></i></span>
                     </button>
                 </template>
             </div>
@@ -74,8 +73,7 @@
                             <i :data-lucide="m.icon" class="w-[18px] h-[18px]"></i>
                         </span>
                         <span class="flex-1 text-left truncate" x-text="m.label"></span>
-                        <i x-show="!moduleEnabled[m.key]" style="display: none;"
-                           data-lucide="wrench" class="w-3.5 h-3.5 shrink-0 text-slate-400"></i>
+                        <span x-show="!moduleEnabled[m.key]" style="display: none;" class="inline-flex items-center justify-center"><i data-lucide="wrench" class="w-3.5 h-3.5 shrink-0 text-slate-400"></i></span>
                     </button>
                 </template>
             </div>

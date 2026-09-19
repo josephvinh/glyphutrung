@@ -11,7 +11,7 @@
          xin phép, thông báo, Thiếu Nhi=phiếu liên lạc, lịch) — xem moduleBadge(). -->
 
     <!-- BẢNG THI ĐUA (trang công khai, chỉ xem) — mở tab mới để chia sẻ cho các em -->
-    <a href="bxh.php" target="_blank" rel="noopener"
+    <a href="bxh.php"
        class="brand-gold flex items-center gap-3 rounded-card p-4 active:scale-[0.99] transition-transform">
         <span class="brand-gold-badge w-11 h-11 rounded-2xl flex items-center justify-center text-2xl shrink-0">🏆</span>
         <span class="min-w-0">

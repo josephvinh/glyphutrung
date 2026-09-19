@@ -164,7 +164,7 @@
         </div>
 
         <!-- Bảng số liệu -->
-        <div class="grid grid-cols-3 gap-3 mb-4">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
             <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-100 text-center">
                 <p class="text-2xl font-black text-emerald-600" x-text="sessionStats.present"></p>
                 <p class="text-micro font-bold text-slate-500 uppercase tracking-wide">Có mặt</p>

@@ -123,8 +123,8 @@
 
                 <div class="w-11 h-11 shrink-0 rounded-2xl flex items-center justify-center border"
                      :class="isProtectedMember(m) ? 'bg-slate-100 border-slate-200 text-slate-500' : 'bg-blue-50 border-blue-100 text-blue-500'">
-                    <i x-show="isProtectedMember(m)" data-lucide="shield-check" class="w-5 h-5"></i>
-                    <i x-show="!isProtectedMember(m)" data-lucide="user" class="w-5 h-5"></i>
+                    <span x-show="isProtectedMember(m)" class="inline-flex items-center justify-center"><i data-lucide="shield-check" class="w-5 h-5"></i></span>
+                    <span x-show="!isProtectedMember(m)" class="inline-flex items-center justify-center"><i data-lucide="user" class="w-5 h-5"></i></span>
                 </div>
 
                 <div class="flex-1 min-w-0">

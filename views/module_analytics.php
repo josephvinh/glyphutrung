@@ -114,7 +114,7 @@
             </template>
 
             <!-- Empty State -->
-            <div x-show="classData.length === 0" class="text-center py-6">
+            <div x-show="classData.length === 0" style="display: none;" class="text-center py-6">
                 <i data-lucide="inbox" class="w-8 h-8 mx-auto text-slate-300 mb-2"></i>
                 <p class="text-slate-500 font-medium text-sm">Chưa có dữ liệu theo lớp</p>
             </div>
@@ -149,7 +149,7 @@
             </template>
 
             <!-- Empty State -->
-            <div x-show="lowAttendance.length === 0" class="text-center py-8">
+            <div x-show="lowAttendance.length === 0" style="display: none;" class="text-center py-8">
                 <i data-lucide="party-popper" class="w-10 h-10 mx-auto text-emerald-300 mb-3"></i>
                 <p class="text-slate-500 font-medium text-sm">Không có học sinh nào cần chú ý</p>
                 <p class="text-slate-400 text-xs mt-1">Tất cả đều có tỷ lệ điểm danh tốt!</p>

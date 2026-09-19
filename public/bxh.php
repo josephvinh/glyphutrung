@@ -218,6 +218,8 @@ body{font-family:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",Roboto,sans
 .hero .ky{display:inline-block;margin-top:10px;background:rgba(255,255,255,.16);
  padding:5px 14px;border-radius:999px;font-size:13px;font-weight:700}
 .spark{position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none}
+.back-btn{position:absolute;top:16px;left:16px;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;display:flex;align-items:center;justify-content:center;text-decoration:none;z-index:10;backdrop-filter:blur(4px)}
+.back-btn:active{background:rgba(255,255,255,.3);transform:scale(0.95)}
 
 .filters{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:-40px auto 8px;position:relative;z-index:2}
 .seg{display:inline-flex;background:#fff;border:1px solid #e2e8f0;border-radius:999px;padding:3px;box-shadow:0 8px 20px -12px rgba(15,23,42,.4)}
@@ -263,6 +265,9 @@ select{border:1px solid #e2e8f0;border-radius:999px;padding:8px 12px;font-size:1
 <body>
 
 <div class="hero">
+  <a href="index.php" class="back-btn" aria-label="Quay lại">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+  </a>
   <div class="spark" id="spark"></div>
   <div class="cup">🏆</div>
   <h1>BẢNG THI ĐUA</h1>

@@ -70,8 +70,8 @@
                                          đã bị gỡ, đổi mấy cũng không ăn. Cách chạy được là đặt
                                          sẵn cả hai thẻ tĩnh rồi bật tắt bằng x-show — lucide chép
                                          thuộc tính sang <svg> và Alpine nhận lại binding. -->
-                                    <i x-show="expandedBlock === b" data-lucide="chevron-up" class="w-4 h-4 text-slate-400"></i>
-                                    <i x-show="expandedBlock !== b" data-lucide="chevron-down" class="w-4 h-4 text-slate-400"></i>
+                                    <span x-show="expandedBlock === b" class="inline-flex items-center justify-center"><i data-lucide="chevron-up" class="w-4 h-4 text-slate-400"></i></span>
+                                    <span x-show="expandedBlock !== b" class="inline-flex items-center justify-center"><i data-lucide="chevron-down" class="w-4 h-4 text-slate-400"></i></span>
                                 </h3>
                                 <p class="text-micro font-medium text-slate-500 mt-0.5">
                                     <span x-text="classesInBlock(b).length"></span> lớp

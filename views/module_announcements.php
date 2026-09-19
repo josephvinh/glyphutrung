@@ -35,9 +35,9 @@
                     <div class="flex items-start gap-3 mb-3">
                         <div class="w-10 h-10 shrink-0 rounded-2xl flex items-center justify-center border"
                              :class="announcementLevelClass(a.level)">
-                            <i x-show="a.level === 'khẩn'" data-lucide="siren" class="w-5 h-5"></i>
-                            <i x-show="a.level === 'quan trọng'" data-lucide="alert-triangle" class="w-5 h-5"></i>
-                            <i x-show="a.level === 'thường'" data-lucide="megaphone" class="w-5 h-5"></i>
+                            <span x-show="a.level === 'khẩn'" class="inline-flex items-center justify-center"><i data-lucide="siren" class="w-5 h-5"></i></span>
+                            <span x-show="a.level === 'quan trọng'" class="inline-flex items-center justify-center"><i data-lucide="alert-triangle" class="w-5 h-5"></i></span>
+                            <span x-show="a.level === 'thường'" class="inline-flex items-center justify-center"><i data-lucide="megaphone" class="w-5 h-5"></i></span>
                         </div>
                         <div class="min-w-0 flex-1">
                             <div class="flex items-center gap-2 mb-1 flex-wrap">
@@ -148,8 +148,8 @@
                     <button x-show="canEditAnnouncement(a)" @click="toggleAnnouncementStatus(a)"
                             class="w-full py-3 rounded-2xl font-bold text-sm active:scale-[0.98] transition-transform flex items-center justify-center gap-2 border"
                             :class="a.status === 'đã phát' ? 'bg-slate-100 text-slate-600 border-slate-200' : 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-200'">
-                        <i x-show="a.status === 'đã phát'" data-lucide="undo-2" class="w-4 h-4"></i>
-                        <i x-show="a.status !== 'đã phát'" data-lucide="send" class="w-4 h-4"></i>
+                        <span x-show="a.status === 'đã phát'" class="inline-flex items-center justify-center"><i data-lucide="undo-2" class="w-4 h-4"></i></span>
+                        <span x-show="a.status !== 'đã phát'" class="inline-flex items-center justify-center"><i data-lucide="send" class="w-4 h-4"></i></span>
                         <span x-text="a.status === 'đã phát' ? 'Thu hồi về nháp' : 'Phát thông báo'"></span>
                     </button>
 

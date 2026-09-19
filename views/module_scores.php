@@ -58,7 +58,7 @@
     <div x-show="scoreClass !== '' && scoreTab === 'enter'" style="display: none;">
 
         <!-- Chọn đầu điểm -->
-        <div class="grid grid-cols-4 gap-2 mb-4">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
             <template x-for="t in scoreTypes" :key="t.key">
                 <button @click="scoreType = t.key" type="button"
                         class="py-2.5 rounded-xl font-bold text-micro border transition-colors flex flex-col items-center gap-0.5"

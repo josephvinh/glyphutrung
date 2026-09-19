@@ -102,8 +102,8 @@
 
                     <div class="w-11 h-11 shrink-0 rounded-2xl flex items-center justify-center border"
                          :class="promoteVerdict(s.id).final === 'len' ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-rose-500 border-rose-500 text-white'">
-                        <i x-show="promoteVerdict(s.id).final === 'len'" data-lucide="arrow-up" class="w-5 h-5"></i>
-                        <i x-show="promoteVerdict(s.id).final !== 'len'" data-lucide="rotate-ccw" class="w-5 h-5"></i>
+                        <span x-show="promoteVerdict(s.id).final === 'len'" class="inline-flex items-center justify-center"><i data-lucide="arrow-up" class="w-5 h-5"></i></span>
+                        <span x-show="promoteVerdict(s.id).final !== 'len'" class="inline-flex items-center justify-center"><i data-lucide="rotate-ccw" class="w-5 h-5"></i></span>
                     </div>
 
                     <div class="flex-1 min-w-0">
