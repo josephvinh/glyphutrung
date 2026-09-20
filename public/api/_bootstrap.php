@@ -255,11 +255,14 @@ function safe_error(Throwable $e, string $chung): string
    CSRF PROTECTION
    ================================================================ */
 
-/** Bắt buộc CSRF token cho mọi POST request (chỉ khi session đã có token) */
+/** Bắt buộc CSRF token cho mọi POST request. */
 function require_csrf(): void {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
-    // Chỉ verify nếu session đã có CSRF token (đã đăng nhập)
-    if (!isset($_SESSION['csrf_token'])) return;
+    // Sau khi require_login() chạy, session đã có csrf_token.
+    // Nếu vẫn chưa có → không hợp lệ, từ chối.
+    if (empty($_SESSION['csrf_token'])) {
+        json_fail('CSRF token not found. Please reload the page.', 403);
+    }
     $token = $_POST['_csrf'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
     if (!verify_csrf($token)) {
         json_fail('Invalid CSRF token.', 403);
@@ -285,6 +288,68 @@ function require_csrf(): void {
 
    Cả hai trả null nghĩa là không giới hạn.
    ================================================================ */
+
+/**
+ * Các khối mà người này được QUẢN LÝ tổ chức (tạo/sửa/xóa khối-lớp,
+ * phân công trưởng khối/chủ nhiệm).
+ *
+ * Phân biệt với quyền XEM (được thấy mọi khối) — ở đây là quyền SỬA.
+ * - Quản Trị / BĐH: toàn đoàn  -> trả null (không giới hạn).
+ * - Trưởng Khối (scope='khối'): chỉ khối mình được phân công trưởng khối.
+ * - GLV / Dự Bị / Chủ Nhiệm: không có quyền quản lý khối-lớp -> trả [].
+ */
+function responsible_blocks(array $me): ?array
+{
+    if (in_array($me['role_code'] ?? '', ['admin', 'bdh'], true)) return null;
+
+    $blockIds = [];
+    foreach (effective_assignments((int) ($me['id'])) as $a) {
+        $scope = $a['role_scope'] ?? '';
+        if ($scope === 'toàn đoàn') return null;
+        if (!empty($a['block_id'])) {
+            $blockIds[] = (int) $a['block_id'];
+        } elseif (!empty($a['class_id'])) {
+            $c = db_one('SELECT block_id FROM classes WHERE id = ?', [(int) $a['class_id']]);
+            if ($c && $c['block_id']) $blockIds[] = (int) $c['block_id'];
+        }
+    }
+
+    // Fallback: nếu không có phân công kiêm nhiệm nào,
+    // dùng block_id gốc của tài khoản (bản ghi members).
+    // Cần cho trường hợp tài khoản được tạo trước khi có bảng assignments.
+    if (!$blockIds && !empty($me['block_id'])) {
+        $blockIds[] = (int) $me['block_id'];
+    }
+
+    if (!$blockIds) return [];
+    return array_values(array_unique($blockIds));
+}
+
+/**
+ * Kiểm tra xem người dùng có được quản lý (tạo/sửa/xóa) một khối cụ thể không.
+ * Chỉ cần gọi khi người dùng KHÔNG phải admin/bdh.
+ */
+function can_manage_block(array $me, int $blockId): bool
+{
+    $blocks = responsible_blocks($me);
+    if ($blocks === null) return true;  // admin/bdh: được tất
+    if ($blocks === [])  return false; // không có quyền quản lý khối
+    return in_array($blockId, $blocks, true);
+}
+
+/**
+ * Kiểm tra xem người dùng có được quản lý một lớp cụ thể không
+ * (dựa trên khối chứa lớp đó).
+ */
+function can_manage_class(array $me, int $classId): bool
+{
+    $blocks = responsible_blocks($me);
+    if ($blocks === null) return true;  // admin/bdh
+    if ($blocks === [])  return false;
+
+    $c = db_one('SELECT block_id FROM classes WHERE id = ?', [$classId]);
+    return $c && in_array((int) $c['block_id'], $blocks, true);
+}
 function allowed_class_ids(array $me): ?array
 {
     // Ranh giới XEM hồ sơ: mọi lớp/khối mình được phân công (kể cả kiêm nhiệm).

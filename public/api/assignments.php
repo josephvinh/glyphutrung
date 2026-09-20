@@ -46,21 +46,40 @@ switch ($action) {
         break;
 
     // -------------------------------------------------------------
-    // Mọi phân công đang hiệu lực của toàn đoàn — cho màn Khối & Lớp dựng
-    // roster kiêm nhiệm. Chỉ cần quyền xem org (đã require ở đầu tệp).
+    // Phân công đang hiệu lực — lọc theo phạm vi người gọi.
+    //
+    // Admin/BĐH (phạm vi null = toàn đoàn): thấy mọi phân công.
+    // Trưởng khối: chỉ phân công TRONG khối mình.
+    // GLV / Dự Bị: chỉ phân công TRONG lớp mình.
+    //
+    // Kết quả gồm vai trò + khối/lớp — KHÔNG có tên cá nhân — đủ cho
+    // màn Khối & Lớp dựng roster kiêm nhiệm mà không lộ thông tin riêng.
     case 'list_active':
-        $rows = db_all(
-            "SELECT a.id, a.member_id, a.role_code, a.is_primary,
-                    r.scope AS role_scope,
-                    b.name AS block_name, c.name AS class_name
-               FROM member_assignments a
-               JOIN roles r ON r.code = a.role_code
-               JOIN members m ON m.id = a.member_id
-               LEFT JOIN blocks b ON b.id = a.block_id
-               LEFT JOIN classes c ON c.id = a.class_id
-              WHERE a.to_date IS NULL
-              ORDER BY a.is_primary DESC, r.level DESC"
-        );
+        $scopeIds = scan_class_ids($me);  // null = toàn đoàn, [] = không có quyền
+        if ($scopeIds === []) {
+            json_out(['ok' => true, 'assignments' => []]);
+            break;
+        }
+
+        $sql  = "SELECT a.id, a.member_id, a.role_code, a.is_primary,
+                        r.scope AS role_scope,
+                        b.name AS block_name, c.name AS class_name
+                   FROM member_assignments a
+                   JOIN roles r ON r.code = a.role_code
+                   JOIN members m ON m.id = a.member_id
+                   LEFT JOIN blocks b ON b.id = a.block_id
+                   LEFT JOIN classes c ON c.id = a.class_id
+                  WHERE a.to_date IS NULL";
+        $params = [];
+
+        if ($scopeIds !== null) {
+            $ph = implode(',', array_fill(0, count($scopeIds), '?'));
+            $sql .= " AND a.class_id IN ($ph)";
+            $params = $scopeIds;
+        }
+
+        $sql .= " ORDER BY a.is_primary DESC, r.level DESC";
+        $rows = db_all($sql, $params);
         json_out(['ok' => true, 'assignments' => array_map(fn($a) => [
             'id'        => (int) $a['id'],
             'memberId'  => (int) $a['member_id'],

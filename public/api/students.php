@@ -160,13 +160,24 @@ switch ($action) {
                     . ' Vui lòng liên hệ Ban Điều Hành.', 403);
         }
 
+        // Lấy ánh xạ lớp: tên → id
         $classMap = [];
-        $res = db_run('SELECT id, name FROM classes')->fetchAll(PDO::FETCH_ASSOC);
-        foreach ($res as $r) $classMap[$r['name']] = (int) $r['id'];
+        foreach (db_all('SELECT id, name FROM classes') as $r) {
+            $classMap[$r['name']] = (int) $r['id'];
+        }
 
+        // Chỉ lấy mã học sinh ĐÃ CÓ trong CSDL để phân biệt thêm mới / cập nhật.
+        // KHÔNG lấy toàn bộ học sinh — chỉ cần code → id, và chỉ cần từ niên khoá
+        // hiện tại (vì mã số gắn với năm nhập học).
         $existingCodes = [];
-        $res = db_run('SELECT code, id FROM students')->fetchAll(PDO::FETCH_ASSOC);
-        foreach ($res as $r) $existingCodes[$r['code']] = (int) $r['id'];
+        foreach (db_all(
+            "SELECT s.code, s.id FROM students s
+               JOIN enrollments e ON e.student_id = s.id
+              WHERE e.year_id = ?",
+            [$yid]
+        ) as $r) {
+            $existingCodes[$r['code']] = (int) $r['id'];
+        }
 
         $year2 = year_two_digit($year);
         $prefix = STUDENT_CODE_PREFIX . sprintf('%02d', $year2);
@@ -177,90 +188,119 @@ switch ($action) {
         );
         $nextNum = ((int) ($row['mx'] ?? 0)) + 1;
 
-        $upsert_students = [];
-        $upsert_params = [];
-        $enrollment_data = [];
+        // Chuẩn bị dữ liệu trước transaction để không giữ lock quá lâu
+        $upsert_students  = [];
+        $upsert_params    = [];
+        $enrollment_batch = [];
+
+        foreach ($rows as $i => $raw) {
+            $s = clean_student($raw);
+            if ($s['name'] === '') { $skipped++; continue; }
+            if ($s['code'] === '') {
+                $s['code'] = $prefix . sprintf('%04d', $nextNum);
+                $nextNum++;
+            }
+
+            $lopId = $classMap[$s['className']] ?? null;
+            if (!$lopId) {
+                $skipped++;
+                $errors[] = 'Dòng ' . ($i + 2) . ': lớp "' . $s['className'] . '" không tồn tại';
+                continue;
+            }
+            if ($chophep !== null && !in_array($lopId, $chophep, true)) {
+                $skipped++;
+                $errors[] = 'Dòng ' . ($i + 2) . ': bạn không phụ trách lớp "' . $s['className'] . '"';
+                continue;
+            }
+
+            $sid = $existingCodes[$s['code']] ?? null;
+            $upsert_students[] = '(?,?,?,?,?,?,?,?,?,?,?)';
+            array_push($upsert_params,
+                $sid, $s['code'], $s['holyName'], $s['name'], $s['gender'], $s['birthDate'], $s['address'],
+                $s['fatherName'], $s['fatherPhone'], $s['motherName'], $s['motherPhone']
+            );
+
+            // enrollment_batch dùng mã để tra sau INSERT thành công
+            $enrollment_batch[] = [
+                'code'    => $s['code'],
+                'class_id'=> $lopId,
+                'status'  => $s['status'],
+            ];
+
+            if (!$sid) {
+                $existingCodes[$s['code']] = -1; // đánh dấu tạm để tránh đếm trùng trong cùng lô
+                $added++;
+            } else {
+                $updated++;
+            }
+        }
+
+        if (!$upsert_students) {
+            json_out(['ok' => true, 'added' => 0, 'updated' => 0,
+                      'skipped' => $skipped, 'errors' => array_slice($errors, 0, 10),
+                      'scope' => allowed_class_names($chophep)]);
+            break;
+        }
 
         db()->beginTransaction();
         try {
-            foreach ($rows as $i => $raw) {
-                $s = clean_student($raw);
-                if ($s['name'] === '') { $skipped++; continue; }
-                if ($s['code'] === '') {
-                    $s['code'] = $prefix . sprintf('%04d', $nextNum);
-                    $nextNum++;
-                }
+            // Chèn / cập nhật học sinh theo lô 500 dòng mỗi lần
+            $chunk_size = 500;
+            $chunks = array_chunk($upsert_students, $chunk_size);
+            $param_chunks = [];
+            for ($ci = 0; $ci < count($upsert_students); $ci += $chunk_size) {
+                $param_chunks[] = array_slice($upsert_params, $ci * 11, $chunk_size * 11);
+            }
+            foreach ($chunks as $ki => $chunk) {
+                $sql = 'INSERT INTO students (id, code, holy_name, full_name, gender, birth_date, address, father_name, father_phone, mother_name, mother_phone) VALUES '
+                     . implode(',', $chunk)
+                     . ' ON DUPLICATE KEY UPDATE holy_name=VALUES(holy_name), full_name=VALUES(full_name), gender=VALUES(gender), birth_date=VALUES(birth_date), address=VALUES(address), father_name=VALUES(father_name), father_phone=VALUES(father_phone), mother_name=VALUES(mother_name), mother_phone=VALUES(mother_phone)';
+                db_run($sql, $param_chunks[$ki]);
+            }
 
-                $lopId = $classMap[$s['className']] ?? null;
-                if (!$lopId) {
-                    $skipped++;
-                    $errors[] = 'Dòng ' . ($i + 2) . ': lớp "' . $s['className'] . '" không tồn tại';
-                    continue;
-                }
-                if ($chophep !== null && !in_array($lopId, $chophep, true)) {
-                    $skipped++;
-                    $errors[] = 'Dòng ' . ($i + 2) . ': bạn không phụ trách lớp "' . $s['className'] . '"';
-                    continue;
-                }
-
-                $sid = $existingCodes[$s['code']] ?? null;
-                $upsert_students[] = '(?,?,?,?,?,?,?,?,?,?,?)';
-                array_push($upsert_params,
-                    $sid, $s['code'], $s['holyName'], $s['name'], $s['gender'], $s['birthDate'], $s['address'],
-                    $s['fatherName'], $s['fatherPhone'], $s['motherName'], $s['motherPhone']
-                );
-                
-                $enrollment_data[] = [
-                    'code' => $s['code'],
-                    'class_id' => $lopId,
-                    'status' => $s['status']
-                ];
-
-                if (!$sid) {
-                    $existingCodes[$s['code']] = -1; // temp mark to avoid duplicate counts if duplicate in same batch
-                    $added++;
-                } else {
-                    $updated++;
+            // Sau khi students đã lưu: lấy lại id mới sinh cho các em mới
+            // (chỉ cần cho các em thêm mới — em cũ đã có trong $existingCodes)
+            $new_codes = [];
+            foreach ($enrollment_batch as $e) {
+                if (($existingCodes[$e['code']] ?? -1) === -1) {
+                    $new_codes[] = $e['code'];
                 }
             }
-            
-            if ($upsert_students) {
-                // Break into chunks of 500 to avoid packet size issues if file is huge
-                $chunk_size = 500;
-                $total_students = count($upsert_students);
-                for ($ci = 0; $ci < $total_students; $ci += $chunk_size) {
-                    $chunk_upsert = array_slice($upsert_students, $ci, $chunk_size);
-                    $chunk_params = array_slice($upsert_params, $ci * 11, $chunk_size * 11);
-                    $sql = 'INSERT INTO students (id, code, holy_name, full_name, gender, birth_date, address, father_name, father_phone, mother_name, mother_phone) VALUES ' 
-                         . implode(',', $chunk_upsert) 
-                         . ' ON DUPLICATE KEY UPDATE holy_name=VALUES(holy_name), full_name=VALUES(full_name), gender=VALUES(gender), birth_date=VALUES(birth_date), address=VALUES(address), father_name=VALUES(father_name), father_phone=VALUES(father_phone), mother_name=VALUES(mother_name), mother_phone=VALUES(mother_phone)';
-                    db_run($sql, $chunk_params);
-                }
 
-                $res = db_run('SELECT code, id FROM students')->fetchAll(PDO::FETCH_ASSOC);
-                $finalCodes = [];
-                foreach ($res as $r) $finalCodes[$r['code']] = (int) $r['id'];
-
-                $upsert_enrollments = [];
-                $enroll_params = [];
-                foreach ($enrollment_data as $e) {
-                    $sid = $finalCodes[$e['code']] ?? null;
-                    if ($sid) {
-                        $upsert_enrollments[] = '(?,?,?,?)';
-                        array_push($enroll_params, $yid, $sid, $e['class_id'], $e['status']);
-                    }
+            $new_ids = [];
+            if ($new_codes) {
+                $ph = implode(',', array_fill(0, count($new_codes), '?'));
+                foreach (db_all(
+                    "SELECT id, code FROM students WHERE code IN ($ph)",
+                    $new_codes
+                ) as $r) {
+                    $new_ids[$r['code']] = (int) $r['id'];
+                    $existingCodes[$r['code']] = (int) $r['id'];
                 }
-                
-                $total_enrolls = count($upsert_enrollments);
-                for ($ci = 0; $ci < $total_enrolls; $ci += $chunk_size) {
-                    $chunk_upsert = array_slice($upsert_enrollments, $ci, $chunk_size);
-                    $chunk_params = array_slice($enroll_params, $ci * 4, $chunk_size * 4);
+            }
+
+            // Chèn enrollments
+            $enroll_rows = [];
+            $enroll_params = [];
+            foreach ($enrollment_batch as $e) {
+                $sid = $existingCodes[$e['code']] ?? null;
+                if ($sid && $sid > 0) {
+                    $enroll_rows[] = '(?,?,?,?)';
+                    array_push($enroll_params, $yid, $sid, $e['class_id'], $e['status']);
+                }
+            }
+
+            if ($enroll_rows) {
+                $ec = count($enroll_rows);
+                for ($ci = 0; $ci < $ec; $ci += $chunk_size) {
                     $sql_e = 'INSERT INTO enrollments (year_id, student_id, class_id, status) VALUES '
-                           . implode(',', $chunk_upsert)
+                           . implode(',', array_slice($enroll_rows, $ci, $chunk_size))
                            . ' ON DUPLICATE KEY UPDATE class_id=VALUES(class_id), status=VALUES(status)';
-                    db_run($sql_e, $chunk_params);
+                    $e_params = array_slice($enroll_params, $ci * 4, $chunk_size * 4);
+                    db_run($sql_e, $e_params);
                 }
             }
+
             db()->commit();
         } catch (Throwable $e) {
             db()->rollBack();

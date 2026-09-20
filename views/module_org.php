@@ -49,8 +49,8 @@
         </div>
 
         <!-- Nút thêm khối -->
-        <button x-show="canManageOrg" @click="openCreateBlock()" style="display: none;"
-                class="w-full mb-4 py-3 bg-white border border-dashed border-slate-300 rounded-field font-bold text-sm text-slate-500 active:scale-[0.98] transition-transform flex items-center justify-center gap-2">
+        <button x-show="canManageOrg" @click="openCreateBlock()" :disabled="busyBlock" style="display: none;"
+                class="w-full mb-4 py-3 bg-white border border-dashed border-slate-300 rounded-field font-bold text-sm text-slate-500 active:scale-[0.98] transition-transform flex items-center justify-center gap-2 disabled:opacity-50">
             <i data-lucide="plus" class="w-4 h-4"></i> Thêm khối mới
         </button>
 
@@ -81,10 +81,10 @@
                             </button>
 
                             <div x-show="canManageOrg" style="display: none;" class="flex gap-2 shrink-0">
-                                <button aria-label="Sửa tên khối" @click="openEditBlock(b)" class="tap-safe w-8 h-8 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 active:scale-90 border border-slate-200">
+                                <button aria-label="Sửa tên khối" @click="openEditBlock(b)" :disabled="busyBlock" class="tap-safe w-8 h-8 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 active:scale-90 border border-slate-200 disabled:opacity-50">
                                     <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
                                 </button>
-                                <button aria-label="Xóa khối" @click="deleteBlock(b)" class="tap-safe w-8 h-8 bg-red-50 rounded-full flex items-center justify-center text-red-400 active:scale-90 border border-red-100">
+                                <button aria-label="Xóa khối" @click="deleteBlock(b)" :disabled="busyBlock" class="tap-safe w-8 h-8 bg-red-50 rounded-full flex items-center justify-center text-red-400 active:scale-90 border border-red-100 disabled:opacity-50">
                                     <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                                 </button>
                             </div>
@@ -125,10 +125,10 @@
                                             </p>
                                         </div>
                                         <div x-show="canManageOrg" style="display: none;" class="flex gap-2 shrink-0">
-                                            <button aria-label="Sửa lớp" @click="openEditClass(cls)" class="tap-safe w-7 h-7 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 active:scale-90 border border-slate-200">
+                                            <button aria-label="Sửa lớp" @click="openEditClass(cls)" :disabled="busyClass" class="tap-safe w-7 h-7 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 active:scale-90 border border-slate-200 disabled:opacity-50">
                                                 <i data-lucide="pencil" class="w-3 h-3"></i>
                                             </button>
-                                            <button aria-label="Xóa lớp" @click="deleteClass(cls)" class="tap-safe w-7 h-7 bg-red-50 rounded-full flex items-center justify-center text-red-400 active:scale-90 border border-red-100">
+                                            <button aria-label="Xóa lớp" @click="deleteClass(cls)" :disabled="busyClass" class="tap-safe w-7 h-7 bg-red-50 rounded-full flex items-center justify-center text-red-400 active:scale-90 border border-red-100 disabled:opacity-50">
                                                 <i data-lucide="trash-2" class="w-3 h-3"></i>
                                             </button>
                                         </div>
@@ -203,8 +203,8 @@
 
                             <p x-show="classesInBlock(b).length === 0" style="display: none;" class="text-center text-xs text-slate-500 py-3">Khối này chưa có lớp nào.</p>
 
-                            <button x-show="canManageOrg" @click="openCreateClass(b)" style="display: none;"
-                                    class="w-full py-2.5 bg-white border border-dashed border-slate-300 rounded-xl font-bold text-xs text-slate-500 active:scale-[0.98] transition-transform flex items-center justify-center gap-1.5">
+                            <button x-show="canManageOrg" @click="openCreateClass(b)" :disabled="busyClass" style="display: none;"
+                                    class="w-full py-2.5 bg-white border border-dashed border-slate-300 rounded-xl font-bold text-xs text-slate-500 active:scale-[0.98] transition-transform flex items-center justify-center gap-1.5 disabled:opacity-50">
                                 <i data-lucide="plus" class="w-3.5 h-3.5"></i> Thêm lớp vào khối này
                             </button>
                         </div>

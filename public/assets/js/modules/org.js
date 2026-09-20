@@ -38,8 +38,10 @@ window.TNTT.org = {
     memberForm: {},
     showBlockModal: false,
     blockForm: { original: '', name: '' },
+    busyBlock: false,        // chặn nút khi đang ghi/xóa khối
     showClassModal: false,
     classForm: { original: '', name: '', block: '' },
+    busyClass: false,        // chặn nút khi đang ghi/xóa lớp
 
     // Mọi phân công đang hiệu lực của toàn đoàn — nguồn để dựng roster kiêm
     // nhiệm ở màn Khối & Lớp (thay cho việc đọc lớp chính trong members).
@@ -66,7 +68,8 @@ window.TNTT.org = {
     // Dùng chung cho cả Khối & Lớp lẫn Nhân sự: đang ở màn nào thì
     // hỏi quyền của đúng màn đó.
     get canManageOrg() {
-        return this.canEditModule(this.currentModule === 'staff' ? 'staff' : 'org');
+        // canEditModule được merge từ core vào root object khi Alpine gộp các module
+        return (this.permOf || window.TNTT.core.permOf)(this.currentModule === 'staff' ? 'staff' : 'org') === 'edit';
     },
 
     // Role của Ban Điều Hành và Admin không được đụng vào từ màn này
@@ -260,13 +263,17 @@ window.TNTT.org = {
         if (!name) { alert('Vui lòng nhập tên khối!'); return; }
         if (this.blocks.some(b => b === name && b !== old)) { alert('Tên khối này đã tồn tại!'); return; }
 
+        this.busyBlock = true;
+        this.save('org', 'saveBlock', { original: old, name }).then(r => {
+            this.busyBlock = false;
+            if (!r || !r.ok) this.loadData();
+        });
+
         if (!old) {
             this.blocks.push(name);
             this.logAction('tao', 'org', 'Thêm khối ' + name, '');
         } else if (old !== name) {
             this.logAction('sua', 'org', 'Đổi tên khối ' + old + ' thành ' + name, 'cập nhật lan sang lớp, thiếu nhi, GLV');
-            // Đổi tên khối phải lan sang mọi nơi đang lưu tên khối dạng chuỗi,
-            // nếu không dữ liệu sẽ mồ côi.
             this.blocks = this.blocks.map(b => b === old ? name : b);
             this.classes.forEach(c => { if (c.block === old) c.block = name; });
             this.students.forEach(s => { if (s.block === old) s.block = name; });
@@ -276,7 +283,6 @@ window.TNTT.org = {
             if (this.filterBlock === old) this.filterBlock = name;
         }
         this.showBlockModal = false;
-        this.save('org', 'saveBlock', { original: old, name: name }).then(r => { if (!r || !r.ok) this.loadData(); });
     },
 
     deleteBlock(name) {
@@ -285,12 +291,15 @@ window.TNTT.org = {
             alert('Khối "' + name + '" còn ' + classCount + ' lớp.\nHãy chuyển hoặc xóa hết lớp trước khi xóa khối.');
             return;
         }
-        if (confirm('Xóa khối "' + name + '"?')) {
+        if (!confirm('Xóa khối "' + name + '"?')) return;
+        this.busyBlock = true;
+        this.save('org', 'deleteBlock', { name }).then(r => {
+            this.busyBlock = false;
+            if (!r || !r.ok) { this.loadData(); return; }
             this.blocks = this.blocks.filter(b => b !== name);
-            this.logAction('xoa', 'org', 'Xóa khối ' + name, '');
             this.members.forEach(m => { if (m.block === name) m.block = ''; });
-            this.save('org', 'deleteBlock', { name: name }).then(r => { if (!r || !r.ok) this.loadData(); });
-        }
+            this.logAction('xoa', 'org', 'Xóa khối ' + name, '');
+        });
     },
 
     // ---- CRUD LỚP ----
@@ -311,26 +320,31 @@ window.TNTT.org = {
         if (!this.classForm.block) { alert('Vui lòng chọn khối cho lớp!'); return; }
         if (this.classes.some(c => c.name === name && c.name !== old)) { alert('Tên lớp này đã tồn tại!'); return; }
 
-        if (!old) {
-            this.classes.push({ name: name, block: this.classForm.block, nextClass: '' });
-            this.logAction('tao', 'org', 'Thêm lớp ' + name, 'khối ' + this.classForm.block);
-        } else {
-            this.logAction('sua', 'org', 'Sửa lớp ' + old, 'thành ' + name + ' · khối ' + this.classForm.block);
-            const cls = this.classes.find(c => c.name === old);
-            if (cls) { cls.name = name; cls.block = this.classForm.block; }
-            this.students.forEach(s => {
-                if (s.className === old) { s.className = name; s.block = this.classForm.block; }
-            });
-            this.members.forEach(m => {
-                if (m.className === old) { m.className = name; m.block = this.classForm.block; }
-            });
-            this.announcements.forEach(a => { if (a.audienceType === 'lớp' && a.audienceValue === old) a.audienceValue = name; });
-            if (this.user.assignedClass === old) this.user.assignedClass = name;
-            if (this.filterClass === old) this.filterClass = name;
-            if (this.attendanceClass === old) this.attendanceClass = name;
-        }
+        this.busyClass = true;
+        this.save('org', 'saveClass', { original: old, name, block: this.classForm.block }).then(r => {
+            this.busyClass = false;
+            if (!r || !r.ok) { this.loadData(); return; }
+
+            if (!old) {
+                this.classes.push({ name, block: this.classForm.block, nextClass: '' });
+                this.logAction('tao', 'org', 'Thêm lớp ' + name, 'khối ' + this.classForm.block);
+            } else {
+                this.logAction('sua', 'org', 'Sửa lớp ' + old, 'thành ' + name + ' · khối ' + this.classForm.block);
+                const cls = this.classes.find(c => c.name === old);
+                if (cls) { cls.name = name; cls.block = this.classForm.block; }
+                this.students.forEach(s => {
+                    if (s.className === old) { s.className = name; s.block = this.classForm.block; }
+                });
+                this.members.forEach(m => {
+                    if (m.className === old) { m.className = name; m.block = this.classForm.block; }
+                });
+                this.announcements.forEach(a => { if (a.audienceType === 'lớp' && a.audienceValue === old) a.audienceValue = name; });
+                if (this.user.assignedClass === old) this.user.assignedClass = name;
+                if (this.filterClass === old) this.filterClass = name;
+                if (this.attendanceClass === old) this.attendanceClass = name;
+            }
+        });
         this.showClassModal = false;
-        this.save('org', 'saveClass', { original: old, name: name, block: this.classForm.block }).then(r => { if (!r || !r.ok) this.loadData(); });
     },
 
     deleteClass(cls) {
@@ -344,40 +358,37 @@ window.TNTT.org = {
             alert('Lớp "' + cls.name + '" còn ' + glvCount + ' GLV đang phụ trách.\nHãy chuyển họ sang lớp khác trước khi xóa.');
             return;
         }
-        if (confirm('Xóa lớp "' + cls.name + '"?')) {
+        if (!confirm('Xóa lớp "' + cls.name + '"?')) return;
+        this.busyClass = true;
+        this.save('org', 'deleteClass', { name: cls.name }).then(r => {
+            this.busyClass = false;
+            if (!r || !r.ok) { this.loadData(); return; }
             this.classes = this.classes.filter(c => c.name !== cls.name);
             this.logAction('xoa', 'org', 'Xóa lớp ' + cls.name, '');
-            this.save('org', 'deleteClass', { name: cls.name }).then(r => { if (!r || !r.ok) this.loadData(); });
-        }
+        });
     },
 
     // ---- CRUD NHÂN SỰ ----
     // ---- HÀNG CHỜ DUYỆT (tài khoản tự đăng ký) ----
     showApproveModal: false,
-    approveForm: { id: null, name: '', phone: '', note: '', role: 'glv', className: '', block: '' },
+    approveForm: { id: null, name: '', phone: '', note: '', role: 'glv' },
 
     get pendingMembers() {
         return this.members.filter(m => m.status === 'chờ duyệt');
     },
 
     openApproveForm(m) {
+        // Duyệt chỉ bật tài khoản + đặt vai cơ sở. Phân lớp làm sau ở Khối & Lớp.
         this.approveForm = {
             id: m.id, name: this.memberFullName(m), phone: m.phone,
-            note: m.registerNote || '', role: 'glv',
-            className: this.availableClasses[0] || '', block: this.availableBlocks[0] || ''
+            note: m.registerNote || '', role: 'glv'
         };
         this.showApproveModal = true;
     },
 
     async confirmApprove() {
         const f = this.approveForm;
-        const scope = this.roleScope(f.role);
-        if (scope === 'lớp' && !f.className) { alert('Vui lòng chọn lớp phụ trách.'); return; }
-        if (scope === 'khối' && !f.block)    { alert('Vui lòng chọn khối phụ trách.'); return; }
-
-        const r = await this.save('org', 'approveMember', {
-            id: f.id, role: f.role, className: f.className, block: f.block
-        });
+        const r = await this.save('org', 'approveMember', { id: f.id, role: f.role });
         if (!r.ok) return;
         this.showApproveModal = false;
         await this.loadData();
