@@ -219,4 +219,66 @@
         </div>
     </div>
 
+    <!-- ============================================================
+         POPUP KHỐI
+         ============================================================ -->
+    <div x-show="showBlockModal" style="display: none;" class="fixed inset-0 z-[200] flex items-end justify-center sm:items-center sm:p-6">
+        <div x-show="showBlockModal" x-transition.opacity.duration.300ms @click="showBlockModal = false" class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+        <div x-show="showBlockModal" x-transition:enter="transform transition ease-out duration-300" x-transition:enter-start="translate-y-full opacity-0" x-transition:enter-end="translate-y-0 opacity-100" x-transition:leave="transform transition ease-in duration-200" x-transition:leave-start="translate-y-0 opacity-100" x-transition:leave-end="translate-y-full opacity-0" class="modal-sheet relative w-full max-w-md sm:max-w-lg bg-white rounded-t-sheet sm:rounded-sheet shadow-2xl flex flex-col max-h-[88dvh] overflow-y-auto">
+            <div class="flex justify-center pt-3 pb-2"><div class="w-12 h-1.5 bg-slate-200 rounded-full"></div></div>
+            <div class="flex justify-between items-center px-5 pb-4 border-b border-slate-100">
+                <h3 class="text-lg font-black text-slate-800" x-text="blockForm.original ? 'Sửa tên khối' : 'Thêm khối mới'"></h3>
+                <button aria-label="Đóng" @click="showBlockModal = false" class="tap-safe w-8 h-8 bg-slate-100 rounded-full text-slate-500 active:scale-90 flex items-center justify-center"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+            <div class="p-5">
+                <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Tên khối</label>
+                <input x-model="blockForm.name" type="text" placeholder="VD: Khai Tâm..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                <p x-show="blockForm.original" style="display: none;" class="text-micro text-amber-600 mt-2 leading-snug">
+                    Đổi tên khối sẽ cập nhật theo cho tất cả lớp, thiếu nhi, GLV và thông báo đang gắn với khối này.
+                </p>
+            </div>
+            <div class="p-4 border-t border-slate-100">
+                <button @click="saveBlock()" :disabled="busyBlock" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-blue-200 flex justify-center items-center disabled:opacity-50">
+                    <i data-lucide="save" class="w-5 h-5 mr-2"></i> Lưu khối
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         POPUP LỚP
+         ============================================================ -->
+    <div x-show="showClassModal" style="display: none;" class="fixed inset-0 z-[200] flex items-end justify-center sm:items-center sm:p-6">
+        <div x-show="showClassModal" x-transition.opacity.duration.300ms @click="showClassModal = false" class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+        <div x-show="showClassModal" x-transition:enter="transform transition ease-out duration-300" x-transition:enter-start="translate-y-full opacity-0" x-transition:enter-end="translate-y-0 opacity-100" x-transition:leave="transform transition ease-in duration-200" x-transition:leave-start="translate-y-0 opacity-100" x-transition:leave-end="translate-y-full opacity-0" class="modal-sheet relative w-full max-w-md sm:max-w-lg bg-white rounded-t-sheet sm:rounded-sheet shadow-2xl flex flex-col max-h-[88dvh] overflow-y-auto">
+            <div class="flex justify-center pt-3 pb-2"><div class="w-12 h-1.5 bg-slate-200 rounded-full"></div></div>
+            <div class="flex justify-between items-center px-5 pb-4 border-b border-slate-100">
+                <h3 class="text-lg font-black text-slate-800" x-text="classForm.original ? 'Sửa lớp' : 'Thêm lớp mới'"></h3>
+                <button aria-label="Đóng" @click="showClassModal = false" class="tap-safe w-8 h-8 bg-slate-100 rounded-full text-slate-500 active:scale-90 flex items-center justify-center"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+            <div class="p-5 space-y-4">
+                <div>
+                    <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Tên lớp</label>
+                    <input x-model="classForm.name" type="text" placeholder="VD: Khai Tâm 1A..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Thuộc khối</label>
+                    <select x-model="classForm.block" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                        <template x-for="b in blocks" :key="b">
+                            <option :value="b" x-text="b"></option>
+                        </template>
+                    </select>
+                </div>
+                <p x-show="classForm.original" style="display: none;" class="text-micro text-amber-600 leading-snug">
+                    Đổi tên hoặc chuyển khối sẽ cập nhật theo cho tất cả thiếu nhi và GLV của lớp này.
+                </p>
+            </div>
+            <div class="p-4 border-t border-slate-100">
+                <button @click="saveClass()" :disabled="busyClass" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-blue-200 flex justify-center items-center disabled:opacity-50">
+                    <i data-lucide="save" class="w-5 h-5 mr-2"></i> Lưu lớp
+                </button>
+            </div>
+        </div>
+    </div>
+
 </div>

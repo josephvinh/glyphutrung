@@ -191,8 +191,8 @@ if (!$__dev) ob_start();
                class="shrink-0 w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center active:scale-90" aria-label="Tải về">
                 <i data-lucide="file-down" class="w-4 h-4 text-slate-500"></i>
             </a>
-            <button x-show="($store.libViewer.item || {}).type==='article' && libCanEdit" style="display:none"
-                    @click="openLibArticle($store.libViewer.item)" class="shrink-0 w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center active:scale-90" aria-label="Sửa">
+            <button x-show="($store.libViewer.item || {}).type==='article' && window.TNTT.library.libCanEdit" style="display:none"
+                    @click="window.TNTT.library.editArticle($store.libViewer.item)" class="shrink-0 w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center active:scale-90" aria-label="Sửa">
                 <i data-lucide="pencil" class="w-4 h-4 text-slate-500"></i>
             </button>
         </div>
