@@ -498,6 +498,67 @@ CREATE TABLE IF NOT EXISTS push_outbox (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
+--  THƯ VIỆN & SỔ TAY
+--  Một mục là TỆP (giáo án, ảnh, Word…) hoặc BÀI VIẾT chữ (kinh,
+--  nghi thức, quy trình — tra cứu nhanh, đọc thẳng trong app).
+--  Tệp lưu NGOÀI web root, tên ngẫu nhiên; chỉ phục vụ qua
+--  api/library_file.php sau khi kiểm quyền (xem public/api/_library.php).
+-- ============================================================
+CREATE TABLE IF NOT EXISTS library_categories (
+    id         INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    name       VARCHAR(100) NOT NULL,
+    sort_order INT NOT NULL DEFAULT 0,
+    is_active  TINYINT(1) NOT NULL DEFAULT 1 COMMENT '0 = ẩn chủ đề cũ mà không xoá'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS library_items (
+    id            INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    title         VARCHAR(200) NOT NULL,
+    item_type     ENUM('file','article') NOT NULL DEFAULT 'file',
+    description   TEXT NULL,
+    body          MEDIUMTEXT NULL COMMENT 'nội dung chữ của bài viết sổ tay',
+    category_id   INT UNSIGNED NULL,
+    stored_name   VARCHAR(120) NULL COMMENT 'tên file ngẫu nhiên trên đĩa (NULL với bài viết)',
+    original_name VARCHAR(255) NULL COMMENT 'tên gốc — chỉ để hiển thị/đặt tên khi tải về',
+    mime_type     VARCHAR(100) NULL,
+    size_bytes    INT UNSIGNED NOT NULL DEFAULT 0,
+    status        ENUM('cho_duyet','da_duyet','tu_choi') NOT NULL DEFAULT 'cho_duyet',
+    uploaded_by   INT NOT NULL,
+    approved_by   INT NULL,
+    reject_reason VARCHAR(255) NULL,
+    created_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    approved_at   DATETIME NULL,
+    INDEX idx_status_cat (status, category_id),
+    INDEX idx_uploader (uploaded_by),
+    CONSTRAINT fk_lib_cat FOREIGN KEY (category_id)
+        REFERENCES library_categories(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Chủ đề khởi tạo
+INSERT IGNORE INTO library_categories (id, name, sort_order) VALUES
+    (1, 'Giáo án',                1),
+    (2, 'Đào tạo Huynh trưởng',   2),
+    (3, 'Bài hát',                3),
+    (4, 'Văn kiện',               4),
+    (5, 'Sinh hoạt',              5),
+    (6, 'Kinh & nghi thức',       6),
+    (7, 'Quy trình & hướng dẫn',  7);
+
+-- Đăng ký module (khu 'glv'). icon 'scroll-text' vì bản lucide rút gọn
+-- của app không có 'library'.
+INSERT IGNORE INTO modules (module_key, label, icon, color, area, sort_order)
+VALUES ('thu_vien', 'Thư viện', 'scroll-text', 'text-amber-600', 'glv', 7);
+
+-- Quyền: view = xem + đăng (chờ duyệt); edit = duyệt/gỡ/quản chủ đề.
+INSERT IGNORE INTO permissions (module_key, role_code, level) VALUES
+    ('thu_vien', 'admin',         'edit'),
+    ('thu_vien', 'bdh',           'edit'),
+    ('thu_vien', 'truong_khoi',   'view'),
+    ('thu_vien', 'glv_chu_nhiem', 'view'),
+    ('thu_vien', 'glv',           'view'),
+    ('thu_vien', 'du_bi',         'view');
+
+-- ============================================================
 -- Performance Indexes - Add after existing table definitions
 -- ============================================================
 

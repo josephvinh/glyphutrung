@@ -177,6 +177,9 @@ window.TNTT.core = {
             this.members           = d.members;
             this.logs              = d.logs;
             this.notes             = d.notes || [];
+            // Chỉ là CON SỐ chờ duyệt của Thư viện, để vẽ chấm đỏ trên icon
+            // mà không phải mở module (moduleBadge chạy ngay ở Trang chủ).
+            this.libraryPending    = d.libraryPending || 0;
 
             // Điểm danh/điểm sẽ đổ vào ở bước 2. Đặt rỗng + index rỗng để
             // các getter chạy an toàn (trả 0) trong lúc chờ.
@@ -591,7 +594,9 @@ window.TNTT.core = {
         promotion:     { admin: 'edit', bdh: 'edit', truong_khoi: 'view', glv_chu_nhiem: 'none', glv: 'none' },
         calendar:       { admin: 'view', bdh: 'view', truong_khoi: 'view', glv_chu_nhiem: 'view', glv: 'view' },
         notes:          { admin: 'edit', bdh: 'edit', truong_khoi: 'edit', glv_chu_nhiem: 'edit', glv: 'edit' },
-        guide:          { admin: 'view', bdh: 'view', truong_khoi: 'view', glv_chu_nhiem: 'view', glv: 'view' }
+        guide:          { admin: 'view', bdh: 'view', truong_khoi: 'view', glv_chu_nhiem: 'view', glv: 'view' },
+        // Thư viện: view = xem + đăng (chờ duyệt); edit = duyệt/gỡ/quản chủ đề.
+        thu_vien:       { admin: 'edit', bdh: 'edit', truong_khoi: 'view', glv_chu_nhiem: 'view', glv: 'view', du_bi: 'view' }
     },
 
     permOf(key) {
@@ -648,6 +653,9 @@ window.TNTT.core = {
         // thực sự duyệt được, để GLV thường khỏi thấy chấm đỏ vô nghĩa.
         if (key === 'staff')     return this.canEditModule('staff') ? this.pendingMembers.length : 0;
         if (key === 'notes')     return this.notesBadgeCount;
+        // Thư viện: chỉ người duyệt được mới thấy số mục đang chờ (GLV thường
+        // thấy chấm đỏ vô nghĩa vì họ không duyệt được).
+        if (key === 'thu_vien')  return this.libCanEdit ? this.libraryPending : 0;
         // Việc cần làm -> chấm số trên icon (thay cho khối ở Trang chủ)
         if (key === 'attendance')    return this.attendanceTodoCount;
         if (key === 'announcements') return this.unreadAnnouncementCount;

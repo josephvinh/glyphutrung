@@ -136,6 +136,9 @@ function library_row_out(array $r): array
         'categoryId'   => $r['category_id'] ? (int) $r['category_id'] : null,
         'categoryName' => $r['category_name'] ?? null,
         'ext'          => $ext,
+        // Tên gốc để hiển thị trong tab "Của tôi" (người đăng đối chiếu được
+        // đã tải lên đúng tệp nào). KHÔNG phải tên trên đĩa nên an toàn.
+        'originalName' => $isFile ? ($r['original_name'] ?? null) : null,
         'viewable'     => $isFile && library_is_viewable($ext),
         'sizeKb'       => (int) round(((int) ($r['size_bytes'] ?? 0)) / 1024),
         'status'       => $r['status'],
@@ -144,4 +147,42 @@ function library_row_out(array $r): array
         'createdAt'    => $r['created_at'] ?? null,
         'fileUrl'      => $isFile ? ('api/library_file.php?id=' . (int) $r['id']) : null,
     ];
+}
+
+/**
+ * Tham số phân trang đọc từ body. Kẹp trần để một client hỏng (hoặc cố ý)
+ * không kéo cả kho tài liệu trong một lượt.
+ *
+ * @return array{0:int,1:int,2:int} [limit, offset, page]
+ */
+function library_page(array $in): array
+{
+    $perPage = (int) ($in['perPage'] ?? 20);
+    if ($perPage < 1)  $perPage = 20;
+    if ($perPage > 60) $perPage = 60;
+    $page = (int) ($in['page'] ?? 1);
+    if ($page < 1) $page = 1;
+    return [$perPage, ($page - 1) * $perPage, $page];
+}
+
+/** Đếm tổng số dòng khớp điều kiện — để client biết còn trang sau hay không. */
+function library_count(string $where, array $params): int
+{
+    return (int) db_one(
+        'SELECT COUNT(*) n FROM library_items i WHERE ' . $where, $params)['n'];
+}
+
+/**
+ * Dựng mệnh đề tìm kiếm dùng chung cho cả 3 tab (Tất cả / Của tôi / Chờ duyệt).
+ * Khớp tiêu đề HOẶC nội dung bài viết (sổ tay) HOẶC mô tả.
+ *
+ * @param array $params mảng tham số, được nối thêm (tham chiếu)
+ */
+function library_search_sql(string $q, array &$params): string
+{
+    $q = trim($q);
+    if ($q === '') return '';
+    $like = '%' . $q . '%';
+    $params[] = $like; $params[] = $like; $params[] = $like;
+    return ' AND (i.title LIKE ? OR i.body LIKE ? OR i.description LIKE ?)';
 }

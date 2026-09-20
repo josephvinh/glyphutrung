@@ -33,7 +33,7 @@
          Đặt trên cùng vì đây là việc cần xử lý, không phải danh sách
          để ngắm. Duyệt là phải phân công lớp luôn.
          ========================================================== -->
-    <div x-show="pendingMembers.length > 0" style="display: none;"
+    <div x-show="canManageOrg && pendingMembers.length > 0" style="display: none;"
          class="bg-amber-50 border border-amber-200 rounded-card p-5 mb-4">
         <div class="flex items-center gap-2 mb-4">
             <div class="tap-safe w-8 h-8 shrink-0 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center">
@@ -385,8 +385,8 @@
             <div class="bg-blue-50 border border-blue-100 rounded-2xl p-3 flex items-start gap-2.5">
                 <i data-lucide="info" class="w-4 h-4 text-blue-500 shrink-0 mt-0.5"></i>
                 <p class="text-micro text-blue-700 leading-snug">
-                    Duyệt là phải <span class="font-bold">phân công luôn</span>, không để tài khoản lơ lửng
-                    không thuộc lớp nào.
+                    Duyệt xong tài khoản vào được ngay với vai đã chọn.
+                    <span class="font-bold">Phân lớp</span> làm sau ở màn <span class="font-bold">Khối &amp; Lớp</span>.
                 </p>
             </div>
 
@@ -394,34 +394,15 @@
                 <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Vai trò</label>
                 <select x-model="approveForm.role" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                     <option value="glv">Giáo Lý Viên</option>
-                    <option value="glv_chu_nhiem">GLV Chủ Nhiệm</option>
-                    <option value="truong_khoi">Trưởng Khối</option>
+                    <option value="du_bi">Dự Bị</option>
                 </select>
-                <p class="text-micro text-slate-500 mt-1 ml-1">Không duyệt thẳng lên Ban Điều Hành được</p>
-            </div>
-
-            <div x-show="roleScope(approveForm.role) === 'lớp'">
-                <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Lớp phụ trách</label>
-                <select x-model="approveForm.className" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
-                    <template x-for="c in classes" :key="c.name">
-                        <option :value="c.name" x-text="c.name + ' (' + c.block + ')'"></option>
-                    </template>
-                </select>
-            </div>
-
-            <div x-show="roleScope(approveForm.role) === 'khối'" style="display: none;">
-                <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Khối phụ trách</label>
-                <select x-model="approveForm.block" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
-                    <template x-for="b in blocks" :key="b">
-                        <option :value="b" x-text="b"></option>
-                    </template>
-                </select>
+                <p class="text-micro text-slate-500 mt-1 ml-1">Chức vụ (Chủ nhiệm, Trưởng khối…) gán sau khi phân lớp</p>
             </div>
         </div>
 
         <div class="p-4 border-t border-slate-100">
             <button @click="confirmApprove()" class="w-full bg-emerald-600 text-white font-bold py-3.5 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-emerald-200 flex justify-center items-center">
-                <i data-lucide="check" class="w-5 h-5 mr-2"></i> Duyệt và phân công
+                <i data-lucide="check" class="w-5 h-5 mr-2"></i> Duyệt
             </button>
         </div>
     </div>

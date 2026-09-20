@@ -327,6 +327,14 @@ $notes = array_map(fn($n) => [
     'done'     => (bool) $n['done'],
 ], db_all('SELECT * FROM personal_notes WHERE member_id = ? ORDER BY remind_at', [$me['id']]));
 
+// ---------------------------------------------------------------
+// Thư viện — chỉ cần CON SỐ chờ duyệt để vẽ chấm đỏ trên icon.
+// Chỉ người có quyền duyệt (edit) mới cần; GLV thường đừng phí lượt đếm.
+// ---------------------------------------------------------------
+$libraryPending = (permission_of('thu_vien') === 'edit')
+    ? (int) db_one('SELECT COUNT(*) n FROM library_items WHERE status = "cho_duyet"')['n']
+    : 0;
+
 $result = [
     'ok' => true,
     'notes'         => $notes,
@@ -341,6 +349,7 @@ $result = [
     'readAnnouncements' => $readIds,
     'members'       => $members,
     'logs'          => $logs,
+    'libraryPending' => $libraryPending,
 ];
 
 // Cache result. Để 60s (trước là 300s) cho "tươi" hơn: thay đổi của người

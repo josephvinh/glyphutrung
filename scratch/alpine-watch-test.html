@@ -1,0 +1,60 @@
+<!doctype html>
+<!--
+  TEST GỘP MẢNH (scratch) — bản tinh khiết, sao đúng cơ chế app.js.
+
+  Kiến trúc: nhiều "mảnh" (window.TNTT.<tên>) được gộp thành MỘT component
+  bằng Object.defineProperties — y như gopManh() trong app.js:36-60.
+  init() nằm ở mảnh shell, thuộc tính searchQuery nằm ở mảnh students.
+  Đăng ký $watch trong init() y như shell.js:170-174.
+
+  Đối chứng: alpine-watch-test2.html (cùng nội dung nhưng component thuần).
+-->
+<html lang="vi">
+<head><meta charset="utf-8"><title>Alpine gop-manh watch test</title></head>
+<body>
+<div x-data="tnttApp" id="root">
+  <span id="out" x-text="displayLimit"></span>
+  <input id="q" type="text" x-model="searchQuery">
+  <span id="qecho" x-text="searchQuery"></span>
+</div>
+
+<script defer src="../public/assets/js/vendor/alpine.js"></script>
+<script>
+window.TNTT = {};
+
+// ---- Mảnh "students": giữ thuộc tính + getter, y như students.js ----
+window.TNTT.students = {
+    students: [{ id: 1, name: 'A' }, { id: 2, name: 'B' }],
+    searchQuery: '',
+    displayLimit: 20,
+    get filteredStudents() { return this.students; },
+    get displayedStudents() { return this.filteredStudents.slice(0, this.displayLimit); }
+};
+
+// ---- Mảnh "shell": giữ init() đăng ký $watch, y như shell.js:167-174 ----
+window.TNTT.shell = {
+    init() {
+        window.__initRan = true;
+        window.__initSoKhoa = Object.keys(this).length;
+        window.__watchFired = 0;
+        this.$watch('searchQuery', () => { window.__watchFired++; this.displayLimit = 20; });
+    }
+};
+
+window.TNTT_MODULES = ['students', 'shell'];
+
+// Sao nguyên văn gopManh() của app.js
+function gopManh() {
+    const dich = {};
+    for (const ten of window.TNTT_MODULES) {
+        const manh = window.TNTT && window.TNTT[ten];
+        if (!manh) continue;
+        Object.defineProperties(dich, Object.getOwnPropertyDescriptors(manh));
+    }
+    return dich;
+}
+
+document.addEventListener('alpine:init', () => { Alpine.data('tnttApp', gopManh); });
+</script>
+</body>
+</html>

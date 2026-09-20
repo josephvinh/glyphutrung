@@ -3,10 +3,11 @@
  * THƯ VIỆN TÀI LIỆU — API.
  *
  *   GET  ?action=categories         danh sách chủ đề
- *   GET  ?action=list[&category=&q=] tài liệu đã duyệt (lọc/tìm)
- *   GET  ?action=mine               tài liệu của tôi (mọi trạng thái)
- *   GET  ?action=pending            hàng chờ duyệt (cần edit)
+ *   GET  ?action=list[&category=&q=&page=] tài liệu đã duyệt (lọc/tìm/phân trang)
+ *   GET  ?action=mine[&q=&page=]    tài liệu của tôi (mọi trạng thái)
+ *   GET  ?action=pending[&q=&page=] hàng chờ duyệt (cần edit)
  *   POST ?action=upload             đăng mới (multipart) -> chờ duyệt
+ *   POST ?action=updateItem         sửa tiêu đề/mô tả/chủ đề, thay hoặc gỡ tệp
  *   POST ?action=approve|reject     duyệt/từ chối (cần edit)
  *   POST ?action=delete             gỡ (của mình; edit gỡ bất kỳ)
  *   POST ?action=saveCategory|toggleCategory  quản chủ đề (cần edit)
@@ -34,38 +35,56 @@ switch ($action) {
 
     case 'list':
         // Filter đọc từ body (helper api() ở frontend luôn gửi POST kèm JSON).
-        $where = ["i.status = 'da_duyet'"];
+        $where  = "i.status = 'da_duyet'";
         $params = [];
-        if ($cat = (int) ($in['category'] ?? 0)) { $where[] = 'i.category_id = ?'; $params[] = $cat; }
-        // Tra cứu: khớp tiêu đề HOẶC nội dung bài viết (sổ tay).
-        $q = trim((string) ($in['q'] ?? ''));
-        if ($q !== '') { $where[] = '(i.title LIKE ? OR i.body LIKE ?)'; $params[] = '%' . $q . '%'; $params[] = '%' . $q . '%'; }
-        $rows = db_all(
+        if ($cat = (int) ($in['category'] ?? 0)) { $where .= ' AND i.category_id = ?'; $params[] = $cat; }
+        $where .= library_search_sql((string) ($in['q'] ?? ''), $params);
+        [$limit, $offset, $page] = library_page($in);
+        $total = library_count($where, $params);
+        $rows  = db_all(
             'SELECT i.*, c.name AS category_name, m.full_name AS uploader_name
                FROM library_items i
                LEFT JOIN library_categories c ON c.id = i.category_id
                LEFT JOIN members m ON m.id = i.uploaded_by
-              WHERE ' . implode(' AND ', $where) . '
-              ORDER BY i.approved_at DESC, i.id DESC', $params);
-        json_out(['ok' => true, 'items' => array_map('library_row_out', $rows)]);
+              WHERE ' . $where . '
+              ORDER BY i.approved_at DESC, i.id DESC
+              LIMIT ' . $limit . ' OFFSET ' . $offset, $params);
+        json_out(['ok' => true, 'items' => array_map('library_row_out', $rows),
+                  'total' => $total, 'page' => $page, 'hasMore' => ($offset + count($rows)) < $total]);
 
     case 'mine':
-        $rows = db_all(
+        $where  = 'i.uploaded_by = ?';
+        $params = [$me['id']];
+        $where .= library_search_sql((string) ($in['q'] ?? ''), $params);
+        [$limit, $offset, $page] = library_page($in);
+        $total = library_count($where, $params);
+        $rows  = db_all(
             'SELECT i.*, c.name AS category_name
                FROM library_items i
                LEFT JOIN library_categories c ON c.id = i.category_id
-              WHERE i.uploaded_by = ? ORDER BY i.id DESC', [$me['id']]);
-        json_out(['ok' => true, 'items' => array_map('library_row_out', $rows)]);
+              WHERE ' . $where . '
+              ORDER BY i.id DESC
+              LIMIT ' . $limit . ' OFFSET ' . $offset, $params);
+        json_out(['ok' => true, 'items' => array_map('library_row_out', $rows),
+                  'total' => $total, 'page' => $page, 'hasMore' => ($offset + count($rows)) < $total]);
 
     case 'pending':
         library_need_edit($canEdit);
-        $rows = db_all(
+        $where  = 'i.status = "cho_duyet"';
+        $params = [];
+        $where .= library_search_sql((string) ($in['q'] ?? ''), $params);
+        [$limit, $offset, $page] = library_page($in);
+        $total = library_count($where, $params);
+        $rows  = db_all(
             'SELECT i.*, c.name AS category_name, m.full_name AS uploader_name
                FROM library_items i
                LEFT JOIN library_categories c ON c.id = i.category_id
                LEFT JOIN members m ON m.id = i.uploaded_by
-              WHERE i.status = "cho_duyet" ORDER BY i.id ASC');
-        json_out(['ok' => true, 'items' => array_map('library_row_out', $rows)]);
+              WHERE ' . $where . '
+              ORDER BY i.id ASC
+              LIMIT ' . $limit . ' OFFSET ' . $offset, $params);
+        json_out(['ok' => true, 'items' => array_map('library_row_out', $rows),
+                  'total' => $total, 'page' => $page, 'hasMore' => ($offset + count($rows)) < $total]);
 
     case 'upload':
         require_write();   // POST + CSRF (client gửi X-CSRF-TOKEN kèm FormData)
@@ -85,14 +104,71 @@ switch ($action) {
             json_fail('Không lưu được file lên máy chủ, vui lòng thử lại.', 500);
         }
 
+        // BĐH/Admin đăng thì duyệt luôn — đồng bộ với saveArticle ở dưới.
+        // Trước đây tệp của BĐH vẫn rơi vào "chờ duyệt" nên chính người có
+        // quyền duyệt phải tự bấm duyệt bài của mình, trong khi bài viết sổ
+        // tay thì không — cùng một người, hai luật khác nhau.
+        $status = $canEdit ? 'da_duyet' : 'cho_duyet';
         db_run('INSERT INTO library_items
                   (title, description, category_id, stored_name, original_name,
-                   mime_type, size_bytes, status, uploaded_by, created_at)
-                VALUES (?,?,?,?,?,?,?,"cho_duyet",?,NOW())',
+                   mime_type, size_bytes, status, uploaded_by, approved_by, created_at, approved_at)
+                VALUES (?,?,?,?,?,?,?,?,?,?,NOW(),' . ($canEdit ? 'NOW()' : 'NULL') . ')',
                [$title, $desc, $catId, $stored, library_clean_original((string) $file['name']),
-                $v['mime'], (int) $file['size'], $me['id']]);
+                $v['mime'], (int) $file['size'], $status, $me['id'], $canEdit ? $me['id'] : null]);
         log_action('tao', 'thu_vien', 'Đăng tài liệu: ' . $title);
-        json_out(['ok' => true]);
+        Cache::flush();   // số mục chờ duyệt đổi -> chấm đỏ trên icon của BĐH cập nhật ngay
+        json_out(['ok' => true, 'autoApproved' => $canEdit]);
+
+    // Sửa MỘT MỤC đã đăng: đổi tiêu đề/mô tả/chủ đề, và với mục 'file' thì
+    // có thể THAY TỆP. Người đăng sửa được mục của mình; edit sửa được mọi mục.
+    case 'updateItem':
+        require_write();
+        $id = (int) ($in['id'] ?? 0);
+        $it = db_one('SELECT * FROM library_items WHERE id = ?', [$id]);
+        if (!$it) json_fail('Không tìm thấy mục cần sửa.', 404);
+        if ((int) $it['uploaded_by'] !== (int) $me['id'] && !$canEdit) {
+            json_fail('Bạn chỉ sửa được mục của mình.', 403);
+        }
+
+        $title = trim((string) ($in['title'] ?? ''));
+        if ($title === '') json_fail('Vui lòng nhập tiêu đề.');
+        $catId = (int) ($in['category_id'] ?? 0) ?: null;
+        if ($catId && !db_one('SELECT id FROM library_categories WHERE id = ?', [$catId])) $catId = null;
+        $desc = trim((string) ($in['description'] ?? '')) ?: null;
+
+        // Sửa xong thì nội dung có thể đã khác bản đã duyệt -> đưa về chờ
+        // duyệt lại. Riêng người có quyền duyệt thì giữ nguyên trạng thái.
+        $status = $canEdit ? $it['status'] : 'cho_duyet';
+        $set    = 'title=?, description=?, category_id=?, status=?';
+        $args   = [$title, $desc, $catId, $status];
+
+        // Có tệp mới? Thay tệp: lưu tệp mới TRƯỚC, chỉ xoá tệp cũ sau khi
+        // ghi DB thành công — để lỡ có lỗi thì vẫn còn tệp mà phục vụ.
+        $file = $_FILES['file'] ?? null;
+        $oldStored = null;
+        if ($file && ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
+            $v      = library_validate_upload($file);
+            $stored = library_random_name($v['ext']);
+            $dest   = library_storage_dir() . '/' . $stored;
+            if (!move_uploaded_file($file['tmp_name'], $dest)) {
+                json_fail('Không lưu được file lên máy chủ, vui lòng thử lại.', 500);
+            }
+            $oldStored = $it['stored_name'];
+            $set  .= ', stored_name=?, original_name=?, mime_type=?, size_bytes=?';
+            $args  = array_merge($args, [$stored, library_clean_original((string) $file['name']),
+                                        $v['mime'], (int) $file['size']]);
+        } elseif ((string) ($in['remove_file'] ?? '') === '1' && !empty($it['stored_name'])) {
+            // Gỡ tệp khỏi mục (giữ lại phần chữ/mô tả).
+            $oldStored = $it['stored_name'];
+            $set  .= ', stored_name=NULL, original_name=NULL, mime_type=NULL, size_bytes=0';
+        }
+
+        $args[] = $id;
+        db_run('UPDATE library_items SET ' . $set . ' WHERE id=?', $args);
+        if ($oldStored) @unlink(library_storage_dir() . '/' . $oldStored);
+        log_action('sua', 'thu_vien', 'Sửa mục thư viện: ' . $title);
+        Cache::flush();
+        json_out(['ok' => true, 'autoApproved' => $canEdit]);
 
     // Viết/sửa BÀI VIẾT sổ tay (nội dung chữ, không có file).
     case 'saveArticle':
@@ -126,6 +202,7 @@ switch ($action) {
                    [$title, $desc, $body, $catId, $status, $me['id'], $canEdit ? $me['id'] : null]);
             log_action('tao', 'thu_vien', 'Viết bài sổ tay: ' . $title);
         }
+        Cache::flush();
         json_out(['ok' => true, 'autoApproved' => $canEdit]);
 
     case 'approve':
@@ -136,6 +213,7 @@ switch ($action) {
         db_run('UPDATE library_items SET status="da_duyet", approved_by=?, approved_at=NOW(),
                        reject_reason=NULL WHERE id=?', [$me['id'], $it['id']]);
         log_action('duyet', 'thu_vien', 'Duyệt tài liệu: ' . $it['title']);
+        Cache::flush();
         json_out(['ok' => true]);
 
     case 'reject':

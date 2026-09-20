@@ -21,7 +21,17 @@ document.addEventListener('alpine:init', () => {
             return s;
         },
 
-        goRegister() { this.error = ''; this.step = 'register'; this.$nextTick(() => lucide.createIcons()); },
+        // Xoá sạch form đăng ký trước khi mở. Thiếu bước này thì dữ liệu của
+        // lần đăng ký TRƯỚC — kể cả mật khẩu — vẫn nằm nguyên trong các ô input
+        // khi người dùng bấm "Về màn đăng nhập" rồi vào lại form.
+        resetRegisterForm() {
+            this.rHoly = ''; this.rName = ''; this.rPhone = ''; this.rBirth = '';
+            this.rPw = ''; this.rPw2 = ''; this.rNote = ''; this.rCode = '';
+            this.rDanhXung = 'glv';
+            this.error = '';
+        },
+
+        goRegister() { this.resetRegisterForm(); this.step = 'register'; this.$nextTick(() => lucide.createIcons()); },
         goLogin()    { this.error = ''; this.step = 'login';    this.$nextTick(() => lucide.createIcons()); },
 
         async submitRegister() {
@@ -37,6 +47,8 @@ document.addEventListener('alpine:init', () => {
                 });
                 if (!r.ok) { this.error = r.error; return; }
                 this.rCode = r.code;
+                // Đã gửi xong thì không giữ mật khẩu lại trong bộ nhớ nữa
+                this.rPw = ''; this.rPw2 = '';
                 this.step = 'done';
                 this.$nextTick(() => lucide.createIcons());
             } catch (e) {

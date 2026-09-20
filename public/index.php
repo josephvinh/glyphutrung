@@ -208,6 +208,14 @@ if (!$__dev) ob_start();
             <!-- PDF -->
             <iframe x-show="($store.libViewer.item || {}).type==='file' && (($store.libViewer.item || {}).ext || '')==='pdf'"
                     :src="($store.libViewer.item || {}).fileUrl + '&mode=view'" class="w-full h-64 sm:h-80 border-0"></iframe>
+            <!-- ẢNH: hiện thẳng, không cần tải về.
+                 Trước đây thiếu nhánh này nên ảnh (viewable = true, ext khác
+                 pdf) rơi vào khoảng không: iframe chỉ nhận pdf, còn khối
+                 "cần tải về" chỉ hiện khi viewable = false. -->
+            <img x-show="($store.libViewer.item || {}).type==='file' && ($store.libViewer.item || {}).viewable && (($store.libViewer.item || {}).ext || '')!=='pdf'"
+                 :src="($store.libViewer.item || {}).fileUrl + '&mode=view'"
+                 :alt="($store.libViewer.item || {}).title || ''"
+                 class="w-full max-h-[70dvh] object-contain bg-slate-50">
             <!-- Tệp không xem được -->
             <div x-show="($store.libViewer.item || {}).type==='file' && !($store.libViewer.item || {}).viewable" class="flex flex-col items-center justify-center text-center p-8">
                 <i data-lucide="file-down" class="w-12 h-12 text-slate-300 mb-3"></i>
@@ -232,8 +240,17 @@ if (!$__dev) ob_start();
     document.addEventListener('alpine:init', function() {
         Alpine.store('libViewer', { open: false, item: null });
     });
+    // Nút "Sửa" nằm trong bottom sheet — mà sheet là một scope RIÊNG
+    // (x-data="tnttApp" thứ hai, đặt ngoài .app-shell). Vì vậy KHÔNG gọi
+    // thẳng window.TNTT.library.editArticle được: khi gọi như vậy `this`
+    // là mảnh JS thô, không có $nextTick (báo "this.$nextTick is not a
+    // function"), và libCompose ghi nhầm vào mảnh chứ không vào component
+    // đang sống — nên modal soạn không bao giờ mở. Phải lấy đúng component
+    // gốc rồi gọi phương thức trên nó.
     function openLibArticle(item) {
-        window.TNTT && window.TNTT.library && window.TNTT.library.editArticle && window.TNTT.library.editArticle(item);
+        const goc = document.querySelector('.app-shell');
+        const app = (goc && window.Alpine && window.Alpine.$data) ? window.Alpine.$data(goc) : null;
+        if (app && app.editArticle) app.editArticle(item);
     }
     </script>
 
