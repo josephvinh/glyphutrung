@@ -23,3 +23,8 @@ config/backup/
 
 # Cấu hình riêng máy chủ/máy nhà — KHÔNG lên git
 config/config.local.php
+
+# Bundle minified (tự build bằng npm run build; không track vì bundle.php
+# nối source nếu file này thiếu hoặc cũ)
+public/assets/js/bundle.min.js
+public/assets/js/login.min.js

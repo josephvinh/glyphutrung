@@ -53,7 +53,12 @@ if (!$__dev) ob_start();
          icon.svg   : tab trình duyệt, nét sắc ở mọi cỡ
          icon-180   : iOS "Thêm vào màn hình chính" (iOS không nhận SVG)
          manifest   : Android, để cài như một app riêng
-         Đổi logo: thay assets/img/icon.svg rồi chạy  node build/tao_icon.cjs -->
+         Đổi logo: thay assets/img/icon.svg rồi chạy  node build/tao_icon.cjs
+         
+         as="image" + fetchpriority="high" cho icon SVG vì nó render-blocking
+         rel="preload" + as="image" cho icon quan trọng nhất
+         ============================================================== -->
+    <link rel="preload" href="assets/img/icon.svg" as="image" type="image/svg+xml">
     <link rel="icon" href="assets/img/icon.svg" type="image/svg+xml">
     <link rel="icon" href="assets/img/icon-32.png" sizes="32x32" type="image/png">
     <link rel="apple-touch-icon" href="assets/img/icon-180.png">
@@ -67,6 +72,21 @@ if (!$__dev) ob_start();
          ở gốc dự án; chạy `npm run css` sau khi thêm lớp mới.
          (Các <link> CSS gom xuống một khối bên dưới — dev nạp lẻ, prod gộp.) -->
     <!-- THƯ VIỆN ĐẶT NGAY TRÊN MÁY CHỦ MÌNH, KHÔNG LẤY TỪ CDN NGOÀI.
+         
+         PRECONNECT: khai báo trước các hostname cần tra DNS, giảm ~100-300ms
+         cho lần đầu tiên kết nối. Khai ở <head> để trình duyệt bắt đầu
+         tra DNS ngay khi thấy thẻ, không phải đợi tải xong HTML.
+         ============================================================== -->
+    <?php if (!$__dev): ?>
+    <!-- Preconnect cho fonts tự-host (nếu dùng Google Fonts tương lai) -->
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Preconnect cho CDN nếu có -->
+    <link rel="preconnect" href="https://cdn.example.com" crossorigin>
+    <?php endif; ?>
+    
+    <!-- DNS PREFETCH: tra DNS sớm cho các domain phụ (không blocking như preconnect) -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
          Đo thực tế trên đường truyền tốt: lấy từ unpkg mất 356ms, từ
          jsdelivr 94ms, còn từ máy chủ mình 9ms. Trên điện thoại 4G sóng
          yếu thì khoảng cách đó giãn ra thành mấy giây, vì mỗi tên miền
@@ -281,6 +301,9 @@ if (!$__dev) ob_start();
     <!-- PRODUCTION: một tệp gộp (toast + module + app.js) cho nhẹ -->
     <script src="assets/js/bundle.php?v=<?php echo bundle_v($__jsFiles); ?>"></script>
     <?php endif; ?>
+    
+    <!-- Performance monitoring — chạy độc lập, không block rendering -->
+    <script defer src="assets/js/modules/perf.js?v=<?php echo asset_v(__DIR__ . '/assets/js/modules/perf.js'); ?>"></script>
     <script>document.addEventListener('DOMContentLoaded', () => { lucide.createIcons(); });</script>
 </body>
 </html>
