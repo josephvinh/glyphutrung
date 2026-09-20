@@ -549,7 +549,21 @@ INSERT IGNORE INTO library_categories (id, name, sort_order) VALUES
 INSERT IGNORE INTO modules (module_key, label, icon, color, area, sort_order)
 VALUES ('thu_vien', 'Thư viện', 'scroll-text', 'text-amber-600', 'glv', 7);
 
--- Quyền: view = xem + đăng (chờ duyệt); edit = duyệt/gỡ/quản chủ đề.
+-- Quyền: view = xem; edit = sửa/xóa/tạo.
+INSERT IGNORE INTO permissions (module_key, role_code, level) VALUES
+    ('org',     'admin',         'edit'),
+    ('org',     'bdh',           'edit'),
+    ('org',     'truong_khoi',   'view'),
+    ('org',     'glv_chu_nhiem', 'view'),
+    ('org',     'glv',           'view'),
+    ('staff',   'admin',         'edit'),
+    ('staff',   'bdh',           'edit'),
+    ('staff',   'truong_khoi',   'view'),
+    ('staff',   'glv_chu_nhiem', 'view'),
+    ('staff',   'glv',           'view'),
+    ('staff',   'du_bi',         'view');
+
+-- Quyền Thư viện: view = xem + đăng (chờ duyệt); edit = duyệt/gỡ/quản chủ đề.
 INSERT IGNORE INTO permissions (module_key, role_code, level) VALUES
     ('thu_vien', 'admin',         'edit'),
     ('thu_vien', 'bdh',           'edit'),
