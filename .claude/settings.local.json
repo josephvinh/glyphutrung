@@ -10,7 +10,16 @@
       "Bash(curl -sL https://phar.phpunit.de/phpunit-10.phar -o phpunit10.phar)",
       "Bash(php phpunit10.phar --version)",
       "Bash(php phpunit10.phar --testdox --bootstrap tests/bootstrap.php tests/unit/CSRFTest.php)",
-      "Bash(git commit -m 'Add CSRF protection for POST requests *)"
+      "Bash(git commit -m 'Add CSRF protection for POST requests')",
+      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__click",
+      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__take_snapshot",
+      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__navigate_page",
+      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__fill",
+      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__wait_for",
+      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__fill_form",
+      "Bash(mysql -u root -e \"SELECT phone FROM staff ORDER BY id LIMIT 5\" tntt)",
+      "Bash(mysql -u root -e \"SELECT phone FROM staff ORDER BY id LIMIT 5\" glyphutrung)",
+      "Bash(php -r ' *)"
     ]
   }
 }

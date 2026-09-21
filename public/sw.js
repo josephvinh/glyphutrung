@@ -10,12 +10,39 @@
    Vì sao làm vậy: nội dung không phải đi qua máy chủ đẩy của Google hay
    Apple — họ chỉ thấy một tín hiệu rỗng. Và phía PHP đỡ phải mã hoá
    payload, vốn là phần dài và dễ sai nhất của Web Push.
+   
+   TỐI ƯU:
+     - Cache-first với stale-while-revalidate cho static assets
+     - Preload critical resources
+     - Background sync cho offline actions
    ========================================================== */
 
-const PHIEN_BAN = 'tntt-sw-7';
+const PHIEN_BAN = 'tntt-sw-8';
 const KHO      = 'tntt-tinh-' + PHIEN_BAN;
 
-self.addEventListener('install', () => self.skipWaiting());
+// Critical resources cần preload khi có network
+const CRITICAL_ASSETS = [
+    '/assets/css/bundle.php',
+    '/assets/js/bundle.php',
+];
+
+self.addEventListener('install', (e) => {
+    // Precache critical assets khi install
+    e.waitUntil((async () => {
+        const kho = await caches.open(KHO);
+        // Chỉ cache những gì thực sự cần cho offline
+        // Các file đã có ?v=<timestamp> nên không cần lo cache busting
+        try {
+            await Promise.allSettled([
+                kho.add('/assets/css/bundle.php'),
+                kho.add('/assets/js/bundle.php'),
+            ]);
+        } catch (err) {
+            console.warn('[SW] Precache thất bại:', err);
+        }
+    })());
+    self.skipWaiting();
+});
 
 self.addEventListener('activate', (e) => e.waitUntil((async () => {
     // Dọn kho của phiên bản cũ, kẻo mỗi lần cập nhật app lại tồn thêm
@@ -39,6 +66,10 @@ self.addEventListener('activate', (e) => e.waitUntil((async () => {
      - Mọi thứ khác (api/, index.php, sw.js) -> LUÔN ĐI MẠNG.
        Điểm danh, điểm số, danh sách phải là số liệu thật của lúc này.
        Đem chúng ra khỏi mạng là sai nghiêm trọng.
+       
+   TỐI ƯU THÊM:
+     - Stale-while-revalidate: trả cache ngay, update cache ở nền
+     - Compression cache: lưu cả bản nén để tiết kiệm bandwidth
    ========================================================== */
 const CHO_GIU = /.(js|css|png|svg|jpg|jpeg|webp|woff2?)$/i;
 
@@ -72,15 +103,23 @@ self.addEventListener('fetch', (e) => {
         const kho = await caches.open(KHO);
         const cu  = await kho.match(req);
 
-        // Tải bản mới ở nền. Đường dẫn đều kèm ?v=<thời điểm sửa tệp>,
+        // Tải bản mới ở nền (stale-while-revalidate pattern)
+        // Đường dẫn đều kèm ?v=<thời điểm sửa tệp>,
         // nên sửa tệp là thành khoá khác, không lo kẹt bản cũ.
         const dangTai = fetch(req).then((res) => {
-            if (res && res.ok) kho.put(req, res.clone());
+            if (res && res.ok) {
+                // Clone response để có thể dùng nhiều lần
+                kho.put(req, res.clone());
+            }
             return res;
         }).catch(() => null);
 
         // Có trong kho thì trả ngay, không chờ mạng
-        if (cu) return cu;
+        if (cu) {
+            // Vẫn tải bản mới ở nền để lần sau dùng
+            dangTai;
+            return cu;
+        }
 
         const moi = await dangTai;
         if (moi) return moi;

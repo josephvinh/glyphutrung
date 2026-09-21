@@ -68,8 +68,8 @@ window.TNTT.org = {
     // Dùng chung cho cả Khối & Lớp lẫn Nhân sự: đang ở màn nào thì
     // hỏi quyền của đúng màn đó.
     get canManageOrg() {
-        // canEditModule được merge từ core vào root object khi Alpine gộp các module
-        return (this.permOf || window.TNTT.core.permOf)(this.currentModule === 'staff' ? 'staff' : 'org') === 'edit';
+        // Dùng canEditModule() như các module khác - nó là getter đã merge từ core
+        return this.canEditModule(this.currentModule === 'staff' ? 'staff' : 'org');
     },
 
     // Role của Ban Điều Hành và Admin không được đụng vào từ màn này

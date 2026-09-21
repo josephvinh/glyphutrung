@@ -78,16 +78,10 @@ if (!$__dev) ob_start();
          tra DNS ngay khi thấy thẻ, không phải đợi tải xong HTML.
          ============================================================== -->
     <?php if (!$__dev): ?>
-    <!-- Preconnect cho fonts tự-host (nếu dùng Google Fonts tương lai) -->
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <!-- Preconnect cho CDN nếu có -->
     <link rel="preconnect" href="https://cdn.example.com" crossorigin>
     <?php endif; ?>
-    
-    <!-- DNS PREFETCH: tra DNS sớm cho các domain phụ (không blocking như preconnect) -->
-    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
-    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
-         Đo thực tế trên đường truyền tốt: lấy từ unpkg mất 356ms, từ
+    <!-- Đo thực tế trên đường truyền tốt: lấy từ unpkg mất 356ms, từ
          jsdelivr 94ms, còn từ máy chủ mình 9ms. Trên điện thoại 4G sóng
          yếu thì khoảng cách đó giãn ra thành mấy giây, vì mỗi tên miền
          lạ phải tra DNS rồi bắt tay TLS lại từ đầu.
