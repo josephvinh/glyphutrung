@@ -86,7 +86,7 @@
         </h3>
         <div class="space-y-2">
             <template x-for="prog in programsInMonth" :key="prog.id">
-                <button @click="showEventDetail(prog)" class="w-full text-left bg-slate-50 hover:bg-slate-100 rounded-xl px-4 py-3 flex items-center gap-3 transition-colors">
+                <button @click="showEventDetail(prog)" type="button" class="w-full text-left bg-slate-50 hover:bg-slate-100 rounded-xl px-4 py-3 flex items-center gap-3 transition-colors">
                     <div class="w-10 h-10 shrink-0 rounded-xl flex items-center justify-center"
                          :class="prog.type === 'chiến dịch' ? 'bg-amber-100 text-amber-600' : 'bg-blue-100 text-blue-600'">
                         <i data-lucide="calendar" class="w-5 h-5"></i>

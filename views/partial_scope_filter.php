@@ -89,7 +89,7 @@ $__nhan   = $__blockMode ? 'khối' : 'lớp';
         </div>
         
         <div class="mt-4 flex justify-end" x-show="<?= $__active ?>" style="display: none;">
-            <button @click="<?= $__clear ?>" class="flex items-center justify-center gap-1.5 px-4 py-2 bg-slate-100 text-slate-600 rounded-xl font-bold text-xs active:scale-95 transition-transform border border-slate-200">
+            <button @click="<?= $__clear ?>" type="button" class="flex items-center justify-center gap-1.5 px-4 py-2 bg-slate-100 text-slate-600 rounded-xl font-bold text-xs active:scale-95 transition-transform border border-slate-200">
                 <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Xóa bộ lọc
             </button>
         </div>

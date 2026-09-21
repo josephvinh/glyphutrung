@@ -10,7 +10,7 @@
             <h2 class="text-xl font-black text-slate-800 tracking-tight">Chương Trình</h2>
         </div>
         
-        <button @click="openCreateProgram()" class="bg-blue-600 text-white px-4 py-2 rounded-xl font-bold text-sm shadow-md shadow-blue-200 flex items-center active:scale-95 transition-transform">
+        <button @click="openCreateProgram()" type="button" class="bg-blue-600 text-white px-4 py-2 rounded-xl font-bold text-sm shadow-md shadow-blue-200 flex items-center active:scale-95 transition-transform">
             <i data-lucide="plus" class="w-4 h-4 mr-1"></i> Tạo mới
         </button>
     </div>
@@ -133,7 +133,7 @@
                 </div>
             </div>
             <div class="p-4 border-t border-slate-100">
-                <button @click="saveProgram()" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-2xl active:scale-[0.98] shadow-md shadow-blue-200 flex justify-center items-center">
+                <button @click="saveProgram()" type="button" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-2xl active:scale-[0.98] shadow-md shadow-blue-200 flex justify-center items-center">
                     <i data-lucide="save" class="w-5 h-5 mr-2"></i> Lưu Chương Trình
                 </button>
             </div>

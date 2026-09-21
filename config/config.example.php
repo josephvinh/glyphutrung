@@ -24,7 +24,9 @@ return [
     'pass_attendance' => 60,
 
     // Mật khẩu cấp cho tài khoản mới. Lần đăng nhập đầu buộc phải đổi.
-    'default_password' => 'tntt@2026',
+    // ⚠️ QUAN TRỌNG: Đổi thành chuỗi ngẫu nhiên dài trước khi deploy production!
+    // Ví dụ: openssl_rand_pseudo_bytes(16) -> hex hoặc dùng password generator
+    'default_password' => 'CHANGE_ME_BEFORE_PRODUCTION',
 
     // Khoá để chạy install.php qua trình duyệt khi máy chủ không có
     // Terminal. Đặt một chuỗi ngẫu nhiên dài. Để rỗng nghĩa là CẤM hẳn,

@@ -39,7 +39,7 @@
             </div>
         </div>
 
-        <button @click="openProfileForm()" class="w-full mt-4 py-2.5 bg-white/20 backdrop-blur-sm rounded-xl font-bold text-xs active:scale-[0.98] transition-transform border border-white/30 flex items-center justify-center gap-2">
+        <button @click="openProfileForm()" type="button" class="w-full mt-4 py-2.5 bg-white/20 backdrop-blur-sm rounded-xl font-bold text-xs active:scale-[0.98] transition-transform border border-white/30 flex items-center justify-center gap-2">
             <i data-lucide="pencil" class="w-3.5 h-3.5"></i> Sửa thông tin
         </button>
     </div>
@@ -317,7 +317,7 @@
             </div>
 
             <div class="p-4 border-t border-slate-100">
-                <button @click="saveProfile()" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-blue-200 flex justify-center items-center">
+                <button @click="saveProfile()" type="button" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-blue-200 flex justify-center items-center">
                     <i data-lucide="save" class="w-5 h-5 mr-2"></i> Lưu thông tin
                 </button>
             </div>

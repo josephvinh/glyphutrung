@@ -114,7 +114,7 @@
                         </div>
                     </div>
 
-                    <button @click="startSession(prog)" :disabled="!heavyLoaded" :class="!heavyLoaded ? 'opacity-50' : ''" class="w-full bg-blue-600 text-white font-bold py-3 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-blue-200 flex justify-center items-center">
+                    <button @click="startSession(prog)" type="button" :disabled="!heavyLoaded" :class="!heavyLoaded ? 'opacity-50' : ''" class="w-full bg-blue-600 text-white font-bold py-3 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-blue-200 flex justify-center items-center">
                         <i data-lucide="clipboard-check" class="w-5 h-5 mr-2"></i> Bắt đầu điểm danh
                     </button>
                 </div>
@@ -125,7 +125,7 @@
                 <i data-lucide="calendar-x" class="w-12 h-12 mx-auto text-slate-300 mb-4"></i>
                 <p class="text-slate-600 font-semibold text-base mb-1">Ngày này không có chương trình nào</p>
                 <p class="text-slate-400 text-sm mb-4">Hầu hết chương trình rơi vào Chúa Nhật</p>
-                <button @click="goToNearestSunday()" class="px-5 py-2.5 bg-blue-50 text-blue-600 rounded-full font-bold text-xs active:scale-95 transition-transform border border-blue-100 hover:bg-blue-100">
+                <button @click="goToNearestSunday()" type="button" class="px-5 py-2.5 bg-blue-50 text-blue-600 rounded-full font-bold text-xs active:scale-95 transition-transform border border-blue-100 hover:bg-blue-100">
                     Xem Chúa Nhật gần nhất
                 </button>
             </div>
@@ -280,7 +280,7 @@
 <div x-show="qrMo" style="display: none;"
      class="fixed inset-0 z-[300] bg-slate-900/95 backdrop-blur-sm flex items-center justify-center p-4">
 
-    <div class="w-full max-w-sm bg-white rounded-sheet shadow-2xl overflow-hidden flex flex-col max-h-[92dvh]">
+    <div class="w-full max-w-sm bg-white rounded-sheet shadow-2xl overflow-hidden flex flex-col max-h-[90dvh]">
 
         <!-- Đầu -->
         <div class="shrink-0 flex items-center justify-between px-4 py-3 border-b border-slate-100">
@@ -308,7 +308,7 @@
         </div>
 
         <!-- Số đếm + vài em gần nhất -->
-        <div class="flex-1 min-h-0 overflow-y-auto px-4 py-3">
+        <div class="flex-1 min-h-0 overflow-y-auto px-4 py-3 max-h-48">
             <div class="flex items-center justify-between mb-2">
                 <p class="text-micro font-bold text-slate-400 uppercase tracking-wider">Đã quét</p>
                 <div class="flex items-baseline gap-1.5">

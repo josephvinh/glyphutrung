@@ -239,7 +239,7 @@
 
                                 <template x-if="r.status === 'published'">
                                     <div class="flex gap-2">
-                                        <button @click="printReport(r)" class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-xl font-bold text-xs active:scale-95 transition-transform">
+                                        <button @click="printReport(r)" type="button" class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-xl font-bold text-xs active:scale-95 transition-transform">
                                             <i data-lucide="printer" class="w-4 h-4"></i> In phiếu
                                         </button>
                                     </div>

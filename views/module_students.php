@@ -57,7 +57,7 @@
             </div>
             
             <div class="mt-4 flex justify-end" x-show="hasActiveFilter" style="display: none;">
-                <button @click="clearFilters()" class="flex items-center justify-center gap-1.5 px-4 py-2 bg-slate-100 text-slate-600 rounded-xl font-bold text-xs active:scale-95 transition-transform border border-slate-200">
+                <button @click="clearFilters()" type="button" class="flex items-center justify-center gap-1.5 px-4 py-2 bg-slate-100 text-slate-600 rounded-xl font-bold text-xs active:scale-95 transition-transform border border-slate-200">
                     <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Xóa bộ lọc
                 </button>
             </div>
@@ -197,7 +197,7 @@
 
         <!-- NÚT TẢI THÊM: Chỉ hiện ra khi số lượng đang hiển thị nhỏ hơn tổng số kết quả lọc -->
         <div x-show="displayLimit < filteredStudents.length" style="display: none;" class="text-center pt-2 pb-6 col-span-full">
-            <button @click="loadMore()" class="px-6 py-2.5 bg-slate-200 text-slate-600 rounded-full font-bold text-sm active:scale-95 transition-transform border border-slate-300 shadow-sm">
+            <button @click="loadMore()" type="button" class="px-6 py-2.5 bg-slate-200 text-slate-600 rounded-full font-bold text-sm active:scale-95 transition-transform border border-slate-300 shadow-sm">
                 Tải thêm danh sách...
             </button>
         </div>

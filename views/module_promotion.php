@@ -257,7 +257,7 @@
             </p>
         </div>
 
-        <button @click="runPromotion()" :disabled="!canPromote || unmappedClasses.length > 0"
+        <button @click="runPromotion()" type="button" :disabled="!canPromote || unmappedClasses.length > 0"
                 class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-blue-200 flex justify-center items-center disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none">
             <i data-lucide="trending-up" class="w-5 h-5 mr-2"></i>
             Chuyển lớp cho khối <span class="ml-1" x-text="promoteBlock"></span>

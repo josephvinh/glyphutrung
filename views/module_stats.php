@@ -10,7 +10,7 @@
                 </button>
                 <h2 class="text-xl font-black text-slate-800 tracking-tight">Thống Kê</h2>
             </div>
-            <button @click="exportStatsCSV()" class="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-blue-50 text-blue-600 rounded-xl font-bold text-xs active:scale-95 transition-transform border border-blue-100 shadow-sm">
+            <button @click="exportStatsCSV()" type="button" class="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-blue-50 text-blue-600 rounded-xl font-bold text-xs active:scale-95 transition-transform border border-blue-100 shadow-sm">
                 <i data-lucide="file-up" class="w-4 h-4"></i> Xuất CSV
             </button>
         </div>

@@ -292,7 +292,7 @@
                     class="w-14 shrink-0 bg-red-50 text-red-500 rounded-2xl border border-red-100 active:scale-95 transition-transform flex justify-center items-center">
                 <i data-lucide="trash-2" class="w-5 h-5"></i>
             </button>
-            <button @click="saveMember()" class="flex-1 bg-blue-600 text-white font-bold py-3.5 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-blue-200 flex justify-center items-center">
+            <button @click="saveMember()" type="button" class="flex-1 bg-blue-600 text-white font-bold py-3.5 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-blue-200 flex justify-center items-center">
                 <i data-lucide="save" class="w-5 h-5 mr-2"></i> Lưu thành viên
             </button>
         </div>
@@ -339,7 +339,7 @@
         </div>
 
         <div class="p-4 border-t border-slate-100">
-            <button @click="confirmApprove()" class="w-full bg-emerald-600 text-white font-bold py-3.5 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-emerald-200 flex justify-center items-center">
+            <button @click="confirmApprove()" type="button" class="w-full bg-emerald-600 text-white font-bold py-3.5 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-emerald-200 flex justify-center items-center">
                 <i data-lucide="check" class="w-5 h-5 mr-2"></i> Duyệt
             </button>
         </div>

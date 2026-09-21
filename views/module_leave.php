@@ -197,10 +197,10 @@
 
                     <!-- Nút xử lý -->
                     <div x-show="req.status === 'chờ duyệt'" class="grid grid-cols-2 gap-3 pt-1">
-                        <button @click="openRejectForm(req)" class="py-3 bg-rose-50 text-rose-600 rounded-2xl font-bold text-sm border border-rose-100 active:scale-95 transition-transform flex items-center justify-center gap-1.5">
+                        <button @click="openRejectForm(req)" type="button" class="py-3 bg-rose-50 text-rose-600 rounded-2xl font-bold text-sm border border-rose-100 active:scale-95 transition-transform flex items-center justify-center gap-1.5">
                             <i data-lucide="x" class="w-4 h-4"></i> Từ chối
                         </button>
-                        <button @click="approveLeave(req)" class="py-3 bg-emerald-600 text-white rounded-2xl font-bold text-sm shadow-md shadow-emerald-200 active:scale-95 transition-transform flex items-center justify-center gap-1.5">
+                        <button @click="approveLeave(req)" type="button" class="py-3 bg-emerald-600 text-white rounded-2xl font-bold text-sm shadow-md shadow-emerald-200 active:scale-95 transition-transform flex items-center justify-center gap-1.5">
                             <i data-lucide="check" class="w-4 h-4"></i> Duyệt
                         </button>
                     </div>
@@ -240,7 +240,7 @@
                 </div>
             </div>
             <div class="p-4 border-t border-slate-100">
-                <button @click="submitLeave()" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-blue-200 flex justify-center items-center">
+                <button @click="submitLeave()" type="button" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-blue-200 flex justify-center items-center">
                     <i data-lucide="send" class="w-5 h-5 mr-2"></i> Nộp đơn
                 </button>
             </div>
@@ -263,7 +263,7 @@
                 <textarea x-model="rejectForm.reason" rows="3" placeholder="Ghi rõ để GLV giải thích lại với phụ huynh..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500 resize-none"></textarea>
             </div>
             <div class="p-4 border-t border-slate-100">
-                <button @click="confirmReject()" class="w-full bg-rose-600 text-white font-bold py-3.5 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-rose-200 flex justify-center items-center">
+                <button @click="confirmReject()" type="button" class="w-full bg-rose-600 text-white font-bold py-3.5 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-rose-200 flex justify-center items-center">
                     <i data-lucide="x-circle" class="w-5 h-5 mr-2"></i> Xác nhận từ chối
                 </button>
             </div>

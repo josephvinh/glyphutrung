@@ -13,7 +13,7 @@
         </label>
         <div x-show="reportClass === ''"></div>
 
-        <button @click="printClassReports()" class="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-blue-50 text-blue-600 rounded-xl font-bold text-xs active:scale-95 transition-transform border border-blue-100 hover:bg-blue-100">
+        <button @click="printClassReports()" type="button" class="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-blue-50 text-blue-600 rounded-xl font-bold text-xs active:scale-95 transition-transform border border-blue-100 hover:bg-blue-100">
             <i data-lucide="printer" class="w-4 h-4"></i>
             <span x-text="selectedReports.length > 0 ? ('In ' + selectedReports.length + ' phiếu') : 'In PDF cả lớp'"></span>
         </button>
@@ -228,10 +228,10 @@
                         class="w-14 shrink-0 bg-red-50 text-red-500 rounded-2xl border border-red-100 active:scale-95 transition-transform flex justify-center items-center">
                     <i data-lucide="trash-2" class="w-5 h-5"></i>
                 </button>
-                <button @click="saveReport(false)" class="flex-1 bg-slate-100 text-slate-600 font-bold py-3.5 rounded-2xl border border-slate-200 active:scale-[0.98] transition-transform">
+                <button @click="saveReport(false)" type="button" class="flex-1 bg-slate-100 text-slate-600 font-bold py-3.5 rounded-2xl border border-slate-200 active:scale-[0.98] transition-transform">
                     Lưu nháp
                 </button>
-                <button @click="saveReport(true)" class="flex-1 bg-blue-600 text-white font-bold py-3.5 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-blue-200 flex justify-center items-center">
+                <button @click="saveReport(true)" type="button" class="flex-1 bg-blue-600 text-white font-bold py-3.5 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-blue-200 flex justify-center items-center">
                     <i data-lucide="send" class="w-4 h-4 mr-2"></i> Gửi
                 </button>
             </div>
@@ -313,7 +313,7 @@
             </div>
 
             <div class="p-4 border-t border-slate-100 bg-white no-print">
-                <button @click="printReport()" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-blue-200 flex justify-center items-center">
+                <button @click="printReport()" type="button" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-blue-200 flex justify-center items-center">
                     <i data-lucide="printer" class="w-5 h-5 mr-2"></i> In phiếu
                 </button>
             </div>

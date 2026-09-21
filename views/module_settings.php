@@ -172,7 +172,7 @@
                 </template>
             </div>
 
-            <button @click="resetPermissions()" class="w-full mt-4 py-3 bg-white border border-slate-200 rounded-field font-bold text-sm text-slate-500 active:scale-[0.98] transition-transform flex items-center justify-center gap-2 shadow-sm">
+            <button @click="resetPermissions()" type="button" class="w-full mt-4 py-3 bg-white border border-slate-200 rounded-field font-bold text-sm text-slate-500 active:scale-[0.98] transition-transform flex items-center justify-center gap-2 shadow-sm">
                 <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Đặt lại mặc định
             </button>
         </div>

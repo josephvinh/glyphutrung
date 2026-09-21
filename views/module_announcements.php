@@ -20,7 +20,7 @@
          ========================================================== -->
     <div x-show="!canManageAnnouncements">
         <div x-show="unreadAnnouncementCount > 0" style="display: none;" class="flex justify-end mb-3">
-            <button @click="markAllAnnouncementsRead()" class="flex items-center gap-1.5 px-3 py-2 bg-white text-slate-500 rounded-xl font-bold text-xs active:scale-95 transition-transform border border-slate-200 shadow-sm">
+            <button @click="markAllAnnouncementsRead()" type="button" class="flex items-center gap-1.5 px-3 py-2 bg-white text-slate-500 rounded-xl font-bold text-xs active:scale-95 transition-transform border border-slate-200 shadow-sm">
                 <i data-lucide="check-check" class="w-4 h-4"></i> Đánh dấu đã đọc hết
             </button>
         </div>
@@ -273,7 +273,7 @@
             </div>
 
             <div class="p-4 border-t border-slate-100 bg-white">
-                <button @click="saveAnnouncement()" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-blue-200 flex justify-center items-center">
+                <button @click="saveAnnouncement()" type="button" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-blue-200 flex justify-center items-center">
                     <i data-lucide="send" class="w-5 h-5 mr-2"></i>
                     <span x-text="announcementForm.status === 'nháp' ? 'Lưu nháp' : 'Phát thông báo'"></span>
                 </button>

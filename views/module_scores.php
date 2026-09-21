@@ -6,7 +6,7 @@
     <?php include __DIR__ . '/partial_children_tabs.php'; ?>
 
     <div class="flex justify-end mb-4">
-        <button @click="exportScoresCSV()" class="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-blue-50 text-blue-600 rounded-xl font-bold text-xs active:scale-95 transition-transform border border-blue-100 shadow-sm">
+        <button @click="exportScoresCSV()" type="button" class="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-blue-50 text-blue-600 rounded-xl font-bold text-xs active:scale-95 transition-transform border border-blue-100 shadow-sm">
             <i data-lucide="file-up" class="w-4 h-4"></i> Xuất
         </button>
     </div>

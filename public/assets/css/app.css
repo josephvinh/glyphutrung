@@ -181,7 +181,9 @@ body {
     /* Tách riêng: nếu trình duyệt không hiểu :has() thì chỉ mất dòng dưới,
        phần ẩn cơ bản vẫn còn tác dụng */
     .app-header, .app-bottomnav, .no-print { display: none !important; }
-    main > div:not(:has(#report-sheet)) { display: none !important; }
+    /* Fallback cho trình duyệt không hỗ trợ :has() */
+    main > div { display: none !important; }
+    #report-sheet, #report-sheet:default { display: block !important; }
     .app-shell { margin: 0; box-shadow: none; border-radius: 0; min-height: auto; }
     .print-area { position: static !important; inset: auto !important; display: block !important; }
     .print-area .modal-sheet {
