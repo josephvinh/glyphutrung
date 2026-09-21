@@ -33,181 +33,54 @@ if (!$year) json_fail('Chưa có niên khoá nào đang mở.', 409);
 $yid = (int) $year['id'];
 $in     = json_input();
 
-/** Không cho hạ vai trò của Ban Điều Hành và Quản trị từ màn này */
-function is_protected(array $m): bool
-{
+// Sử dụng OrgService để tách logic nghiệp vụ
+require_once __DIR__ . '/OrgService.php';
+$org = new OrgService($me, $yid, $in);
+
+/** Legacy helpers - dùng OrgService */
+function is_protected(array $m): bool {
     return in_array($m['role_code'], ['admin', 'bdh'], true);
 }
 
-function demote(int $memberId): void
-{
-    // Tìm chức vụ cao nhất CÒN LẠI của người này (trừ các chức vụ đã kết thúc)
-    $activeRoles = db_all(
-        "SELECT role_code, block_id, class_id FROM member_assignments 
-         WHERE member_id = ? AND to_date IS NULL",
-        [$memberId]
-    );
-
-    $levels = ['admin' => 50, 'bdh' => 40, 'truong_khoi' => 30, 'glv_chu_nhiem' => 20, 'glv' => 10];
-    $highestLvl = 10;
-    $highestRole = 'glv';
-    $bestBlockId = null;
-    $bestClassId = null;
-
-    foreach ($activeRoles as $r) {
-        $lvl = $levels[$r['role_code']] ?? 10;
-        if ($lvl > $highestLvl) {
-            $highestLvl = $lvl;
-            $highestRole = $r['role_code'];
-            $bestBlockId = $r['block_id'];
-            $bestClassId = $r['class_id'];
-        }
-    }
-
-    $t = db_one("SELECT id FROM titles WHERE role_code=? ORDER BY sort_order LIMIT 1", [$highestRole]);
-    db_run("UPDATE members SET role_code=?, title_id=?, block_id=?, class_id=? WHERE id=?", 
-           [$highestRole, $t['id'] ?? null, $bestBlockId, $bestClassId, $memberId]);
+function demote(int $memberId): void {
+    global $org;
+    $org->demoteMember($memberId);
 }
 
 switch ($action) {
 
     // ============================= KHỐI =============================
     case 'saveBlock':
-        require_write();
-        $name = trim((string) ($in['name'] ?? ''));
-        $old  = trim((string) ($in['original'] ?? ''));
-        if ($name === '') json_fail('Vui lòng nhập tên khối.');
-        if (mb_strlen($name) > 64) json_fail('Tên khối tối đa 64 ký tự.');
-
-        $dup = db_one('SELECT id FROM blocks WHERE name = ?', [$name]);
-        if ($dup && $old !== $name) json_fail('Tên khối này đã tồn tại.');
-
-        if ($old === '') {
-            // Chỉ admin/bdh được tạo khối mới (không thuộc phạm vi khối nào)
-            if (!can_manage_block($me, 0)) {
-                json_fail('Bạn không có quyền tạo khối mới.', 403);
-            }
-            $max = db_one('SELECT COALESCE(MAX(sort_order),0) n FROM blocks');
-            db_insert('INSERT INTO blocks (name, sort_order) VALUES (?,?)', [$name, $max['n'] + 1]);
-            log_action('tao', 'org', 'Thêm khối ' . $name, '');
-        } elseif ($old !== $name) {
-            // Đổi tên: kiểm tra phạm vi khối đang sửa
-            $b = db_one('SELECT id FROM blocks WHERE name = ?', [$old]);
-            if (!$b) json_fail('Không tìm thấy khối "' . $old . '".', 404);
-            if (!can_manage_block($me, (int) $b['id'])) {
-                json_fail('Bạn không có quyền sửa khối "' . $old . '".', 403);
-            }
-            db_run('UPDATE blocks SET name=? WHERE name=?', [$name, $old]);
-            log_action('sua', 'org', 'Đổi tên khối ' . $old . ' thành ' . $name, '');
+        $result = $org->saveBlock();
+        if (!$result['ok']) {
+            json_fail($result['error'], $result['code'] ?? 400);
         }
-        Cache::flush();
         json_out(['ok' => true]);
 
     case 'deleteBlock':
-        require_write();
-        $name = trim((string) ($in['name'] ?? ''));
-        $b = db_one('SELECT id FROM blocks WHERE name=?', [$name]);
-        if (!$b) json_fail('Không tìm thấy khối.', 404);
-        if (!can_manage_block($me, (int) $b['id'])) {
-            json_fail('Bạn không có quyền xóa khối "' . $name . '".', 403);
+        $result = $org->deleteBlock();
+        if (!$result['ok']) {
+            json_fail($result['error'], $result['code'] ?? 400);
         }
-
-        $n = db_one('SELECT COUNT(*) n FROM classes WHERE block_id=?', [$b['id']])['n'];
-        if ($n > 0) json_fail('Khối "' . $name . '" còn ' . $n . ' lớp. Hãy chuyển hoặc xóa hết lớp trước.');
-
-        // Kết thúc phân công trưởng khối đang trỏ vào khối này
-        db_run("UPDATE member_assignments SET to_date = CURDATE()
-                  WHERE role_code = 'truong_khoi' AND block_id = ? AND to_date IS NULL",
-               [$b['id']]);
-
-        db_run('DELETE FROM blocks WHERE id=?', [$b['id']]);
-        log_action('xoa', 'org', 'Xóa khối ' . $name, '');
-        Cache::flush();
         json_out(['ok' => true]);
 
     // ============================= LỚP ==============================
     case 'saveClass':
-        require_write();
-        $name  = trim((string) ($in['name'] ?? ''));
-        $old   = trim((string) ($in['original'] ?? ''));
-        $block = trim((string) ($in['block'] ?? ''));
-        if ($name === '')  json_fail('Vui lòng nhập tên lớp.');
-        if (mb_strlen($name) > 64) json_fail('Tên lớp tối đa 64 ký tự.');
-        if ($block === '') json_fail('Vui lòng chọn khối cho lớp.');
-
-        $b = db_one('SELECT id FROM blocks WHERE name=?', [$block]);
-        if (!$b) json_fail('Không tìm thấy khối "' . $block . '".');
-
-        // Khi tạo mới: kiểm tra phạm vi khối
-        if ($old === '') {
-            if (!can_manage_block($me, (int) $b['id'])) {
-                json_fail('Bạn không có quyền tạo lớp trong khối "' . $block . '".', 403);
-            }
+        $result = $org->saveClass();
+        if (!$result['ok']) {
+            json_fail($result['error'], $result['code'] ?? 400);
         }
-
-        // Khi sửa: kiểm tra phạm vi lớp cũ
-        if ($old !== '') {
-            $oldCls = db_one('SELECT id, block_id FROM classes WHERE name=?', [$old]);
-            if (!$oldCls) json_fail('Không tìm thấy lớp "' . $old . '".', 404);
-            if (!can_manage_class($me, (int) $oldCls['id'])) {
-                json_fail('Bạn không có quyền sửa lớp "' . $old . '".', 403);
-            }
-        }
-
-        $dup = db_one('SELECT id FROM classes WHERE name=?', [$name]);
-        if ($dup && $old !== $name) json_fail('Tên lớp này đã tồn tại.');
-
-        if ($old === '') {
-            db_insert('INSERT INTO classes (name, block_id, sort_order) VALUES (?,?,?)',
-                      [$name, $b['id'], 1]);
-            log_action('tao', 'org', 'Thêm lớp ' . $name, 'khối ' . $block);
-        } else {
-            db_run('UPDATE classes SET name=?, block_id=? WHERE name=?', [$name, $b['id'], $old]);
-            log_action('sua', 'org', 'Sửa lớp ' . $old, 'thành ' . $name . ' · khối ' . $block);
-        }
-
-        // Sơ đồ lên lớp
-        if (array_key_exists('nextClass', $in)) {
-            $target = trim((string) $in['nextClass']);
-            if ($target === 'RA_TRUONG') {
-                db_run('UPDATE classes SET next_class_id=NULL, is_final=1 WHERE name=?', [$name]);
-            } elseif ($target === '') {
-                db_run('UPDATE classes SET next_class_id=NULL, is_final=0 WHERE name=?', [$name]);
-            } else {
-                $t = db_one('SELECT id FROM classes WHERE name=?', [$target]);
-                if (!$t) json_fail('Không tìm thấy lớp kế tiếp "' . $target . '".');
-                db_run('UPDATE classes SET next_class_id=?, is_final=0 WHERE name=?', [$t['id'], $name]);
-            }
-        }
-        Cache::flush();
         json_out(['ok' => true]);
 
     case 'deleteClass':
-        require_write();
-        $name = trim((string) ($in['name'] ?? ''));
-        $c = db_one('SELECT id, block_id FROM classes WHERE name=?', [$name]);
-        if (!$c) json_fail('Không tìm thấy lớp.', 404);
-        if (!can_manage_class($me, (int) $c['id'])) {
-            json_fail('Bạn không có quyền xóa lớp "' . $name . '".', 403);
+        $result = $org->deleteClass();
+        if (!$result['ok']) {
+            json_fail($result['error'], $result['code'] ?? 400);
         }
-
-        $n = db_one('SELECT COUNT(*) n FROM enrollments WHERE class_id=?', [$c['id']])['n'];
-        if ($n > 0) json_fail('Lớp "' . $name . '" còn ' . $n . ' em ghi danh. Hãy chuyển các em sang lớp khác trước.');
-
-        $g = db_one('SELECT COUNT(*) n FROM members WHERE class_id=?', [$c['id']])['n'];
-        if ($g > 0) json_fail('Lớp "' . $name . '" còn ' . $g . ' GLV đang phụ trách. Hãy chuyển họ trước.');
-
-        // Kết thúc phân công chủ nhiệm vào lớp này
-        db_run("UPDATE member_assignments SET to_date = CURDATE()
-                  WHERE class_id = ? AND role_code = 'glv_chu_nhiem' AND to_date IS NULL",
-               [$c['id']]);
-
-        db_run('DELETE FROM classes WHERE id=?', [$c['id']]);
-        log_action('xoa', 'org', 'Xóa lớp ' . $name, '');
-        Cache::flush();
         json_out(['ok' => true]);
 
     // ============================ NHÂN SỰ ===========================
+    // TODO: Di chuyển sang StaffService riêng
     case 'saveMember':
         require_write();
         $id    = (int) ($in['id'] ?? 0);

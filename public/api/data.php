@@ -302,8 +302,9 @@ $members = array_map(fn($m) => [
       ORDER BY m.id'));
 
 // ---------------------------------------------------------------
-// Nhật ký — 300 dòng gần nhất
+// Nhật ký — 50 dòng gần nhất (đủ xem, nhẹ bandwidth)
 // ---------------------------------------------------------------
+// TODO: Chuyển sang API riêng có pagination khi có màn xem nhật ký
 $logs = array_map(fn($l) => [
     'id'     => (int) $l['id'],
     'at'     => substr($l['logged_at'], 0, 16),
@@ -313,7 +314,7 @@ $logs = array_map(fn($l) => [
     'module' => $l['module'],
     'what'   => $l['what'],
     'detail' => $l['detail'] ?? '',
-], db_all('SELECT * FROM activity_logs ORDER BY id DESC LIMIT 300'));
+], db_all('SELECT * FROM activity_logs ORDER BY id DESC LIMIT 50'));
 
 // ---------------------------------------------------------------
 // Lịch cá nhân — CHỈ ghi chú của chính người đang đăng nhập (riêng tư)

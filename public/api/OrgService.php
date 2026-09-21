@@ -1,0 +1,273 @@
+<?php
+/**
+ * ORG SERVICE
+ *
+ * Tách logic nghiệp vụ ra khỏi org.php (499 dòng).
+ * Giữ nguyên cấu trúc switch/case để không phá API contract.
+ *
+ * TODO: Chuyển sang class-based endpoints khi có thời gian refactor đầy đủ
+ */
+
+class OrgService
+{
+    private array $me;
+    private int $yid;
+    private array $in;
+
+    public function __construct(array $me, int $yid, array $input)
+    {
+        $this->me = $me;
+        $this->yid = $yid;
+        $this->in = $input;
+    }
+
+    /**
+     * Lấy giá trị input, có trim
+     */
+    private function in(string $key, string $default = ''): string
+    {
+        return trim((string) ($this->in[$key] ?? $default));
+    }
+
+    /**
+     * Kiểm tra quyền quản lý khối
+     */
+    private function canManageBlock(int $blockId): bool
+    {
+        return can_manage_block($this->me, $blockId);
+    }
+
+    /**
+     * Kiểm tra quyền quản lý lớp
+     */
+    private function canManageClass(int $classId): bool
+    {
+        return can_manage_class($this->me, $classId);
+    }
+
+    /**
+     * Lưu khối mới hoặc đổi tên
+     */
+    public function saveBlock(): array
+    {
+        require_write();
+
+        $name = $this->in('name');
+        $old = $this->in('original');
+
+        if ($name === '') {
+            return ['ok' => false, 'error' => 'Vui lòng nhập tên khối.'];
+        }
+        if (mb_strlen($name) > 64) {
+            return ['ok' => false, 'error' => 'Tên khối tối đa 64 ký tự.'];
+        }
+
+        $dup = db_one('SELECT id FROM blocks WHERE name = ?', [$name]);
+        if ($dup && $old !== $name) {
+            return ['ok' => false, 'error' => 'Tên khối này đã tồn tại.'];
+        }
+
+        if ($old === '') {
+            // Tạo mới
+            if (!$this->canManageBlock(0)) {
+                return ['ok' => false, 'error' => 'Bạn không có quyền tạo khối mới.', 'code' => 403];
+            }
+            $max = db_one('SELECT COALESCE(MAX(sort_order),0) n FROM blocks');
+            db_insert('INSERT INTO blocks (name, sort_order) VALUES (?,?)', [$name, $max['n'] + 1]);
+            log_action('tao', 'org', 'Thêm khối ' . $name, '');
+        } elseif ($old !== $name) {
+            // Đổi tên
+            $b = db_one('SELECT id FROM blocks WHERE name = ?', [$old]);
+            if (!$b) {
+                return ['ok' => false, 'error' => 'Không tìm thấy khối "' . $old . '".', 'code' => 404];
+            }
+            if (!$this->canManageBlock((int) $b['id'])) {
+                return ['ok' => false, 'error' => 'Bạn không có quyền sửa khối "' . $old . '".', 'code' => 403];
+            }
+            db_run('UPDATE blocks SET name=? WHERE name=?', [$name, $old]);
+            log_action('sua', 'org', 'Đổi tên khối ' . $old . ' thành ' . $name, '');
+        }
+
+        Cache::flush();
+        return ['ok' => true];
+    }
+
+    /**
+     * Xóa khối
+     */
+    public function deleteBlock(): array
+    {
+        require_write();
+
+        $name = $this->in('name');
+        $b = db_one('SELECT id FROM blocks WHERE name=?', [$name]);
+        if (!$b) {
+            return ['ok' => false, 'error' => 'Không tìm thấy khối.', 'code' => 404];
+        }
+        if (!$this->canManageBlock((int) $b['id'])) {
+            return ['ok' => false, 'error' => 'Bạn không có quyền xóa khối "' . $name . '".', 'code' => 403];
+        }
+
+        $n = db_one('SELECT COUNT(*) n FROM classes WHERE block_id=?', [$b['id']])['n'];
+        if ($n > 0) {
+            return ['ok' => false, 'error' => 'Khối "' . $name . '" còn ' . $n . ' lớp. Hãy chuyển hoặc xóa hết lớp trước.'];
+        }
+
+        // Kết thúc phân công trưởng khối
+        db_run("UPDATE member_assignments SET to_date = CURDATE()
+                  WHERE role_code = 'truong_khoi' AND block_id = ? AND to_date IS NULL",
+               [$b['id']]);
+
+        db_run('DELETE FROM blocks WHERE id=?', [$b['id']]);
+        log_action('xoa', 'org', 'Xóa khối ' . $name, '');
+        Cache::flush();
+        return ['ok' => true];
+    }
+
+    /**
+     * Lưu lớp mới hoặc đổi tên
+     */
+    public function saveClass(): array
+    {
+        require_write();
+
+        $name = $this->in('name');
+        $old = $this->in('original');
+        $block = $this->in('block');
+
+        if ($name === '') {
+            return ['ok' => false, 'error' => 'Vui lòng nhập tên lớp.'];
+        }
+        if (mb_strlen($name) > 64) {
+            return ['ok' => false, 'error' => 'Tên lớp tối đa 64 ký tự.'];
+        }
+        if ($block === '') {
+            return ['ok' => false, 'error' => 'Vui lòng chọn khối cho lớp.'];
+        }
+
+        $b = db_one('SELECT id FROM blocks WHERE name=?', [$block]);
+        if (!$b) {
+            return ['ok' => false, 'error' => 'Không tìm thấy khối "' . $block . '".'];
+        }
+
+        // Kiểm tra quyền khi tạo mới
+        if ($old === '') {
+            if (!$this->canManageBlock((int) $b['id'])) {
+                return ['ok' => false, 'error' => 'Bạn không có quyền tạo lớp trong khối "' . $block . '".', 'code' => 403];
+            }
+        }
+
+        // Kiểm tra quyền khi sửa
+        if ($old !== '') {
+            $oldCls = db_one('SELECT id, block_id FROM classes WHERE name=?', [$old]);
+            if (!$oldCls) {
+                return ['ok' => false, 'error' => 'Không tìm thấy lớp "' . $old . '".', 'code' => 404];
+            }
+            if (!$this->canManageClass((int) $oldCls['id'])) {
+                return ['ok' => false, 'error' => 'Bạn không có quyền sửa lớp "' . $old . '".', 'code' => 403];
+            }
+        }
+
+        $dup = db_one('SELECT id FROM classes WHERE name=?', [$name]);
+        if ($dup && $old !== $name) {
+            return ['ok' => false, 'error' => 'Tên lớp này đã tồn tại.'];
+        }
+
+        if ($old === '') {
+            db_insert('INSERT INTO classes (name, block_id, sort_order) VALUES (?,?,?)',
+                      [$name, $b['id'], 1]);
+            log_action('tao', 'org', 'Thêm lớp ' . $name, 'khối ' . $block);
+        } else {
+            db_run('UPDATE classes SET name=?, block_id=? WHERE name=?', [$name, $b['id'], $old]);
+            log_action('sua', 'org', 'Sửa lớp ' . $old, 'thành ' . $name . ' · khối ' . $block);
+        }
+
+        // Sơ đồ lên lớp
+        $target = $this->in('nextClass');
+        if ($target === 'RA_TRUONG') {
+            db_run('UPDATE classes SET next_class_id=NULL, is_final=1 WHERE name=?', [$name]);
+        } elseif ($target !== '') {
+            $nextClass = db_one('SELECT id FROM classes WHERE name=?', [$target]);
+            if ($nextClass) {
+                db_run('UPDATE classes SET next_class_id=?, is_final=0 WHERE name=?', [$nextClass['id'], $name]);
+            }
+        } else {
+            db_run('UPDATE classes SET next_class_id=NULL, is_final=0 WHERE name=?', [$name]);
+        }
+
+        Cache::flush();
+        return ['ok' => true];
+    }
+
+    /**
+     * Xóa lớp
+     */
+    public function deleteClass(): array
+    {
+        require_write();
+
+        $name = $this->in('name');
+        $cls = db_one('SELECT id FROM classes WHERE name=?', [$name]);
+        if (!$cls) {
+            return ['ok' => false, 'error' => 'Không tìm thấy lớp.', 'code' => 404];
+        }
+        if (!$this->canManageClass((int) $cls['id'])) {
+            return ['ok' => false, 'error' => 'Bạn không có quyền xóa lớp "' . $name . '".', 'code' => 403];
+        }
+
+        $n = db_one('SELECT COUNT(*) n FROM students WHERE class_id=?', [$cls['id']])['n'];
+        if ($n > 0) {
+            return ['ok' => false, 'error' => 'Lớp "' . $name . '" còn ' . $n . ' em. Hãy chuyển hoặc xóa hết em trước.'];
+        }
+
+        // Kết thúc phân công GLV
+        db_run("UPDATE member_assignments SET to_date = CURDATE()
+                  WHERE role_code IN ('glv', 'glv_chu_nhiem') AND class_id = ? AND to_date IS NULL",
+               [$cls['id']]);
+
+        db_run('DELETE FROM classes WHERE id=?', [$cls['id']]);
+        log_action('xoa', 'org', 'Xóa lớp ' . $name, '');
+        Cache::flush();
+        return ['ok' => true];
+    }
+
+    /**
+     * Kiểm tra member có bảo vệ không
+     */
+    public function isProtected(array $member): bool
+    {
+        return in_array($member['role_code'], ['admin', 'bdh'], true);
+    }
+
+    /**
+     * Hạ vai member
+     */
+    public function demoteMember(int $memberId): void
+    {
+        $activeRoles = db_all(
+            "SELECT role_code, block_id, class_id FROM member_assignments
+             WHERE member_id = ? AND to_date IS NULL",
+            [$memberId]
+        );
+
+        $levels = ['admin' => 50, 'bdh' => 40, 'truong_khoi' => 30, 'glv_chu_nhiem' => 20, 'glv' => 10];
+        $highestLvl = 10;
+        $highestRole = 'glv';
+        $bestBlockId = null;
+        $bestClassId = null;
+
+        foreach ($activeRoles as $r) {
+            $lvl = $levels[$r['role_code']] ?? 10;
+            if ($lvl > $highestLvl) {
+                $highestLvl = $lvl;
+                $highestRole = $r['role_code'];
+                $bestBlockId = $r['block_id'];
+                $bestClassId = $r['class_id'];
+            }
+        }
+
+        $t = db_one("SELECT id FROM titles WHERE role_code=? ORDER BY sort_order LIMIT 1", [$highestRole]);
+        db_run("UPDATE members SET role_code=?, title_id=?, block_id=?, class_id=? WHERE id=?",
+               [$highestRole, $t['id'] ?? null, $bestBlockId, $bestClassId, $memberId]);
+    }
+}
