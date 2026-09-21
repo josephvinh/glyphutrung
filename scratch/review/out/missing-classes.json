@@ -1,0 +1,789 @@
+[
+  {
+    "cls": "active:scale-[0.99]",
+    "files": [
+      "views\\module_library.php",
+      "views\\module_menu.php",
+      "views\\partial_my_tasks.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "animate-spin",
+    "files": [
+      "views\\layout_header.php",
+      "views\\module_student_profile.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "bg-blue-50/30",
+    "files": [
+      "views\\module_reports.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "bg-blue-50/50",
+    "files": [
+      "views\\module_calendar.php",
+      "views\\module_qrcard.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "bg-purple-600",
+    "files": [
+      "views\\partial_reports_tabs.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "bg-slate-200/60",
+    "files": [
+      "views\\module_stats.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "bg-slate-50/50",
+    "files": [
+      "views\\module_calendar.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "bg-slate-50/80",
+    "files": [
+      "views\\module_student_profile.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "bg-slate-50/95",
+    "files": [
+      "views\\module_students.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "bg-teal-50",
+    "files": [
+      "views\\module_announcements.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "bg-teal-50/30",
+    "files": [
+      "views\\module_notes.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "bg-teal-50/50",
+    "files": [
+      "views\\module_menu.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "bg-teal-50/70",
+    "files": [
+      "views\\module_announcements.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "border-emerald-600",
+    "files": [
+      "views\\module_announcements.php",
+      "views\\module_notes.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "border-r",
+    "files": [
+      "views\\module_calendar.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "border-sky-100",
+    "files": [
+      "views\\module_guide.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "border-slate-200/60",
+    "files": [
+      "views\\module_student_profile.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "border-t-2",
+    "files": [
+      "views\\module_student_profile.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "border-teal-100",
+    "files": [
+      "views\\module_announcements.php",
+      "views\\module_menu.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "border-teal-200",
+    "files": [
+      "views\\module_announcements.php",
+      "views\\module_notes.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "border-transparent",
+    "files": [
+      "views\\module_student_profile.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "col-span-full",
+    "files": [
+      "views\\module_students.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "cursor-pointer",
+    "files": [
+      "views\\module_announcements.php",
+      "views\\module_library.php",
+      "views\\module_notes.php",
+      "views\\module_qrcard.php",
+      "views\\module_reports.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "divide-slate-100",
+    "files": [
+      "views\\module_announcements.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "divide-y",
+    "files": [
+      "views\\module_announcements.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "focus:border-teal-500",
+    "files": [
+      "views\\module_announcements.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "focus:ring-teal-500",
+    "files": [
+      "views\\module_announcements.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "gap-x-2",
+    "files": [
+      "views\\module_notes.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "gap-x-3",
+    "files": [
+      "views\\module_announcements.php",
+      "views\\module_menu.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "gap-y-0.5",
+    "files": [
+      "views\\module_notes.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "gap-y-1",
+    "files": [
+      "views\\module_announcements.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "gap-y-5",
+    "files": [
+      "views\\module_menu.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "grid-cols-1",
+    "files": [
+      "views\\module_attendance.php",
+      "views\\module_library.php",
+      "views\\module_org.php",
+      "views\\module_qrcard.php",
+      "views\\module_students.php",
+      "views\\partial_scope_filter.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "grid-cols-7",
+    "files": [
+      "views\\module_calendar.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "h-[50px]",
+    "files": [
+      "views\\partial_scope_filter.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "h-4.5",
+    "files": [
+      "views\\partial_my_tasks.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "h-48",
+    "files": [
+      "views\\module_student_profile.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "hover:bg-amber-200",
+    "files": [
+      "views\\module_calendar.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "hover:bg-slate-100",
+    "files": [
+      "views\\module_calendar.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "hover:bg-slate-100/50",
+    "files": [
+      "views\\module_student_profile.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "hover:text-slate-700",
+    "files": [
+      "views\\module_stats.php",
+      "views\\module_student_profile.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "inline",
+    "files": [
+      "views\\module_attendance.php",
+      "views\\module_promotion.php",
+      "views\\module_reports.php",
+      "views\\module_scores.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "inline-block",
+    "files": [
+      "views\\module_library.php",
+      "views\\module_student_profile.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "left-3.5",
+    "files": [
+      "views\\module_students.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "lg:grid",
+    "files": [
+      "views\\module_students.php",
+      "views\\partial_students_skeleton.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "lg:grid-cols-2",
+    "files": [
+      "views\\module_qrcard.php",
+      "views\\module_students.php",
+      "views\\partial_students_skeleton.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "line-through",
+    "files": [
+      "views\\module_notes.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "mb-2.5",
+    "files": [
+      "views\\module_notes.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "md:flex",
+    "files": [
+      "views\\module_menu.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "md:grid-cols-4",
+    "files": [
+      "views\\module_analytics.php",
+      "views\\module_scores.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "ml-2",
+    "files": [
+      "views\\module_analytics.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "ml-auto",
+    "files": [
+      "views\\module_calendar.php",
+      "views\\module_menu.php",
+      "views\\module_students.php",
+      "views\\partial_my_tasks.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "mr-0.5",
+    "files": [
+      "views\\module_qrcard.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "mt-2.5",
+    "files": [
+      "views\\module_announcements.php",
+      "views\\module_org.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "normal-case",
+    "files": [
+      "views\\module_qrcard.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "object-contain",
+    "files": [
+      "views\\partial_student_profile_header.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "p-0.5",
+    "files": [
+      "views\\module_profile.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "p-1",
+    "files": [
+      "views\\module_stats.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "p-2",
+    "files": [
+      "views\\module_leave.php",
+      "views\\module_qrcard.php",
+      "views\\module_students.php",
+      "views\\module_student_profile.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "p-2.5",
+    "files": [
+      "views\\module_menu.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "pb-24",
+    "files": [
+      "views\\module_analytics.php",
+      "views\\module_announcements.php",
+      "views\\module_attendance.php",
+      "views\\module_birthdays.php",
+      "views\\module_calendar.php",
+      "views\\module_guide.php",
+      "views\\module_leave.php",
+      "views\\module_notes.php",
+      "views\\module_org.php",
+      "views\\module_profile.php",
+      "views\\module_programs.php",
+      "views\\module_promotion.php",
+      "views\\module_qrcard.php",
+      "views\\module_reporthub.php",
+      "views\\module_reports.php",
+      "views\\module_scores.php",
+      "views\\module_settings.php",
+      "views\\module_staff.php",
+      "views\\module_stats.php",
+      "views\\module_students.php",
+      "views\\module_student_profile.php",
+      "views\\module_years.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "pb-3",
+    "files": [
+      "views\\module_announcements.php",
+      "views\\module_students.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "pl-1",
+    "files": [
+      "views\\module_reports.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "pl-10",
+    "files": [
+      "views\\module_students.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "placeholder:font-normal",
+    "files": [
+      "views\\module_students.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "pr-1",
+    "files": [
+      "views\\module_reports.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "px-3.5",
+    "files": [
+      "views\\module_guide.php",
+      "views\\module_notes.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "py-16",
+    "files": [
+      "views\\module_notes.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "rounded-[20px]",
+    "files": [
+      "views\\module_student_profile.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "scroll-smooth",
+    "files": [
+      "views\\module_student_profile.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "scroll-x",
+    "files": [
+      "views\\module_scores.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "select-none",
+    "files": [
+      "views\\layout_bottomnav.php",
+      "views\\layout_header.php",
+      "views\\module_announcements.php",
+      "views\\module_notes.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "self-stretch",
+    "files": [
+      "views\\module_menu.php",
+      "views\\module_notes.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "shadow",
+    "files": [
+      "views\\module_profile.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "shadow-inner",
+    "files": [
+      "views\\module_stats.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "shadow-purple-200",
+    "files": [
+      "views\\partial_reports_tabs.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "sm:bg-transparent",
+    "files": [
+      "views\\module_students.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "sm:col-span-2",
+    "files": [
+      "views\\partial_scope_filter.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "sm:grid-cols-2",
+    "files": [
+      "views\\module_library.php",
+      "views\\module_org.php",
+      "views\\partial_scope_filter.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "sm:grid-cols-3",
+    "files": [
+      "views\\module_attendance.php",
+      "views\\module_students.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "sm:inline",
+    "files": [
+      "views\\partial_student_profile_header.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "sm:p-2",
+    "files": [
+      "views\\module_calendar.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "sm:pb-0",
+    "files": [
+      "views\\module_students.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "sm:pt-0",
+    "files": [
+      "views\\module_students.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "sm:px-0",
+    "files": [
+      "views\\module_students.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "sm:static",
+    "files": [
+      "views\\module_students.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "sm:w-auto",
+    "files": [
+      "views\\module_student_profile.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "sm:z-auto",
+    "files": [
+      "views\\module_students.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "snap-start",
+    "files": [
+      "views\\module_student_profile.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "sticky",
+    "files": [
+      "views\\module_students.php",
+      "views\\module_student_profile.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "text-[10px]",
+    "files": [
+      "views\\module_stats.php",
+      "views\\partial_student_profile_header.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "text-3xl",
+    "files": [
+      "views\\module_stats.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "text-rose-300",
+    "files": [
+      "views\\module_student_profile.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "text-teal-500",
+    "files": [
+      "views\\module_notes.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "text-teal-700",
+    "files": [
+      "views\\module_announcements.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "text-white/80",
+    "files": [
+      "views\\module_guide.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "w-2/3",
+    "files": [
+      "views\\module_attendance.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "w-32",
+    "files": [
+      "views\\module_attendance.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "w-4.5",
+    "files": [
+      "views\\partial_my_tasks.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "w-40",
+    "files": [
+      "views\\partial_students_skeleton.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "w-48",
+    "files": [
+      "views\\module_student_profile.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "xl:grid-cols-3",
+    "files": [
+      "views\\module_students.php",
+      "views\\partial_students_skeleton.php"
+    ],
+    "ctx": "attr"
+  },
+  {
+    "cls": "z-[210]",
+    "files": [
+      "views\\module_announcements.php"
+    ],
+    "ctx": "attr"
+  }
+]

@@ -1,0 +1,67 @@
+﻿diff --git a/public/api/org.php b/public/api/org.php
+index f71ae0c..b690b48 100644
+--- a/public/api/org.php
++++ b/public/api/org.php
+@@ -18,12 +18,19 @@
+ 
+ require __DIR__ . '/_bootstrap.php';
+ 
+-$me   = require_permission('org', 'edit');
++$action = $_GET['action'] ?? '';
++
++// Duyệt tài khoản + quản lý nhân sự thuộc module Nhân sự (staff).
++// Còn lại (khối, lớp, chủ nhiệm/trưởng khối) thuộc module Tổ chức (org).
++$STAFF_ACTIONS = ['saveMember', 'deleteMember', 'approveMember', 'rejectMember', 'resetPassword'];
++$me   = in_array($action, $STAFF_ACTIONS, true)
++    ? require_permission('staff', 'edit')
++    : require_permission('org', 'edit');
++
+ $year = current_year();
+ if (!$year) json_fail('Chưa có niên khoá nào đang mở.', 409);
+ 
+-$yid    = (int) $year['id'];
+-$action = $_GET['action'] ?? '';
++$yid = (int) $year['id'];
+ $in     = json_input();
+ 
+ /** Không cho hạ vai trò của Ban Điều Hành và Quản trị từ màn này */
+@@ -263,7 +270,7 @@ switch ($action) {
+     case 'approveMember':
+         require_write();
+         $id = (int) ($in['id'] ?? 0);
+-        $m  = db_one('SELECT id, role_code, full_name FROM members WHERE id=?', [$id]);
++        $m  = db_one('SELECT id, role_code, full_name, status FROM members WHERE id=?', [$id]);
+         if (!$m) json_fail('Không tìm thấy thành viên.', 404);
+         if ($m['status'] !== 'chờ duyệt') json_fail('Tài khoản này đã được duyệt rồi.');
+ 
+@@ -311,7 +318,7 @@ switch ($action) {
+     case 'rejectMember':
+         require_write();
+         $id = (int) ($in['id'] ?? 0);
+-        $m  = db_one('SELECT id, role_code, full_name FROM members WHERE id=?', [$id]);
++        $m  = db_one('SELECT id, role_code, full_name, phone, status FROM members WHERE id=?', [$id]);
+         if (!$m) json_fail('Không tìm thấy thành viên.', 404);
+         if ($m['status'] !== 'chờ duyệt') json_fail('Chỉ từ chối được tài khoản đang chờ duyệt.');
+ 
+@@ -324,7 +331,7 @@ switch ($action) {
+     case 'resetPassword':
+         require_write();
+         $id = (int) ($in['id'] ?? 0);
+-        $m  = db_one('SELECT id, role_code, full_name FROM members WHERE id=?', [$id]);
++        $m  = db_one('SELECT id, role_code, full_name, phone FROM members WHERE id=?', [$id]);
+         if (!$m) json_fail('Không tìm thấy thành viên.', 404);
+ 
+         // Chỉ Quản trị mới cấp lại được cho Ban Điều Hành
+diff --git a/views/module_staff.php b/views/module_staff.php
+index f18ab18..e16f273 100644
+--- a/views/module_staff.php
++++ b/views/module_staff.php
+@@ -33,7 +33,7 @@
+          Đặt trên cùng vì đây là việc cần xử lý, không phải danh sách
+          để ngắm. Duyệt là phải phân công lớp luôn.
+          ========================================================== -->
+-    <div x-show="pendingMembers.length > 0" style="display: none;"
++    <div x-show="canManageOrg && pendingMembers.length > 0" style="display: none;"
+          class="bg-amber-50 border border-amber-200 rounded-card p-5 mb-4">
+         <div class="flex items-center gap-2 mb-4">
+             <div class="tap-safe w-8 h-8 shrink-0 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center">

@@ -1,0 +1,4 @@
+[0919/201416.338:ERROR:third_party\crashpad\crashpad\client\crashpad_client_win.cc:421] OpenProcess: Access is denied. (0x5)
+[12324:18416:0919/201416.421:FATAL:mojo\public\cpp\platform\platform_channel.cc:108] Check failed: . : Access is denied. (0x5)
+[12324:20476:0919/201416.421:ERROR:chrome\installer\util\google_update_settings_win.cc:270] Failed opening key Software\Google\Update\ClientStateMedium\{8A69D345-D564-463c-AFF1-A69D9E530F96} to set usagestats; result: 5
+[0919/201416.437:ERROR:third_party\crashpad\crashpad\client\crashpad_client_win.cc:142] crash server failed to launch, self-terminating

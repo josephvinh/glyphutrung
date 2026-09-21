@@ -41,8 +41,9 @@ if (extension_loaded('brotli')
     && !ini_get('zlib.output_compression')
     && stripos($_SERVER['HTTP_ACCEPT_ENCODING'] ?? '', 'br') !== false) {
     // Nén brotli level 5 (cân bằng tốc độ/nén), buffer trước ob_gzhandler
+    // Dùng giá trị số 0 thay vì constant để tránh lỗi undefined constant trên một số host
     @ob_start(function($buffer) {
-        return brotli_compress($buffer, BROTLI_COMPRESS_GENERIC, 5);
+        return brotli_compress($buffer, 0, 5); // 0 = BROTLI_GENERIC
     });
     header('Content-Encoding: br');
 }

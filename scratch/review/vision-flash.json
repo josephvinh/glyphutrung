@@ -1,0 +1,590 @@
+[
+  {
+    "name": "announcements-desktop.png",
+    "model": "gemini-2.5-flash",
+    "raw": "{\n  \"doc_duoc_anh\": true,\n  \"kich_thuoc_uoc_luong\": \"desktop\",\n  \"mo_ta_tong_quan\": \"Giao diện trang quản lý Thông Báo trên máy tính với bố cục chia làm hai phần chính: sidebar bên trái chứa các mục menu điều hướng, và vùng nội dung chính bên phải. Phía trên vùng nội dung có thẻ chào mừng người dùng màu đỏ với các nút thao tác nhanh. Dưới cùng là tiêu đề Thông Báo kèm nút Phát mới và danh sách các thẻ thông báo dạng lưới gồm hai cột.\",\n  \"chu_de_trang\": \"Thông Báo\",\n  \"thanh_menu\": [\n    \"Danh sách\",\n    \"Điểm danh\",\n    \"Xin phép\",\n    \"Báo cáo\",\n    \"Thư viện\",\n    \"Khối lớp\",\n    \"Lịch của tôi\",\n    \"Hướng dẫn\",\n    \"Lên lớp\",\n    \"Chương trình\",\n    \"Thông báo\",\n    \"Nhân sự\",\n    \"Niên khoá\",\n    \"Cài đặt\"\n  ],\n  \"cac_nut_hanh_dong\": [\n    \"Phát mới\",\n    \"Thu hồi về nhấp\"\n  ],\n  \"so_lieu_thong_ke\": [\n    \"0 tham gia\",\n    \"0 vắng\"\n  ],\n  \"van_de\": [\n    {\n      \"loai\": \"UI\",\n      \"mo_ta\": \"Mục 'Niên khoá' ở gần cuối sidebar trái bị cắt cụt phần chữ phía dưới do tràn khung chứa.\",\n      \"vi_tri\": \"Sidebar bên trái, nhóm 'BAN ĐIỀU HÀNH', mục cuối cùng\",\n      \"muc_do\": \"trung binh\"\n    }\n  ],\n  \"khong_thay_van_de\": false,\n  \"ghi_chu_do_tin_cay\": \"Các thành phần văn bản và biểu tượng đều đọc rõ, ngoại trừ mục cuối cùng trong sidebar bị che khuất một phần.\"\n}",
+    "usage": {
+      "prompt_tokens": 2492,
+      "completion_tokens": 447,
+      "total_tokens": 2939,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "text_tokens": 1047,
+        "audio_tokens": 0,
+        "image_tokens": 0
+      },
+      "completion_tokens_details": {
+        "text_tokens": 389,
+        "audio_tokens": 0,
+        "reasoning_tokens": 0
+      }
+    }
+  },
+  {
+    "name": "announcements-mobile.png",
+    "model": "gemini-2.5-flash",
+    "raw": "```json\n{\n  \"doc_duoc_anh\": true,\n  \"kich_thuoc_uoc_luong\": \"mobile\",\n  \"mo_ta_tong_quan\": \"Giao diện quản lý thông báo trên thiết bị di động của GIA ĐÌNH GIÁO LÝ PHÚ TRUNG. Phần đầu là thanh tiêu đề màu đỏ với lời chào và thông tin tài khoản Phêrô Nguyễn Văn A. Tiếp theo là tiêu đề trang 'Thông Báo' kèm nút phát mới, phía dưới là danh sách các thẻ thông báo dạng card với các nhãn phân loại và chi tiết. Ở đáy màn hình có thanh điều hướng gồm các mục Trang chủ, Thiếu Nhi, Điểm danh, Thông báo và Cá nhân.\",\n  \"chu_de_trang\": \"Thông Báo\",\n  \"thanh_menu\": [\n    \"Trang chủ\",\n    \"Thiếu Nhi\",\n    \"Điểm danh\",\n    \"Thông báo\",\n    \"Cá nhân\"\n  ],\n  \"cac_nut_hanh_dong\": [\n    \"Phát mới\",\n    \"Thu hồi về nháp\",\n    \"Kết quả họp · 0 tham gia / 0 vắng\"\n  ],\n  \"so_lieu_thong_ke\": [\n    \"0 tham gia\",\n    \"0 vắng\"\n  ],\n  \"van_de\": [\n    {\n      \"loai\": \"UI\",\n      \"mo_ta\": \"Thanh điều hướng dưới cùng bị dính sát vào mép dưới hoặc bị che khuất một phần nội dung thông báo phía trên (thẻ thông báo thứ hai bị cắt cụt phần đáy bởi thanh menu).\",\n      \"vi_tri\": \"Vùng đáy màn hình\",\n      \"muc_do\": \"trung binh\"\n    }\n  ],\n  \"khong_thay_van_de\": false,\n  \"ghi_chu_do_tin_cay\": \"Đọc rõ toàn bộ các thành phần, chữ viết và số liệu trên ảnh.\"\n}\n```",
+    "usage": {
+      "prompt_tokens": 2476,
+      "completion_tokens": 496,
+      "total_tokens": 2972,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "text_tokens": 1033,
+        "audio_tokens": 0,
+        "image_tokens": 0
+      },
+      "completion_tokens_details": {
+        "text_tokens": 431,
+        "audio_tokens": 0,
+        "reasoning_tokens": 0
+      }
+    }
+  },
+  {
+    "name": "attendance-desktop.png",
+    "model": "gemini-2.5-flash",
+    "raw": "```json\n{\n  \"doc_duoc_anh\": true,\n  \"kich_thuoc_uoc_luong\": \"desktop\",\n  \"mo_ta_tong_quan\": \"Giao diện quản lý trên máy tính của ứng dụng GLY Phú Trung với bố cục sidebar bên trái chứa các mục menu chức năng và ban điều hành. Phía trên cùng bên phải là banner chào mừng với thông tin người dùng và các nút thao tác nhanh. Khu vực nội dung chính hiển thị trang Điểm danh với bộ lọc ngày và thông báo không có chương trình. Giao diện sử dụng tông màu đỏ và trắng chủ đạo.\",\n  \"chu_de_trang\": \"Điểm Danh\",\n  \"thanh_menu\": [\n    \"Danh sách\",\n    \"Điểm danh\",\n    \"Xin phép\",\n    \"Báo cáo\",\n    \"Thư viện\",\n    \"Khối lớp\",\n    \"Lịch của tôi\",\n    \"Hướng dẫn\",\n    \"Lên lớp\",\n    \"Chương trình\",\n    \"Thông báo\",\n    \"Nhân sự\",\n    \"Niên khoá\",\n    \"Cài đặt\"\n  ],\n  \"cac_nut_hanh_dong\": [\n    \"Xem Chúa Nhật gần nhất\"\n  ],\n  \"so_lieu_thong_ke\": [],\n  \"van_de\": [\n    {\n      \"loai\": \"UI\",\n      \"mo_ta\": \"Mục 'Niên khoá' ở cuối danh sách 'BAN ĐIỀU HÀNH' bị cắt cụt phần dưới do giới hạn hiển thị của container.\",\n      \"vi_tri\": \"Sidebar trái, phần cuối mục BAN ĐIỀU HÀNH\",\n      \"muc_do\": \"trung binh\"\n    }\n  ],\n  \"khong_thay_van_de\": false,\n  \"ghi_chu_do_tin_cay\": \"Tất cả các thành phần văn bản và bố cục đều rõ ràng, đọc được hoàn toàn.\"\n}\n```",
+    "usage": {
+      "prompt_tokens": 2491,
+      "completion_tokens": 400,
+      "total_tokens": 2891,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "text_tokens": 1046,
+        "audio_tokens": 0,
+        "image_tokens": 0
+      },
+      "completion_tokens_details": {
+        "text_tokens": 348,
+        "audio_tokens": 0,
+        "reasoning_tokens": 0
+      }
+    }
+  },
+  {
+    "name": "attendance-mobile.png",
+    "model": "gemini-2.5-flash",
+    "raw": "```json\n{\n  \"doc_duoc_anh\": true,\n  \"kich_thuoc_uoc_luong\": \"mobile\",\n  \"mo_ta_tong_quan\": \"Ảnh chụp màn hình giao diện di động của ứng dụng quản lý, hiển thị trang Điểm Danh với phần đầu màu đỏ chào người dùng Phêrô Nguyễn Văn A. Phần giữa bao gồm bộ chọn ngày điểm danh và khung thông báo ngày không có chương trình nào đi kèm nút gợi ý. Phía dưới cùng là thanh điều hướng menu gồm các mục Trang chủ, Thiếu Nhi, Điểm danh, Thông báo, Cá nhân.\",\n  \"chu_de_trang\": \"Điểm Danh\",\n  \"thanh_menu\": [\n    \"Trang chủ\",\n    \"Thiếu Nhi\",\n    \"Điểm danh\",\n    \"Thông báo\",\n    \"Cá nhân\"\n  ],\n  \"cac_nut_hanh_dong\": [\n    \"Xem Chúa Nhật gần nhất\"\n  ],\n  \"so_lieu_thong_ke\": [],\n  \"van_de\": [],\n  \"khong_thay_van_de\": true,\n  \"ghi_chu_do_tin_cay\": \"Các thông tin văn bản, biểu tượng và bố cục trong ảnh hiển thị rõ ràng, sắc nét, không phát hiện lỗi giao diện hay trải nghiệm rõ rệt.\"\n}\n```",
+    "usage": {
+      "prompt_tokens": 2475,
+      "completion_tokens": 355,
+      "total_tokens": 2830,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "text_tokens": 1032,
+        "audio_tokens": 0,
+        "image_tokens": 0
+      },
+      "completion_tokens_details": {
+        "text_tokens": 309,
+        "audio_tokens": 0,
+        "reasoning_tokens": 0
+      }
+    }
+  },
+  {
+    "name": "dashboard-desktop.png",
+    "model": "gemini-2.5-flash",
+    "raw": "```json\n{\n  \"doc_duoc_anh\": true,\n  \"kich_thuoc_uoc_luong\": \"desktop\",\n  \"mo_ta_tong_quan\": \"Giao diện trang chủ (dashboard) trên máy tính của ứng dụng GIA ĐÌNH GIÁO LÝ PHÚ TRUNG. Bên trái là thanh điều hướng (sidebar) chứa logo, các mục chức năng, ban điều hành và cài đặt tài khoản. Phần nội dung chính bên phải gồm banner chào mừng người dùng, các thẻ thông kê nhanh (thông báo, tổng sĩ số, sinh nhật), banner bảng thi đua, cùng hai khu vực bên dưới là lịch sắp tới và thông báo gần đây.\",\n  \"chu_de_trang\": \"Chào ngày mới, Phêrô Nguyễn Văn A\",\n  \"thanh_menu\": [\n    \"Danh sách\",\n    \"Điểm danh\",\n    \"Xin phép\",\n    \"Báo cáo\",\n    \"Thư viện\",\n    \"Khối lớp\",\n    \"Lịch của tôi\",\n    \"Hướng dẫn\",\n    \"Lên lớp\",\n    \"Chương trình\",\n    \"Thông báo\",\n    \"Nhân sự\",\n    \"Niên khoá\",\n    \"Cải đặt Nguyễn Văn A\"\n  ],\n  \"cac_nut_hanh_dong\": [\n    \"Mở lịch >\",\n    \"Xem tất cả >\",\n    \"Bảng thi đua\"\n  ],\n  \"so_lieu_thong_ke\": [\n    \"2 MỚI (Thông báo từ BĐH)\",\n    \"180 em (Tổng sĩ số toàn đoàn)\",\n    \"18 em (Sinh nhật tháng này)\"\n  ],\n  \"van_de\": [\n    {\n      \"loai\": \"UI\",\n      \"mo_ta\": \"Mục 'Cải đặt' ở cuối sidebar bị tràn/cắt cụt phần dưới màn hình, hiển thị lửng lơ.\",\n      \"vi_tri\": \"Góc dưới bên trái (Sidebar)\",\n      \"muc_do\": \"trung binh\"\n    }\n  ],\n  \"khong_thay_van_de\": false,\n  \"ghi_chu_do_tin_cay\": \"Các thành phần chữ và biểu tượng đều đọc rõ, ngoại trừ mục menu cuối cùng ở sidebar trái bị khuất một phần do chiều cao màn hình.\"\n}\n```",
+    "usage": {
+      "prompt_tokens": 2491,
+      "completion_tokens": 473,
+      "total_tokens": 2964,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "text_tokens": 1046,
+        "audio_tokens": 0,
+        "image_tokens": 0
+      },
+      "completion_tokens_details": {
+        "text_tokens": 411,
+        "audio_tokens": 0,
+        "reasoning_tokens": 0
+      }
+    }
+  },
+  {
+    "name": "dashboard-mobile.png",
+    "model": "gemini-2.5-flash",
+    "raw": "{\n  \"doc_duoc_anh\": true,\n  \"kich_thuoc_uoc_luong\": \"mobile\",\n  \"mo_ta_tong_quan\": \"Màn hình giao diện di động của ứng dụng quản lý với phần đầu trang màu đỏ hiển thị lời chào, tên người dùng và các nút thao tác nhanh. Phía dưới là vùng nội dung cuộn gồm các thẻ thông báo, thẻ thống kê tổng sĩ số, thẻ Bảng thi đua, phần Sắp tới hiển thị lịch trống và phần Thông báo gần đây. Ở đáy màn hình có thanh điều hướng với năm mục chính gồm Trang chủ, Thiếu Nhi, Điểm danh, Thông báo và Cá nhân.\",\n  \"chu_de_trang\": \"Dashboard\",\n  \"thanh_menu\": [\n    \"Trang chủ\",\n    \"Thiếu Nhi\",\n    \"Điểm danh\",\n    \"Thông báo\",\n    \"Cá nhân\"\n  ],\n  \"cac_nut_hanh_dong\": [\n    \"Mở lịch\",\n    \"Xem tất cả\"\n  ],\n  \"so_lieu_thong_ke\": [\n    \"180 em Tổng sĩ số toàn đoàn\"\n  ],\n  \"van_de\": [\n    {\n      \"loai\": \"UI\",\n      \"mo_ta\": \"Hai thẻ thông báo đầu trang (thẻ 'Họp GLV đầu tháng' và thẻ 'Tổng sĩ số toàn đoàn') bị tràn ra ngoài biên phải của khung màn hình, khiến phần bên phải của thẻ 'Tổng sĩ số toàn đoàn' bị cắt cụt.\",\n      \"vi_tri\": \"Khu vực nửa trên màn hình (dưới header đỏ)\",\n      \"muc_do\": \"cao\"\n    }\n  ],\n  \"khong_thay_van_de\": false,\n  \"ghi_chu_do_tin_cay\": \"Tất cả các thành phần chữ và biểu tượng đều đọc rõ, ngoại trừ phần bên phải của thẻ thống kê sĩ số bị tràn khung màn hình.\"\n}",
+    "usage": {
+      "prompt_tokens": 2475,
+      "completion_tokens": 434,
+      "total_tokens": 2908,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "text_tokens": 1032,
+        "audio_tokens": 0,
+        "image_tokens": 0
+      },
+      "completion_tokens_details": {
+        "text_tokens": 377,
+        "audio_tokens": 0,
+        "reasoning_tokens": 0
+      }
+    }
+  },
+  {
+    "name": "guide-desktop.png",
+    "model": "gemini-2.5-flash",
+    "raw": "```json\n{\n  \"doc_duoc_anh\": true,\n  \"kich_thuoc_uoc_luong\": \"desktop\",\n  \"mo_ta_tong_quan\": \"Trang web có bố cục dạng dashboard với sidebar ở bên trái chứa menu điều hướng chia làm các nhóm 'CHỨC NĂNG', 'BAN ĐIỀU HÀNH' và nút cài đặt cá nhân ở dưới cùng. Phần nội dung chính bên phải bao gồm banner chào mừng người dùng ở phía trên cùng với thông tin tài khoản và vai trò, tiếp theo là tiêu đề 'Hướng dẫn sử dụng' và danh sách các khối thẻ chứa nội dung hướng dẫn chi tiết được phân theo từng chủ đề.\",\n  \"chu_de_trang\": \"Hướng dẫn sử dụng\",\n  \"thanh_menu\": [\n    \"Danh sách\",\n    \"Điểm danh\",\n    \"Xin phép\",\n    \"Báo cáo\",\n    \"Thư viện\",\n    \"Khối lớp\",\n    \"Lịch của tôi\",\n    \"Hướng dẫn\",\n    \"Lên lớp\",\n    \"Chương trình\",\n    \"Thông báo\",\n    \"Nhân sự\",\n    \"Niên khoá\"\n  ],\n  \"cac_nut_hanh_dong\": [\n    \"Nút làm mới (icon xoay tròn ở góc phải banner)\",\n    \"Nút đăng xuất (icon mũi tên ở góc phải banner)\",\n    \"Nút quay lại (icon mũi tên trái cạnh tiêu đề Hướng dẫn sử dụng)\"\n  ],\n  \"so_lieu_thong_ke\": [],\n  \"van_de\": [\n    {\n      \"loai\": \"UI\",\n      \"mo_ta\": \"Mục 'Niên khoá' và phần tử 'Cài đặt' ở dưới cùng sidebar bị cắt cụt phần dưới do màn hình hoặc khung sidebar kết thúc.\",\n      \"vi_tri\": \"Sidebar bên trái, phần dưới cùng\",\n      \"muc_do\": \"trung binh\"\n    }\n  ],\n  \"khong_thay_van_de\": false,\n  \"ghi_chu_do_tin_cay\": \"Toàn bộ chữ và bố cục trong ảnh rõ nét, dễ đọc.\"\n}\n```",
+    "usage": {
+      "prompt_tokens": 2491,
+      "completion_tokens": 458,
+      "total_tokens": 2949,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "text_tokens": 1046,
+        "audio_tokens": 0,
+        "image_tokens": 0
+      },
+      "completion_tokens_details": {
+        "text_tokens": 398,
+        "audio_tokens": 0,
+        "reasoning_tokens": 0
+      }
+    }
+  },
+  {
+    "name": "guide-mobile.png",
+    "model": "gemini-2.5-flash",
+    "raw": "```json\n{\n  \"doc_duoc_anh\": true,\n  \"kich_thuoc_uoc_luong\": \"mobile\",\n  \"mo_ta_tong_quan\": \"Ảnh chụp màn hình giao diện di động của ứng dụng quản lý đoàn Thiếu Nhi Thánh Thể, hiển thị trang Hướng dẫn sử dụng. Phần đầu trang có thanh tiêu đề đỏ chứa lời chào và thông tin tài khoản Phêrô Nguyễn Văn A. Phần nội dung chính nằm trên nền trắng, bao gồm tiêu đề trang, một khung thông báo chào mừng màu xanh nhạt và các thẻ nội dung hướng dẫn sử dụng được phân nhóm rõ ràng. Phía dưới cùng là thanh menu điều hướng dạng tab với các biểu tượng Trang chủ, Thiếu Nhi, Điểm danh, Thông báo và Cá nhân.\",\n  \"chu_de_trang\": \"Hướng dẫn sử dụng\",\n  \"thanh_menu\": [\n    \"Trang chủ\",\n    \"Thiếu Nhi\",\n    \"Điểm danh\",\n    \"Thông báo\",\n    \"Cá nhân\"\n  ],\n  \"cac_nut_hanh_dong\": [\n    \"Nút mũi tên quay lại (trước tiêu đề Hướng dẫn sử dụng)\",\n    \"Nút tròn có biểu tượng làm mới (ở góc trên bên phải, nền đỏ)\",\n    \"Nút tròn có biểu tượng đăng xuất/mũi tên (ở góc trên bên phải, nền đỏ)\"\n  ],\n  \"so_lieu_thong_ke\": [],\n  \"van_de\": [\n    {\n      \"loai\": \"UI\",\n      \"mo_ta\": \"Nội dung văn bản ở cuối trang bị che khuất và đè lên bởi thanh menu điều hướng dưới cùng (phần chữ mờ 'Phan • Thông báo hiện thị các tin tức mới' bị thanh menu che một phần).\",\n      \"vi_tri\": \"Vùng dưới cùng của nội dung chính, sát thanh menu điều hướng\",\n      \"muc_do\": \"trung binh\"\n    }\n  ],\n  \"khong_thay_van_de\": false,\n  \"ghi_chu_do_tin_cay\": \"Toàn bộ văn bản và thành phần giao diện đều đọc rõ ràng, không có phần nào bị mờ hay lỗi font.\"\n}\n```",
+    "usage": {
+      "prompt_tokens": 2475,
+      "completion_tokens": 499,
+      "total_tokens": 2974,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "text_tokens": 1032,
+        "audio_tokens": 0,
+        "image_tokens": 0
+      },
+      "completion_tokens_details": {
+        "text_tokens": 434,
+        "audio_tokens": 0,
+        "reasoning_tokens": 0
+      }
+    }
+  },
+  {
+    "name": "leave-desktop.png",
+    "model": "gemini-2.5-flash",
+    "raw": "{\n  \"doc_duoc_anh\": true,\n  \"kich_thuoc_uoc_luong\": \"desktop\",\n  \"mo_ta_tong_quan\": \"Giao diện quản lý trên desktop của ứng dụng GIA ĐÌNH GIÁO LÝ PHÚ TRUNG với bố cục sidebar bên trái chứa các menu chức năng, phần đầu bên phải là thẻ thông tin người dùng màu đỏ, và khu vực nội dung chính hiển thị trang 'Xin phép' với form chọn ngày và chương trình.\",\n  \"chu_de_trang\": \"Xin Phép\",\n  \"thanh_menu\": [\n    \"Danh sách\",\n    \"Điểm danh\",\n    \"Xin phép\",\n    \"Báo cáo\",\n    \"Thư viện\",\n    \"Khối lớp\",\n    \"Lịch của tôi\",\n    \"Hướng dẫn\",\n    \"Lên lớp\",\n    \"Chương trình\",\n    \"Thông báo\",\n    \"Nhân sự\",\n    \"Niên khoá\",\n    \"Cài đặt Nguyễn Văn A\"\n  ],\n  \"cac_nut_hanh_dong\": [\n    \"Tạo đơn\",\n    \"Duyệt đơn\",\n    \"-- Chọn chương trình --\"\n  ],\n  \"so_lieu_thong_ke\": [],\n  \"van_de\": [\n    {\n      \"loai\": \"UI\",\n      \"mo_ta\": \"Mục menu 'Niên khoá' ở gần cuối sidebar bị cắt cụt phần dưới hiển thị không trọn vẹn do tràn viền khung.\",\n      \"vi_tri\": \"Sidebar bên trái, nhóm 'BAN ĐIỀU HÀNH', mục cuối cùng 'Niên khoá'\",\n      \"muc_do\": \"trung binh\"\n    }\n  ],\n  \"khong_thay_van_de\": false,\n  \"ghi_chu_do_tin_cay\": \"Tất cả các văn bản và thành phần giao diện đều rõ nét và đọc được chính xác.\"\n}",
+    "usage": {
+      "prompt_tokens": 2491,
+      "completion_tokens": 375,
+      "total_tokens": 2866,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "text_tokens": 1046,
+        "audio_tokens": 0,
+        "image_tokens": 0
+      },
+      "completion_tokens_details": {
+        "text_tokens": 326,
+        "audio_tokens": 0,
+        "reasoning_tokens": 0
+      }
+    }
+  },
+  {
+    "name": "leave-mobile.png",
+    "model": "gemini-2.5-flash",
+    "raw": "```json\n{\n  \"doc_duoc_anh\": true,\n  \"kich_thuoc_uoc_luong\": \"mobile\",\n  \"mo_ta_tong_quan\": \"Giao diện trang quản lý 'Xin Phép' trên thiết bị di động với phần header màu đỏ chứa thông tin người dùng, tiếp theo là tiêu đề trang và các nút chuyển tab 'Tạo đơn' / 'Duyệt đơn'. Vùng nội dung bên dưới hiển thị biểu mẫu chọn ngày xin phép, chọn chương trình cùng thông báo không có chương trình, và có thanh điều hướng dưới cùng với 5 mục.\",\n  \"chu_de_trang\": \"Xin Phép\",\n  \"thanh_menu\": [\"Trang chủ\", \"Thiếu Nhi\", \"Điểm danh\", \"Thông báo\", \"Cá nhân\"],\n  \"cac_nut_hanh_dong\": [\"Tạo đơn\", \"Duyệt đơn\"],\n  \"so_lieu_thong_ke\": [],\n  \"van_de\": [],\n  \"khong_thay_van_de\": true,\n  \"ghi_chu_do_tin_cay\": \"Tất cả các thành phần giao diện đều hiển thị rõ ràng, không phát hiện lỗi UI/UX rõ rệt trong phạm vi bức ảnh.\"\n}\n```",
+    "usage": {
+      "prompt_tokens": 2475,
+      "completion_tokens": 330,
+      "total_tokens": 2805,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "text_tokens": 1032,
+        "audio_tokens": 0,
+        "image_tokens": 0
+      },
+      "completion_tokens_details": {
+        "text_tokens": 287,
+        "audio_tokens": 0,
+        "reasoning_tokens": 0
+      }
+    }
+  },
+  {
+    "name": "notes-desktop.png",
+    "model": "gemini-2.5-flash",
+    "raw": "{\n  \"doc_duoc_anh\": true,\n  \"kich_thuoc_uoc_luong\": \"desktop\",\n  \"mo_ta_tong_quan\": \"Giao diện web app quản lý có sidebar bên trái hiển thị logo GLY PHÚ TRUNG và các mục chức năng như Danh sách, Điểm danh, Lịch của tôi (đang được chọn), cùng các mục ban điều hành. Phía trên vùng nội dung chính là banner chào ngày mới với tên Phê rô Nguyễn Văn A và thông tin vai trò. Vùng nội dung chính hiển thị tiêu đề Lịch của tôi, kèm theo trạng thái chưa có việc nào và nút Thêm việc đầu tiên.\",\n  \"chu_de_trang\": \"Lịch của tôi\",\n  \"thanh_menu\": [\n    \"Danh sách\",\n    \"Điểm danh\",\n    \"Xin phép\",\n    \"Báo cáo\",\n    \"Thư viện\",\n    \"Khối lớp\",\n    \"Lịch của tôi\",\n    \"Hướng dẫn\",\n    \"Lên lớp\",\n    \"Chương trình\",\n    \"Thông báo\",\n    \"Nhân sự\",\n    \"Niên khoá\",\n    \"Cài đặt Nguyễn Văn A\"\n  ],\n  \"cac_nut_hanh_dong\": [\n    \"Thêm việc\",\n    \"Thêm việc đầu tiên\"\n  ],\n  \"so_lieu_thong_ke\": [],\n  \"van_de\": [\n    {\n      \"loai\": \"UI\",\n      \"mo_ta\": \"Mục 'Niên khoá' và khối 'Cài đặt Nguyễn Văn A' ở phía dưới sidebar trái bị cắt cụt phần đáy hoặc tràn ra khỏi khung sidebar.\",\n      \"vi_tri\": \"Sidebar bên trái, phần dưới cùng\",\n      \"muc_do\": \"trung binh\"\n    }\n  ],\n  \"khong_thay_van_de\": false,\n  \"ghi_chu_do_tin_cay\": \"Toàn bộ chữ và thành phần giao diện đều rõ ràng, độ tin cậy cao.\"\n}",
+    "usage": {
+      "prompt_tokens": 2491,
+      "completion_tokens": 455,
+      "total_tokens": 2946,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "text_tokens": 1046,
+        "audio_tokens": 0,
+        "image_tokens": 0
+      },
+      "completion_tokens_details": {
+        "text_tokens": 396,
+        "audio_tokens": 0,
+        "reasoning_tokens": 0
+      }
+    }
+  },
+  {
+    "name": "notes-mobile.png",
+    "model": "gemini-2.5-flash",
+    "raw": "```json\n{\n  \"doc_duoc_anh\": true,\n  \"kich_thuoc_uoc_luong\": \"mobile\",\n  \"mo_ta_tong_quan\": \"Ảnh chụp màn hình giao diện di động của trang quản lý lịch cá nhân. Phần trên cùng là header màu đỏ hiển thị lời chào và thông tin người dùng Phêrô Nguyễn Văn A. Phía dưới là tiêu đề Lịch của tôi, nút Thêm việc và một khung thẻ trạng thái thông báo chưa có việc nào cùng nút thêm việc đầu tiên. Dưới cùng là thanh điều hướng cố định với 5 mục: Trang chủ, Thiếu Nhi, Điểm danh, Thông báo, Cá nhân.\",\n  \"chu_de_trang\": \"Lịch của tôi\",\n  \"thanh_menu\": [\n    \"Trang chủ\",\n    \"Thiếu Nhi\",\n    \"Điểm danh\",\n    \"Thông báo\",\n    \"Cá nhân\"\n  ],\n  \"cac_nut_hanh_dong\": [\n    \"Thêm việc\",\n    \"Thêm việc đầu tiên\"\n  ],\n  \"so_lieu_thong_ke\": [],\n  \"van_de\": [\n    {\n      \"loai\": \"UI\",\n      \"mo_ta\": \"Nút 'Thêm việc' màu đỏ ở góc phải bên dưới tiêu đề bị tràn ra ngoài hoặc đè lên mép viền của màn hình/khung nhìn, chữ trong nút bị cắt cụt một phần biểu tượng hoặc viền.\",\n      \"vi_tri\": \"Góc trên bên phải của vùng nội dung 'Lịch của tôi'\",\n      \"muc_do\": \"trung binh\"\n    }\n  ],\n  \"khong_thay_van_de\": false,\n  \"ghi_chu_do_tin_cay\": \"Các thông tin văn bản và bố cục hiển thị rất rõ ràng, không có chi tiết nào mờ hoặc khó đọc.\"\n}\n```",
+    "usage": {
+      "prompt_tokens": 2475,
+      "completion_tokens": 444,
+      "total_tokens": 2919,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "text_tokens": 1032,
+        "audio_tokens": 0,
+        "image_tokens": 0
+      },
+      "completion_tokens_details": {
+        "text_tokens": 386,
+        "audio_tokens": 0,
+        "reasoning_tokens": 0
+      }
+    }
+  },
+  {
+    "name": "org-desktop.png",
+    "model": "gemini-2.5-flash",
+    "raw": "```json\n{\n  \"doc_duoc_anh\": true,\n  \"kich_thuoc_uoc_luong\": \"desktop\",\n  \"mo_ta_tong_quan\": \"Giao diện web app quản lý đoàn Thiếu Nhi Thánh Thể với bố cục hai cột: sidebar bên trái và vùng nội dung chính bên phải. Sidebar hiển thị logo, năm học và các mục menu chức năng được phân nhóm. Vùng nội dung chính hiển thị tiêu đề trang 'Khối & Lớp', một banner chào mừng người dùng, thông tin người dùng trong phần 'BAN ĐIỀU HÀNH' và danh sách các khối lớp như 'Khai Tâm', 'Ấu Nhi' với thông tin chi tiết và các nút hành động.\",\n  \"chu_de_trang\": \"Khối & Lớp\",\n  \"thanh_menu\": [\n    \"Danh sách\",\n    \"Điểm danh\",\n    \"Xin phép\",\n    \"Báo cáo\",\n    \"Thư viện\",\n    \"Khối lớp\",\n    \"Lịch của tôi\",\n    \"Hướng dẫn\",\n    \"Lên lớp\",\n    \"Chương trình\",\n    \"Thông báo\",\n    \"Nhân sự\",\n    \"Niên khoá\",\n    \"Cài đặt\"\n  ],\n  \"cac_nut_hanh_dong\": [\n    \"QUẢN TRỊ HỆ THỐNG\",\n    \"BAN ĐIỀU HÀNH\",\n    \"+ Thêm khối mới\"\n  ],\n  \"so_lieu_thong_ke\": [\n    \"4 lớp (Khai Tâm)\",\n    \"120 em (Khai Tâm)\",\n    \"4 lớp (Ấu Nhi)\",\n    \"120 em (Ấu Nhi)\"\n  ],\n  \"van_de\": [\n    {\n      \"loai\": \"UI\",\n      \"mo_ta\": \"Nút 'QUẢN TRỊ HỆ THỐNG' bị cắt cụt viền bo góc bên phải và nằm quá sát mép phải của card chứa nó.\",\n      \"vi_tri\": \"Vùng nội dung chính, trong card 'BAN ĐIỀU HÀNH', bên cạnh 'Phêrô Nguyễn Văn A'\",\n      \"muc_do\": \"trung binh\"\n    },\n    {\n      \"loai\": \"UI\",\n      \"mo_ta\": \"Nút 'BAN ĐIỀU HÀNH' (màu đỏ) bị cắt cụt viền bo góc bên phải và nằm quá sát mép phải của card chứa nó.\",\n      \"vi_tri\": \"Vùng nội dung chính, trong card 'BAN ĐIỀU HÀNH', bên cạnh 'Maria Trần Thị Điều Hành'\",\n      \"muc_do\": \"trung binh\"\n    },\n    {\n      \"loai\": \"UI\",\n      \"mo_ta\": \"Dòng chữ 'Không sửa được vai trò' và biểu tượng ổ khóa nằm quá sát mép trên và mép phải của card 'BAN ĐIỀU HÀNH'.\",\n      \"vi_tri\": \"Vùng nội dung chính, trong card 'BAN ĐIỀU HÀNH', góc trên bên phải\",\n      \"muc_do\": \"thap\"\n    },\n    {\n      \"loai\": \"UI\",\n      \"mo_ta\": \"Các biểu tượng chỉnh sửa (bút chì) và xóa (thùng rác) nằm quá sát mép phải của card 'Khai Tâm'.\",\n      \"vi_tri\": \"Vùng nội dung chính, card 'Khai Tâm', góc trên bên phải\",\n      \"muc_do\": \"thap\"\n    },\n    {\n      \"loai\": \"UI\",\n      \"mo_ta\": \"Các biểu tượng chỉnh sửa (bút chì) và xóa (thùng rác) nằm quá sát mép phải của card 'Ấu Nhi'.\",\n      \"vi_tri\": \"Vùng nội dung chính, card 'Ấu Nhi', góc trên bên phải\",\n      \"muc_do\": \"thap\"\n    },\n    {\n      \"loai\": \"UI\",\n      \"mo_ta\": \"Biểu tượng dropdown (mũi tên xuống) trong ô chọn 'TRƯỜNG KHỐI' của khối 'Khai Tâm' nằm quá sát mép phải của ô input.\",\n      \"vi_tri\": \"Vùng nội dung chính, card 'Khai Tâm', trong ô 'TRƯỜNG KHỐI'\",\n      \"muc_do\": \"thap\"\n    },\n    {\n      \"loai\": \"UI\",\n      \"mo_ta\": \"Biểu tượng dropdown (mũi tên xuống) trong ô chọn 'TRƯỜNG KHỐI' của khối 'Ấu Nhi' nằm quá sát mép phải của ô input.\",\n      \"vi_tri\": \"Vùng nội dung chính, card 'Ấu Nhi', trong ô 'TRƯỜNG KHỐI'\",\n      \"muc_do\": \"thap\"\n    },\n    {\n      \"loai\": \"UX\",\n      \"mo_ta\": \"Sự khác biệt về màu sắc (đen cho 'QUẢN TRỊ HỆ THỐNG' và đỏ cho 'BAN ĐIỀU HÀNH') và vị trí của các nút hành động trong cùng một danh sách có thể gây khó hiểu về mức độ ưu tiên hoặc loại hành động, đặc biệt khi chúng xuất hiện song song cho các người dùng khác nhau.\",\n      \"vi_tri\": \"Vùng nội dung chính, trong card 'BAN ĐIỀU HÀNH'\",\n      \"muc_do\": \"trung binh\"\n    }\n  ],\n  \"khong_thay_van_de\": false,\n  \"ghi_chu_do_tin_cay\": \"Không có phần nào trong ảnh không đọc rõ hoặc không chắc chắn.\"\n}\n```",
+    "usage": {
+      "prompt_tokens": 2626,
+      "completion_tokens": 6442,
+      "total_tokens": 9068,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "text_tokens": 820,
+        "audio_tokens": 0,
+        "image_tokens": 0
+      },
+      "completion_tokens_details": {
+        "text_tokens": 1305,
+        "audio_tokens": 0,
+        "reasoning_tokens": 5137
+      }
+    }
+  },
+  {
+    "name": "org-mobile.png",
+    "model": "gemini-2.5-flash",
+    "raw": "```json\n{\n  \"doc_duoc_anh\": true,\n  \"kich_thuoc_uoc_luong\": \"mobile\",\n  \"mo_ta_tong_quan\": \"Giao diện ứng dụng di động hiển thị trang quản lý Khối & Lớp của GIA ĐÌNH GIÁO LÝ PHÚ TRUNG. Phần đầu là thanh thông tin tài khoản người dùng với nền đỏ. Phía dưới là tiêu đề 'Khối & Lớp' kèm nút quay lại, danh sách ban điều hành, nút thêm khối mới và danh sách các khối như Khai Tâm, Ấu Nhi. Ở đáy màn hình có thanh điều hướng gồm 5 mục.\",\n  \"chu_de_trang\": \"Khối & Lớp\",\n  \"thanh_menu\": [\n    \"Trang chủ\",\n    \"Thiếu Nhi\",\n    \"Điểm danh\",\n    \"Thông báo\",\n    \"Cá nhân\"\n  ],\n  \"cac_nut_hanh_dong\": [\n    \"Thêm khối mới\"\n  ],\n  \"so_lieu_thong_ke\": [\n    \"4 lớp - 120 em\"\n  ],\n  \"van_de\": [\n    {\n      \"loai\": \"UI\",\n      \"mo_ta\": \"Nội dung bên trong hộp chọn (dropdown) 'Anna Phạm Thị Chủ Nhiệm — K' bị tràn viền và cắt cụt ở bên phải.\",\n      \"vi_tri\": \"Khối 'Khai Tâm', phần 'TRƯỞNG KHỐI'\",\n      \"muc_do\": \"trung binh\"\n    },\n    {\n      \"loai\": \"UI\",\n      \"mo_ta\": \"Thanh điều hướng đáy màn hình (bottom navigation) bị che khuất một phần nội dung bên dưới của thẻ 'Ấu Nhi'.\",\n      \"vi_tri\": \"Đáy màn hình\",\n      \"muc_do\": \"thap\"\n    }\n  ],\n  \"khong_thay_van_de\": false,\n  \"ghi_chu_do_tin_cay\": \"Các chữ cái hiển thị rõ ràng, riêng đoạn text trong dropdown khối Khai Tâm bị cắt cụt do chiều dài vượt quá khung chứa.\"\n}\n```",
+    "usage": {
+      "prompt_tokens": 2475,
+      "completion_tokens": 523,
+      "total_tokens": 2998,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "text_tokens": 1032,
+        "audio_tokens": 0,
+        "image_tokens": 0
+      },
+      "completion_tokens_details": {
+        "text_tokens": 455,
+        "audio_tokens": 0,
+        "reasoning_tokens": 0
+      }
+    }
+  },
+  {
+    "name": "programs-desktop.png",
+    "model": "gemini-2.5-flash",
+    "raw": "```json\n{\n  \"doc_duoc_anh\": true,\n  \"kich_thuoc_uoc_luong\": \"desktop\",\n  \"mo_ta_tong_quan\": \"Giao diện trang quản lý chương trình trên máy tính với thanh sidebar bên trái hiển thị các mục chức năng và ban điều hành. Khu vực nội dung chính ở bên phải có banner chào ngày mới màu đỏ ở trên cùng với thông tin người dùng. Phần dưới banner hiển thị tiêu đề Chương Trình, nút tạo mới và danh sách các thẻ chương trình dạng card có thể bật tắt tính năng.\",\n  \"chu_de_trang\": \"Chương Trình\",\n  \"thanh_menu\": [\n    \"Danh sách\",\n    \"Điểm danh\",\n    \"Xin phép\",\n    \"Báo cáo\",\n    \"Thư viện\",\n    \"Khối lớp\",\n    \"Lịch của tôi\",\n    \"Hướng dẫn\",\n    \"Lên lớp\",\n    \"Chương trình\",\n    \"Thông báo\",\n    \"Nhân sự\",\n    \"Niên khoá\",\n    \"Cài đặt Nguyễn Văn A\"\n  ],\n  \"cac_nut_hanh_dong\": [\n    \"Tạo mới\"\n  ],\n  \"so_lieu_thong_ke\": [],\n  \"van_de\": [\n    {\n      \"loai\": \"UI\",\n      \"mo_ta\": \"Mục 'Niên khoá' ở gần cuối sidebar bị cắt cụt phần dưới do tràn ra ngoài khung sidebar.\",\n      \"vi_tri\": \"Sidebar bên trái, mục 'Niên khoá'\",\n      \"muc_do\": \"trung binh\"\n    }\n  ],\n  \"khong_thay_van_de\": false,\n  \"ghi_chu_do_tin_cay\": \"Toàn bộ văn bản và bố cục hiển thị rõ ràng, độ tin cậy cao.\"\n}\n```",
+    "usage": {
+      "prompt_tokens": 2491,
+      "completion_tokens": 383,
+      "total_tokens": 2874,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "text_tokens": 1046,
+        "audio_tokens": 0,
+        "image_tokens": 0
+      },
+      "completion_tokens_details": {
+        "text_tokens": 333,
+        "audio_tokens": 0,
+        "reasoning_tokens": 0
+      }
+    }
+  },
+  {
+    "name": "programs-mobile.png",
+    "model": "gemini-2.5-flash",
+    "raw": "```json\n{\n  \"doc_duoc_anh\": true,\n  \"kich_thuoc_uoc_luong\": \"mobile\",\n  \"mo_ta_tong_quan\": \"Giao diện trên thiết bị di động hiển thị trang quản lý 'Chương Trình' của ứng dụng GIA ĐÌNH GIÁO LÝ PHÚ TRUNG. Phần trên cùng là thanh tiêu đề cá nhân với thông tin tài khoản Phêrô Nguyễn Văn A và các nút chức năng. Phía dưới là tiêu đề trang kèm nút 'Tạo mới'. Nội dung chính gồm các thẻ chương trình như 'Thánh Lễ Thiếu Nhi' và 'Học Giáo Lý Sáng' với các tùy chọn kích hoạt, tính điểm chuyên cần. Cuối màn hình là thanh điều hướng cố định gồm 5 mục.\",\n  \"chu_de_trang\": \"Chương Trình\",\n  \"thanh_menu\": [\n    \"Trang chủ\",\n    \"Thiếu Nhi\",\n    \"Điểm danh\",\n    \"Thông báo\",\n    \"Cá nhân\"\n  ],\n  \"cac_nut_hanh_dong\": [\n    \"Tạo mới\",\n    \"Nút quay lại\",\n    \"Nút chỉnh sửa (hình bút chì)\",\n    \"Nút xóa (thùng rác)\",\n    \"Nút gạt bật/tắt (toggle switch)\"\n  ],\n  \"so_lieu_thong_ke\": [],\n  \"van_de\": [\n    {\n      \"loai\": \"UI\",\n      \"mo_ta\": \"Thanh điều hướng dưới cùng (bottom navigation bar) che khuất phần nội dung và văn bản mô tả của thẻ chương trình thứ hai ('Học Giáo Lý Sáng').\",\n      \"vi_tri\": \"Khu vực dưới cùng của màn hình, chồng lên phần cuối thẻ chương trình thứ hai\",\n      \"muc_do\": \"cao\"\n    }\n  ],\n  \"khong_thay_van_de\": false,\n  \"ghi_chu_do_tin_cay\": \"Toàn bộ chữ và thành phần giao diện đều đọc rõ ràng, ngoại trừ phần bị thanh điều hướng dưới cùng che khuất.\"\n}\n```",
+    "usage": {
+      "prompt_tokens": 2475,
+      "completion_tokens": 447,
+      "total_tokens": 2922,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "text_tokens": 1032,
+        "audio_tokens": 0,
+        "image_tokens": 0
+      },
+      "completion_tokens_details": {
+        "text_tokens": 389,
+        "audio_tokens": 0,
+        "reasoning_tokens": 0
+      }
+    }
+  },
+  {
+    "name": "promotion-desktop.png",
+    "model": "gemini-2.5-flash",
+    "raw": "{\n  \"doc_duoc_anh\": true,\n  \"kich_thuoc_uoc_luong\": \"desktop\",\n  \"mo_ta_tong_quan\": \"Giao diện trang web quản lý có sidebar bên trái hiển thị logo, các mục chức năng, ban điều hành và phần cài đặt người dùng. Phía trên vùng nội dung chính là banner chào ngày mới màu đỏ với thông tin tài khoản và hai nút hành động tròn. Phía dưới banner là tiêu đề 'Lên Lớp' cùng thanh lọc khối lớp và vùng hướng dẫn chọn khối ở trung tâm.\",\n  \"chu_de_trang\": \"Lên Lớp\",\n  \"thanh_menu\": [\n    \"Danh sách\",\n    \"Điểm danh\",\n    \"Xin phép\",\n    \"Báo cáo\",\n    \"Thư viện\",\n    \"Khối lớp\",\n    \"Lịch của tôi\",\n    \"Hướng dẫn\",\n    \"Lên lớp\",\n    \"Chương trình\",\n    \"Thông báo\",\n    \"Nhân sự\",\n    \"Niên khoá\",\n    \"Cài đặt Nguyễn Văn A\"\n  ],\n  \"cac_nut_hanh_dong\": [\n    \"Chưa chọn khối\"\n  ],\n  \"so_lieu_thong_ke\": [],\n  \"van_de\": [\n    {\n      \"loai\": \"UI\",\n      \"mo_ta\": \"Biểu tượng phễu lọc nhỏ xuất hiện một cách lạ lùng và không rõ mục đích ở mép trái bên trong khung vùng nội dung chính (ngay dưới dòng 'Chưa chọn khối')\",\n      \"vi_tri\": \"Vùng nội dung chính, sát cạnh trái bên trong khung viền đứt nét\",\n      \"muc_do\": \"thap\"\n    }\n  ],\n  \"khong_thay_van_de\": false,\n  \"ghi_chu_do_tin_cay\": \"Các mục menu ở cuối sidebar (phần Niên khoá và Cài đặt) bị cắt bớt một phần ở mép dưới do khung nhìn.\"\n}",
+    "usage": {
+      "prompt_tokens": 2491,
+      "completion_tokens": 481,
+      "total_tokens": 2972,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "text_tokens": 1046,
+        "audio_tokens": 0,
+        "image_tokens": 0
+      },
+      "completion_tokens_details": {
+        "text_tokens": 418,
+        "audio_tokens": 0,
+        "reasoning_tokens": 0
+      }
+    }
+  },
+  {
+    "name": "promotion-mobile.png",
+    "model": "gemini-2.5-flash",
+    "raw": "```json\n{\n  \"doc_duoc_anh\": true,\n  \"kich_thuoc_uoc_luong\": \"mobile\",\n  \"mo_ta_tong_quan\": \"Giao diện quản lý ứng dụng di động hiển thị tiêu đề chào ngày mới với thông tin người dùng ở phía trên, thanh điều hướng trang với tiêu đề 'Lên Lớp' và nút quay lại ở giữa. Vùng nội dung chính chứa bộ lọc 'Chưa chọn khối' và một thẻ thông báo yêu cầu chọn khối để xét lên lớp. Phía dưới cùng có thanh menu điều hướng 5 mục gồm Trang chủ, Thiếu Nhi, Điểm danh, Thông báo và Cá nhân.\",\n  \"chu_de_trang\": \"Lên Lớp\",\n  \"thanh_menu\": [\n    \"Trang chủ\",\n    \"Thiếu Nhi\",\n    \"Điểm danh\",\n    \"Thông báo\",\n    \"Cá nhân\"\n  ],\n  \"cac_nut_hanh_dong\": [\n    \"Chưa chọn khối\",\n    \"nút lọc (biểu tượng phễu)\"\n  ],\n  \"so_lieu_thong_ke\": [],\n  \"van_de\": [\n    {\n      \"loai\": \"UI\",\n      \"mo_ta\": \"Biểu tượng chiếc phễu nhỏ bị tràn lệch ra ngoài lề trái của khối văn bản hướng dẫn bên trong thẻ.\",\n      \"vi_tri\": \"Bên trái đoạn văn bản 'Việc xét lên lớp làm theo từng khối — bấm nút lọc phía trên rồi chọn khối.'\",\n      \"muc_do\": \"thap\"\n    }\n  ],\n  \"khong_thay_van_de\": false,\n  \"ghi_chu_do_tin_cay\": \"Các thông tin chữ và bố cục đều hiển thị rõ ràng, độ tin cậy cao.\"\n}\n```",
+    "usage": {
+      "prompt_tokens": 2367,
+      "completion_tokens": 431,
+      "total_tokens": 2798,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "text_tokens": 1032,
+        "audio_tokens": 0,
+        "image_tokens": 0
+      },
+      "completion_tokens_details": {
+        "text_tokens": 392,
+        "audio_tokens": 0,
+        "reasoning_tokens": 0
+      }
+    }
+  },
+  {
+    "name": "reporthub-desktop.png",
+    "model": "gemini-2.5-flash",
+    "raw": "```json\n{\n  \"doc_duoc_anh\": true,\n  \"kich_thuoc_uoc_luong\": \"desktop\",\n  \"mo_ta_tong_quan\": \"Trang web quản lý 'GLY PHÚ TRUNG' với bố cục sidebar bên trái gồm các mục chức năng và ban điều hành. Vùng nội dung chính bên phải có header màu đỏ chào mừng người dùng Phêrô Nguyễn Văn A và các thẻ thống kê dữ liệu sinh hoạt, điểm danh, tỷ lệ có mặt.\",\n  \"chu_de_trang\": \"Thống Kế\",\n  \"thanh_menu\": [\n    \"Danh sách\",\n    \"Điểm danh\",\n    \"Xin phép\",\n    \"Báo cáo\",\n    \"Thư viện\",\n    \"Khối lớp\",\n    \"Lịch của tôi\",\n    \"Hướng dẫn\",\n    \"Lên lớp\",\n    \"Chương trình\",\n    \"Thông báo\",\n    \"Nhân sự\",\n    \"Niên khoá\",\n    \"Cài đặt Nguyễn Văn A\"\n  ],\n  \"cac_nut_hanh_dong\": [\n    \"Xuất CSV\",\n    \"Tổng quan\",\n    \"Thi đua & Lớp\",\n    \"Nút reload (header)\",\n    \"Nút logout/chuyển đổi (header)\"\n  ],\n  \"so_lieu_thong_ke\": [\n    \"180 ĐANG SINH HOẠT\",\n    \"6 BUỔI ĐÃ ĐIỂM DANH\",\n    \"87% TỶ LỆ CÓ MẶT\",\n    \"1 ĐƠN XIN PHÉP\",\n    \"1080 lượt CƠ CẤU CHUYÊN CẦN\",\n    \"829 CÓ MẶT (77%)\",\n    \"115 ĐI TRỄ (11%)\",\n    \"1 VẮNG CP (0%)\",\n    \"135 VẮNG KP (13%)\"\n  ],\n  \"van_de\": [\n    {\n      \"loai\": \"UI\",\n      \"mo_ta\": \"Thanh cuộn dọc (scrollbar) hiển thị ở mép phải của sidebar\",\n      \"vi_tri\": \"Sidebar bên trái\",\n      \"muc_do\": \"thap\"\n    }\n  ],\n  \"khong_thay_van_de\": false,\n  \"ghi_chu_do_tin_cay\": \"Các thông tin văn bản và số liệu đều hiển thị rõ ràng, sắc nét.\"\n}\n```",
+    "usage": {
+      "prompt_tokens": 2494,
+      "completion_tokens": 438,
+      "total_tokens": 2933,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "text_tokens": 1049,
+        "audio_tokens": 0,
+        "image_tokens": 0
+      },
+      "completion_tokens_details": {
+        "text_tokens": 381,
+        "audio_tokens": 0,
+        "reasoning_tokens": 0
+      }
+    }
+  },
+  {
+    "name": "reporthub-mobile.png",
+    "model": "gemini-2.5-flash",
+    "raw": "```json\n{\n  \"doc_duoc_anh\": true,\n  \"kich_thuoc_uoc_luong\": \"mobile\",\n  \"mo_ta_tong_quan\": \"Ảnh chụp màn hình hiển thị trang thống kê của một ứng dụng quản lý đoàn Thiếu Nhi Thánh Thể. Trang có phần header chào mừng người dùng, tiêu đề trang 'Thống Kê', các thẻ thống kê số liệu, một biểu đồ thanh về chuyên cần và thanh điều hướng dưới cùng. Bố cục được thiết kế cho thiết bị di động với các phần tử xếp chồng lên nhau.\",\n  \"chu_de_trang\": \"Thống Kê\",\n  \"thanh_menu\": [\n    \"Trang chủ\",\n    \"Thiếu Nhi\",\n    \"Điểm danh\",\n    \"Thông báo\",\n    \"Cá nhân\"\n  ],\n  \"cac_nut_hanh_dong\": [\n    \"Xuất CSV\",\n    \"Tổng quan\",\n    \"Thi đua & Lớp\"\n  ],\n  \"so_lieu_thong_ke\": [\n    \"180 ĐANG SINH HOẠT\",\n    \"6 BUỔI ĐÃ ĐIỂM DANH\",\n    \"87% TỶ LỆ CÓ MẶT\",\n    \"1 ĐƠN XIN PHÉP\",\n    \"CÓ MẶT 829 77%\",\n    \"ĐI TRỄ 115 11%\",\n    \"1080 lượt\"\n  ],\n  \"van_de\": [\n    {\n      \"loai\": \"UI\",\n      \"mo_ta\": \"Chữ 'ĐIỂM DANH', 'Thông báo', 'Cá nhân' ở thanh điều hướng dưới cùng bị cắt một phần ở phía dưới, không hiển thị trọn vẹn.\",\n      \"vi_tri\": \"Thanh điều hướng dưới cùng, các mục 'Điểm danh', 'Thông báo', 'Cá nhân'\",\n      \"muc_do\": \"thap\"\n    },\n    {\n      \"loai\": \"UI\",\n      \"mo_ta\": \"Nội dung trong thẻ 'ĐI TRỄ' (số '115' và phần trăm '11%') có vẻ hơi lệch lên trên so với nội dung tương ứng trong thẻ 'CÓ MẶT' (số '829' và phần trăm '77%'), tạo cảm giác không đồng đều về căn chỉnh.\",\n      \"vi_tri\": \"Phần 'CƠ CẤU CHUYÊN CẦN', hai thẻ 'CÓ MẶT' và 'ĐI TRỄ'\",\n      \"muc_do\": \"thap\"\n    },\n    {\n      \"loai\": \"UX\",\n      \"mo_ta\": \"Hai biểu tượng ở góc trên bên phải (biểu tượng làm mới và biểu tượng mũi tên) không có nhãn rõ ràng, có thể gây khó hiểu về chức năng của chúng cho người dùng mới.\",\n      \"vi_tri\": \"Góc trên bên phải của header\",\n      \"muc_do\": \"trung binh\"\n    },\n    {\n      \"loai\": \"UX\",\n      \"mo_ta\": \"Mật độ thông tin trên màn hình khá dày đặc, đặc biệt là các thẻ thống kê và biểu đồ, có thể khiến người dùng cảm thấy hơi chật chội trên màn hình di động.\",\n      \"vi_tri\": \"Vùng nội dung chính\",\n      \"muc_do\": \"thap\"\n    }\n  ],\n  \"khong_thay_van_de\": false,\n  \"ghi_chu_do_tin_cay\": \"Không có phần nào trong ảnh không đọc rõ hoặc không chắc chắn.\"\n}\n```",
+    "usage": {
+      "prompt_tokens": 3145,
+      "completion_tokens": 1861,
+      "total_tokens": 5006,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "text_tokens": 823,
+        "audio_tokens": 0,
+        "image_tokens": 0
+      },
+      "completion_tokens_details": {
+        "text_tokens": 833,
+        "audio_tokens": 0,
+        "reasoning_tokens": 1028
+      }
+    }
+  },
+  {
+    "name": "staff-desktop.png",
+    "model": "gemini-2.5-flash",
+    "raw": "```json\n{\n  \"doc_duoc_anh\": true,\n  \"kich_thuoc_uoc_luong\": \"desktop\",\n  \"mo_ta_tong_quan\": \"Giao diện trang quản lý 'Nhân sự' của web app GIA ĐÌNH GIÁO LÝ PHÚ TRUNG trên thiết bị desktop. Bố cục gồm sidebar bên trái chứa các mục chức năng và thông tin tài khoản ở dưới cùng, phần banner chào ngày mới màu đỏ ở trên cùng bên phải, tiếp theo là tiêu đề trang Nhân sự kèm nút Thêm thành viên, ô tìm kiếm, các thẻ lọc trạng thái, tổng số thành viên và danh sách các thẻ nhân sự chi tiết.\",\n  \"chu_de_trang\": \"Nhân sự\",\n  \"thanh_menu\": [\n    \"Danh sách\",\n    \"Điểm danh\",\n    \"Xin phép\",\n    \"Báo cáo\",\n    \"Thư viện\",\n    \"Khối lớp\",\n    \"Lịch của tôi\",\n    \"Hướng dẫn\",\n    \"Lên lớp\",\n    \"Chương trình\",\n    \"Thông báo\",\n    \"Nhân sự\",\n    \"Niên khoá\",\n    \"Cài đặt Nguyễn Văn A\"\n  ],\n  \"cac_nut_hanh_dong\": [\n    \"Thêm thành viên\",\n    \"Tất cả\",\n    \"Quản Trị Hệ Thống\",\n    \"Ban Điều Hành\",\n    \"Trưởng Khối\",\n    \"GLV Chủ Nhiệm\",\n    \"Giáo Lý Viên\"\n  ],\n  \"so_lieu_thong_ke\": [\n    \"6 thành viên\"\n  ],\n  \"van_de\": [\n    {\n      \"loai\": \"UI\",\n      \"mo_ta\": \"Thanh lọc thể loại (filter chips) ở phía trên danh sách bị tràn ra ngoài khung bên phải (thẻ 'Giáo Lý Viên' bị cắt một phần ở mép phải).\",\n      \"vi_tri\": \"Khu vực dưới ô tìm kiếm, hàng chứa các nút lọc danh mục nhân sự\",\n      \"muc_do\": \"trung binh\"\n    }\n  ],\n  \"khong_thay_van_de\": false,\n  \"ghi_chu_do_tin_cay\": \"Ảnh rõ nét, các chữ và bố cục đều đọc được hoàn toàn chính xác.\"\n}\n```",
+    "usage": {
+      "prompt_tokens": 2491,
+      "completion_tokens": 499,
+      "total_tokens": 2990,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "text_tokens": 1046,
+        "audio_tokens": 0,
+        "image_tokens": 0
+      },
+      "completion_tokens_details": {
+        "text_tokens": 434,
+        "audio_tokens": 0,
+        "reasoning_tokens": 0
+      }
+    }
+  },
+  {
+    "name": "staff-mobile.png",
+    "model": "gemini-2.5-flash",
+    "raw": "```json\n{\n  \"doc_duoc_anh\": true,\n  \"kich_thuoc_uoc_luong\": \"mobile\",\n  \"mo_ta_tong_quan\": \"Giao diện trang quản lý Nhân Sự trên thiết bị di động với phần đầu trang màu đỏ hiển thị lời chào và thông tin người dùng, tiếp theo là tiêu đề trang kèm nút quay lại, nút thêm thành viên, thanh tìm kiếm và các bộ lọc ngang. Phần thân trang liệt kê danh sách các thành viên nhân sự dưới dạng thẻ (card) với các nút thao tác chỉnh sửa và phân quyền. Phía dưới cùng có thanh điều hướng chính gồm 5 mục.\",\n  \"chu_de_trang\": \"Nhân Sự\",\n  \"thanh_menu\": [\n    \"Trang chủ\",\n    \"Thiếu Nhi\",\n    \"Điểm danh\",\n    \"Thông báo\",\n    \"Cá nhân\"\n  ],\n  \"cac_nut_hanh_dong\": [\n    \"Thêm thành viên\",\n    \"Tất cả\",\n    \"Quản Trị Hệ Thống\",\n    \"Ban Điều Hành\"\n  ],\n  \"so_lieu_thong_ke\": [\n    \"6 thành viên\"\n  ],\n  \"van_de\": [\n    {\n      \"loai\": \"UI\",\n      \"mo_ta\": \"Thanh bộ lọc ngang ở phần trên (chứa các nút 'Tất cả', 'Quản Trị Hệ Thống', 'Ban Điều Hành') bị tràn sang phải, phần tử tiếp theo bị cắt cụt một phần ra khỏi khung nhìn màn hình.\",\n      \"vi_tri\": \"Dưới thanh tìm kiếm, khu vực các nút lọc ngang\",\n      \"muc_do\": \"trung binh\"\n    },\n    {\n      \"loai\": \"UI\",\n      \"mo_ta\": \"Chữ 'GLV CHỦ NHIỆM' mờ nằm đè lên thanh điều hướng dưới cùng ở giữa, gây chồng chéo và khó đọc.\",\n      \"vi_tri\": \"Khu vực sát đáy màn hình, đè lên thanh điều hướng chân trang\",\n      \"muc_do\": \"thap\"\n    }\n  ],\n  \"khong_thay_van_de\": false,\n  \"ghi_chu_do_tin_cay\": \"Các thành phần chính và chữ viết trong ảnh rất rõ ràng, độ tin cậy cao.\"\n}\n```",
+    "usage": {
+      "prompt_tokens": 2475,
+      "completion_tokens": 567,
+      "total_tokens": 3042,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "text_tokens": 1032,
+        "audio_tokens": 0,
+        "image_tokens": 0
+      },
+      "completion_tokens_details": {
+        "text_tokens": 493,
+        "audio_tokens": 0,
+        "reasoning_tokens": 0
+      }
+    }
+  },
+  {
+    "name": "students-desktop.png",
+    "model": "gemini-2.5-flash",
+    "raw": "```json\n{\n  \"doc_duoc_anh\": true,\n  \"kich_thuoc_uoc_luong\": \"desktop\",\n  \"mo_ta_tong_quan\": \"Giao diện trang quản lý 'Thiếu Nhi' trên máy tính với thanh sidebar bên trái chứa logo, các mục chức năng và ban điều hành. Phần nội dung chính ở bên phải có một banner đỏ chào ngày mới ở phía trên cùng, tiếp theo là tiêu đề 'Thiếu Nhi' kèm các tab con, thanh tìm kiếm, thông báo phân quyền lớp, tổng số thiếu nhi và một danh sách thẻ thông tin thiếu nhi hiển thị chi tiết.\",\n  \"chu_de_trang\": \"Thiếu Nhi\",\n  \"thanh_menu\": [\n    \"Danh sách\",\n    \"Điểm danh\",\n    \"Xin phép\",\n    \"Báo cáo\",\n    \"Thư viện\",\n    \"Khối lớp\",\n    \"Lịch của tôi\",\n    \"Hướng dẫn\",\n    \"Lên lớp\",\n    \"Chương trình\",\n    \"Thông báo\",\n    \"Nhân sự\",\n    \"Niên khoá\",\n    \"Cài đặt\"\n  ],\n  \"cac_nut_hanh_dong\": [\n    \"Danh sách\",\n    \"Điểm số\",\n    \"Phiếu liên lạc\",\n    \"In thẻ QR\",\n    \"Thêm\",\n    \"Nhập\",\n    \"Xuất\",\n    \"Xem hồ sơ\"\n  ],\n  \"so_lieu_thong_ke\": [\n    \"Tổng: 180 em\"\n  ],\n  \"van_de\": [\n    {\n      \"loai\": \"UI\",\n      \"mo_ta\": \"Thanh sidebar bên trái bị tràn nội dung xuống dưới cùng làm mục 'Cài đặt Nguyễn Văn A' đè lên viền dưới của khối sidebar.\",\n      \"vi_tri\": \"Sidebar bên trái, phần dưới cùng\",\n      \"muc_do\": \"trung binh\"\n    }\n  ],\n  \"khong_thay_van_de\": false,\n  \"ghi_chu_do_tin_cay\": \"Các thành phần chữ và biểu tượng đều đọc rõ, ngoại trừ một số mục trong thẻ thông tin thiếu nhi ở dưới có thể cuộn thêm.\"\n}\n```",
+    "usage": {
+      "prompt_tokens": 2491,
+      "completion_tokens": 478,
+      "total_tokens": 2969,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "text_tokens": 1046,
+        "audio_tokens": 0,
+        "image_tokens": 0
+      },
+      "completion_tokens_details": {
+        "text_tokens": 416,
+        "audio_tokens": 0,
+        "reasoning_tokens": 0
+      }
+    }
+  },
+  {
+    "name": "students-mobile.png",
+    "model": "gemini-2.5-flash",
+    "raw": "```json\n{\n  \"doc_duoc_anh\": true,\n  \"kich_thuoc_uoc_luong\": \"mobile\",\n  \"mo_ta_tong_quan\": \"Giao diện trang quản lý Thiếu Nhi trên thiết bị di động của web app 'GIA ĐÌNH GIÁO LÝ PHÚ TRUNG'. Phía trên cùng hiển thị thông tin người dùng với nền đỏ, tiếp theo là tiêu đề trang 'Thiếu Nhi', các tab điều hướng chức năng, thanh tìm kiếm, thông báo phân quyền lớp học, các nút thao tác nhanh (Thêm, Nhập, Xuất) cùng với thẻ danh sách thiếu nhi đang hiển thị dở dang ở phía dưới.\",\n  \"chu_de_trang\": \"Thiếu Nhi\",\n  \"thanh_menu\": [\"Trang chủ\", \"Thiếu Nhi\", \"Điểm danh\", \"Thông báo\", \"Cá nhân\"],\n  \"cac_nut_hanh_dog\": [\"Danh sách\", \"Điểm số\", \"Phiếu liên lạc\", \"Thêm\", \"Nhập\", \"Xuất\"],\n  \"so_lieu_thong_ke\": [\"Tổng: 180 em\"],\n  \"van_de\": [\n    {\n      \"loai\": \"UI\",\n      \"mo_ta\": \"Thanh điều hướng dưới cùng (bottom navigation bar) bị che khuất một phần nội dung thẻ thiếu nhi (phần 'TÊN CHA' và nút gọi điện thoại bị cắt cụt ở đáy màn hình).\",\n      \"vi_tri\": \"Khu vực dưới cùng của màn hình, giao thoa giữa thẻ thiếu nhi và thanh menu bottom bar.\",\n      \"muc_do\": \"cao\"\n    },\n    {\n      \"loai\": \"UX\",\n      \"mo_ta\": \"Nội dung thẻ thiếu nhi bị tràn xuống dưới và bị che bởi thanh menu cố định, làm người dùng khó đọc hết thông tin chi tiết và khó thao tác.\",\n      \"vi_tri\": \"Thẻ thông tin thiếu nhi 'Ngô Thanh An' ở phần dưới nội dung chính.\",\n      \"muc_do\": \"cao\"\n    }\n  ],\n  \"khong_thay_van_de\": false,\n  \"ghi_chu_do_tin_cay\": \"Các thông tin văn bản, số liệu và bố cục đều rõ ràng, có độ tin cậy cao.\"\n}\n```",
+    "usage": {
+      "prompt_tokens": 2475,
+      "completion_tokens": 580,
+      "total_tokens": 3054,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "text_tokens": 1032,
+        "audio_tokens": 0,
+        "image_tokens": 0
+      },
+      "completion_tokens_details": {
+        "text_tokens": 504,
+        "audio_tokens": 0,
+        "reasoning_tokens": 0
+      }
+    }
+  },
+  {
+    "name": "thu_vien-desktop.png",
+    "model": "gemini-2.5-flash",
+    "raw": "```json\n{\n  \"doc_duoc_anh\": true,\n  \"kich_thuoc_uoc_luong\": \"desktop\",\n  \"mo_ta_tong_quan\": \"Giao diện quản lý trên máy tính của ứng dụng GIA ĐÌNH GIÁO LÝ PHÚ TRUNG với thanh sidebar bên trái gồm các mục chức năng và ban điều hành. Phía trên vùng nội dung chính là banner chào ngày mới hiển thị thông tin người dùng Phêrô Nguyễn Văn A. Khu vực nội dung bên dưới hiển thị trang Thư viện & Sổ tay với các tab lọc, thanh tìm kiếm, danh mục chủ đề và danh sách tài liệu.\",\n  \"chu_de_trang\": \"Thư viện & Sổ tay\",\n  \"thanh_menu\": [\n    \"Danh sách\",\n    \"Điểm danh\",\n    \"Xin phép\",\n    \"Báo cáo\",\n    \"Thư viện\",\n    \"Khối lớp\",\n    \"Lịch của tôi\",\n    \"Hướng dẫn\",\n    \"Lên lớp\",\n    \"Chương trình\",\n    \"Thông báo\",\n    \"Nhân sự\",\n    \"Niên khoá\",\n    \"Cài đặt Nguyễn Văn A\"\n  ],\n  \"cac_nut_hanh_dong\": [\n    \"Soạn\",\n    \"Tất cả\",\n    \"Của tôi\",\n    \"Chờ duyệt\",\n    \"Tất cả chủ đề\",\n    \"Giáo án\",\n    \"Đào tạo Huynh trưởng\",\n    \"Bài hát\",\n    \"Văn kiện\",\n    \"Sinh hoạt\",\n    \"Kinh & nghi thức\",\n    \"Quy trình & hướng dẫn\"\n  ],\n  \"so_lieu_thong_ke\": [],\n  \"van_de\": [\n    {\n      \"loai\": \"UI\",\n      \"mo_ta\": \"Mục 'Niên khoá' ở cuối nhóm Ban điều hành trong sidebar bị cắt cụt phần dưới do giới hạn hiển thị của khối.\",\n      \"vi_tri\": \"Sidebar bên trái, mục cuối cùng trong phần BAN ĐIỀU HÀNH\",\n      \"muc_do\": \"thap\"\n    }\n  ],\n  \"khong_thay_van_de\": false,\n  \"ghi_chu_do_tin_cay\": \"Tất cả các thành phần văn bản và bố cục đều rõ ràng, dễ đọc.\"\n}\n```",
+    "usage": {
+      "prompt_tokens": 2493,
+      "completion_tokens": 491,
+      "total_tokens": 2984,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "text_tokens": 1048,
+        "audio_tokens": 0,
+        "image_tokens": 0
+      },
+      "completion_tokens_details": {
+        "text_tokens": 427,
+        "audio_tokens": 0,
+        "reasoning_tokens": 0
+      }
+    }
+  },
+  {
+    "name": "thu_vien-mobile.png",
+    "model": "gemini-2.5-flash",
+    "raw": "```json\n{\n  \"doc_duoc_anh\": true,\n  \"kich_thuoc_uoc_luong\": \"mobile\",\n  \"mo_ta_tong_quan\": \"Trang web được thiết kế tối ưu cho thiết bị di động, hiển thị thư viện tài liệu và sổ tay với phần đầu trang màu đỏ chứa thông tin người dùng và nút thao tác nhanh. Phía dưới là tiêu đề Thư viện & Sổ tay cùng nút Soạn, các bộ lọc trạng thái và danh mục chủ đề theo dạng thẻ bấm. Ở vùng nội dung có thanh tìm kiếm và thẻ hiển thị tài liệu mẫu 'Sáng danh', phía đáy màn hình có thanh điều hướng menu di động gồm 5 mục.\",\n  \"chu_de_trang\": \"Thư viện & Sổ tay\",\n  \"thanh_menu\": [\n    \"Trang chủ\",\n    \"Thiếu Nhi\",\n    \"Điểm danh\",\n    \"Thông báo\",\n    \"Cá nhân\"\n  ],\n  \"cac_nut_hanh_dong\": [\n    \"Soạn\",\n    \"Tất cả\",\n    \"Của tôi\",\n    \"Chờ duyệt\",\n    \"Tất cả chủ đề\",\n    \"Giáo án\",\n    \"Đào tạo Huynh trưởng\",\n    \"Bài hát\",\n    \"Văn kiện\",\n    \"Sinh hoạt\",\n    \"Kinh & nghi thức\",\n    \"Quy trình & hướng dẫn\"\n  ],\n  \"so_lieu_thong_ke\": [],\n  \"van_de\": [],\n  \"khong_thay_van_de\": true,\n  \"ghi_chu_do_tin_cay\": \"Tất cả các thành phần giao diện, chữ viết và biểu tượng đều rõ ràng, không phát hiện lỗi UI hay UX đáng kể nào.\"\n}\n```",
+    "usage": {
+      "prompt_tokens": 2477,
+      "completion_tokens": 415,
+      "total_tokens": 2892,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "text_tokens": 1034,
+        "audio_tokens": 0,
+        "image_tokens": 0
+      },
+      "completion_tokens_details": {
+        "text_tokens": 361,
+        "audio_tokens": 0,
+        "reasoning_tokens": 0
+      }
+    }
+  },
+  {
+    "name": "years-desktop.png",
+    "model": "gemini-2.5-flash",
+    "raw": "```json\n{\n  \"doc_duoc_anh\": true,\n  \"kich_thuoc_uoc_luong\": \"desktop\",\n  \"mo_ta_tong_quan\": \"Giao diện trang quản lý 'Niên Khoá' của web app GIA ĐÌNH GIÁO LÝ PHÚ TRUNG trên desktop. Bên trái là thanh menu sidebar dọc chứa các mục chức năng và thông tin người dùng ở góc dưới. Phía trên vùng nội dung chính là thẻ banner chào ngày mới của tài khoản Quản trị viên, kèm theo tiêu đề 'Niên Khoá' và một thẻ thông tin chi tiết về niên khóa đang dùng 2026 - 2027.\",\n  \"chu_de_trang\": \"Niên Khoá\",\n  \"thanh_menu\": [\n    \"Danh sách\",\n    \"Điểm danh\",\n    \"Xin phép\",\n    \"Báo cáo\",\n    \"Thư viện\",\n    \"Khối lớp\",\n    \"Lịch của tôi\",\n    \"Hướng dẫn\",\n    \"Lên lớp\",\n    \"Chương trình\",\n    \"Thông báo\",\n    \"Nhân sự\",\n    \"Niên khoá\",\n    \"Cài đặt Nguyễn Văn A\"\n  ],\n  \"cac_nut_hanh_dong\": [\n    \"Mở niên khoá mới\",\n    \"Khoá sổ\",\n    \"Đang dùng\"\n  ],\n  \"so_lieu_thong_ke\": [\n    \"600 ghi danh\",\n    \"3 chương trình\",\n    \"34790 lượt điểm danh\",\n    \"1 đơn phép\"\n  ],\n  \"van_de\": [\n    {\n      \"loai\": \"UI\",\n      \"mo_ta\": \"Mục 'Niên khoá' trong menu sidebar ở phần 'BAN ĐIỀU HÀNH' bị che khuất một phần ở cạnh dưới (bị cắt cụt nửa dưới), tràn ra ngoài khung bo góc của sidebar.\",\n      \"vi_tri\": \"Sidebar bên trái, mục cuối của phần 'BAN ĐIỀU HÀNH'\",\n      \"muc_do\": \"trung binh\"\n    }\n  ],\n  \"khong_thay_van_de\": false,\n  \"ghi_chu_do_tin_cay\": \"Tất cả các chữ và số liệu đều hiển thị rõ ràng, độ tin cậy cao.\"\n}\n```",
+    "usage": {
+      "prompt_tokens": 2491,
+      "completion_tokens": 545,
+      "total_tokens": 3036,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "text_tokens": 1046,
+        "audio_tokens": 0,
+        "image_tokens": 0
+      },
+      "completion_tokens_details": {
+        "text_tokens": 474,
+        "audio_tokens": 0,
+        "reasoning_tokens": 0
+      }
+    }
+  },
+  {
+    "name": "years-mobile.png",
+    "model": "gemini-2.5-flash",
+    "raw": "```json\n{\n  \"doc_duoc_anh\": true,\n  \"kich_thuoc_uoc_luong\": \"mobile\",\n  \"mo_ta_tong_quan\": \"Giao diện trang quản lý 'Niên Khoá' trên thiết bị di động với nền đỏ ở phần header hiển thị thông tin người dùng, tiếp theo là tiêu đề trang và một nút quay lại. Nội dung chính bao gồm một khung thông báo hướng dẫn, nút tạo niên khoá mới màu đỏ, và một thẻ card hiển thị chi tiết niên khoá 2026 - 2027 với các trạng thái, thời gian học kỳ cùng các số liệu thống kê. Phía dưới cùng là thanh điều hướng menu với 5 mục.\",\n  \"chu_de_trang\": \"Niên Khoá\",\n  \"thanh_menu\": [\n    \"Trang chủ\",\n    \"Thiếu Nhi\",\n    \"Điểm danh\",\n    \"Thông báo\",\n    \"Cá nhân\"\n  ],\n  \"cac_nut_hanh_dong\": [\n    \"Mở niên khoá mới\",\n    \"Khoá sổ\",\n    \"Đang dùng\"\n  ],\n  \"so_lieu_thong_ke\": [\n    \"600 ghi danh\",\n    \"3 chương trình\",\n    \"34790 lượt điểm danh\",\n    \"1 đơn phép\"\n  ],\n  \"van_de\": [],\n  \"khong_thay_van_de\": true,\n  \"ghi_chu_do_tin_cay\": \"Tất cả các thành phần giao diện, chữ viết và số liệu đều hiển thị rõ ràng, không phát hiện lỗi UI/UX rõ rệt trong ảnh.\"\n}\n```",
+    "usage": {
+      "prompt_tokens": 2475,
+      "completion_tokens": 412,
+      "total_tokens": 2887,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "text_tokens": 1032,
+        "audio_tokens": 0,
+        "image_tokens": 0
+      },
+      "completion_tokens_details": {
+        "text_tokens": 358,
+        "audio_tokens": 0,
+        "reasoning_tokens": 0
+      }
+    }
+  }
+]
