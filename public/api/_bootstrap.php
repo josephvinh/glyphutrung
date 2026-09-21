@@ -6,6 +6,10 @@
  * quyền. Mọi file trong api/ đều bắt đầu bằng require file này.
  */
 
+// Lúc nào cũng dùng giờ Việt Nam, không phụ thuộc cấu hình máy chủ.
+// Nếu server ở Châu Âu, strtotime() vẫn phải hiểu start_time = 07:30 là 7h30 sáng VN.
+date_default_timezone_set('Asia/Ho_Chi_Minh');
+
 // API LUÔN trả JSON. Tuyệt đối không để warning/notice/deprecation của PHP
 // lọt vào thân phản hồi: trên iOS/WebKit, res.json() sẽ ném SyntaxError
 // "The string did not match the expected pattern." (Chrome nói "Unexpected
@@ -25,6 +29,22 @@ if (extension_loaded('zlib')
     && !ini_get('zlib.output_compression')
     && stripos($_SERVER['HTTP_ACCEPT_ENCODING'] ?? '', 'gzip') !== false) {
     @ob_start('ob_gzhandler');
+}
+
+/* ================================================================
+   BROTLI COMPRESSION — nén mạnh hơn gzip ~20%
+   Apache: cần mod_brotli + .htaccess
+   Nginx: cần ngx_http_brotli_filter_module
+   Fallback: tự nén bằng brotli extension nếu có
+   ================================================================ */
+if (extension_loaded('brotli')
+    && !ini_get('zlib.output_compression')
+    && stripos($_SERVER['HTTP_ACCEPT_ENCODING'] ?? '', 'br') !== false) {
+    // Nén brotli level 5 (cân bằng tốc độ/nén), buffer trước ob_gzhandler
+    @ob_start(function($buffer) {
+        return brotli_compress($buffer, BROTLI_COMPRESS_GENERIC, 5);
+    });
+    header('Content-Encoding: br');
 }
 
 header('Content-Type: application/json; charset=utf-8');
