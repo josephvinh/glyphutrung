@@ -169,6 +169,14 @@ window.TNTT.core = {
             // gồm phạm vi mình được xem, không đếm được lớp ngoài phạm vi.
             this.classCounts       = d.classCounts || {};
             this.programs          = d.programs;
+            // HƯỚNG B: thời khóa biểu lớp + ngoại lệ (nạp ngay để điểm danh &
+            // thống kê dùng đúng lịch riêng, và loại ngày NGHỈ khỏi mẫu số).
+            this.classSchedules    = d.classSchedules || [];
+            const _excMap = {};
+            (d.scheduleExceptions || []).forEach(e => {
+                (_excMap[e.scheduleId] = _excMap[e.scheduleId] || []).push(e);
+            });
+            this.scheduleExceptions = _excMap;
             this.leaveRequests     = d.leaveRequests;
             this.reports           = d.reports;
             this.rebuildReportIndex();  // chỉ số phiếu O(1) — tránh chậm thao tác (myTasks + danh sách Phiếu LC)

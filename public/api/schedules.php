@@ -24,9 +24,10 @@ switch ($action) {
     // Lấy danh sách thời khóa biểu
     // -------------------------------------------------------------
     case 'list':
-        require_login();
+        $me = require_login();
 
         $scopeIds = allowed_class_ids($me);
+        if ($scopeIds !== null && !$scopeIds) json_out(['ok' => true, 'schedules' => []]);
         $sql      = 'SELECT cs.*, c.name AS class_name, p.name AS program_name
                        FROM class_schedules cs
                        JOIN classes c ON c.id = cs.class_id
@@ -70,7 +71,8 @@ switch ($action) {
 
         $id        = (int) ($in['id'] ?? 0);
         $classId   = (int) ($in['classId'] ?? 0);
-        $programId = $in['programId'] !== null && $in['programId'] !== '' ? (int) $in['programId'] : null;
+        $programId = isset($in['programId']) && $in['programId'] !== null && $in['programId'] !== ''
+                     ? (int) $in['programId'] : null;
         $dow       = (int) ($in['dayOfWeek'] ?? -1);
         $start     = trim((string) ($in['startTime'] ?? ''));
         $cutoff    = trim((string) ($in['cutoffTime'] ?? ''));
@@ -114,6 +116,14 @@ switch ($action) {
             // Cập nhật bản ghi hiện có
             if (!db_one('SELECT id FROM class_schedules WHERE id=? AND year_id=?', [$id, $yid])) {
                 json_fail('Không tìm thấy thời khóa biểu.', 404);
+            }
+            // Chặn trùng slot khi SỬA (tránh đụng khoá uq_cs_slot -> lỗi 500)
+            $dup = db_one(
+                'SELECT id FROM class_schedules
+                  WHERE year_id=? AND class_id=? AND day_of_week=? AND start_time=? AND program_id <=> ? AND id<>?',
+                [$yid, $classId, $dow, $start, $programId, $id]);
+            if ($dup) {
+                json_fail('Lớp này đã có lịch vào thứ và giờ đã chọn. Vui lòng chọn giá trị khác.');
             }
             db_run('UPDATE class_schedules
                        SET class_id=?, program_id=?, day_of_week=?, start_time=?,
@@ -222,19 +232,19 @@ switch ($action) {
     // Lấy danh sách ngoại lệ của một schedule
     // -------------------------------------------------------------
     case 'exceptions':
-        require_login();
+        $me = require_login();
 
         $scheduleId = (int) ($_GET['scheduleId'] ?? 0);
         if ($scheduleId <= 0) json_fail('Thiếu scheduleId.');
 
-        // Kiểm tra quyền truy cập schedule
-        $sc = db_one(
-            'SELECT cs.* FROM class_schedules cs
-               JOIN classes c ON c.id = cs.class_id
-               JOIN enrollments e ON e.class_id = c.id
-              WHERE cs.id=? AND e.year_id=?',
-            [$scheduleId, $yid]);
+        // Lịch phải thuộc niên khoá hiện tại VÀ nằm trong phạm vi lớp người dùng
+        // được phép xem (khớp hardening F1–F9 — không để rò ngoại lệ lớp khác).
+        $sc = db_one('SELECT * FROM class_schedules WHERE id=? AND year_id=?', [$scheduleId, $yid]);
         if (!$sc) json_fail('Không tìm thấy lịch.', 404);
+        $scopeIds = allowed_class_ids($me);
+        if ($scopeIds !== null && !in_array((int) $sc['class_id'], $scopeIds, true)) {
+            json_fail('Bạn không có quyền xem lịch của lớp này.', 403);
+        }
 
         $exceptions = array_map(fn($e) => [
             'id'         => (int) $e['id'],
@@ -296,6 +306,11 @@ switch ($action) {
                    [$kind, $newStartVal, $newCutoffVal, $note ?: null, $id, $scheduleId]);
             log_action('sua', 'schedule_exceptions', 'Sửa ngoại lệ lịch', "id=$id, ngày=$onDate, loại=$kind");
         } else {
+            // Chặn trùng ngoại lệ cùng (lịch, ngày) -> tránh đụng khoá uq_se (500)
+            if (db_one('SELECT id FROM schedule_exceptions WHERE schedule_id=? AND on_date=?',
+                       [$scheduleId, $onDate])) {
+                json_fail('Ngày này đã có ngoại lệ cho lịch. Hãy sửa ngoại lệ hiện có.');
+            }
             // Tạo mới
             $id = db_insert('INSERT INTO schedule_exceptions
                               (schedule_id, on_date, kind, new_start, new_cutoff, note)
@@ -315,7 +330,10 @@ switch ($action) {
         require_permission('programs', 'edit');
 
         $id = (int) ($in['id'] ?? 0);
-        if (!db_one('SELECT id FROM schedule_exceptions WHERE id=?', [$id])) {
+        // Chỉ cho xoá ngoại lệ thuộc lịch của NIÊN KHOÁ hiện tại
+        if (!db_one('SELECT se.id FROM schedule_exceptions se
+                       JOIN class_schedules cs ON cs.id = se.schedule_id
+                      WHERE se.id=? AND cs.year_id=?', [$id, $yid])) {
             json_fail('Không tìm thấy ngoại lệ.', 404);
         }
 
