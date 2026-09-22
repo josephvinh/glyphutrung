@@ -152,16 +152,23 @@ php phpunit10.phar --no-coverage          # 33/33 là OK
 Kiểm tra cuối: mở `https://tenmien/` → đăng nhập → thấy đủ module (Báo cáo,
 Lịch trình...) và icon không trống.
 
-**Nén (hiệu năng — nên bật):** API đã **tự nén gzip** ở tầng PHP (`ob_gzhandler`
-trong `api/_bootstrap.php`) nên `api/data.php` truyền rất nhẹ (vd toàn đoàn
-~4.8MB → ~140KB). Để nén luôn **JS/CSS tĩnh**, thêm vào `public/.htaccess` (nếu
-host bật `mod_deflate`):
-```apache
-<IfModule mod_deflate.c>
-  AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json image/svg+xml
-</IfModule>
-```
-Kiểm chứng: DevTools → Network → `data.php` có `Content-Encoding: gzip`.
+**Nén (hiệu năng):** đã **tự nén ở tầng PHP**, KHÔNG cần cấu hình gì thêm trên host:
+- API: `ob_gzhandler` trong `api/_bootstrap.php` (vd `api/data.php` toàn đoàn ~4.8MB → ~140KB).
+- JS/CSS gộp + trang HTML: helper chung `public/assets/_nen.php` (dùng bởi
+  `assets/js/bundle.php`, `assets/css/bundle.php`, `index.php`) — ưu tiên brotli,
+  không có thì gzip. Đo được: JS 288KB → ~40KB (kèm minify), CSS 53KB → ~10KB.
+
+An toàn với **LiteSpeed của AZDIGI**: helper tự **lùi** nếu `zlib.output_compression`
+đã bật ở php.ini (không nén chồng), và tự bỏ brotli nếu host không có extension đó
+(shared host thường không có → rơi về gzip). Cùng cơ chế `ob_gzhandler` đã chạy
+thật cho API nên đã được kiểm chứng trên host này.
+
+> Thêm `mod_deflate` vào `.htaccess` giờ **không cần** (bundle tự nén). Nếu vẫn
+> muốn nén cả `.woff2`/ảnh SVG lẻ thì mới cân nhắc — nhưng nhớ bọc `<IfModule
+> mod_deflate.c>` kẻo host thiếu module là 500.
+
+Kiểm chứng: DevTools → Network → `data.php` **và** `bundle.php` (JS lẫn CSS) đều có
+`Content-Encoding: gzip` (hoặc `br`).
 
 ---
 
