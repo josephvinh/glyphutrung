@@ -34,8 +34,39 @@ window.TNTT.attendance = {
     },
 
     // Các chương trình đang kích hoạt có diễn ra vào một ngày bất kỳ
+    // HƯỚNG B: Ưu tiên dùng classSchedules (lịch riêng của lớp) nếu có
     programsOn(dateStr) {
         if (!dateStr) return [];
+
+        // HƯỚNG B: Nếu có classSchedules và đang chọn lớp, dùng lịch lớp
+        if (this.attendanceClass && this.classSchedules?.length > 0) {
+            const dow = new Date(dateStr + 'T00:00:00').getDay();
+            // Lọc schedules của lớp đang chọn
+            const todaySchedules = this.classSchedules.filter(cs => {
+                if (cs.dayOfWeek !== dow) return false;
+                if (cs.className !== this.attendanceClass) return false;
+                // Kiểm tra active_from/active_to
+                if (cs.activeFrom && dateStr < cs.activeFrom) return false;
+                if (cs.activeTo && dateStr > cs.activeTo) return false;
+                return true;
+            });
+            if (todaySchedules.length > 0) {
+                // Chuyển đổi schedule thành "program-like" object để tương thích
+                return todaySchedules.map(cs => ({
+                    id: cs.programId || 0,
+                    name: cs.programName || (cs.slot ? `Ca ${cs.slot}` : 'Giáo lý'),
+                    type: cs.programId ? 'bắt buộc' : 'chiến dịch',
+                    status: 'kích hoạt',
+                    startTime: cs.startTime,
+                    cutoffTime: cs.cutoffTime,
+                    dayOfWeek: cs.dayOfWeek,
+                    scheduleId: cs.id,  // HƯỚNG B: đánh dấu đây là schedule
+                    slot: cs.slot,
+                })).sort((a, b) => a.startTime.localeCompare(b.startTime));
+            }
+        }
+
+        // Fallback: dùng program toàn đoàn (cách cũ)
         const dow = new Date(dateStr + 'T00:00:00').getDay();
         return this.programs.filter(p => {
             if (p.status !== 'kích hoạt') return false;
@@ -68,7 +99,12 @@ window.TNTT.attendance = {
             window.TNTT.toast.info('Đang tải số liệu điểm danh, đợi một chút rồi bắt đầu nhé.');
             return;
         }
-        this.activeSession = { programId: prog.id, date: this.attendanceDate };
+        // HƯỚNG B: Bao gồm scheduleId nếu có (từ classSchedules)
+        this.activeSession = {
+            programId: prog.id,
+            scheduleId: prog.scheduleId || null,
+            date: this.attendanceDate
+        };
         this.attendanceSearch = '';
         // Bắt chọn lớp cho điểm danh TAY (giống Danh sách): một lớp thì tự mở,
         // nhiều lớp để trống, chọn lớp nào điểm danh lớp đó. Bộ chọn chỉ hiện
@@ -221,6 +257,7 @@ window.TNTT.attendance = {
             }
             this.save('attendance', 'toggle', {
                 programId: this.activeSession.programId,
+                scheduleId: this.activeSession.scheduleId || null,
                 date: this.activeSession.date,
                 studentId: student.id
             }).then(r => {
@@ -250,6 +287,7 @@ window.TNTT.attendance = {
 
         this.save('attendance', 'toggle', {
             programId: this.activeSession.programId,
+            scheduleId: this.activeSession.scheduleId || null,
             date: this.activeSession.date,
             studentId: student.id
         }).then(r => {

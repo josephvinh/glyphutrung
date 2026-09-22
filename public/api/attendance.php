@@ -2,7 +2,7 @@
 /**
  * ĐIỂM DANH
  *
- *   POST api/attendance.php?action=toggle { programId, date, studentId }
+ *   POST api/attendance.php?action=toggle { programId, date, studentId, scheduleId? }
  *
  * Một endpoint duy nhất vì thao tác ở hiện trường chỉ có một: chạm vào
  * tên. Chưa có bản ghi thì ghi vào, có rồi thì gỡ ra.
@@ -10,6 +10,10 @@
  * Trạng thái có mặt hay đi trễ do MÁY CHỦ quyết định theo giờ chốt,
  * không nhận từ trình duyệt — nếu không thì đổi giờ máy điện thoại là
  * biến đi trễ thành có mặt.
+ *
+ * HƯỚNG B: Hỗ trợ class_schedules — lịch riêng của từng lớp.
+ * Nếu có scheduleId, dùng schedule thay vì program để xác định
+ * ngày hợp lệ và giờ chốt. Ghi kèm schedule_id vào attendance.
  */
 
 require __DIR__ . '/_bootstrap.php';
@@ -22,6 +26,7 @@ if ($year['status'] === 'đã khóa') json_fail('Niên khoá đã khoá sổ, kh
 
 $in        = json_input();
 $programId = (int) ($in['programId'] ?? 0);
+$scheduleId = isset($in['scheduleId']) && $in['scheduleId'] !== '' ? (int) $in['scheduleId'] : null;
 $date      = (string) ($in['date'] ?? '');
 
 if (!$programId || !$date) json_fail('Thiếu thông tin buổi điểm danh.');
@@ -30,16 +35,40 @@ $prog = db_one('SELECT * FROM programs WHERE id = ? AND year_id = ?', [$programI
 if (!$prog) json_fail('Không tìm thấy chương trình.', 404);
 if ($prog['status'] !== 'kích hoạt') json_fail('Chương trình này đã đóng.');
 
+// HƯỚNG B: Lấy schedule nếu có
+$schedule = null;
+$scheduleClassId = null;
+if ($scheduleId) {
+    $schedule = db_one('SELECT * FROM class_schedules WHERE id = ? AND year_id = ? AND status = "kích hoạt"', [$scheduleId, $year['id']]);
+    if (!$schedule) json_fail('Không tìm thấy lịch lớp này.', 404);
+    $scheduleClassId = (int) $schedule['class_id'];
+}
+
 // Buổi phải thật sự diễn ra vào ngày đó
 $dow = (int) date('w', strtotime($date));
-$hopLe = $prog['type'] === 'chiến dịch'
-    ? ($prog['event_date'] === $date)
-    : ((int) $prog['day_of_week'] === $dow);
+if ($schedule) {
+    // HƯỚNG B: Kiểm tra theo schedule (thứ trong tuần phải khớp)
+    $hopLe = ((int) $schedule['day_of_week'] === $dow);
+    // Kiểm tra active_from/active_to nếu có
+    if ($schedule['active_from'] && $date < $schedule['active_from']) $hopLe = false;
+    if ($schedule['active_to'] && $date > $schedule['active_to']) $hopLe = false;
+} else {
+    // Cũ: kiểm tra theo program
+    $hopLe = $prog['type'] === 'chiến dịch'
+        ? ($prog['event_date'] === $date)
+        : ((int) $prog['day_of_week'] === $dow);
+}
 if (!$hopLe) json_fail('Buổi này không diễn ra vào ngày ' . $date . '.');
 
-// Giờ chốt do máy chủ tính
+// Giờ chốt do máy chủ tính — HƯỚNG B: ưu tiên schedule.cutoff_time
 $cutoffMin  = (int) app_config('cutoff_minutes');
-$cutoffTs   = strtotime($date . ' ' . $prog['start_time']) + $cutoffMin * 60;
+if ($schedule && $schedule['cutoff_time']) {
+    // Dùng giờ chốt riêng của lớp
+    $cutoffTs = strtotime($date . ' ' . $schedule['cutoff_time']);
+} else {
+    // Mặc định từ program
+    $cutoffTs = strtotime($date . ' ' . $prog['start_time']) + $cutoffMin * 60;
+}
 $pastCutoff = time() >= $cutoffTs;
 $status     = $pastCutoff ? 'đi trễ' : 'có mặt';
 
@@ -197,9 +226,16 @@ if ($existing) {
 }
 
 $status = $pastCutoff ? 'đi trễ' : 'có mặt';
-db_run('INSERT INTO attendances (year_id, program_id, session_date, student_id, status, method, marked_by)
-        VALUES (?,?,?,?,?,?,?)',
-    [$year['id'], $programId, $date, $studentId, $status, $in['method'] ?? 'tay', $me['id']]);
+// HƯỚNG B: Ghi kèm schedule_id nếu có
+if ($scheduleId) {
+    db_run('INSERT INTO attendances (year_id, program_id, schedule_id, session_date, student_id, status, method, marked_by)
+            VALUES (?,?,?,?,?,?,?,?)',
+        [$year['id'], $programId, $scheduleId, $date, $studentId, $status, $in['method'] ?? 'tay', $me['id']]);
+} else {
+    db_run('INSERT INTO attendances (year_id, program_id, session_date, student_id, status, method, marked_by)
+            VALUES (?,?,?,?,?,?,?)',
+        [$year['id'], $programId, $date, $studentId, $status, $in['method'] ?? 'tay', $me['id']]);
+}
 
 if ($pastCutoff) {
     log_action('diemdanh', 'attendance', 'Ghi điểm danh cho ' . $st['full_name'],

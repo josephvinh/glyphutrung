@@ -181,7 +181,8 @@ if ($part !== 'core') {                          // bước 'core' bỏ qua đi�
     }
 }
 $attendances = array_map(fn($a) => [
-    'programId' => (int) $a['program_id'],
+    'programId'  => (int) $a['program_id'],
+    'scheduleId' => !empty($a['schedule_id']) ? (int) $a['schedule_id'] : null,  // HƯỚNG B
     'date'      => $a['session_date'],
     'studentId' => (int) $a['student_id'],
     'status'    => $a['status'],
