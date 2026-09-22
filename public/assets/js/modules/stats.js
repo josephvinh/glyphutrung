@@ -242,4 +242,107 @@ window.TNTT.stats = {
         link.click();
         URL.revokeObjectURL(url);
     },
+
+    // ==========================================
+    // XUẤT SỔ ĐIỂM DANH (dạng lưới)
+    //
+    // Khác với "Xuất CSV" (một dòng tổng kết mỗi em), bản này mô phỏng
+    // đúng cuốn SỔ ĐIỂM DANH giấy:
+    //   - Cột đầu: Mã thiếu nhi · Tên Thánh · Họ và Tên
+    //   - Mỗi TUẦN là một nhóm cột lớn, gộp bên dưới là các CHƯƠNG TRÌNH
+    //     tính chuyên cần của buổi hôm đó (Thánh Lễ, Giáo Lý Sáng/Chiều...)
+    //   - Ô đánh dấu:  ✓ = có mặt · T = đi trễ · P = vắng có phép ·
+    //     để TRỐNG = vắng (không phép)
+    //   - Vài cột tổng kết ở cuối cho dễ cộng sổ.
+    // Chỉ lấy các buổi ĐÃ QUA GIỜ CHỐT trong tháng đang xem, giống hệt
+    // phạm vi của màn Thống kê nên số liệu không bao giờ lệch.
+    // ==========================================
+    exportAttendanceGridCSV() {
+        const sessions = this.statSessions.filter(s => s.countForAttendance);
+        if (sessions.length === 0) {
+            alert('Tháng này chưa có buổi chuyên cần nào đã qua giờ chốt để xuất!');
+            return;
+        }
+
+        // Gom các buổi theo NGÀY -> mỗi ngày là một "tuần" trên sổ. Trong
+        // một ngày, các chương trình giữ thứ tự theo giờ bắt đầu (statSessions
+        // đã sắp sẵn), không lặp lại chương trình.
+        const weeks = [];
+        const byDate = new Map();
+        sessions.forEach(ss => {
+            let w = byDate.get(ss.date);
+            if (!w) { w = { date: ss.date, programs: [] }; byDate.set(ss.date, w); weeks.push(w); }
+            if (!w.programs.some(p => p.programId === ss.programId)) {
+                w.programs.push({ programId: ss.programId, name: ss.name });
+            }
+        });
+        weeks.sort((a, b) => a.date.localeCompare(b.date));
+
+        const { att, leave } = this.buildAttendanceIndex();
+
+        const students = this.accessibleStudents
+            .filter(s => s.status === 'đang sinh hoạt')
+            .slice()
+            .sort((a, b) =>
+                (a.className || '').localeCompare(b.className || '', 'vi') ||
+                String(a.code || '').localeCompare(String(b.code || ''), 'vi'));
+
+        const dow  = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+        const ddmm = ds => ds.slice(8, 10) + '/' + ds.slice(5, 7);
+        const dayLabel = ds => dow[new Date(ds + 'T00:00:00').getDay()] + ' ' + ddmm(ds);
+
+        const lead = ['Mã thiếu nhi', 'Tên Thánh', 'Họ và Tên'];
+        const tail = ['Có mặt', 'Đi trễ', 'Vắng', 'Tỷ lệ (%)'];
+
+        // Hàng tiêu đề TUẦN: nhãn tuần đặt ở ô đầu mỗi nhóm, các ô còn lại để
+        // trống — mở bằng Excel/Sheets có thể bôi-gộp cho ra "dòng lớn".
+        const rowWeek = ['', '', ''];
+        weeks.forEach((w, i) => {
+            rowWeek.push('Tuần ' + (i + 1) + ' — ' + dayLabel(w.date));
+            for (let k = 1; k < w.programs.length; k++) rowWeek.push('');
+        });
+        rowWeek.push('Tổng kết', '', '', '');
+
+        // Hàng tiêu đề CHƯƠNG TRÌNH (nằm dưới mỗi tuần).
+        const rowProg = lead.slice();
+        weeks.forEach(w => w.programs.forEach(p => rowProg.push(p.name)));
+        tail.forEach(t => rowProg.push(t));
+
+        const lines = [];
+        lines.push(this.csvCell('SỔ ĐIỂM DANH CHUYÊN CẦN — ' + this.statMonthLabel));
+        lines.push(this.csvCell('Chú thích:  ✓ = Có mặt   ·   T = Đi trễ   ·   P = Vắng có phép   ·   (để trống) = Vắng'));
+        lines.push(rowWeek.map(v => this.csvCell(v)).join(','));
+        lines.push(rowProg.map(v => this.csvCell(v)).join(','));
+
+        students.forEach(s => {
+            const cells = [s.code, s.holyName, s.name];
+            let present = 0, late = 0, absent = 0;
+
+            weeks.forEach(w => w.programs.forEach(p => {
+                const key = p.programId + '|' + w.date + '|' + s.id;
+                const rec = att.get(key);
+                if (rec) {
+                    if (rec.status === 'đi trễ') { cells.push('T'); late++; }
+                    else                         { cells.push('✓'); present++; }
+                } else if (leave.has(key)) {
+                    cells.push('P'); absent++;   // vắng có phép — vẫn là buổi vắng mặt
+                } else {
+                    cells.push('');  absent++;   // vắng không phép — để trống
+                }
+            }));
+
+            const total = present + late + absent;
+            const rate  = total ? Math.round(((present + late) / total) * 100) : 0;
+            cells.push(present, late, absent, rate);
+            lines.push(cells.map(v => this.csvCell(v)).join(','));
+        });
+
+        const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'So_Diem_Danh_Chuyen_Can_' + this.statMonth + '.csv';
+        link.click();
+        URL.revokeObjectURL(url);
+    },
 };
