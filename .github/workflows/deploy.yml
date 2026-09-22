@@ -27,8 +27,8 @@ jobs:
       #                   khoá public của cặp này phải được Authorize trên host
       #                   (cPanel -> SSH Access -> Manage SSH Keys).
       #
-      # Thư mục clone mặc định ~/repositories/tntt (khớp mô hình 2). Đổi thì
-      # sửa dòng `cd` bên dưới.
+      # Thư mục clone trên host: ~/tntt (khớp Repository Path trong cPanel Git
+      # Version Control). Đổi thì sửa dòng `cd` bên dưới.
       - name: SSH pull + deploy
         uses: appleboy/ssh-action@v1.2.0
         with:
@@ -39,6 +39,6 @@ jobs:
           script_stop: true
           script: |
             set -e
-            cd "$HOME/repositories/tntt"
+            cd "$HOME/tntt"
             git pull --ff-only origin master
             bash scripts/deploy.sh
