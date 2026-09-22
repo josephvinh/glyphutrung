@@ -159,7 +159,7 @@ class StaffService
                 // chỗ (Khối & Lớp) thay vì tưởng đã lưu.
                 if ($old['role_code'] !== $role) {
                     return ['ok' => false,
-                            'error' => 'Người này đang kiêm nhiệm nhiều vị trí. '
+                            'error' => 'Người này đã được phân công (kiêm nhiệm). '
                                      . 'Đổi vai trò/chức vụ phải thực hiện ở màn Khối & Lớp '
                                      . '(phân công), không đổi ở màn Nhân sự.',
                             'code' => 409];
