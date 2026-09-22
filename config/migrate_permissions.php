@@ -5,8 +5,9 @@
  * Chạy: php config/migrate_permissions.php
  *
  * Mục đích:
- *   - Trưởng Khối (truong_khoi) chỉ được XEM khối-lớp, không được SỬA.
- *   - Ban Điều Hành (bdh) được SỬA danh sách thiếu nhi.
+ *   - Trưởng Khối (truong_khoi) được SỬA khối-lớp TRONG KHỐI MÌNH (F5).
+ *     (Đã bị can_manage_block/class giới hạn phạm vi ở tầng API.)
+ *   - Ban Điều Hành (bdh) được SỬA module Tổ chức (org) và danh sách thiếu nhi.
  *   - Module Nhân sự (staff) có quyền hợp lệ cho mọi vai.
  *
  * Idempotent: chạy lại vô hại.
@@ -15,12 +16,13 @@ require __DIR__ . '/db.php';
 
 echo "=== Migration: permissions fix ===\n";
 
-// Bước 1: Sửa quyền org — trưởng khối chỉ được xem
+// Bước 1: Quyền org — Trưởng Khối được SỬA (quản khối-lớp trong khối mình);
+//         BĐH được SỬA org (gộp từ fix_permission.php đã bỏ — xem F5/F8).
 $n1 = db_run(
-    "UPDATE permissions SET level = 'view'
-     WHERE module_key = 'org' AND role_code = 'truong_khoi'"
+    "UPDATE permissions SET level = 'edit'
+     WHERE module_key = 'org' AND role_code IN ('truong_khoi', 'bdh')"
 );
-echo "1. org.truong_khoi = view: $n1 dòng cập nhật\n";
+echo "1. org.truong_khoi + org.bdh = edit: $n1 dòng cập nhật\n";
 
 // Bước 2: Sửa quyền students — BĐH được sửa
 $n2 = db_run(
@@ -55,7 +57,7 @@ $rows = db_all(
      ORDER BY module_key, FIELD(role_code,'admin','bdh','truong_khoi','glv_chu_nhiem','glv','du_bi')"
 );
 foreach ($rows as $r) {
-    $mark = ($r['module_key'] === 'org' && $r['role_code'] === 'truong_khoi' && $r['level'] === 'view')
+    $mark = ($r['module_key'] === 'org' && in_array($r['role_code'], ['truong_khoi', 'bdh'], true) && $r['level'] === 'edit')
          || ($r['module_key'] === 'staff' && $r['level'] !== 'none')
          || ($r['module_key'] === 'students' && $r['role_code'] === 'bdh' && $r['level'] === 'edit')
         ? '✓' : ' ';

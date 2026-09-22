@@ -82,8 +82,14 @@ switch ($action) {
         json_out(['ok' => true]);
 
     // ============================ NHÂN SỰ ===========================
-    // NOTE: saveMember giữ nguyên vì có transaction phức tạp với demote logic
-    // TODO: Refactor sang StaffService khi có thời gian
+    // saveMember (A′): chỉ quản danh tính + vai gốc, KHÔNG đụng phân công.
+    // Kiêm nhiệm do setClassHead/setBlockHead quản (non-destructive).
+    case 'saveMember':
+        $result = $staff->saveMember();
+        if (!$result['ok']) {
+            json_fail($result['error'], $result['code'] ?? 400);
+        }
+        json_out(['ok' => true]);
 
     case 'deleteMember':
         $result = $staff->deleteMember();

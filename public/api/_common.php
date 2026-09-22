@@ -65,6 +65,18 @@ function current_member(): ?array
     return $me ?: null;
 }
 
+/**
+ * Người này có được THẤY vai/tài khoản Quản trị không.
+ * Chỉ chính admin mới thấy admin — mọi người khác bị ẩn hoàn toàn khỏi
+ * danh sách nhân sự, danh sách vai và ma trận phân quyền (xem data.php và
+ * _bootstrap_page.php). Đây là lớp CHE GIẤU (obscurity), không thay cho
+ * kiểm soát truy cập: lá chắn thật là whitelist gán vai + kiểm quyền backend.
+ */
+function can_see_admin(?array $me): bool
+{
+    return ($me['role_code'] ?? '') === 'admin';
+}
+
 /* ============================================================================
    KIÊM NHIỆM — truy vấn bảng member_assignments
 

@@ -69,9 +69,28 @@ class StaffService
             return ['ok' => false, 'error' => 'Không tìm thấy thành viên.', 'code' => 404];
         }
 
-        // Vai trò BĐH/Quản trị bị khóa
+        // Vai trò BĐH/Quản trị bị khóa: không cho HẠ vai người đang là admin/bdh.
         if ($old && $this->isProtected($old)) {
             $role = $old['role_code'];
+        }
+
+        // Chống leo thang (F2): chỉ kiểm khi vai THỰC SỰ thay đổi (tạo mới hoặc
+        // đổi vai). Sửa danh tính của người giữ nguyên vai — kể cả admin/bdh —
+        // không bị chặn ở đây.
+        $callerIsAdmin = ($this->me['role_code'] ?? '') === 'admin';
+        $roleChanging  = !$old || ($old['role_code'] !== $role);
+        if ($roleChanging) {
+            $ASSIGNABLE = ['truong_khoi', 'glv_chu_nhiem', 'glv', 'du_bi'];
+            // Chỉ Quản trị mới được tạo/gán vai Quản trị hoặc Ban Điều Hành.
+            if (in_array($role, ['admin', 'bdh'], true) && !$callerIsAdmin) {
+                return ['ok' => false,
+                        'error' => 'Chỉ Quản Trị Hệ Thống mới được gán vai Quản trị hoặc Ban Điều Hành.',
+                        'code' => 403];
+            }
+            // Vai khác phải nằm trong danh sách hợp lệ (admin được phép mọi vai).
+            if (!$callerIsAdmin && !in_array($role, $ASSIGNABLE, true)) {
+                return ['ok' => false, 'error' => 'Vai trò không hợp lệ.', 'code' => 400];
+            }
         }
 
         $r = db_one('SELECT scope FROM roles WHERE code=?', [$role]);
@@ -88,13 +107,30 @@ class StaffService
                 return ['ok' => false, 'error' => 'Trưởng Khối cần chọn khối phụ trách.'];
             }
             $blockId = (int) $b['id'];
-        } elseif ($r['scope'] === 'lớp') {
+        } elseif ($r['scope'] === 'lớp' && $role !== 'du_bi') {
+            // Dự Bị là vai hỗ trợ, phân lớp làm SAU ở màn Khối & Lớp → không bắt
+            // buộc chọn lớp lúc tạo/sửa nhân sự (giữ hành vi trước khi F6 đổi
+            // scope du_bi từ '' sang 'lớp'; tránh regression).
             $c = db_one('SELECT c.id, c.block_id FROM classes c WHERE c.name=?', [$this->in('className')]);
             if (!$c) {
                 return ['ok' => false, 'error' => 'Vai trò này cần chọn lớp phụ trách.'];
             }
             $classId = (int) $c['id'];
             $blockId = (int) $c['block_id'];
+        }
+
+        // Phòng thủ theo chiều sâu (F6-review): người tạo/sửa KHÔNG phải toàn
+        // đoàn (admin/BĐH) chỉ được gán khối/lớp thuộc phạm vi mình quản — chặn
+        // việc "cấy" một người có phạm vi ngoài quyền mình. Hiện chỉ admin/BĐH có
+        // staff=edit nên nhánh này thường không chạm tới, nhưng chặn sẵn phòng khi
+        // phân quyền được chỉnh trong app.
+        if (!$callerIsAdmin && ($this->me['role_code'] ?? '') !== 'bdh') {
+            if ($classId !== null && !can_manage_class($this->me, $classId)) {
+                return ['ok' => false, 'error' => 'Bạn không quản lý lớp đã chọn.', 'code' => 403];
+            }
+            if ($classId === null && $blockId !== null && !can_manage_block($this->me, $blockId)) {
+                return ['ok' => false, 'error' => 'Bạn không quản lý khối đã chọn.', 'code' => 403];
+            }
         }
 
         $t = db_one('SELECT id FROM titles WHERE role_code=? AND label=?', [$role, $this->in('title')]);
@@ -105,51 +141,79 @@ class StaffService
             return ['ok' => false, 'error' => 'Số điện thoại này đã có tài khoản khác dùng.'];
         }
 
+        // A′ — KHÔNG ghi/xoá member_assignments ở đây. Kiêm nhiệm (thêm/bớt vị
+        // trí) do màn Khối & Lớp quản (org.php: setClassHead/setBlockHead) một
+        // cách non-destructive. saveMember chỉ quản DANH TÍNH + VAI GỐC.
         if ($old) {
-            // Cập nhật
-            db_run(
-                "UPDATE members SET holy_name=?, full_name=?, phone=?, role_code=?, title_id=?, block_id=?, class_id=? WHERE id=?",
-                [$holyName, $name, $phone, $role, $titleId, $blockId, $classId, $id]
-            );
+            // Đang kiêm nhiệm (có ≥1 phân công hiệu lực) thì vai gốc + block/class
+            // là giá trị DẪN XUẤT từ phân công (xem demoteMember) — không sửa
+            // ngược từ màn Nhân sự, chỉ cập nhật danh tính để không xoá kiêm nhiệm.
+            $hasAssignments = (int) db_one(
+                "SELECT COUNT(*) n FROM member_assignments WHERE member_id=? AND to_date IS NULL",
+                [$id]
+            )['n'] > 0;
 
-            if ($old['role_code'] !== $role) {
-                $this->updateAssignment($id, $role, $blockId, $classId);
+            if ($hasAssignments) {
+                // Không âm thầm nuốt thay đổi vai: nếu người dùng cố đổi vai gốc
+                // của người đang kiêm nhiệm ở màn Nhân sự, báo rõ để họ làm đúng
+                // chỗ (Khối & Lớp) thay vì tưởng đã lưu.
+                if ($old['role_code'] !== $role) {
+                    return ['ok' => false,
+                            'error' => 'Người này đã được phân công (kiêm nhiệm). '
+                                     . 'Đổi vai trò/chức vụ phải thực hiện ở màn Khối & Lớp '
+                                     . '(phân công), không đổi ở màn Nhân sự.',
+                            'code' => 409];
+                }
+                db_run(
+                    "UPDATE members SET holy_name=?, full_name=?, phone=?, title_id=? WHERE id=?",
+                    [$holyName, $name, $phone, $titleId, $id]
+                );
+            } else {
+                // Đơn vai (chưa có phân công): cho sửa cả vai gốc + vị trí hiển thị.
+                db_run(
+                    "UPDATE members SET holy_name=?, full_name=?, phone=?, role_code=?, title_id=?, block_id=?, class_id=? WHERE id=?",
+                    [$holyName, $name, $phone, $role, $titleId, $blockId, $classId, $id]
+                );
             }
 
             log_action('sua', 'staff', 'Sửa nhân sự: ' . $name, $role);
         } else {
-            // Tạo mới
-            $defaultPw = config('default_password') ?: 'tntt@2026';
-            db_insert(
-                "INSERT INTO members (holy_name, full_name, phone, password, role_code, title_id, block_id, class_id, status, created_at)
-                 VALUES (?,?,?,?,?,?,?,?,'chờ duyệt',NOW())",
-                [$holyName, $name, $phone, password_hash($defaultPw, PASSWORD_DEFAULT), $role, $titleId, $blockId, $classId]
-            );
-
-            $newId = db_one('SELECT LAST_INSERT_ID() id')['id'];
-            $this->createAssignment($newId, $role, $blockId, $classId);
+            // Tạo mới: chỉ tạo bản ghi members (trạng thái chờ duyệt). KHÔNG tạo
+            // assignment — phân lớp/khối làm sau ở màn Khối & Lớp.
+            $defaultPw = app_config('default_password') ?: 'tntt@2026';
+            $pwHash    = password_hash($defaultPw, PASSWORD_DEFAULT);
+            // Cấp mã GLV kế tiếp (giống luồng tự đăng ký ở auth.php). MAX+1 không
+            // nguyên tử nên hai lần tạo song song (kể cả cùng lúc với tự đăng ký)
+            // có thể trùng mã — members.code là UNIQUE. Thử lại vài lần với mã kế
+            // tiếp thay vì để lỗi trùng khoá làm hỏng cả yêu cầu (500).
+            $inserted = false;
+            for ($attempt = 0; $attempt < 5 && !$inserted; $attempt++) {
+                $max  = db_one("SELECT COALESCE(MAX(CAST(SUBSTRING(code,4) AS UNSIGNED)),0) n
+                                  FROM members WHERE code LIKE 'GLV%'");
+                $code = 'GLV' . str_pad((string) (((int) ($max['n'] ?? 0)) + 1), 3, '0', STR_PAD_LEFT);
+                try {
+                    db_insert(
+                        "INSERT INTO members (code, holy_name, full_name, phone, password_hash, role_code, title_id, block_id, class_id, status, created_at)
+                         VALUES (?,?,?,?,?,?,?,?,?,'chờ duyệt',NOW())",
+                        [$code, $holyName, $name, $phone, $pwHash, $role, $titleId, $blockId, $classId]
+                    );
+                    $inserted = true;
+                } catch (\PDOException $e) {
+                    // 23000 = vi phạm ràng buộc (khả năng trùng mã do đua). Nếu là
+                    // trùng SỐ ĐIỆN THOẠI thì đã chặn ở trên; còn lại thử mã mới.
+                    if ($e->getCode() !== '23000' || $attempt === 4) {
+                        return ['ok' => false,
+                                'error' => 'Không tạo được tài khoản (mã bị trùng do thao tác đồng thời), '
+                                         . 'vui lòng thử lại.', 'code' => 409];
+                    }
+                }
+            }
 
             log_action('tao', 'staff', 'Tạo nhân sự: ' . $name, $role);
         }
 
         Cache::flush();
         return ['ok' => true];
-    }
-
-    private function updateAssignment(int $memberId, string $role, ?int $blockId, ?int $classId): void
-    {
-        // Kết thúc phân công cũ
-        db_run("UPDATE member_assignments SET to_date = CURDATE() WHERE member_id = ? AND to_date IS NULL", [$memberId]);
-        // Tạo phân công mới
-        $this->createAssignment($memberId, $role, $blockId, $classId);
-    }
-
-    private function createAssignment(int $memberId, string $role, ?int $blockId, ?int $classId): void
-    {
-        db_insert(
-            "INSERT INTO member_assignments (member_id, role_code, block_id, class_id, from_date) VALUES (?,?,?,?,CURDATE())",
-            [$memberId, $role, $blockId, $classId]
-        );
     }
 
     /**
@@ -184,78 +248,8 @@ class StaffService
         return ['ok' => true];
     }
 
-    /**
-     * Duyệt tài khoản
-     */
-    public function approveMember(): array
-    {
-        $id = (int) ($this->in['id'] ?? 0);
-        if (!$id) {
-            return ['ok' => false, 'error' => 'Thiếu ID.'];
-        }
-
-        $m = db_one('SELECT id, full_name, status FROM members WHERE id=?', [$id]);
-        if (!$m) {
-            return ['ok' => false, 'error' => 'Không tìm thấy thành viên.', 'code' => 404];
-        }
-
-        if ($m['status'] !== 'chờ duyệt') {
-            return ['ok' => false, 'error' => 'Tài khoản không ở trạng thái chờ duyệt.'];
-        }
-
-        db_run("UPDATE members SET status='hoạt động' WHERE id=?", [$id]);
-        log_action('duyet', 'staff', 'Duyệt tài khoản: ' . $m['full_name'], '');
-        Cache::flush();
-
-        return ['ok' => true];
-    }
-
-    /**
-     * Từ chối tài khoản
-     */
-    public function rejectMember(): array
-    {
-        $id = (int) ($this->in['id'] ?? 0);
-        if (!$id) {
-            return ['ok' => false, 'error' => 'Thiếu ID.'];
-        }
-
-        $m = db_one('SELECT id, full_name, status FROM members WHERE id=?', [$id]);
-        if (!$m) {
-            return ['ok' => false, 'error' => 'Không tìm thấy thành viên.', 'code' => 404];
-        }
-
-        $reason = $this->in('reason');
-
-        db_run("UPDATE members SET status='từ chối' WHERE id=?", [$id]);
-        log_action('tuchoi', 'staff', 'Từ chối: ' . $m['full_name'], $reason ?: '');
-        Cache::flush();
-
-        return ['ok' => true];
-    }
-
-    /**
-     * Reset mật khẩu
-     */
-    public function resetPassword(): array
-    {
-        $id = (int) ($this->in['id'] ?? 0);
-        if (!$id) {
-            return ['ok' => false, 'error' => 'Thiếu ID.'];
-        }
-
-        $m = db_one('SELECT id, full_name FROM members WHERE id=?', [$id]);
-        if (!$m) {
-            return ['ok' => false, 'error' => 'Không tìm thấy thành viên.', 'code' => 404];
-        }
-
-        $defaultPw = config('default_password') ?: 'tntt@2026';
-        db_run('UPDATE members SET password=?, must_change_pw=1 WHERE id=?',
-               [password_hash($defaultPw, PASSWORD_DEFAULT), $id]);
-
-        log_action('reset_pw', 'staff', 'Reset mật khẩu: ' . $m['full_name'], 'Cấp lại mật khẩu mặc định');
-        Cache::flush();
-
-        return ['ok' => true, 'default_password' => $defaultPw];
-    }
+    // GHI CHÚ: approveMember / rejectMember / resetPassword trước đây trùng ở
+    // đây và trong org.php (bản inline). Bản inline của org.php mới là đường
+    // đang chạy (dùng đúng cột password_hash + ENUM status hợp lệ). Các bản
+    // trùng ở StaffService đã bị xoá để tránh nhầm lẫn và loại code sai.
 }

@@ -77,6 +77,13 @@ window.TNTT.org = {
         return ['admin', 'bdh'].includes(m.role);
     },
 
+    // A′: người ĐÃ có phân công (kiêm nhiệm) thì vai trò/chức vụ + lớp/khối do
+    // màn Khối & Lớp quản — khoá các ô đó ở màn Nhân sự để khớp với backend
+    // (StaffService trả 409 nếu cố đổi vai tại đây).
+    isRoleLockedByAssignment(m) {
+        return this.isEditingMember && !this.isProtectedMember(m) && !!m.hasAssignment;
+    },
+
     canEditMemberRole(m) {
         return this.canManageOrg && !this.isProtectedMember(m);
     },
