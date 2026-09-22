@@ -39,7 +39,13 @@ function bundle_v(array $files): int {   // ?v = mtime lớn nhất trong nhóm
 }
 // PRODUCTION: gom cả trang rồi xoá comment HTML cho gọn (trông chuyên
 // nghiệp khi mở F12). DEV giữ nguyên comment để dễ đọc lúc sửa.
-if (!$__dev) ob_start();
+// Bọc thêm lớp nén (brotli/gzip) BÊN NGOÀI: trang có window.TNTT_BOOT nội tuyến,
+// với Admin/BĐH khá nặng — nén để lần mở đầu (SW chưa cache) nhẹ như API JSON.
+if (!$__dev) {
+    require_once __DIR__ . '/assets/_nen.php';
+    tntt_nen_tinh();   // buffer nén (ngoài) — echo $__html cuối trang sẽ được nén
+    ob_start();        // buffer xoá comment (trong)
+}
 ?>
 <!DOCTYPE html>
 <html lang="vi">

@@ -6,6 +6,10 @@
 $manifest = require __DIR__ . '/../asset_manifest.php';
 $base = __DIR__ . '/';
 
+// Nén (brotli/gzip) TRƯỚC khi in — bắt được cả nhánh readfile bản min bên dưới.
+require_once __DIR__ . '/../_nen.php';
+tntt_nen_tinh();
+
 header('Content-Type: text/css; charset=utf-8');
 header('Cache-Control: public, max-age=31536000, immutable');
 

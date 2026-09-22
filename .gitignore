@@ -24,7 +24,11 @@ config/backup/
 # Cấu hình riêng máy chủ/máy nhà — KHÔNG lên git
 config/config.local.php
 
-# Bundle minified (tự build bằng npm run build; không track vì bundle.php
-# nối source nếu file này thiếu hoặc cũ)
-public/assets/js/bundle.min.js
-public/assets/js/login.min.js
+# Bundle minified: GIỜ ĐƯỢC TRACK và commit (giống bundle.min.css).
+# Lý do: deploy chỉ rsync (scripts/deploy.sh), KHÔNG chạy `npm run build`.
+# Trước đây hai tệp này bị ignore -> không bao giờ có trên host:
+#   - bundle.min.js  : bundle.php rơi về nối thô CHƯA minify (287KB thay vì ~143KB)
+#   - login.min.js   : layout_login.php nạp THẲNG (không fallback) -> nguy cơ 404
+# Commit tệp .min bảo đảm host luôn có bản minify. bundle.php vẫn tự bỏ qua bản
+# min nếu nó CŨ hơn nguồn (nối thô) nên min lỡ cũ cũng không phục vụ mã sai.
+# => Sau khi sửa JS: chạy `npm run build` rồi commit lại tệp .min.

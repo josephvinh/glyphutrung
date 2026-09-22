@@ -9,6 +9,10 @@
 $manifest = require __DIR__ . '/../asset_manifest.php';
 $base = __DIR__ . '/';
 
+// Nén (brotli/gzip) TRƯỚC khi in — bắt được cả nhánh readfile bản min bên dưới.
+require_once __DIR__ . '/../_nen.php';
+tntt_nen_tinh();
+
 $files = array_merge(
     [$base . 'modules/toast.js'],
     array_map(fn($m) => $base . 'modules/' . $m . '.js', $manifest['js_modules']),
