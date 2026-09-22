@@ -74,10 +74,6 @@
                     </div>
                     <div class="flex-1 min-w-0" style="max-width:100%;overflow:hidden">
                         <p class="text-sm font-bold text-slate-800 truncate" x-text="it.title"></p>
-                        <p class="text-micro text-slate-400 truncate">
-                            <span x-show="it.categoryName" x-text="it.categoryName + ' · '"></span>
-                            <span x-text="it.type==='article' ? 'Sổ tay' : (it.ext.toUpperCase() + ' · ' + libSizeLabel(it.sizeKb))"></span>
-                        </p>
                         <p class="text-xs text-slate-500 truncate mt-0.5" style="max-width:100%" x-show="it.type==='article' && it.body" x-text="it.body"></p>
                     </div>
                 </button>
