@@ -84,6 +84,12 @@ window.TNTT.org = {
         return this.isEditingMember && !this.isProtectedMember(m) && !!m.hasAssignment;
     },
 
+    // Ô "Vai trò" bị khóa khi: đang sửa admin/BĐH (bảo vệ) HOẶC người đã kiêm
+    // nhiệm. Gom về một chỗ để 3 nơi trong giao diện không phải lặp biểu thức.
+    roleFieldLocked(m) {
+        return (this.isEditingMember && this.isProtectedMember(m)) || this.isRoleLockedByAssignment(m);
+    },
+
     canEditMemberRole(m) {
         return this.canManageOrg && !this.isProtectedMember(m);
     },
@@ -461,8 +467,13 @@ window.TNTT.org = {
         const f = this.memberForm;
         if (!f.fullName.trim()) { alert('Vui lòng nhập họ và tên!'); return; }
         const scope = this.roleScope(f.role);
-        if (scope === 'khối' && !f.block) { alert('Vai trò Trưởng Khối cần chọn khối phụ trách!'); return; }
-        if (scope === 'lớp' && !f.className) { alert('Vai trò này cần chọn lớp phụ trách!'); return; }
+        // Người đã kiêm nhiệm: ô vai trò + lớp/khối bị khóa (chỉ sửa danh tính),
+        // nên KHÔNG đòi chọn lớp/khối — nếu đòi thì một GLV kiêm nhiệm không có
+        // lớp gốc sẽ không sửa nổi cả số điện thoại. Backend cũng bỏ qua tương ứng.
+        if (!this.isRoleLockedByAssignment(f)) {
+            if (scope === 'khối' && !f.block) { alert('Vai trò Trưởng Khối cần chọn khối phụ trách!'); return; }
+            if (scope === 'lớp' && !f.className) { alert('Vai trò này cần chọn lớp phụ trách!'); return; }
+        }
 
         f.holyName = f.holyName.trim();
         f.fullName = f.fullName.trim();

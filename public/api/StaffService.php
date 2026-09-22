@@ -69,6 +69,20 @@ class StaffService
             return ['ok' => false, 'error' => 'Không tìm thấy thành viên.', 'code' => 404];
         }
 
+        // Có phân công đang hiệu lực? (kiêm nhiệm). Dùng cho hai việc:
+        //  - Khi CHỈ sửa danh tính người đã có phân công (identityOnly) thì KHÔNG
+        //    bắt buộc chọn lại khối/lớp — vai gốc + block/class là giá trị dẫn
+        //    xuất từ phân công, quản ở màn Khối & Lớp. Nếu vẫn đòi, một GLV kiêm
+        //    nhiệm không có class_id gốc sẽ không sửa nổi cả số điện thoại.
+        //  - Chặn đổi vai gốc ở màn Nhân sự (xem nhánh cập nhật bên dưới).
+        $hasAssignments = $old
+            ? ((int) db_one(
+                "SELECT COUNT(*) n FROM member_assignments WHERE member_id=? AND to_date IS NULL",
+                [$id]
+              )['n'] > 0)
+            : false;
+        $identityOnly = $old && $hasAssignments;
+
         // Vai trò BĐH/Quản trị bị khóa: không cho HẠ vai người đang là admin/bdh.
         if ($old && $this->isProtected($old)) {
             $role = $old['role_code'];
@@ -101,22 +115,27 @@ class StaffService
         $blockId = null;
         $classId = null;
 
+        // Chỉ đòi chọn khối/lớp khi THỰC SỰ cần dùng (tạo mới / đổi vai đơn-vai).
+        // Khi chỉ sửa danh tính người đã kiêm nhiệm ($identityOnly) thì bỏ qua —
+        // block/class không được ghi ở nhánh đó nên không bắt buộc.
         if ($r['scope'] === 'khối') {
             $b = db_one('SELECT id FROM blocks WHERE name=?', [$this->in('block')]);
-            if (!$b) {
+            if ($b) {
+                $blockId = (int) $b['id'];
+            } elseif (!$identityOnly) {
                 return ['ok' => false, 'error' => 'Trưởng Khối cần chọn khối phụ trách.'];
             }
-            $blockId = (int) $b['id'];
         } elseif ($r['scope'] === 'lớp' && $role !== 'du_bi') {
             // Dự Bị là vai hỗ trợ, phân lớp làm SAU ở màn Khối & Lớp → không bắt
             // buộc chọn lớp lúc tạo/sửa nhân sự (giữ hành vi trước khi F6 đổi
             // scope du_bi từ '' sang 'lớp'; tránh regression).
             $c = db_one('SELECT c.id, c.block_id FROM classes c WHERE c.name=?', [$this->in('className')]);
-            if (!$c) {
+            if ($c) {
+                $classId = (int) $c['id'];
+                $blockId = (int) $c['block_id'];
+            } elseif (!$identityOnly) {
                 return ['ok' => false, 'error' => 'Vai trò này cần chọn lớp phụ trách.'];
             }
-            $classId = (int) $c['id'];
-            $blockId = (int) $c['block_id'];
         }
 
         // Phòng thủ theo chiều sâu (F6-review): người tạo/sửa KHÔNG phải toàn
@@ -148,11 +167,6 @@ class StaffService
             // Đang kiêm nhiệm (có ≥1 phân công hiệu lực) thì vai gốc + block/class
             // là giá trị DẪN XUẤT từ phân công (xem demoteMember) — không sửa
             // ngược từ màn Nhân sự, chỉ cập nhật danh tính để không xoá kiêm nhiệm.
-            $hasAssignments = (int) db_one(
-                "SELECT COUNT(*) n FROM member_assignments WHERE member_id=? AND to_date IS NULL",
-                [$id]
-            )['n'] > 0;
-
             if ($hasAssignments) {
                 // Không âm thầm nuốt thay đổi vai: nếu người dùng cố đổi vai gốc
                 // của người đang kiêm nhiệm ở màn Nhân sự, báo rõ để họ làm đúng
