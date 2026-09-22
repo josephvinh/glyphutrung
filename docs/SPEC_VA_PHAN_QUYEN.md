@@ -76,6 +76,7 @@ if ($sid) {
 - `admin`/`bdh` (`allowed_class_ids` = `null`) → `can_access_class` trả `true` cho mọi lớp: không đổi hành vi.
 - Em chưa ghi danh niên khoá hiện tại → chỉ kiểm lớp đích (tạo mới ghi danh hợp lệ).
 - Không đổi luồng tạo em mới (`isNew`) — mã do máy chủ cấp, không có em cũ.
+- **Tương thích kiêm nhiệm:** `can_access_class`/`allowed_class_ids` chạy trên `member_scopes()` = **mọi phân công đang hiệu lực**. Người giữ nhiều vị trí (VD Trưởng Khối khối 1 + Chủ nhiệm lớp 3A) tự động phủ cả hai phạm vi. Không cần xử lý riêng cho kiêm nhiệm.
 
 ### Tiêu chí nghiệm thu
 - GLV Chủ nhiệm lớp A gửi `save` với mã em thuộc lớp B → **403**, hồ sơ + enrollment của em không đổi.
@@ -87,9 +88,26 @@ if ($sid) {
 
 ## F2 + F4 — Hoàn thiện/khoá quản lý nhân sự (saveMember)
 
-Hai lựa chọn; **chọn một** và ghi rõ trong PR. Khuyến nghị **Phương án A** (khôi phục tính năng có kiểm soát) vì UI đang cần `saveMember`.
+### ⚠️ Điểm mấu chốt cho hệ có KIÊM NHIỆM
+Hệ thống hỗ trợ một người **giữ nhiều vị trí cùng lúc** qua bảng `member_assignments` (mỗi phân công một dòng, `to_date IS NULL`). Có **hai đường ghi** vào sơ đồ tổ chức, và chúng **không được giẫm chân nhau**:
 
-### Phương án A — Khôi phục `saveMember` an toàn (khuyến nghị)
+| Đường | File | Cách xử lý phân công | Kiêm nhiệm |
+|---|---|---|---|
+| **Khối & Lớp** | `org.php` `setClassHead`/`setBlockHead` | **Cộng thêm** phân công, giữ nguyên các phân công khác của người đó | ✅ Bảo toàn |
+| **Nhân sự** | `StaffService::saveMember` → `updateAssignment` | **Kết thúc SẠCH mọi phân công** rồi tạo đúng một | ❌ Phá kiêm nhiệm |
+
+`StaffService::updateAssignment()` hiện chạy:
+```php
+db_run("UPDATE member_assignments SET to_date=CURDATE() WHERE member_id=? AND to_date IS NULL", ...); // xoá hết
+$this->createAssignment(...); // còn một
+```
+→ Nếu BĐH chỉ sửa danh tính (SĐT/họ tên) của một người đang kiêm nhiệm qua màn Nhân sự, **toàn bộ vị trí khác của họ bị xoá phẳng**. Vì vậy **không dùng Phương án A nguyên bản** cho hệ có kiêm nhiệm.
+
+**→ Phù hợp nhất: Phương án A′** (bên dưới) — `saveMember` chỉ quản danh tính + vai gốc + mật khẩu, **không đụng** `member_assignments`; kiêm nhiệm giữ nguyên ở màn Khối & Lớp.
+
+Ba lựa chọn; **chọn một** và ghi rõ trong PR.
+
+### Phương án A — Khôi phục `saveMember` an toàn (chỉ hợp khi KHÔNG cần kiêm nhiệm qua màn Nhân sự)
 
 **File:** `public/api/StaffService.php`
 
@@ -140,17 +158,50 @@ case 'saveMember':
 
 6. **Dọn code chết:** `StaffService::approveMember/rejectMember` trùng với bản inline trong `org.php` (cases 96-142). Giữ **một** đường. Khuyến nghị giữ bản inline của `org.php` (đang dùng, đúng cột), xoá 2 method trùng khỏi `StaffService` để tránh nhầm; nếu giữ, phải sửa cột/ENUM như trên.
 
+### ✅ Phương án A′ — `saveMember` tách khỏi phân công (KHUYẾN NGHỊ cho hệ có kiêm nhiệm)
+
+Giống Phương án A về **whitelist vai (bước 1)** và **sửa cột/hàm/ENUM (bước 2–4)** và **nối case (bước 5)**, nhưng khác ở chỗ **không để `saveMember` ghi/xoá `member_assignments`**:
+
+1. **Bỏ lời gọi `updateAssignment()`/`createAssignment()` trong `saveMember`.** `saveMember` chỉ ghi các cột danh tính + vai gốc trên bảng `members`:
+
+```php
+// KHÔNG gọi updateAssignment/createAssignment ở đây nữa.
+// Phân công (kiêm nhiệm) do màn Khối & Lớp quản: setClassHead/setBlockHead.
+db_run("UPDATE members SET holy_name=?, full_name=?, phone=?, role_code=?, title_id=? WHERE id=?",
+        [$holyName, $name, $phone, $role, $titleId, $id]);
+```
+
+   - **Không** ghi đè `block_id`/`class_id` trên `members` khi người đó đang có kiêm nhiệm — các trường này chỉ là "vị trí hiển thị" suy ra từ phân công (xem `demoteMember()`), không phải nguồn thật.
+   - Với **tạo mới**: chỉ tạo bản ghi `members` (trạng thái `chờ duyệt`), **không** tạo assignment. Việc phân lớp/khối làm sau ở màn Khối & Lớp — đúng như luồng `approveMember` đã ghi chú (`org.php:103-106`).
+
+2. **Vai gốc (`members.role_code`) là dẫn xuất, không sửa ngược.** Khi cần đổi "vai gốc", để `setClassHead`/`setBlockHead` và `demoteMember()` (đã có) tự tính vai cao nhất từ các phân công đang hiệu lực. `saveMember` chỉ nên cho sửa `role_code` khi người đó **chưa có** phân công nào (tài khoản mới/đơn vai); nếu đã kiêm nhiệm, khoá trường vai ở UI và bỏ qua ở backend.
+
+3. **Ranh giới rõ ràng giữa 2 màn hình:**
+   - **Nhân sự (saveMember):** họ tên, danh xưng, SĐT, mật khẩu, vai gốc (khi đơn vai). → không đụng kiêm nhiệm.
+   - **Khối & Lớp (setClassHead/setBlockHead):** thêm/bớt vị trí, kiêm nhiệm. → đã non-destructive + đã kiểm `can_manage_*`.
+
+> Ưu điểm: sửa danh tính một người đang giữ nhiều vị trí **không còn xoá** các vị trí khác của họ. Đây là hành vi đúng cho mô hình kiêm nhiệm.
+
 ### Phương án B — Khoá cứng (nếu chưa muốn mở lại tính năng)
 - Giữ `org.php` không có `case 'saveMember'` (tiếp tục trả 404).
 - **Xoá** `StaffService::saveMember` và `resetPassword` (code chết, sai cột/hàm) để loại bỏ lỗ hổng ngủ F2.
 - Ghi chú TODO rõ ràng nếu định làm lại sau.
+- *Nhược điểm:* UI Nhân sự vẫn không tạo/sửa được thành viên.
 
-### Tiêu chí nghiệm thu (Phương án A)
-- bdh gọi `saveMember` với `role='admin'` hoặc `role='bdh'` → **403**.
-- admin gọi `saveMember` với `role='bdh'` → thành công.
-- bdh tạo/sửa nhân sự vai `glv`/`glv_chu_nhiem`/`truong_khoi`/`du_bi` → thành công, ghi đúng `password_hash`.
-- `resetPassword` đặt lại được mật khẩu (cột `password_hash`), buộc đổi lần sau (`must_change_pw=1`).
-- Sửa nhân sự từ UI (`views/module_staff.php` → `org.js:saveMember`) không còn 404.
+### So sánh nhanh
+| | A (nguyên bản) | **A′ (khuyến nghị)** | B (khoá) |
+|---|---|---|---|
+| Mở lại UI Nhân sự | ✅ | ✅ | ❌ |
+| Chống leo thang (F2) | ✅ whitelist | ✅ whitelist | ✅ (xoá code) |
+| Sửa cột/hàm/ENUM (F4) | ✅ | ✅ | — |
+| **Giữ kiêm nhiệm khi sửa danh tính** | ❌ xoá phẳng | ✅ không đụng phân công | n/a |
+
+### Tiêu chí nghiệm thu (Phương án A′)
+- bdh gọi `saveMember` với `role='admin'`/`'bdh'` → **403**; admin gọi với `role='bdh'` → thành công.
+- bdh sửa **danh tính** (SĐT) của một người đang giữ 2 vị trí (VD Trưởng Khối + Chủ nhiệm) → cập nhật danh tính thành công, **cả hai phân công vẫn còn** (`SELECT * FROM member_assignments WHERE member_id=? AND to_date IS NULL` vẫn 2 dòng).
+- Thêm/bớt vị trí chỉ thực hiện được qua màn Khối & Lớp; `saveMember` không tạo/xoá dòng `member_assignments`.
+- `resetPassword` đặt lại mật khẩu qua cột `password_hash`, `must_change_pw=1`.
+- Sửa nhân sự từ UI không còn 404.
 
 ---
 
