@@ -10,6 +10,12 @@
 
 Mỗi hạng mục dưới đây là một đơn vị triển khai độc lập, có thể làm/PR riêng.
 
+## ✅ Quyết định đã chốt (2026-09-22)
+- **F2/F4:** dùng **Phương án A′** — `saveMember` tách khỏi phân công, giữ kiêm nhiệm.
+- **F5:** giữ **`org.truong_khoi = edit`** (Trưởng Khối quản khối-lớp trong khối mình; đã bị `can_manage_*` giới hạn).
+- **F9:** thực hiện, làm **cùng** F2. Ghi chú: `settings.php` vốn đã admin-only toàn bộ (dòng 13-14) nên phần "gia cố endpoint sửa quyền" đã có sẵn — không cần thêm.
+- **Trạng thái:** đã triển khai trên nhánh `claude/member-permissions-review-a3h7bi`.
+
 ---
 
 ## F1 — Chặn IDOR sửa & chuyển hồ sơ thiếu nhi ngoài phạm vi

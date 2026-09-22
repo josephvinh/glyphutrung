@@ -24,9 +24,13 @@ function page_bootstrap(array $me): array
     $terms = $year ? db_all('SELECT id, name, start_date, end_date FROM terms
                               WHERE year_id = ? ORDER BY sort_order', [$year['id']]) : [];
 
+    // Ẩn vai Quản trị khỏi mọi người trừ chính admin (F9).
+    $hideAdmin = !can_see_admin($me);
+
     // Phân quyền gom theo module để giao diện tra cứu O(1)
     $perms = [];
     foreach (db_all('SELECT module_key, role_code, level FROM permissions') as $p) {
+        if ($hideAdmin && $p['role_code'] === 'admin') continue;
         $perms[$p['module_key']][$p['role_code']] = $p['level'];
     }
 
@@ -91,7 +95,10 @@ function page_bootstrap(array $me): array
         'roles' => array_map(fn($r) => [
             'value' => $r['code'], 'label' => $r['label'],
             'level' => (int) $r['level'], 'scope' => $r['scope'], 'desc' => $r['descr'],
-        ], db_all('SELECT code, label, level, scope, descr FROM roles ORDER BY level DESC')),
+        ], array_values(array_filter(
+            db_all('SELECT code, label, level, scope, descr FROM roles ORDER BY level DESC'),
+            fn($r) => !$hideAdmin || $r['code'] !== 'admin'   // ẩn vai admin (F9)
+        ))),
         'blocks'  => array_column(db_all('SELECT name FROM blocks ORDER BY sort_order'), 'name'),
         'classes' => array_map(fn($c) => [
             'id'        => (int) $c['id'],

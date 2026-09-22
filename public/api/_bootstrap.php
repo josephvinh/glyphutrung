@@ -92,7 +92,16 @@ function require_login(): array
     return $me;
 }
 
-/** Mức quyền của tài khoản hiện tại với một module: none | view | edit */
+/**
+ * Mức quyền của tài khoản hiện tại với một module: none | view | edit.
+ *
+ * ⚠️ CHỈ là CỔNG THEO MODULE — KHÔNG xét phạm vi lớp/khối. Hàm này lấy HỢP
+ * mức-quyền cao nhất của vai gốc + mọi vai kiêm nhiệm, bỏ qua scope. Vì vậy
+ * MỌI thao tác theo-đối-tượng (một em/một lớp/một khối cụ thể) BẮT BUỘC gọi
+ * thêm can_access_class() / can_manage_class() / can_manage_block() sau khi
+ * đã qua require_permission(). Bỏ bước kiểm phạm vi = leo thang chiều ngang
+ * (xem lỗi F1 trong docs/BAO_CAO_PHAN_QUYEN_THANH_VIEN.md).
+ */
 function permission_of(string $moduleKey): string
 {
     $me = current_member();

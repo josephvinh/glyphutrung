@@ -298,8 +298,10 @@ $members = array_map(fn($m) => [
        FROM members m
        LEFT JOIN titles  t ON t.id = m.title_id
        LEFT JOIN blocks  b ON b.id = m.block_id
-       LEFT JOIN classes c ON c.id = m.class_id
-      ORDER BY m.id'));
+       LEFT JOIN classes c ON c.id = m.class_id'
+    // Ẩn tài khoản Quản trị khỏi mọi người trừ chính admin (F9).
+    . (can_see_admin($me) ? '' : " WHERE m.role_code <> 'admin'")
+    . ' ORDER BY m.id'));
 
 // ---------------------------------------------------------------
 // Nhật ký — 50 dòng gần nhất (đủ xem, nhẹ bandwidth)
