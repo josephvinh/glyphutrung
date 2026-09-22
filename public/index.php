@@ -183,19 +183,24 @@ if (!$__dev) ob_start();
 
     </div>
 
-    <!-- ================= MODAL POPUP: XEM TÀI LIỆU THƯ VIỆN ================= -->
+    <!-- ================= MODAL POPUP: XEM TÀI LIỆU THƯ VIỆN =================
+         Bọc backdrop + thẻ popup trong MỘT scope Alpine (x-data). Trước đây
+         backdrop nằm ngoài mọi x-data nên Alpine không khởi tạo: nó luôn bị
+         display:none (không mờ nền) và @click đóng modal không chạy — nên bấm
+         ra ngoài không tắt được. Dùng x-data rỗng là đủ vì mọi thứ đọc qua
+         $store.libViewer và các hàm toàn cục (closeLibViewer, libSizeLabel). -->
+    <div x-data @keydown.escape.window="closeLibViewer()">
     <!-- Backdrop -->
     <div x-show="$store.libViewer.open"
          x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
          x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
          style="display:none" class="fixed inset-0 z-[300] bg-slate-900/60 backdrop-blur-sm cursor-pointer" @click="closeLibViewer()"></div>
 
-    <!-- Modal popup: giữa màn hình -->
-    <div x-data="tnttApp"
-         x-show="$store.libViewer.open"
+    <!-- Modal popup: giữa màn hình. Bấm ra vùng ngoài thẻ trắng cũng đóng. -->
+    <div x-show="$store.libViewer.open"
          x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
          x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
-         style="display:none" class="fixed inset-0 z-[301] flex items-center justify-center p-4">
+         style="display:none" class="fixed inset-0 z-[301] flex items-center justify-center p-4" @click="closeLibViewer()">
 
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90dvh] flex flex-col overflow-hidden" @click.stop>
 
@@ -250,6 +255,7 @@ if (!$__dev) ob_start();
             </div>
         </div>
     </div>
+    </div><!-- /x-data wrapper của modal thư viện -->
 
     <!-- JS: đăng ký Alpine store + function toàn cục cho click handlers -->
     <script>
