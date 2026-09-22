@@ -297,20 +297,86 @@ foreach ($rows as [$role,$lv]) {
 
 ---
 
+## F9 — Ẩn vai/tài khoản `admin` khỏi toàn bộ web (trừ chính admin)
+
+### Bối cảnh
+Payload gửi cho giao diện đang phát role/tài khoản `admin` cho **mọi** người đăng nhập ở 3 nơi. Ẩn bằng CSS/JS vô nghĩa (dữ liệu vẫn nằm trong JSON) → phải **lọc ở tầng máy chủ**, gate theo `$me['role_code'] !== 'admin'`.
+
+| # | Nơi lộ | Vị trí | Nội dung |
+|---|---|---|---|
+| 1 | Danh sách nhân sự | `data.php:296-302` | `SELECT ... FROM members` không lọc |
+| 2 | Danh sách vai trò | `_bootstrap_page.php:91-94` | `SELECT ... FROM roles` |
+| 3 | Ma trận phân quyền | `_bootstrap_page.php:29` | `SELECT ... FROM permissions` |
+
+### ⚠️ Đây là "che giấu" (obscurity), KHÔNG phải kiểm soát truy cập
+Ẩn admin khỏi UI **không** tự nó chặn leo thang. Lá chắn thật là **F2** (whitelist gán vai) + kiểm quyền backend. Làm F9 **cùng** F2, đồng thời gia cố endpoint sửa quyền (bước 4).
+
+### Thay đổi
+
+**File:** `public/api/_common.php` — helper dùng chung:
+```php
+/** Chỉ admin mới được thấy vai/tài khoản admin. */
+function can_see_admin(?array $me): bool {
+    return ($me['role_code'] ?? '') === 'admin';
+}
+```
+
+1. **`data.php`** — lọc members:
+```php
+$memberWhere = can_see_admin($me) ? '' : "WHERE m.role_code <> 'admin'";
+// chèn $memberWhere vào truy vấn SELECT ... FROM members m LEFT JOIN ... trước ORDER BY m.id
+```
+
+2. **`_bootstrap_page.php`** — lọc `permissions` (dòng 29) và `roles` (dòng 91-94):
+```php
+$hideAdmin = !can_see_admin($me);
+foreach (db_all('SELECT module_key, role_code, level FROM permissions') as $p) {
+    if ($hideAdmin && $p['role_code'] === 'admin') continue;
+    $perms[$p['module_key']][$p['role_code']] = $p['level'];
+}
+// roles:
+$rolesRows = db_all('SELECT code,label,level,scope,descr FROM roles ORDER BY level DESC');
+if ($hideAdmin) $rolesRows = array_values(array_filter($rolesRows, fn($r) => $r['code'] !== 'admin'));
+```
+
+3. **(Tuỳ chọn) Nhật ký** `data.php:317`: ẩn dòng log do admin tạo khi người xem không phải admin (join `activity_logs.actor_id` → `members.role_code`). Cân nhắc vì log lưu `actor_name`, không lưu role.
+
+4. **Gia cố `settings.php?action=permission`** (bắt buộc đi kèm): từ chối mọi thao tác đổi quyền có `role_code='admin'` trừ khi người gọi là admin — chặn "mò" API dù UI đã ẩn.
+```php
+if ($role === 'admin' && ($me['role_code'] ?? '') !== 'admin') {
+    json_fail('Không được thay đổi quyền của vai Quản trị.', 403);
+}
+```
+
+### Ràng buộc / edge case
+- Khi người đăng nhập **là** admin: mọi filter tắt → thấy đầy đủ (không hồi quy).
+- BĐH quản nhân sự sẽ **không còn thấy** tài khoản admin — đây là đổi hành vi sản phẩm, xác nhận trước khi làm.
+- Nếu sau này có nhiều vai cần ẩn, mở rộng `can_see_admin` thành danh sách `HIDDEN_ROLES` + helper `visible_role_filter()`.
+
+### Tiêu chí nghiệm thu
+- GLV/BĐH gọi `data.php` → payload `members` **không** chứa bản ghi `role='admin'`.
+- GLV/BĐH boot trang → `roles` không có mục `admin`, `permissions` không có hàng `admin`.
+- admin đăng nhập → thấy đủ admin ở cả 3 nơi.
+- Non-admin POST `settings.php?action=permission` với `roleCode=admin` → **403**.
+
+---
+
 ## Thứ tự triển khai đề xuất
 
 1. **F1** (rủi ro cao nhất, ảnh hưởng PII trẻ em) — độc lập, vá ngay.
-2. **F2 + F4** (làm chung: khôi phục saveMember có whitelist + sửa cột/hàm/ENUM).
-3. **F8** (xoá file lộ — nhanh, nên kèm F5).
-4. **F5** (chốt chủ đích quyền org Trưởng Khối + đồng bộ migration).
-5. **F6, F7** (migration dữ liệu nhỏ, ít rủi ro).
-6. **F3** (docblock + audit — chốt sổ, phòng tái diễn).
+2. **F2 + F4** (làm chung: khôi phục saveMember có whitelist + sửa cột/hàm/ENUM). Ưu tiên **Phương án A′** nếu cần giữ kiêm nhiệm.
+3. **F9** (ẩn admin — làm **cùng** F2; kèm gia cố `settings.php`).
+4. **F8** (xoá file lộ — nhanh, nên kèm F5).
+5. **F5** (chốt chủ đích quyền org Trưởng Khối + đồng bộ migration).
+6. **F6, F7** (migration dữ liệu nhỏ, ít rủi ro).
+7. **F3** (docblock + audit — chốt sổ, phòng tái diễn).
 
 ## Kiểm thử tổng thể
 - Bổ sung test PHPUnit (dự án có `phpunit.xml`, `tests/`) cho:
   - `can_access_class` với các tổ hợp scope (toàn đoàn / khối / lớp) và mức quyền.
   - Ca F1: sửa em ngoài phạm vi bị chặn.
   - Ca F2: bdh không gán được vai admin/bdh.
+  - Ca F9: payload `data.php`/boot của non-admin không lộ vai/tài khoản admin.
 - Chạy toàn bộ test hiện có trước khi push; không được đỏ.
 - Với mỗi migration: chạy hai lần liên tiếp để xác nhận idempotent.
 
