@@ -121,4 +121,50 @@ class PermissionHardeningTest extends TestCase
                    [$old['level']]);
         }
     }
+
+    // -------------------------------------------------- Finding 4 (A′, DB)
+    /** @group db */
+    public function test_role_change_on_kiem_nhiem_member_is_blocked(): void
+    {
+        require_once __DIR__ . '/../../public/api/_bootstrap.php';
+        $this->fakePost();
+
+        $adminId = (int) db_one("SELECT id FROM members WHERE role_code='admin' LIMIT 1")['id'];
+        $classA  = db_one("SELECT id, block_id FROM classes WHERE block_id IS NOT NULL LIMIT 1");
+        if (!$classA) $this->markTestSkipped('Cần ít nhất 1 lớp.');
+
+        $phone = '09' . random_int(10000000, 99999999);
+        $mid = db_insert(
+            "INSERT INTO members (code, full_name, phone, password_hash, role_code)
+             VALUES ('F4_TEST', 'F4 Test', ?, ?, 'glv')",
+            [$phone, password_hash('x', PASSWORD_DEFAULT)]
+        );
+        // Người này đang kiêm nhiệm (có 1 phân công hiệu lực)
+        db_run(
+            "INSERT INTO member_assignments (member_id, role_code, class_id, is_primary, from_date, assigned_by)
+             VALUES (?, 'glv', ?, 1, CURDATE(), ?)",
+            [$mid, $classA['id'], $adminId]
+        );
+
+        // Admin cố ĐỔI VAI qua màn Nhân sự → phải bị chặn 409 (không âm thầm no-op)
+        $svc = new StaffService(['id' => $adminId, 'role_code' => 'admin'], 1, [
+            'id' => $mid, 'fullName' => 'F4 Test', 'phone' => $phone, 'role' => 'glv_chu_nhiem',
+        ]);
+        $r = $svc->saveMember();
+        $this->assertFalse($r['ok']);
+        $this->assertSame(409, $r['code'] ?? 0);
+
+        // Nhưng chỉ sửa DANH TÍNH (giữ nguyên vai) thì được
+        $svc2 = new StaffService(['id' => $adminId, 'role_code' => 'admin'], 1, [
+            'id' => $mid, 'fullName' => 'F4 Test Đổi Tên', 'phone' => $phone, 'role' => 'glv',
+        ]);
+        $r2 = $svc2->saveMember();
+        $this->assertTrue($r2['ok']);
+        // Phân công vẫn còn (kiêm nhiệm không bị xoá)
+        $n = (int) db_one("SELECT COUNT(*) n FROM member_assignments WHERE member_id=? AND to_date IS NULL", [$mid])['n'];
+        $this->assertSame(1, $n, 'saveMember không được xoá phân công (giữ kiêm nhiệm)');
+
+        db_run("DELETE FROM member_assignments WHERE member_id=?", [$mid]);
+        db_run("DELETE FROM members WHERE id=?", [$mid]);
+    }
 }

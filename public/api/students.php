@@ -144,16 +144,20 @@ switch ($action) {
         }
 
         $existing = db_one('SELECT id FROM students WHERE code = ?', [$s['code']]);
-        // Chống IDOR: nếu em ĐÃ có lớp trong niên khoá này, người dùng phải phủ
-        // được lớp NGUỒN đó mới được sửa/chuyển. Chỉ kiểm lớp đích là chưa đủ —
+        // Chống IDOR: sửa một em ĐÃ TỒN TẠI (không phải thêm mới) thì người phạm
+        // vi hẹp phải phủ được lớp NGUỒN của em. Chỉ kiểm lớp đích là chưa đủ —
         // nếu không, người phụ trách lớp A có thể "bắt" em bất kỳ (mã tuần tự dễ
-        // đoán) sang lớp mình và ghi đè hồ sơ.
-        if ($existing) {
+        // đoán) sang lớp mình và ghi đè hồ sơ. FAIL-CLOSED: em chưa ghi danh
+        // niên khoá này (curClass = null) → người phạm vi hẹp cũng KHÔNG chứng
+        // minh được mình phụ trách, nên từ chối; chỉ toàn đoàn (admin/BĐH) mới
+        // re-enroll/sửa được. Người tạo em MỚI dùng isNew → mã do máy chủ cấp,
+        // $existing = null nên không vướng nhánh này.
+        if ($existing && $chophep !== null) {   // $chophep null = toàn đoàn
             $curClass = current_enrollment_class((int) $existing['id'], $yid);
-            if ($curClass !== null
-                && !can_access_class($me, 'students', $curClass, 'edit')) {
-                json_fail('Em này thuộc lớp bạn không phụ trách. '
-                        . 'Bạn không thể sửa hồ sơ hoặc chuyển em sang lớp khác.', 403);
+            if ($curClass === null || !can_access_class($me, 'students', $curClass, 'edit')) {
+                json_fail('Em này không thuộc lớp bạn phụ trách (hoặc chưa ghi danh '
+                        . 'niên khoá hiện tại). Bạn không thể sửa hồ sơ hay chuyển em. '
+                        . 'Vui lòng liên hệ Ban Điều Hành để xếp lớp.', 403);
             }
         }
 
@@ -196,16 +200,19 @@ switch ($action) {
         // Chỉ lấy mã học sinh ĐÃ CÓ trong CSDL để phân biệt thêm mới / cập nhật.
         // KHÔNG lấy toàn bộ học sinh — chỉ cần code → id, và chỉ cần từ niên khoá
         // hiện tại (vì mã số gắn với năm nhập học).
+        // LEFT JOIN (không phải JOIN): phải bắt được CẢ em đã tồn tại nhưng CHƯA
+        // ghi danh niên khoá này — nếu không, em đó bị coi như "mới", và
+        // INSERT ... ON DUPLICATE KEY UPDATE (mã là UNIQUE) sẽ ghi đè hồ sơ của
+        // em ngoài phạm vi. class_id = null nghĩa là chưa ghi danh năm nay.
         $existingCodes = [];
-        $existingClass = [];   // code → class_id hiện tại (để kiểm phạm vi lớp NGUỒN)
+        $existingClass = [];   // code → class_id hiện tại (null = chưa ghi danh năm nay)
         foreach (db_all(
             "SELECT s.code, s.id, e.class_id FROM students s
-               JOIN enrollments e ON e.student_id = s.id
-              WHERE e.year_id = ?",
+               LEFT JOIN enrollments e ON e.student_id = s.id AND e.year_id = ?",
             [$yid]
         ) as $r) {
             $existingCodes[$r['code']] = (int) $r['id'];
-            $existingClass[$r['code']] = (int) $r['class_id'];
+            $existingClass[$r['code']] = $r['class_id'] !== null ? (int) $r['class_id'] : null;
         }
 
         $year2 = year_two_digit($year);
@@ -244,15 +251,18 @@ switch ($action) {
 
             $sid = $existingCodes[$s['code']] ?? null;
 
-            // Chống IDOR (như action save): em ĐÃ có lớp nguồn thì người nhập
-            // phải phủ được lớp đó mới được cập nhật/chuyển. Chặn việc "kéo" em
-            // ngoài phạm vi vào lớp mình qua file nhập.
-            if ($sid && isset($existingClass[$s['code']])
-                && !can_access_class($me, 'students', $existingClass[$s['code']], 'edit')) {
-                $skipped++;
-                $errors[] = 'Dòng ' . ($i + 2) . ': em "' . $s['code']
-                          . '" thuộc lớp bạn không phụ trách, đã bỏ qua';
-                continue;
+            // Chống IDOR (như action save): với em ĐÃ TỒN TẠI, người phạm vi hẹp
+            // ($chophep !== null) phải phủ được lớp NGUỒN mới được cập nhật/chuyển.
+            // FAIL-CLOSED: chưa ghi danh năm nay (curClass = null) cũng bị bỏ qua
+            // cho người phạm vi hẹp — chỉ toàn đoàn mới re-enroll qua file.
+            if ($sid && $chophep !== null) {
+                $curClass = $existingClass[$s['code']] ?? null;
+                if ($curClass === null || !can_access_class($me, 'students', $curClass, 'edit')) {
+                    $skipped++;
+                    $errors[] = 'Dòng ' . ($i + 2) . ': em "' . $s['code']
+                              . '" không thuộc lớp bạn phụ trách (hoặc chưa ghi danh năm nay), đã bỏ qua';
+                    continue;
+                }
             }
 
             $upsert_students[] = '(?,?,?,?,?,?,?,?,?,?,?)';
