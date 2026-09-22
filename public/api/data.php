@@ -116,6 +116,42 @@ $programs = array_map(fn($p) => [
 ], db_all('SELECT * FROM programs WHERE year_id = ? ORDER BY start_time', [$yid]));
 
 // ---------------------------------------------------------------
+// Thời khóa biểu lớp (Hướng B) — lịch sinh hoạt riêng của từng lớp
+// Chỉ gửi lịch trong phạm vi người này được xem.
+// ---------------------------------------------------------------
+$classSchedules = [];
+if (db_one("SHOW TABLES LIKE 'class_schedules'")) {   // phòng khi bảng chưa tạo
+    $csScopeIds = allowed_class_ids($me);
+    $csSql      = 'SELECT cs.*, c.name AS class_name, p.name AS program_name
+                    FROM class_schedules cs
+                    JOIN classes c ON c.id = cs.class_id
+                    LEFT JOIN programs p ON p.id = cs.program_id
+                   WHERE cs.year_id = ? AND cs.status = "kích hoạt"';
+    $csParams   = [$yid];
+
+    if ($csScopeIds !== null) {
+        $csSql .= ' AND cs.class_id IN (' . implode(',', array_fill(0, count($csScopeIds), '?')) . ')';
+        $csParams = array_merge($csParams, $csScopeIds);
+    }
+
+    $csSql .= ' ORDER BY c.sort_order, cs.day_of_week, cs.start_time';
+
+    $classSchedules = array_map(fn($r) => [
+        'id'          => (int) $r['id'],
+        'classId'     => (int) $r['class_id'],
+        'className'   => $r['class_name'],
+        'programId'   => $r['program_id'] !== null ? (int) $r['program_id'] : null,
+        'programName' => $r['program_name'] ?? '',
+        'dayOfWeek'   => (int) $r['day_of_week'],
+        'startTime'   => substr($r['start_time'], 0, 5),
+        'cutoffTime'  => !empty($r['cutoff_time']) ? substr($r['cutoff_time'], 0, 5) : null,
+        'slot'        => $r['slot'],
+        'activeFrom'  => $r['active_from'] ?? '',
+        'activeTo'    => $r['active_to'] ?? '',
+    ], db_all($csSql, $csParams));
+}
+
+// ---------------------------------------------------------------
 // Điểm danh — chỉ các em CÓ TỚI.
 // GIỚI HẠN theo phạm vi: chỉ gửi điểm danh của các em người này được xem.
 // Admin/BĐH (phạm vi null) vẫn nhận toàn đoàn (họ cần thống kê cả đoàn);
@@ -350,6 +386,7 @@ $result = [
     'students'      => $students,
     'classCounts'   => $classCounts,
     'programs'      => $programs,
+    'classSchedules' => $classSchedules,
     'attendances'   => $attendances,
     'leaveRequests' => $leaves,
     'scores'        => $scores,
