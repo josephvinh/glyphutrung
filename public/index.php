@@ -247,12 +247,6 @@ if (!$__dev) ob_start();
                     </a>
                 </div>
             </div>
-
-            <!-- Footer info -->
-            <div class="px-4 py-2 border-t border-slate-100 shrink-0 text-xs text-slate-400 flex justify-between">
-                <span x-text="($store.libViewer.item || {}).uploaderName || ''"></span>
-                <span x-text="($store.libViewer.item || {}).createdAt || ''"></span>
-            </div>
         </div>
     </div>
     </div><!-- /x-data wrapper của modal thư viện -->
