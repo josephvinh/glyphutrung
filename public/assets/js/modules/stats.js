@@ -13,14 +13,9 @@ window.TNTT.stats = {
     // ==========================================
     statMonth: '',
 
-    // HƯỚNG B: Cache ngoại lệ lịch (scheduleId -> exceptions[])
-    // Được cập nhật khi schedules module lưu exception
-    _scheduleExceptions: {},
-
-    // Đồng bộ ngoại lệ từ schedules module
-    get scheduleExceptions() {
-        return window.TNTT.schedules?.scheduleExceptions || this._scheduleExceptions;
-    },
+    // HƯỚNG B: ngoại lệ lịch (scheduleId -> exceptions[]) dùng chung một
+    // property phản ứng do module schedules khai báo, được loadData nạp sẵn
+    // từ data.php (không còn getter đọc singleton — tránh mất tính reactive).
 
     openStats(khongDoiMan = false) {
         if (!this.statMonth) this.statMonth = this.toDateInput(new Date()).slice(0, 7);

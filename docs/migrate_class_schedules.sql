@@ -52,6 +52,37 @@ ALTER TABLE attendances
     ADD INDEX idx_att_sched (schedule_id, session_date);
 
 -- ---------------------------------------------------------------------
+-- 2b. Cho phép điểm danh buổi theo LỊCH LỚP không gắn program
+--     (slot "giáo lý mặc định": class_schedules.program_id = NULL).
+--     Trước đây program_id là NOT NULL nên các buổi này không ghi được.
+-- ---------------------------------------------------------------------
+ALTER TABLE attendances
+    MODIFY COLUMN program_id INT DEFAULT NULL COMMENT 'NULL khi buổi chỉ gắn với schedule (giáo lý mặc định)';
+
+-- ---------------------------------------------------------------------
+-- 2c. Đổi khoá duy nhất để một EM có thể được điểm danh ở NHIỀU slot
+--     trong cùng một ngày (VD lớp học 2 ca, hoặc buổi lễ + buổi giáo lý).
+--
+--     Khoá cũ uq_att(program_id, session_date, student_id) không phân biệt
+--     slot -> hai buổi cùng program trong ngày đè nhau. Khoá mới dựa trên
+--     "khoá buổi" = s<schedule_id> nếu theo lịch lớp, ngược lại p<program_id>.
+--     Nhờ vậy: buổi theo lịch khác nhau -> khoá khác nhau; buổi program cũ
+--     vẫn chống trùng như trước (quét QR dùng INSERT IGNORE).
+-- ---------------------------------------------------------------------
+ALTER TABLE attendances DROP INDEX uq_att;
+
+ALTER TABLE attendances
+    ADD COLUMN session_key VARCHAR(24)
+        GENERATED ALWAYS AS (
+            IF(schedule_id IS NOT NULL, CONCAT('s', schedule_id), CONCAT('p', program_id))
+        ) STORED
+        COMMENT 'Khoá buổi: s<schedule_id> theo lịch lớp, ngược lại p<program_id>';
+
+ALTER TABLE attendances
+    ADD UNIQUE KEY uq_att_session (session_key, session_date, student_id)
+    COMMENT 'Chống điểm danh trùng: mỗi em một lần cho mỗi buổi/ngày';
+
+-- ---------------------------------------------------------------------
 -- 3. Seed dữ liệu mẫu (tùy chọn — xóa hoặc điều chỉnh theo thực tế)
 --
 -- Giả sử: year_id = 1 (lấy từ niên khoá hiện tại),

@@ -67,10 +67,20 @@ window.TNTT.calendar = {
             // HƯỚNG B: Ưu tiên lịch lớp nếu có, không thì dùng programs
             const events = [];
 
-            // 1) Chương trình bắt buộc (cách cũ - toàn đoàn)
+            // Lịch lớp áp dụng cho ngày này (để tránh vẽ TRÙNG với program toàn
+            // đoàn mà nó bắt nguồn): thu các programId đã được lịch lớp phủ.
+            const daySchedules = this.calendarSchedules.filter(cs => {
+                if (cs.dayOfWeek !== dow) return false;
+                if (cs.activeFrom && dateStr < cs.activeFrom) return false;
+                if (cs.activeTo && dateStr > cs.activeTo) return false;
+                return true;
+            });
+            const coveredProgramIds = new Set(daySchedules.map(cs => cs.programId).filter(Boolean));
+
+            // 1) Chương trình bắt buộc (cách cũ - toàn đoàn), bỏ cái đã có lịch lớp phủ
             this.programs.filter(p => {
                 if (p.status !== 'kích hoạt') return false;
-                if (p.type === 'bắt buộc') return p.dayOfWeek === dow;
+                if (p.type === 'bắt buộc') return p.dayOfWeek === dow && !coveredProgramIds.has(p.id);
                 return false;
             }).forEach(p => {
                 events.push({
@@ -99,13 +109,8 @@ window.TNTT.calendar = {
                 });
             });
 
-            // 3) HƯỚNG B: Lịch lớp riêng (classSchedules)
-            this.calendarSchedules.filter(cs => {
-                if (cs.dayOfWeek !== dow) return false;
-                if (cs.activeFrom && dateStr < cs.activeFrom) return false;
-                if (cs.activeTo && dateStr > cs.activeTo) return false;
-                return true;
-            }).forEach(cs => {
+            // 3) HƯỚNG B: Lịch lớp riêng (classSchedules) — đã lọc ở daySchedules
+            daySchedules.forEach(cs => {
                 // Gộp nếu cùng giờ và program, hoặc hiện cả hai
                 events.push({
                     id: cs.id,
