@@ -72,7 +72,8 @@ window.TNTT.promotion = {
         const sessions = this.sessionsBetween(from, to).filter(s => s.countForAttendance);
 
         sessions.forEach(ss => {
-            const key = st => ss.programId + '|' + ss.date + '|' + st.id;
+            // HƯỚNG B: Dùng attKey hỗ trợ scheduleId
+            const key = st => this.attKey({ programId: ss.programId, scheduleId: ss.scheduleId, date: ss.date, studentId: st.id });
             const taken = students.some(st => idx.att.has(key(st)) || idx.leave.has(key(st)));
             if (!taken) return;
             students.forEach(st => {

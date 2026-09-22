@@ -163,14 +163,24 @@ window.TNTT.attendance = {
     },
 
     // ---- Index điểm danh (O(1)) ----
-    attKey(programId, date, studentId) { return programId + '|' + date + '|' + studentId; },
+    // HƯỚNG B: attKey hỗ trợ cả programId và scheduleId
+    attKey(session) {
+        if (session.scheduleId) {
+            return 's:' + session.scheduleId + '|' + session.date + '|' + session.studentId;
+        }
+        return session.programId + '|' + session.date + '|' + session.studentId;
+    },
 
     // Dựng lại toàn bộ index từ this.attendances. Gọi sau loadData.
     rebuildAttendanceIndex() {
         const idx = new Map();
         const byStu = new Map();
         for (const a of this.attendances) {
-            idx.set(this.attKey(a.programId, a.date, a.studentId), a);
+            // HƯỚNG B: Index bằng cả programId và scheduleId
+            idx.set(this.attKey({ programId: a.programId, date: a.date, studentId: a.studentId, scheduleId: a.scheduleId }), a);
+            if (a.scheduleId) {
+                idx.set(this.attKey({ programId: a.programId, date: a.date, studentId: a.studentId }), a);
+            }
             let arr = byStu.get(a.studentId);
             if (!arr) { arr = []; byStu.set(a.studentId, arr); }
             arr.push(a);
@@ -182,16 +192,28 @@ window.TNTT.attendance = {
     // Thêm/xoá 1 bản ghi: cập nhật CẢ mảng lẫn index để không lệch.
     _attThem(rec) {
         this.attendances.push(rec);
-        if (this.attIndex) this.attIndex.set(this.attKey(rec.programId, rec.date, rec.studentId), rec);
+        // HƯỚNG B: Index với scheduleId nếu có
+        if (this.attIndex) {
+            this.attIndex.set(this.attKey({ programId: rec.programId, date: rec.date, studentId: rec.studentId, scheduleId: rec.scheduleId }), rec);
+            if (rec.scheduleId) {
+                this.attIndex.set(this.attKey({ programId: rec.programId, date: rec.date, studentId: rec.studentId }), rec);
+            }
+        }
         if (this.attByStudent) {
             let arr = this.attByStudent.get(rec.studentId);
             if (!arr) { arr = []; this.attByStudent.set(rec.studentId, arr); }
             arr.push(rec);
         }
     },
-    _attXoa(programId, date, studentId) {
-        const key = this.attKey(programId, date, studentId);
-        const rec = this.attIndex ? this.attIndex.get(key) : null;
+    _attXoa(programId, date, studentId, scheduleId = null) {
+        // HƯỚNG B: Thử với scheduleId trước
+        let key = this.attKey({ programId, date, studentId, scheduleId });
+        let rec = this.attIndex ? this.attIndex.get(key) : null;
+        if (!rec && scheduleId) {
+            // Thử không có scheduleId (backward compatible)
+            key = this.attKey({ programId, date, studentId });
+            rec = this.attIndex ? this.attIndex.get(key) : null;
+        }
         const i = this.attendances.findIndex(a => a.programId === programId && a.date === date && a.studentId === studentId);
         if (i !== -1) this.attendances.splice(i, 1);
         if (this.attIndex) this.attIndex.delete(key);
@@ -209,7 +231,14 @@ window.TNTT.attendance = {
     attendanceRecord(studentId, session) {
         const ss = session || this.activeSession;
         if (!ss) return null;
-        if (this.attIndex) return this.attIndex.get(this.attKey(ss.programId, ss.date, studentId)) || null;
+        // HƯỚNG B: Ưu tiên tìm với scheduleId
+        if (this.attIndex) {
+            if (ss.scheduleId) {
+                let rec = this.attIndex.get(this.attKey({ programId: ss.programId, date: ss.date, studentId, scheduleId: ss.scheduleId }));
+                if (rec) return rec;
+            }
+            return this.attIndex.get(this.attKey({ programId: ss.programId, date: ss.date, studentId })) || null;
+        }
         return this.attendances.find(a => a.programId === ss.programId && a.date === ss.date && a.studentId === studentId) || null;
     },
 
@@ -250,7 +279,7 @@ window.TNTT.attendance = {
         const cu = this.attendanceRecord(student.id, this.activeSession);
 
         if (cu) {
-            this._attXoa(this.activeSession.programId, this.activeSession.date, student.id);
+            this._attXoa(this.activeSession.programId, this.activeSession.date, student.id, this.activeSession.scheduleId);
             if (this.isPastCutoff) {
                 this.logAction('diemdanh', 'attendance', 'Gỡ điểm danh của ' + student.name,
                                this.sessionProgram.name + ' · ' + this.formatDate(this.activeSession.date) + ' · đang là ' + cu.status);
@@ -292,10 +321,10 @@ window.TNTT.attendance = {
             studentId: student.id
         }).then(r => {
             if (!r || !r.ok) {
-                this._attXoa(this.activeSession.programId, this.activeSession.date, student.id);
+                this._attXoa(this.activeSession.programId, this.activeSession.date, student.id, this.activeSession.scheduleId);
             } else if (r.status) {
                 // Cập nhật lại chính xác trạng thái từ server (tránh đồng hồ client lệch)
-                this._attXoa(this.activeSession.programId, this.activeSession.date, student.id);
+                this._attXoa(this.activeSession.programId, this.activeSession.date, student.id, this.activeSession.scheduleId);
                 newRec.status = r.status;
                 newRec.markedAt = r.markedAt;
                 newRec.markedBy = r.markedBy;
