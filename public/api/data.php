@@ -351,11 +351,11 @@ $members = array_map(fn($m) => [
     // Đã có phân công đang hiệu lực chưa (kiêm nhiệm) — giao diện dùng để KHOÁ
     // ô vai trò ở màn Nhân sự: vai/chức vụ + lớp/khối của người có phân công do
     // màn Khối & Lớp quản (backend trả 409 nếu đổi ở đây). Xem StaffService A′.
-    'hasAssignment' => ((int) ($m['assignment_count'] ?? 0)) > 0,
+    'hasAssignment' => !empty($m['has_assignment']),
 ], db_all(
     'SELECT m.*, t.label AS title_label, b.name AS block_name, c.name AS class_name,
-            (SELECT COUNT(*) FROM member_assignments a
-              WHERE a.member_id = m.id AND a.to_date IS NULL) AS assignment_count
+            EXISTS(SELECT 1 FROM member_assignments a
+                    WHERE a.member_id = m.id AND a.to_date IS NULL) AS has_assignment
        FROM members m
        LEFT JOIN titles  t ON t.id = m.title_id
        LEFT JOIN blocks  b ON b.id = m.block_id

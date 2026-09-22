@@ -228,12 +228,12 @@
             <div class="border-t border-slate-100 pt-4">
                 <div class="flex items-center justify-between mb-1">
                     <label class="block text-micro font-bold text-slate-500 uppercase">Vai trò (quyền hệ thống)</label>
-                    <span x-show="(isEditingMember && isProtectedMember(memberForm)) || isRoleLockedByAssignment(memberForm)" style="display: none;" class="flex items-center gap-1 text-micro font-bold text-rose-600">
+                    <span x-show="roleFieldLocked(memberForm)" style="display: none;" class="flex items-center gap-1 text-micro font-bold text-rose-600">
                         <i data-lucide="lock" class="w-3 h-3"></i> Đã khóa
                     </span>
                 </div>
                 <select x-model="memberForm.role" @change="onMemberRoleChange()"
-                        :disabled="(isEditingMember && isProtectedMember(memberForm)) || isRoleLockedByAssignment(memberForm)"
+                        :disabled="roleFieldLocked(memberForm)"
                         class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed">
                     <template x-for="r in roleDefs" :key="r.value">
                         <option :value="r.value" x-text="r.label"></option>
@@ -243,9 +243,9 @@
                     Không thể đổi vai trò của Ban Điều Hành và Quản trị từ màn này.
                 </p>
                 <p x-show="isRoleLockedByAssignment(memberForm)" style="display: none;" class="text-micro text-amber-600 mt-1.5 leading-snug">
-                    Người này đã được phân công (kiêm nhiệm). Đổi vai trò, chức vụ và lớp/khối ở màn <span class="font-bold">Khối &amp; Lớp</span>, không đổi tại đây.
+                    Người này đã được phân công (kiêm nhiệm). Đổi <span class="font-bold">vai trò</span> và <span class="font-bold">lớp/khối</span> ở màn Khối &amp; Lớp, không đổi tại đây. (Vẫn sửa được họ tên, SĐT, chức danh.)
                 </p>
-                <p x-show="!(isEditingMember && isProtectedMember(memberForm)) && !isRoleLockedByAssignment(memberForm)" class="text-micro text-slate-500 mt-1.5 leading-snug"
+                <p x-show="!roleFieldLocked(memberForm)" class="text-micro text-slate-500 mt-1.5 leading-snug"
                    x-text="'Phạm vi: ' + roleScope(memberForm.role)"></p>
             </div>
 
