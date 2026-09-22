@@ -8,9 +8,13 @@ window.TNTT.schedules = {
     // 1. DATA & STATE
     // ==========================================
     classSchedules: [],   // nạp từ data.php
+    scheduleExceptions: {},  // scheduleId -> exceptions[], nạp khi cần
 
     showScheduleModal: false,
     isEditingSchedule: false,
+    showExceptionModal: false,
+    editingException: null,
+    exceptionScheduleId: null,
 
     // Form state
     scheduleForm: {
@@ -24,6 +28,58 @@ window.TNTT.schedules = {
         activeFrom: '',
         activeTo: '',
         status: 'kích hoạt'
+    },
+
+    // Form ngoại lệ
+    exceptionForm: {
+        id: null,
+        scheduleId: null,
+        onDate: '',
+        kind: 'nghỉ',
+        newStart: '',
+        newCutoff: '',
+        note: ''
+    },
+
+    // ==========================================
+    // 2. HELPERS: Ngoại lệ lịch
+    // ==========================================
+
+    // Lấy ngoại lệ của một schedule (từ cache hoặc API)
+    async getExceptions(scheduleId) {
+        if (this.scheduleExceptions[scheduleId]) {
+            return this.scheduleExceptions[scheduleId];
+        }
+        const r = await this.api('schedules', 'exceptions', { scheduleId: scheduleId });
+        if (r && r.ok && r.exceptions) {
+            this.scheduleExceptions[scheduleId] = r.exceptions;
+            return r.exceptions;
+        }
+        return [];
+    },
+
+    // Kiểm tra ngoại lệ cho một schedule vào một ngày cụ thể
+    async checkException(scheduleId, dateStr) {
+        const exceptions = await this.getExceptions(scheduleId);
+        return exceptions.find(e => e.onDate === dateStr) || null;
+    },
+
+    // Kiểm tra schedule có ngoại lệ "nghỉ" vào ngày này không
+    async isScheduleCancelled(scheduleId, dateStr) {
+        const exc = await this.checkException(scheduleId, dateStr);
+        return exc && exc.kind === 'nghỉ';
+    },
+
+    // Lấy giờ điều chỉnh nếu có ngoại lệ "dời_giờ" hoặc "học_bù"
+    async getExceptionTime(scheduleId, dateStr, defaultStart, defaultCutoff) {
+        const exc = await this.checkException(scheduleId, dateStr);
+        if (exc && (exc.kind === 'dời_giờ' || exc.kind === 'học_bù')) {
+            return {
+                start: exc.newStart || defaultStart,
+                cutoff: exc.newCutoff || this.addMinutes(exc.newStart || defaultStart, this.CUTOFF_MINUTES || 30)
+            };
+        }
+        return null;
     },
 
     // ==========================================
@@ -230,5 +286,132 @@ window.TNTT.schedules = {
         await window.TNTT.core.loadData();
 
         window.TNTT.toast.success(r.message || `Đã tạo ${r.created || 0} lịch!`);
+    },
+
+    // ==========================================
+    // 3. NGOẠI LỆ LỊCH
+    // ==========================================
+
+    // Mở popup ngoại lệ cho một schedule
+    async openScheduleExceptions(sch) {
+        this.exceptionScheduleId = sch.id;
+        // Tải ngoại lệ từ API
+        await this.getExceptions(sch.id);
+        // Reset form
+        this.exceptionForm = {
+            id: null,
+            scheduleId: sch.id,
+            onDate: '',
+            kind: 'nghỉ',
+            newStart: '',
+            newCutoff: '',
+            note: ''
+        };
+        this.editingException = null;
+        this.showExceptionModal = true;
+    },
+
+    // Mở form sửa ngoại lệ
+    openEditException(exc) {
+        this.editingException = exc;
+        this.exceptionForm = {
+            id: exc.id,
+            scheduleId: exc.scheduleId,
+            onDate: exc.onDate,
+            kind: exc.kind,
+            newStart: exc.newStart || '',
+            newCutoff: exc.newCutoff || '',
+            note: exc.note || ''
+        };
+    },
+
+    // Lưu ngoại lệ
+    async saveException() {
+        const f = this.exceptionForm;
+        if (!f.onDate) {
+            window.TNTT.toast.error('Vui lòng chọn ngày ngoại lệ!');
+            return;
+        }
+        if (f.kind !== 'nghỉ' && !f.newStart) {
+            window.TNTT.toast.error('Vui lòng nhập giờ mới!');
+            return;
+        }
+
+        const r = await this.api('schedules', 'saveException', {
+            id: f.id,
+            scheduleId: f.scheduleId,
+            onDate: f.onDate,
+            kind: f.kind,
+            newStart: f.newStart || '',
+            newCutoff: f.newCutoff || '',
+            note: f.note || ''
+        });
+
+        if (!r || !r.ok) {
+            window.TNTT.toast.error(r && r.error || 'Không lưu được ngoại lệ.');
+            return;
+        }
+
+        // Cập nhật cache cục bộ
+        if (!this.scheduleExceptions[f.scheduleId]) {
+            this.scheduleExceptions[f.scheduleId] = [];
+        }
+
+        const exc = {
+            id: r.id || f.id,
+            scheduleId: f.scheduleId,
+            onDate: f.onDate,
+            kind: f.kind,
+            newStart: f.newStart || null,
+            newCutoff: f.newCutoff || null,
+            note: f.note || ''
+        };
+
+        const idx = this.scheduleExceptions[f.scheduleId].findIndex(e => e.id === exc.id);
+        if (idx !== -1) {
+            this.scheduleExceptions[f.scheduleId][idx] = exc;
+        } else {
+            this.scheduleExceptions[f.scheduleId].push(exc);
+        }
+
+        // Reset form
+        this.exceptionForm = {
+            id: null,
+            scheduleId: f.scheduleId,
+            onDate: '',
+            kind: 'nghỉ',
+            newStart: '',
+            newCutoff: '',
+            note: ''
+        };
+        this.editingException = null;
+
+        this.logAction(
+            f.id ? 'sua' : 'tao',
+            'schedule_exceptions',
+            (f.id ? 'Sửa' : 'Tạo') + ' ngoại lệ lịch',
+            `ngày=${f.onDate}, loại=${f.kind}`
+        );
+
+        window.TNTT.toast.success('Đã lưu ngoại lệ!');
+    },
+
+    // Xóa ngoại lệ
+    async deleteException(id) {
+        if (!confirm('Xóa ngoại lệ này?')) return;
+
+        const r = await this.api('schedules', 'deleteException', { id: id });
+        if (!r || !r.ok) {
+            window.TNTT.toast.error(r && r.error || 'Không xóa được ngoại lệ.');
+            return;
+        }
+
+        // Cập nhật cache cục bộ
+        for (const sid in this.scheduleExceptions) {
+            this.scheduleExceptions[sid] = this.scheduleExceptions[sid].filter(e => e.id !== id);
+        }
+
+        this.logAction('xoa', 'schedule_exceptions', 'Xóa ngoại lệ lịch', `id=${id}`);
+        window.TNTT.toast.success('Đã xóa ngoại lệ!');
     },
 };

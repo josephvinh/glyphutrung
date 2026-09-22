@@ -13,6 +13,15 @@ window.TNTT.stats = {
     // ==========================================
     statMonth: '',
 
+    // HƯỚNG B: Cache ngoại lệ lịch (scheduleId -> exceptions[])
+    // Được cập nhật khi schedules module lưu exception
+    _scheduleExceptions: {},
+
+    // Đồng bộ ngoại lệ từ schedules module
+    get scheduleExceptions() {
+        return window.TNTT.schedules?.scheduleExceptions || this._scheduleExceptions;
+    },
+
     openStats(khongDoiMan = false) {
         if (!this.statMonth) this.statMonth = this.toDateInput(new Date()).slice(0, 7);
         if (!khongDoiMan) this.changeModule('stats');
@@ -59,19 +68,39 @@ window.TNTT.stats = {
                 });
 
                 todaySchedules.forEach(cs => {
-                    // Kiểm tra đã qua giờ chốt chưa (dùng giờ chốt riêng nếu có)
-                    const cutoff = cs.cutoffTime || this.addMinutes(cs.startTime, this.CUTOFF_MINUTES || 30);
-                    const cutoffTs = new Date(ds + 'T' + cutoff + ':00').getTime();
+                    // HƯỚNG B: Kiểm tra ngoại lệ "nghỉ" - bỏ qua buổi này
+                    const excs = this.scheduleExceptions[cs.id] || [];
+                    const exc = excs.find(e => e.onDate === ds);
+                    if (exc && exc.kind === 'nghỉ') return;  // Nghỉ -> bỏ qua
+
+                    // HƯỚNG B: Nếu là học bù, đây là buổi BÙ, không phải buổi THƯỜNG
+                    const isHocBu = exc && exc.kind === 'học_bù';
+
+                    // Kiểm tra đã qua giờ chốt chưa
+                    // Dùng giờ mới nếu có ngoại lệ dời_giờ
+                    let effectiveStart = cs.startTime;
+                    let effectiveCutoff = cs.cutoffTime || this.addMinutes(cs.startTime, this.CUTOFF_MINUTES || 30);
+                    if (exc && exc.kind === 'dời_giờ') {
+                        effectiveStart = exc.newStart || cs.startTime;
+                        effectiveCutoff = exc.newCutoff || this.addMinutes(exc.newStart || cs.startTime, this.CUTOFF_MINUTES || 30);
+                    } else if (isHocBu) {
+                        effectiveStart = exc.newStart || cs.startTime;
+                        effectiveCutoff = exc.newCutoff || this.addMinutes(exc.newStart || cs.startTime, this.CUTOFF_MINUTES || 30);
+                    }
+
+                    const cutoffTs = new Date(ds + 'T' + effectiveCutoff + ':00').getTime();
                     if (Date.now() >= cutoffTs) {
                         out.push({
                             programId: cs.programId || 0,
                             scheduleId: cs.id,
                             date: ds,
-                            name: cs.programName || (cs.slot ? `Ca ${cs.slot}` : 'Giáo lý'),
-                            startTime: cs.startTime,
-                            cutoffTime: cs.cutoffTime,
+                            name: (isHocBu ? '🔄 ' : '') + (cs.programName || (cs.slot ? `Ca ${cs.slot}` : 'Giáo lý')),
+                            startTime: effectiveStart,
+                            cutoffTime: effectiveCutoff,
                             countForAttendance: true,
-                            type: 'schedule'
+                            type: isHocBu ? 'học_bù' : 'schedule',
+                            isException: !!exc,
+                            exceptionKind: exc?.kind || null
                         });
                     }
                 });

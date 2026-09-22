@@ -97,6 +97,11 @@
                                       :class="sch.status === 'kích hoạt' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400'"
                                       x-text="sch.status"></span>
 
+                                <!-- Nút ngoại lệ -->
+                                <button @click="openScheduleExceptions(sch)" class="tap-safe w-7 h-7 bg-blue-50 rounded-full flex items-center justify-center text-blue-400 active:scale-90 border border-blue-100" title="Ngoại lệ lịch">
+                                    <i data-lucide="calendar-off" class="w-3 h-3"></i>
+                                </button>
+
                                 <!-- Nút hành động -->
                                 <button @click="openEditSchedule(sch)" class="tap-safe w-7 h-7 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 active:scale-90 border border-slate-200">
                                     <i data-lucide="pencil" class="w-3 h-3"></i>
@@ -223,6 +228,82 @@
             <div class="p-4 border-t border-slate-100">
                 <button @click="saveSchedule()" type="button" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-2xl active:scale-[0.98] shadow-md shadow-blue-200 flex justify-center items-center">
                     <i data-lucide="save" class="w-5 h-5 mr-2"></i> Lưu Thời Khoá Biểu
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. POPUP NGOẠI LỆ LỊCH -->
+    <div x-show="showExceptionModal" style="display: none;" class="fixed inset-0 z-[200] flex items-end justify-center sm:items-center sm:p-6">
+        <div x-show="showExceptionModal" x-transition.opacity.duration.300ms @click="showExceptionModal = false" class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+        <div x-show="showExceptionModal" x-transition:enter="transform transition ease-out duration-300" x-transition:enter-start="translate-y-full opacity-0" x-transition:enter-end="translate-y-0 opacity-100" x-transition:leave="transform transition ease-in duration-200" x-transition:leave-start="translate-y-0 opacity-100" x-transition:leave-end="translate-y-full opacity-0" class="modal-sheet relative w-full max-w-md sm:max-w-lg bg-white rounded-t-sheet sm:rounded-sheet shadow-2xl flex flex-col max-h-[88dvh] overflow-y-auto">
+            <div class="flex justify-center pt-3 pb-2"><div class="w-12 h-1.5 bg-slate-200 rounded-full"></div></div>
+            <div class="flex justify-between items-center px-5 pb-4 border-b border-slate-100">
+                <h3 class="text-lg font-black text-slate-800">Ngoại lệ Lịch</h3>
+                <button aria-label="Đóng" @click="showExceptionModal = false" class="tap-safe w-8 h-8 bg-slate-100 rounded-full text-slate-500 active:scale-90 flex items-center justify-center"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+
+            <!-- Danh sách ngoại lệ -->
+            <div class="p-4 border-b border-slate-100">
+                <p class="text-sm font-bold text-slate-600 mb-2">Ngoại lệ đã thêm:</p>
+                <template x-if="!scheduleExceptions[exceptionScheduleId] || scheduleExceptions[exceptionScheduleId].length === 0">
+                    <p class="text-sm text-slate-400 italic">Chưa có ngoại lệ nào.</p>
+                </template>
+                <template x-for="exc in (scheduleExceptions[exceptionScheduleId] || [])" :key="exc.id">
+                    <div class="flex items-center justify-between bg-slate-50 rounded-xl px-3 py-2 mb-2">
+                        <div>
+                            <span class="text-sm font-medium" x-text="exc.onDate"></span>
+                            <span class="text-xs px-2 py-0.5 rounded-full ml-2"
+                                  :class="exc.kind === 'nghỉ' ? 'bg-rose-100 text-rose-600' : exc.kind === 'dời_giờ' ? 'bg-amber-100 text-amber-600' : 'bg-blue-100 text-blue-600'"
+                                  x-text="exc.kind === 'nghỉ' ? 'Nghỉ' : exc.kind === 'dời_giờ' ? 'Dời giờ' : 'Học bù'"></span>
+                            <span x-show="exc.newStart" class="text-xs text-slate-500 ml-2" x-text="'→ ' + exc.newStart"></span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button @click="openEditException(exc)" class="tap-safe w-6 h-6 bg-white rounded-full flex items-center justify-center text-slate-400 border border-slate-200">
+                                <i data-lucide="pencil" class="w-3 h-3"></i>
+                            </button>
+                            <button @click="deleteException(exc.id)" class="tap-safe w-6 h-6 bg-red-50 rounded-full flex items-center justify-center text-red-400 border border-red-100">
+                                <i data-lucide="trash-2" class="w-3 h-3"></i>
+                            </button>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Form thêm ngoại lệ -->
+            <div class="p-4 space-y-4">
+                <div>
+                    <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Ngày ngoại lệ</label>
+                    <input x-model="exceptionForm.onDate" type="date" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800">
+                </div>
+                <div>
+                    <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Loại</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button @click="exceptionForm.kind = 'nghỉ'" type="button" class="py-2 rounded-xl text-sm font-bold border-2" :class="exceptionForm.kind === 'nghỉ' ? 'bg-rose-100 border-rose-500 text-rose-700' : 'bg-slate-50 border-slate-200 text-slate-500'">Nghỉ</button>
+                        <button @click="exceptionForm.kind = 'dời_giờ'" type="button" class="py-2 rounded-xl text-sm font-bold border-2" :class="exceptionForm.kind === 'dời_giờ' ? 'bg-amber-100 border-amber-500 text-amber-700' : 'bg-slate-50 border-slate-200 text-slate-500'">Dời giờ</button>
+                        <button @click="exceptionForm.kind = 'học_bù'" type="button" class="py-2 rounded-xl text-sm font-bold border-2" :class="exceptionForm.kind === 'học_bù' ? 'bg-blue-100 border-blue-500 text-blue-700' : 'bg-slate-50 border-slate-200 text-slate-500'">Học bù</button>
+                    </div>
+                </div>
+                <div x-show="exceptionForm.kind !== 'nghỉ'" class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Giờ mới</label>
+                        <input x-model="exceptionForm.newStart" type="time" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800">
+                    </div>
+                    <div>
+                        <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Giờ chốt mới</label>
+                        <input x-model="exceptionForm.newCutoff" type="time" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Ghi chú</label>
+                    <input x-model="exceptionForm.note" type="text" placeholder="VD: Nghỉ Tết, Học bù CN tuần sau..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800">
+                </div>
+            </div>
+
+            <div class="p-4 border-t border-slate-100 flex gap-2">
+                <button @click="showExceptionModal = false" type="button" class="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-2xl active:scale-[0.98]">Đóng</button>
+                <button @click="saveException()" type="button" class="flex-1 bg-blue-600 text-white font-bold py-3 rounded-2xl active:scale-[0.98] shadow-md shadow-blue-200 flex justify-center items-center">
+                    <i data-lucide="save" class="w-5 h-5 mr-2"></i> Lưu
                 </button>
             </div>
         </div>
