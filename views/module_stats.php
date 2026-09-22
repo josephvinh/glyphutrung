@@ -11,7 +11,7 @@
                 <h2 class="text-xl font-black text-slate-800 tracking-tight">Thống Kê</h2>
             </div>
             <div class="shrink-0 flex items-center gap-2">
-                <button @click="exportAttendanceGridCSV()" type="button" title="Xuất sổ điểm danh dạng lưới (tuần × chương trình)" class="flex items-center gap-1.5 px-3 py-2 bg-emerald-50 text-emerald-600 rounded-xl font-bold text-xs active:scale-95 transition-transform border border-emerald-100 shadow-sm">
+                <button @click="exportAttendanceGridXLS()" type="button" title="Xuất sổ điểm danh dạng lưới (tuần × chương trình) — file Excel có định dạng" class="flex items-center gap-1.5 px-3 py-2 bg-emerald-50 text-emerald-600 rounded-xl font-bold text-xs active:scale-95 transition-transform border border-emerald-100 shadow-sm">
                     <i data-lucide="table-2" class="w-4 h-4"></i> Sổ điểm danh
                 </button>
                 <button @click="exportStatsCSV()" type="button" title="Xuất bảng tổng kết chuyên cần (mỗi em một dòng)" class="flex items-center gap-1.5 px-3 py-2 bg-blue-50 text-blue-600 rounded-xl font-bold text-xs active:scale-95 transition-transform border border-blue-100 shadow-sm">

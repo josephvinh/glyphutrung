@@ -244,20 +244,24 @@ window.TNTT.stats = {
     },
 
     // ==========================================
-    // XUẤT SỔ ĐIỂM DANH (dạng lưới)
+    // XUẤT SỔ ĐIỂM DANH (dạng lưới, có định dạng)
     //
-    // Khác với "Xuất CSV" (một dòng tổng kết mỗi em), bản này mô phỏng
-    // đúng cuốn SỔ ĐIỂM DANH giấy:
+    // Khác với "Tổng kết" (CSV, một dòng mỗi em), bản này mô phỏng đúng
+    // cuốn SỔ ĐIỂM DANH giấy và giữ được MÀU/VIỀN/Ô GỘP:
     //   - Cột đầu: Mã thiếu nhi · Tên Thánh · Họ và Tên
-    //   - Mỗi TUẦN là một nhóm cột lớn, gộp bên dưới là các CHƯƠNG TRÌNH
-    //     tính chuyên cần của buổi hôm đó (Thánh Lễ, Giáo Lý Sáng/Chiều...)
+    //   - Mỗi TUẦN là một ô lớn (gộp) đè lên các CHƯƠNG TRÌNH tính chuyên
+    //     cần của buổi hôm đó (Thánh Lễ, Giáo Lý Sáng/Chiều...)
     //   - Ô đánh dấu:  ✓ = có mặt · T = đi trễ · P = vắng có phép ·
     //     để TRỐNG = vắng (không phép)
-    //   - Vài cột tổng kết ở cuối cho dễ cộng sổ.
-    // Chỉ lấy các buổi ĐÃ QUA GIỜ CHỐT trong tháng đang xem, giống hệt
-    // phạm vi của màn Thống kê nên số liệu không bao giờ lệch.
+    //   - Khối TỔNG KẾT (Có mặt / Đi trễ / Vắng / Tỷ lệ) ở cuối.
+    //
+    // Kỹ thuật: xuất một BẢNG HTML rồi đặt đuôi .xls + MIME của Excel.
+    // Excel/Google Sheets mở file HTML này như bảng tính bình thường, giữ
+    // nguyên màu nền, viền và ô gộp — không cần thêm thư viện nào.
+    // Chỉ lấy các buổi ĐÃ QUA GIỜ CHỐT trong tháng đang xem, đúng phạm vi
+    // quyền như màn Thống kê nên số liệu không bao giờ lệch.
     // ==========================================
-    exportAttendanceGridCSV() {
+    exportAttendanceGridXLS() {
         const sessions = this.statSessions.filter(s => s.countForAttendance);
         if (sessions.length === 0) {
             alert('Tháng này chưa có buổi chuyên cần nào đã qua giờ chốt để xuất!');
@@ -290,58 +294,106 @@ window.TNTT.stats = {
         const dow  = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
         const ddmm = ds => ds.slice(8, 10) + '/' + ds.slice(5, 7);
         const dayLabel = ds => dow[new Date(ds + 'T00:00:00').getDay()] + ' ' + ddmm(ds);
+        const esc = v => (v === null || v === undefined ? '' : String(v))
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-        const lead = ['Mã thiếu nhi', 'Tên Thánh', 'Họ và Tên'];
-        const tail = ['Có mặt', 'Đi trễ', 'Vắng', 'Tỷ lệ (%)'];
+        const totalCols = 3 + weeks.reduce((n, w) => n + w.programs.length, 0) + 4;
 
-        // Hàng tiêu đề TUẦN: nhãn tuần đặt ở ô đầu mỗi nhóm, các ô còn lại để
-        // trống — mở bằng Excel/Sheets có thể bôi-gộp cho ra "dòng lớn".
-        const rowWeek = ['', '', ''];
+        // Bảng màu (khớp file Excel mẫu).
+        const BRD = '1px solid #b7c3d9';
+        const cell = (txt, extra) => '<td style="border:' + BRD + ';padding:4px 6px;' + (extra || '') + '">' + txt + '</td>';
+        const head = (txt, extra, span) =>
+            '<td' + (span ? ' colspan="' + span + '"' : '') +
+            ' style="border:' + BRD + ';padding:6px;font-weight:bold;text-align:center;vertical-align:middle;' + (extra || '') + '">' + txt + '</td>';
+
+        let html = '';
+        html += '<table style="border-collapse:collapse;font-family:Arial,sans-serif;font-size:11px;color:#1f2937;">';
+
+        // Tiêu đề + phụ đề + chú thích (gộp toàn bộ chiều ngang).
+        html += '<tr><td colspan="' + totalCols + '" style="padding:8px;text-align:center;font-size:16px;font-weight:bold;color:#1f3864;">'
+             + 'SỔ ĐIỂM DANH CHUYÊN CẦN</td></tr>';
+        html += '<tr><td colspan="' + totalCols + '" style="padding:2px 8px;text-align:center;font-style:italic;color:#595959;">'
+             + esc(this.statMonthLabel) + '</td></tr>';
+        html += '<tr><td colspan="' + totalCols + '" style="padding:6px 8px;text-align:center;font-weight:bold;color:#404040;background:#fff7e6;border:' + BRD + ';">'
+             + 'Chú thích:&nbsp;&nbsp; ✓ Có mặt &nbsp;&nbsp; T Đi trễ &nbsp;&nbsp; P Vắng có phép &nbsp;&nbsp; (để trống) Vắng không phép</td></tr>';
+
+        // Hàng tiêu đề TUẦN (ô Tuần gộp trên các chương trình; cột tên gộp 2 hàng).
+        const nameHdr = 'background:#1f3864;color:#fff;';
+        html += '<tr>';
+        html += '<td rowspan="2" style="border:' + BRD + ';padding:6px;font-weight:bold;text-align:center;vertical-align:middle;' + nameHdr + '">Mã thiếu nhi</td>';
+        html += '<td rowspan="2" style="border:' + BRD + ';padding:6px;font-weight:bold;text-align:center;vertical-align:middle;' + nameHdr + '">Tên Thánh</td>';
+        html += '<td rowspan="2" style="border:' + BRD + ';padding:6px;font-weight:bold;text-align:center;vertical-align:middle;' + nameHdr + '">Họ và Tên</td>';
         weeks.forEach((w, i) => {
-            rowWeek.push('Tuần ' + (i + 1) + ' — ' + dayLabel(w.date));
-            for (let k = 1; k < w.programs.length; k++) rowWeek.push('');
+            html += head('Tuần ' + (i + 1) + '<br>' + dayLabel(w.date), 'background:#2e5496;color:#fff;', w.programs.length);
         });
-        rowWeek.push('Tổng kết', '', '', '');
+        html += head('TỔNG KẾT', 'background:#c9a227;color:#fff;', 4);
+        html += '</tr>';
 
-        // Hàng tiêu đề CHƯƠNG TRÌNH (nằm dưới mỗi tuần).
-        const rowProg = lead.slice();
-        weeks.forEach(w => w.programs.forEach(p => rowProg.push(p.name)));
-        tail.forEach(t => rowProg.push(t));
+        // Hàng tiêu đề CHƯƠNG TRÌNH + nhãn các cột tổng kết.
+        html += '<tr>';
+        weeks.forEach(w => w.programs.forEach(p => {
+            html += head(esc(p.name), 'background:#d9e1f2;color:#1f3864;font-size:9px;');
+        }));
+        ['Có mặt', 'Đi trễ', 'Vắng', 'Tỷ lệ'].forEach(t => {
+            html += head(t, 'background:#f2e2b5;color:#7a5c00;font-size:9px;');
+        });
+        html += '</tr>';
 
-        const lines = [];
-        lines.push(this.csvCell('SỔ ĐIỂM DANH CHUYÊN CẦN — ' + this.statMonthLabel));
-        lines.push(this.csvCell('Chú thích:  ✓ = Có mặt   ·   T = Đi trễ   ·   P = Vắng có phép   ·   (để trống) = Vắng'));
-        lines.push(rowWeek.map(v => this.csvCell(v)).join(','));
-        lines.push(rowProg.map(v => this.csvCell(v)).join(','));
+        // Các dòng học sinh.
+        const mark = {
+            'có mặt': { t: '✓', s: 'background:#c6efce;color:#1b7a3d;font-weight:bold;text-align:center;' },
+            'đi trễ': { t: 'T', s: 'background:#ffeb9c;color:#9c6500;font-weight:bold;text-align:center;' },
+            'phép':   { t: 'P', s: 'background:#bdd7ee;color:#1f4e78;font-weight:bold;text-align:center;' },
+            'vắng':   { t: '',  s: 'background:#fbe4e6;text-align:center;' }
+        };
+        students.forEach((s, idx) => {
+            const zebra = idx % 2 ? 'background:#f4f7fc;' : '';
+            html += '<tr>';
+            html += cell(esc(s.code), 'text-align:center;' + zebra);
+            html += cell(esc(s.holyName), zebra);
+            html += cell(esc(s.name), zebra);
 
-        students.forEach(s => {
-            const cells = [s.code, s.holyName, s.name];
             let present = 0, late = 0, absent = 0;
-
             weeks.forEach(w => w.programs.forEach(p => {
                 const key = p.programId + '|' + w.date + '|' + s.id;
                 const rec = att.get(key);
+                let m;
                 if (rec) {
-                    if (rec.status === 'đi trễ') { cells.push('T'); late++; }
-                    else                         { cells.push('✓'); present++; }
-                } else if (leave.has(key)) {
-                    cells.push('P'); absent++;   // vắng có phép — vẫn là buổi vắng mặt
-                } else {
-                    cells.push('');  absent++;   // vắng không phép — để trống
-                }
+                    if (rec.status === 'đi trễ') { m = mark['đi trễ']; late++; }
+                    else                         { m = mark['có mặt']; present++; }
+                } else if (leave.has(key)) { m = mark['phép']; absent++; }
+                else                       { m = mark['vắng']; absent++; }
+                html += cell(m.t, m.s);
             }));
 
             const total = present + late + absent;
             const rate  = total ? Math.round(((present + late) / total) * 100) : 0;
-            cells.push(present, late, absent, rate);
-            lines.push(cells.map(v => this.csvCell(v)).join(','));
+            const sumS  = 'text-align:center;font-weight:bold;color:#1f3864;' + zebra;
+            html += cell(present, sumS);
+            html += cell(late, sumS);
+            html += cell(absent, sumS);
+            html += cell(rate + '%', sumS);
+            html += '</tr>';
         });
 
-        const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+        html += '</table>';
+
+        const doc = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">'
+            + '<head><meta charset="utf-8">'
+            + '<!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>'
+            + '<x:Name>Chuyên cần</x:Name>'
+            + '<x:WorksheetOptions><x:FrozenNoSplit/><x:SplitHorizontal>7</x:SplitHorizontal>'
+            + '<x:TopRowBottomPane>7</x:TopRowBottomPane><x:SplitVertical>3</x:SplitVertical>'
+            + '<x:LeftColumnRightPane>3</x:LeftColumnRightPane><x:ActivePane>0</x:ActivePane>'
+            + '<x:Panes><x:Pane><x:Number>3</x:Number></x:Pane></x:Panes></x:WorksheetOptions>'
+            + '</x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->'
+            + '</head><body>' + html + '</body></html>';
+
+        const blob = new Blob(['﻿' + doc], { type: 'application/vnd.ms-excel;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = 'So_Diem_Danh_Chuyen_Can_' + this.statMonth + '.csv';
+        link.download = 'So_Diem_Danh_Chuyen_Can_' + this.statMonth + '.xls';
         link.click();
         URL.revokeObjectURL(url);
     },
