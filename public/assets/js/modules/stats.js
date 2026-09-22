@@ -68,17 +68,10 @@ window.TNTT.stats = {
                     const exc = excs.find(e => e.onDate === ds);
                     if (exc && exc.kind === 'nghỉ') return;  // Nghỉ -> bỏ qua
 
-                    // HƯỚNG B: Nếu là học bù, đây là buổi BÙ, không phải buổi THƯỜNG
-                    const isHocBu = exc && exc.kind === 'học_bù';
-
-                    // Kiểm tra đã qua giờ chốt chưa
-                    // Dùng giờ mới nếu có ngoại lệ dời_giờ
+                    // Kiểm tra đã qua giờ chốt chưa. Dùng giờ mới nếu có "dời giờ".
                     let effectiveStart = cs.startTime;
                     let effectiveCutoff = cs.cutoffTime || this.addMinutes(cs.startTime, this.CUTOFF_MINUTES || 30);
                     if (exc && exc.kind === 'dời_giờ') {
-                        effectiveStart = exc.newStart || cs.startTime;
-                        effectiveCutoff = exc.newCutoff || this.addMinutes(exc.newStart || cs.startTime, this.CUTOFF_MINUTES || 30);
-                    } else if (isHocBu) {
                         effectiveStart = exc.newStart || cs.startTime;
                         effectiveCutoff = exc.newCutoff || this.addMinutes(exc.newStart || cs.startTime, this.CUTOFF_MINUTES || 30);
                     }
@@ -89,11 +82,11 @@ window.TNTT.stats = {
                             programId: cs.programId || 0,
                             scheduleId: cs.id,
                             date: ds,
-                            name: (isHocBu ? '🔄 ' : '') + (cs.programName || (cs.slot ? `Ca ${cs.slot}` : 'Giáo lý')),
+                            name: cs.programName || (cs.slot ? `Ca ${cs.slot}` : 'Giáo lý'),
                             startTime: effectiveStart,
                             cutoffTime: effectiveCutoff,
                             countForAttendance: true,
-                            type: isHocBu ? 'học_bù' : 'schedule',
+                            type: 'schedule',
                             isException: !!exc,
                             exceptionKind: exc?.kind || null
                         });

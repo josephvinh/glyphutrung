@@ -70,10 +70,10 @@ window.TNTT.schedules = {
         return exc && exc.kind === 'nghỉ';
     },
 
-    // Lấy giờ điều chỉnh nếu có ngoại lệ "dời_giờ" hoặc "học_bù"
+    // Lấy giờ điều chỉnh nếu có ngoại lệ "dời_giờ"
     async getExceptionTime(scheduleId, dateStr, defaultStart, defaultCutoff) {
         const exc = await this.checkException(scheduleId, dateStr);
-        if (exc && (exc.kind === 'dời_giờ' || exc.kind === 'học_bù')) {
+        if (exc && exc.kind === 'dời_giờ') {
             return {
                 start: exc.newStart || defaultStart,
                 cutoff: exc.newCutoff || this.addMinutes(exc.newStart || defaultStart, this.CUTOFF_MINUTES || 30)

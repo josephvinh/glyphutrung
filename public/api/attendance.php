@@ -74,19 +74,14 @@ if ($schedule) {
         json_fail('Buổi ngày ' . $date . ' đã báo NGHỈ theo lịch, không điểm danh.');
     }
 
-    if ($exc && $exc['kind'] === 'học_bù') {
-        // Buổi HỌC BÙ diễn ra đúng ngày này, bất kể thứ trong tuần
-        $hopLe = true;
-    } else {
-        // Buổi thường / dời giờ: vẫn phải khớp thứ + trong khoảng hiệu lực
-        $hopLe = ((int) $schedule['day_of_week'] === $dow);
-        if ($schedule['active_from'] && $date < $schedule['active_from']) $hopLe = false;
-        if ($schedule['active_to']   && $date > $schedule['active_to'])   $hopLe = false;
-    }
+    // Buổi thường / dời giờ: phải khớp thứ + trong khoảng hiệu lực
+    $hopLe = ((int) $schedule['day_of_week'] === $dow);
+    if ($schedule['active_from'] && $date < $schedule['active_from']) $hopLe = false;
+    if ($schedule['active_to']   && $date > $schedule['active_to'])   $hopLe = false;
     if (!$hopLe) json_fail('Buổi này không diễn ra vào ngày ' . $date . '.');
 
-    // Giờ chốt: ưu tiên giờ của NGOẠI LỆ (dời giờ / học bù), rồi giờ chốt riêng
-    // của lịch lớp, cuối cùng suy ra từ giờ bắt đầu + số phút ân hạn.
+    // Giờ chốt: ưu tiên giờ của NGOẠI LỆ (dời giờ), rồi giờ chốt riêng của lịch
+    // lớp, cuối cùng suy ra từ giờ bắt đầu + số phút ân hạn.
     $effStart  = ($exc && $exc['new_start'])  ? $exc['new_start']  : $schedule['start_time'];
     $effCutoff = ($exc && $exc['new_cutoff']) ? $exc['new_cutoff'] : $schedule['cutoff_time'];
     $cutoffTs  = $effCutoff
@@ -171,11 +166,39 @@ if (($_GET['action'] ?? '') === 'scan') {
     // Phạm vi quét tính theo KHỐI (xem scan_class_ids trong _bootstrap.php)
     $chophep = scan_class_ids($me);
 
+    // HƯỚNG B: quét QR nhận biết LỊCH LỚP. Máy quét chọn buổi theo PROGRAM và
+    // quét cả khối (nhiều lớp), nên MÁY CHỦ tự suy schedule_id cho từng em theo
+    // lớp của em — nhờ vậy bản ghi QR trùng khoá với bản ghi chạm tay, không
+    // sinh hai dòng cho cùng một buổi. Lớp nào không có lịch riêng thì ghi theo
+    // program như cũ.
+    $schedByClass = [];   // class_id => [id, start_time, cutoff_time]
+    $excBySched   = [];   // schedule_id => ngoại lệ (nghỉ / dời giờ) đúng ngày
+    if (db_one("SHOW TABLES LIKE 'class_schedules'")) {
+        foreach (db_all(
+            'SELECT id, class_id, start_time, cutoff_time
+               FROM class_schedules
+              WHERE year_id=? AND program_id=? AND day_of_week=? AND status="kích hoạt"
+                AND (active_from IS NULL OR active_from<=?)
+                AND (active_to   IS NULL OR active_to  >=?)',
+            [$year['id'], $programId, $dow, $date, $date]) as $sc) {
+            $schedByClass[(int) $sc['class_id']] = $sc;
+        }
+        if ($schedByClass) {
+            $scIds = array_map(fn($x) => (int) $x['id'], $schedByClass);
+            $ph2   = implode(',', array_fill(0, count($scIds), '?'));
+            foreach (db_all(
+                "SELECT * FROM schedule_exceptions WHERE on_date=? AND schedule_id IN ($ph2)",
+                array_merge([$date], $scIds)) as $ex) {
+                $excBySched[(int) $ex['schedule_id']] = $ex;
+            }
+        }
+    }
+
     $them = 0; $daCo = 0; $bo = [];
 
-    // Lọc trước các em hợp lệ (bỏ ra ngoài vòng ghi để chèn HÀNG LOẠT một
-    // lượt, thay vì mỗi em một câu INSERT — trước đây là N+1).
-    $hopLe = [];
+    // Lọc trước các em hợp lệ + suy schedule_id/trạng thái theo lịch của lớp em.
+    // Mỗi phần tử: [studentId, scheduleId|null, status]
+    $rows2 = [];
     foreach ($codes as $ma) {
         $ma = trim((string) $ma);
         $em = $theoMa[$ma] ?? null;
@@ -185,24 +208,37 @@ if (($_GET['action'] ?? '') === 'scan') {
         if ($chophep !== null && !in_array((int) $em['class_id'], $chophep, true)) {
             $bo[] = [$ma, $em['full_name'] . ' không thuộc khối bạn phụ trách']; continue;
         }
-        $hopLe[] = (int) $em['id'];
+
+        $sc = $schedByClass[(int) $em['class_id']] ?? null;
+        if ($sc) {
+            $ex = $excBySched[(int) $sc['id']] ?? null;
+            if ($ex && $ex['kind'] === 'nghỉ') {
+                $bo[] = [$ma, $em['full_name'] . ' — buổi lớp báo nghỉ']; continue;
+            }
+            $effStart  = ($ex && $ex['new_start'])  ? $ex['new_start']  : $sc['start_time'];
+            $effCutoff = ($ex && $ex['new_cutoff']) ? $ex['new_cutoff'] : $sc['cutoff_time'];
+            $cts = $effCutoff ? strtotime($date . ' ' . $effCutoff)
+                              : strtotime($date . ' ' . $effStart) + $cutoffMin * 60;
+            $rows2[] = [(int) $em['id'], (int) $sc['id'], time() >= $cts ? 'đi trễ' : 'có mặt'];
+        } else {
+            $rows2[] = [(int) $em['id'], null, $status];   // không lịch riêng -> theo program
+        }
     }
 
-    if ($hopLe) {
+    if ($rows2) {
         db()->beginTransaction();
         try {
-            // INSERT IGNORE nhiều dòng trong MỘT câu. Khoá duy nhất
-            // (program, date, student) khiến bản ghi trùng bị bỏ qua, không
-            // đè bản cũ. rowCount() trả về SỐ DÒNG THẬT SỰ CHÈN -> "thêm mới";
-            // phần còn lại là "đã có". Chia lô 200 (đã giới hạn từ trên).
-            foreach (array_chunk($hopLe, 200) as $lo) {
-                $vals   = implode(',', array_fill(0, count($lo), '(?,?,?,?,?,?,?)'));
+            // INSERT IGNORE nhiều dòng trong MỘT câu. Khoá duy nhất session_key
+            // (s<schedule_id>/p<program_id>, date, student) khiến bản ghi trùng
+            // bị bỏ qua. rowCount() = SỐ DÒNG THẬT SỰ CHÈN -> "thêm mới".
+            foreach (array_chunk($rows2, 200) as $lo) {
+                $vals   = implode(',', array_fill(0, count($lo), '(?,?,?,?,?,?,?,?)'));
                 $params = [];
-                foreach ($lo as $sid) {
-                    array_push($params, $year['id'], $programId, $date, $sid, $status, 'qr', $me['id']);
+                foreach ($lo as $r) {
+                    array_push($params, $year['id'], $programId, $r[1], $date, $r[0], $r[2], 'qr', $me['id']);
                 }
                 $them += db_run("INSERT IGNORE INTO attendances
-                                    (year_id, program_id, session_date, student_id, status, method, marked_by)
+                                    (year_id, program_id, schedule_id, session_date, student_id, status, method, marked_by)
                                  VALUES $vals", $params);
             }
             db()->commit();
@@ -210,7 +246,7 @@ if (($_GET['action'] ?? '') === 'scan') {
             db()->rollBack();
             json_fail(safe_error($e, 'Ghi điểm danh thất bại, đã hoàn tác: '), 500);
         }
-        $daCo = count($hopLe) - $them;
+        $daCo = count($rows2) - $them;
     }
 
     // Một dòng nhật ký cho cả lô, không phải 500 dòng

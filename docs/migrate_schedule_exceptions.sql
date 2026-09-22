@@ -4,7 +4,6 @@
 --  Bảng schedule_exceptions cho phép:
 --    - Nghỉ lễ: schedule không diễn ra vào ngày đó
 --    - Dời giờ: schedule vẫn diễn ra nhưng giờ khác
---    - Học bù: thêm buổi bù vào ngày không có lịch
 -- =====================================================================
 
 -- ---------------------------------------------------------------------
@@ -14,9 +13,9 @@ CREATE TABLE IF NOT EXISTS schedule_exceptions (
     id           INT AUTO_INCREMENT PRIMARY KEY,
     schedule_id  INT NOT NULL COMMENT 'Lịch bị ảnh hưởng',
     on_date      DATE NOT NULL COMMENT 'Ngày ngoại lệ',
-    kind         ENUM('nghỉ','dời_giờ','học_bù') NOT NULL COMMENT 'Loại ngoại lệ',
-    new_start    TIME NULL COMMENT 'Giờ mới (dời_giờ hoặc học_bù)',
-    new_cutoff   TIME NULL COMMENT 'Giờ chốt mới (dời_giờ hoặc học_bù)',
+    kind         ENUM('nghỉ','dời_giờ') NOT NULL COMMENT 'Loại ngoại lệ',
+    new_start    TIME NULL COMMENT 'Giờ mới (khi dời_giờ)',
+    new_cutoff   TIME NULL COMMENT 'Giờ chốt mới (khi dời_giờ)',
     note         VARCHAR(255) NULL COMMENT 'Ghi chú (VD: Nghỉ Tết, Học bù...)',
 
     CONSTRAINT fk_se_schedule FOREIGN KEY (schedule_id) REFERENCES class_schedules(id) ON DELETE CASCADE,

@@ -278,7 +278,7 @@ switch ($action) {
         // Validation
         if ($scheduleId <= 0) json_fail('Thiếu scheduleId.');
         if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $onDate)) json_fail('Ngày không hợp lệ.');
-        if (!in_array($kind, ['nghỉ','dời_giờ','học_bù'], true)) json_fail('Loại ngoại lệ không hợp lệ.');
+        if (!in_array($kind, ['nghỉ','dời_giờ'], true)) json_fail('Loại ngoại lệ không hợp lệ.');
 
         // Kiểm tra schedule tồn tại
         if (!db_one('SELECT id FROM class_schedules WHERE id=? AND year_id=?', [$scheduleId, $yid])) {

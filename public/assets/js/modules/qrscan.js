@@ -317,7 +317,7 @@ window.TNTT.qrscan = {
             this._qrBipLoi(); this._qrRung(150);
             return;
         }
-        const truoc = this.studentSessionStatus(em.id);
+        const truoc = this.statusInSession(em.id, this.qrSessionFor(em));
         if (truoc === 'có mặt' || truoc === 'đi trễ') {
             this.qrTrangThai = em.name + ' — đã điểm danh';
             return;                      // im lặng, không bíp: chuyện bình thường
@@ -344,12 +344,34 @@ window.TNTT.qrscan = {
      * Ghi vào danh sách trên máy NGAY, không đợi máy chủ trả lời.
      * GLV thấy con số nhảy tức thì; máy chủ đồng bộ ở nền.
      */
-    _qrGhiTamThoi(em) {
+    // HƯỚNG B: suy buổi theo LỚP của em cho lượt quét QR (quét cả khối nên mỗi
+    // em có thể thuộc một lịch lớp khác nhau). Trùng khớp cách máy chủ suy
+    // schedule_id ở nhánh scan -> chỉ số phía máy và bản ghi máy chủ không lệch.
+    qrSessionFor(em) {
         const s = this.activeSession;
+        if (!s) return s;
+        if (this.classSchedules?.length && s.programId != null) {
+            const dow = new Date(s.date + 'T00:00:00').getDay();
+            const cs = this.classSchedules.find(c =>
+                c.className === em.className &&
+                c.programId === s.programId &&
+                c.dayOfWeek === dow &&
+                (!c.activeFrom || s.date >= c.activeFrom) &&
+                (!c.activeTo   || s.date <= c.activeTo));
+            if (cs) {
+                return { programId: s.programId, scheduleId: cs.id, date: s.date,
+                         startTime: cs.startTime, cutoffTime: cs.cutoffTime };
+            }
+        }
+        return s;
+    },
+
+    _qrGhiTamThoi(em) {
+        const s = this.qrSessionFor(em);
         if (this.attendanceRecord(em.id, s)) return;   // đã có -> bỏ
         this._attThem({
-            programId: s.programId, date: s.date, studentId: em.id,
-            status: this.isPastCutoff ? 'đi trễ' : 'có mặt',
+            programId: s.programId, scheduleId: s.scheduleId || null, date: s.date, studentId: em.id,
+            status: this.isPastCutoffFor(s) ? 'đi trễ' : 'có mặt',
             method: 'qr', markedBy: this.user.fullName, markedAt: this.currentTime()
         });
     },

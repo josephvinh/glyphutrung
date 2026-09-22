@@ -278,10 +278,9 @@
                 </div>
                 <div>
                     <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Loại</label>
-                    <div class="grid grid-cols-3 gap-2">
+                    <div class="grid grid-cols-2 gap-2">
                         <button @click="exceptionForm.kind = 'nghỉ'" type="button" class="py-2 rounded-xl text-sm font-bold border-2" :class="exceptionForm.kind === 'nghỉ' ? 'bg-rose-100 border-rose-500 text-rose-700' : 'bg-slate-50 border-slate-200 text-slate-500'">Nghỉ</button>
                         <button @click="exceptionForm.kind = 'dời_giờ'" type="button" class="py-2 rounded-xl text-sm font-bold border-2" :class="exceptionForm.kind === 'dời_giờ' ? 'bg-amber-100 border-amber-500 text-amber-700' : 'bg-slate-50 border-slate-200 text-slate-500'">Dời giờ</button>
-                        <button @click="exceptionForm.kind = 'học_bù'" type="button" class="py-2 rounded-xl text-sm font-bold border-2" :class="exceptionForm.kind === 'học_bù' ? 'bg-blue-100 border-blue-500 text-blue-700' : 'bg-slate-50 border-slate-200 text-slate-500'">Học bù</button>
                     </div>
                 </div>
                 <div x-show="exceptionForm.kind !== 'nghỉ'" class="grid grid-cols-2 gap-3">
