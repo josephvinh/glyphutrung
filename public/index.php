@@ -194,7 +194,7 @@ if (!$__dev) ob_start();
     <div x-show="$store.libViewer.open"
          x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
          x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-         style="display:none" class="fixed inset-0 z-[300] bg-slate-900/60 backdrop-blur-sm cursor-pointer" @click="closeLibViewer()"></div>
+         style="display:none" class="fixed inset-0 z-[300] bg-slate-900/70 cursor-pointer" @click="closeLibViewer()"></div>
 
     <!-- Modal popup: giữa màn hình. Bấm ra vùng ngoài thẻ trắng cũng đóng. -->
     <div x-show="$store.libViewer.open"
