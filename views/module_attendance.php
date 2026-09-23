@@ -120,8 +120,28 @@
                 </div>
             </template>
 
+            <!-- BUỔI CHƯA TỚI GIỜ BẮT ĐẦU — hiện mờ, chưa mở được (tránh quét nhầm buổi) -->
+            <template x-for="prog in pendingProgramsOnDate" :key="'pending-' + prog.id">
+                <div class="bg-slate-50 rounded-card p-5 border border-slate-200 border-dashed opacity-80">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-micro font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-slate-200 text-slate-500">Chưa tới giờ</span>
+                        <span class="text-micro font-bold uppercase tracking-wider px-2 py-0.5 rounded-md"
+                              :class="prog.type === 'bắt buộc' ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-600'"
+                              x-text="prog.type"></span>
+                    </div>
+                    <h3 class="text-base font-black text-slate-600 leading-tight mb-3" x-text="prog.name"></h3>
+                    <div class="flex items-center gap-2 text-slate-500">
+                        <i data-lucide="clock" class="w-4 h-4 shrink-0"></i>
+                        <p class="text-sm font-semibold">
+                            Buổi sẽ mở lúc <span class="font-black text-slate-700" x-text="prog.startTime"></span>
+                        </p>
+                    </div>
+                    <p class="text-micro text-slate-400 mt-2 leading-relaxed">Buổi chỉ mở để điểm danh khi tới giờ bắt đầu, tránh quét nhầm sang buổi khác.</p>
+                </div>
+            </template>
+
             <!-- KHÔNG CÓ BUỔI NÀO -->
-            <div x-show="programsOnDate.length === 0" style="display: none;" class="text-center py-12 px-6 bg-white rounded-card border border-slate-100 border-dashed">
+            <div x-show="programsOnDate.length === 0 && pendingProgramsOnDate.length === 0" style="display: none;" class="text-center py-12 px-6 bg-white rounded-card border border-slate-100 border-dashed">
                 <i data-lucide="calendar-x" class="w-12 h-12 mx-auto text-slate-300 mb-4"></i>
                 <p class="text-slate-600 font-semibold text-base mb-1">Ngày này không có chương trình nào</p>
                 <p class="text-slate-400 text-sm mb-4">Hầu hết chương trình rơi vào Chúa Nhật</p>
