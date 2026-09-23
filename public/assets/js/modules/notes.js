@@ -203,8 +203,8 @@ window.TNTT.notes = {
         this.save('notes', 'toggle', { id: n.id });
     },
 
-    deleteNote(n) {
-        if (!confirm('Xoá việc "' + n.title + '"?')) return;
+    async deleteNote(n) {
+        if (!await window.TNTT.toast.confirm('Xoá việc "' + n.title + '"?', { danger: true, confirmText: 'Xoá' })) return;
         this.notes = this.notes.filter(x => x.id !== n.id);
         this.showNoteModal = false;
         this.save('notes', 'delete', { id: n.id });

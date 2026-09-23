@@ -26,8 +26,11 @@
 
 /* Individual toast */
 .toast {
-    padding: 0.875rem 1.25rem;
-    border-radius: 0.5rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.625rem;
+    padding: 0.875rem 1.125rem;
+    border-radius: 0.75rem;
     background: white;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     max-width: 350px;
@@ -35,8 +38,13 @@
     pointer-events: auto;
     font-size: 0.9375rem;
     line-height: 1.4;
+    cursor: pointer;                 /* chạm để đóng */
     animation: toastSlideIn 0.3s ease forwards;
 }
+
+/* Icon + nội dung nhiều dòng (giữ \n từ thông điệp cũ của alert) */
+.toast .toast-ico { flex-shrink: 0; margin-top: 1px; }
+.toast .toast-text { flex: 1 1 auto; white-space: pre-line; overflow-wrap: anywhere; }
 
 /* Toast types - left border color */
 .toast.success {
@@ -135,3 +143,95 @@
         width: 100%;
     }
 }
+
+/* ==========================================================
+   HỘP THOẠI XÁC NHẬN (thay confirm() gốc)
+   ========================================================== */
+.tntt-dialog-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgb(15 23 42 / 0.6);
+    animation: tnttDialogFade 0.18s ease forwards;
+}
+.tntt-dialog-backdrop.fade-out { animation: tnttDialogFadeOut 0.18s ease forwards; }
+
+.tntt-dialog {
+    width: 100%;
+    max-width: 22rem;
+    background: #fff;
+    border-radius: 1.25rem;
+    box-shadow: 0 25px 50px -12px rgb(15 23 42 / 0.4);
+    padding: 1.5rem 1.375rem 1.25rem;
+    animation: tnttDialogPop 0.2s ease forwards;
+}
+.tntt-dialog-backdrop.fade-out .tntt-dialog { animation: none; }
+
+.tntt-dialog-title {
+    font-size: 1.0625rem;
+    font-weight: 800;
+    color: #1e293b;
+    margin: 0 0 0.5rem;
+}
+.tntt-dialog-msg {
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    color: #475569;
+    margin: 0 0 1.25rem;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+}
+.tntt-dialog-actions {
+    display: flex;
+    gap: 0.625rem;
+}
+.tntt-dialog-btn {
+    flex: 1 1 0;
+    padding: 0.75rem 1rem;
+    border-radius: 0.875rem;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: transform 0.12s ease, background-color 0.15s ease;
+}
+.tntt-dialog-btn:active { transform: scale(0.97); }
+.tntt-dialog-cancel {
+    background: #f1f5f9;
+    color: #475569;
+    border-color: #e2e8f0;
+}
+.tntt-dialog-cancel:hover { background: #e2e8f0; }
+.tntt-dialog-ok {
+    background: #2563eb;
+    color: #fff;
+    box-shadow: 0 8px 20px -8px rgb(37 99 235 / 0.6);
+}
+.tntt-dialog-ok:hover { background: #1d4ed8; }
+.tntt-dialog-danger {
+    background: #e11d36;
+    color: #fff;
+    box-shadow: 0 8px 20px -8px rgb(225 29 54 / 0.6);
+}
+.tntt-dialog-danger:hover { background: #be123c; }
+
+@keyframes tnttDialogFade    { from { opacity: 0; } to { opacity: 1; } }
+@keyframes tnttDialogFadeOut { from { opacity: 1; } to { opacity: 0; } }
+@keyframes tnttDialogPop {
+    from { opacity: 0; transform: scale(0.95) translateY(6px); }
+    to   { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tntt-dialog-backdrop, .tntt-dialog { animation: none !important; }
+}
+
+/* Dark mode (giữ sẵn — hiện app luôn sáng nhưng để phòng bật lại) */
+.dark .tntt-dialog { background: #1e293b; }
+.dark .tntt-dialog-title { color: #f1f5f9; }
+.dark .tntt-dialog-msg { color: #cbd5e1; }
+.dark .tntt-dialog-cancel { background: #334155; color: #e2e8f0; border-color: #475569; }

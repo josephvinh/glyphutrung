@@ -191,8 +191,8 @@ window.TNTT.shell = {
             // luôn phải có. Thiếu nghĩa là máy chủ hỏng. Báo thẳng —
             // trước đây chỗ này âm thầm rơi về dữ liệu giả, khiến màn
             // hình hiện số liệu bịa mà không ai biết.
-            alert('Không nhận được cấu hình từ máy chủ.\n'
-                + 'Vui lòng tải lại trang hoặc đăng nhập lại.');
+            window.TNTT.toast.error('Không nhận được cấu hình từ máy chủ.\n'
+                + 'Vui lòng tải lại trang hoặc đăng nhập lại.', 0);
             throw new Error('TNTT_BOOT không tồn tại');
         }
         Object.assign(this.user, BOOT.user);

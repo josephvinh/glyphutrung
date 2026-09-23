@@ -152,15 +152,15 @@ window.TNTT.announcements = {
     saveAnnouncement() {
         const f = this.announcementForm;
         if (!f.title.trim() || !f.body.trim()) {
-            alert('Vui lòng nhập tiêu đề và nội dung thông báo!');
+            window.TNTT.toast.warning('Vui lòng nhập tiêu đề và nội dung thông báo!');
             return;
         }
         if (f.audienceType !== 'toàn đoàn' && !f.audienceValue) {
-            alert('Vui lòng chọn ' + (f.audienceType === 'khối' ? 'khối' : 'lớp') + ' nhận thông báo!');
+            window.TNTT.toast.warning('Vui lòng chọn ' + (f.audienceType === 'khối' ? 'khối' : 'lớp') + ' nhận thông báo!');
             return;
         }
         if (f.isMeeting && !f.meetingAt) {
-            alert('Buổi họp cần chọn ngày và giờ họp!');
+            window.TNTT.toast.warning('Buổi họp cần chọn ngày và giờ họp!');
             return;
         }
         f.title = f.title.trim();
@@ -198,10 +198,10 @@ window.TNTT.announcements = {
         });
     },
 
-    deleteAnnouncement(id) {
+    async deleteAnnouncement(id) {
         const a = this.announcements.find(x => x.id === id);
         if (!a) return;
-        if (confirm('Xóa thông báo "' + a.title + '"?')) {
+        if (await window.TNTT.toast.confirm('Xóa thông báo "' + a.title + '"?', { danger: true, confirmText: 'Xoá' })) {
             this.announcements = this.announcements.filter(x => x.id !== id);
             this.logAction('xoa', 'announcements', 'Xóa thông báo "' + a.title + '"', '');
             this.save('announcements', 'delete', { id: id }).then(r => { if (!r || !r.ok) this.loadData(); });

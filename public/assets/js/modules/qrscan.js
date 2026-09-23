@@ -157,12 +157,12 @@ window.TNTT.qrscan = {
     _qrRung(ms) { if (navigator.vibrate) { try { navigator.vibrate(ms); } catch (e) {} } },
 
     async moQuetQR() {
-        if (!this.activeSession) { alert('Hãy chọn buổi điểm danh trước khi quét.'); return; }
+        if (!this.activeSession) { window.TNTT.toast.warning('Hãy chọn buổi điểm danh trước khi quét.'); return; }
 
         // Buổi có thể tắt quét QR (chỉ điểm danh tay)
         const _prog = this.sessionProgram;
         if (_prog && _prog.allowQr === false) {
-            alert('Buổi này không cho phép quét QR — hãy điểm danh bằng cách chạm tên.');
+            window.TNTT.toast.warning('Buổi này không cho phép quét QR — hãy điểm danh bằng cách chạm tên.');
             return;
         }
 
@@ -170,16 +170,16 @@ window.TNTT.qrscan = {
         // đổi lớp mỗi lần là hỏng cả nhịp. Quét theo khối của mình.
         const lopQuet = this.qrLopQuetDuoc;
         if (lopQuet !== null && lopQuet.length === 0) {
-            alert('Bạn chưa được phân vào khối nào nên chưa quét được.\n'
+            window.TNTT.toast.warning('Bạn chưa được phân vào khối nào nên chưa quét được.\n'
                 + 'Hãy nhờ Ban Điều Hành phân công lớp hoặc khối.');
             return;
         }
         if (!this.qrHoTro) {
-            alert('Trình duyệt này không mở được camera.\nHãy dùng Chrome hoặc Safari trên điện thoại.');
+            window.TNTT.toast.error('Trình duyệt này không mở được camera.\nHãy dùng Chrome hoặc Safari trên điện thoại.');
             return;
         }
         if (!window.isSecureContext) {
-            alert('Camera chỉ chạy trên kết nối HTTPS.\nHãy mở trang bằng địa chỉ https://');
+            window.TNTT.toast.error('Camera chỉ chạy trên kết nối HTTPS.\nHãy mở trang bằng địa chỉ https://');
             return;
         }
 
@@ -194,7 +194,7 @@ window.TNTT.qrscan = {
             await this._qrTaiBangTra();
         } catch (e) {
             this.qrMo = false;
-            alert(e.message);
+            window.TNTT.toast.error(e.message);
             return;
         }
 
@@ -219,7 +219,7 @@ window.TNTT.qrscan = {
             });
         } catch (e) {
             this.qrMo = false;
-            alert(e && e.name === 'NotAllowedError'
+            window.TNTT.toast.error(e && e.name === 'NotAllowedError'
                 ? 'Bạn đã từ chối quyền camera. Vào cài đặt trình duyệt để bật lại.'
                 : 'Không mở được camera: ' + (e && e.message ? e.message : e));
             return;
@@ -243,7 +243,7 @@ window.TNTT.qrscan = {
             this.qrDangTai = true;
             this.qrTrangThai = 'Đang tải bộ giải mã…';
             try { await this._qrTaiJsQR(); }
-            catch (e) { this.qrDangTai = false; this.dongQuetQR(); alert(e.message); return; }
+            catch (e) { this.qrDangTai = false; this.dongQuetQR(); window.TNTT.toast.error(e.message); return; }
             this.qrDangTai = false;
             this.qrTrangThai = 'Đưa thẻ vào khung';
             this._qrVongJs(video);
@@ -409,12 +409,12 @@ window.TNTT.qrscan = {
         this.qrMo = false;
 
         if (sot) {
-            alert('Đã ghi ' + (daGhi - sot) + ' em.\n'
+            window.TNTT.toast.warning('Đã ghi ' + (daGhi - sot) + ' em.\n'
                 + 'Còn ' + sot + ' em chưa gửi được lên máy chủ do mất mạng.\n'
-                + 'Hãy kiểm lại danh sách và điểm danh tay cho các em đó.');
+                + 'Hãy kiểm lại danh sách và điểm danh tay cho các em đó.', 8000);
         } else if (daGhi) {
             await this.loadData();      // lấy lại số liệu chuẩn từ máy chủ
-            alert('Xong. Đã điểm danh ' + daGhi + ' em bằng thẻ QR.');
+            window.TNTT.toast.success('Xong. Đã điểm danh ' + daGhi + ' em bằng thẻ QR.');
         }
     },
 

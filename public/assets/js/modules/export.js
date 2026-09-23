@@ -16,7 +16,7 @@ window.TNTT.export = {
         if (r.ok && r.url) {
             this._download(r.url, r.filename);
         } else {
-            alert(r.error || 'Không thể xuất phiếu liên lạc.');
+            window.TNTT.toast.error(r.error || 'Không thể xuất phiếu liên lạc.');
         }
     },
 
@@ -30,7 +30,7 @@ window.TNTT.export = {
         if (r.ok && r.url) {
             this._download(r.url, r.filename);
         } else {
-            alert(r.error || 'Không thể xuất bảng điểm danh.');
+            window.TNTT.toast.error(r.error || 'Không thể xuất bảng điểm danh.');
         }
     },
 
@@ -45,7 +45,7 @@ window.TNTT.export = {
         if (r.ok && r.url) {
             this._download(r.url, r.filename);
         } else {
-            alert(r.error || 'Không thể xuất bảng điểm.');
+            window.TNTT.toast.error(r.error || 'Không thể xuất bảng điểm.');
         }
     },
 
@@ -57,7 +57,7 @@ window.TNTT.export = {
     async classReports(className, format = 'csv') {
         const students = window.TNTT.reports.reportStudents || [];
         if (students.length === 0) {
-            alert('Không có phiếu nào để xuất.');
+            window.TNTT.toast.warning('Không có phiếu nào để xuất.');
             return;
         }
 
@@ -82,7 +82,7 @@ window.TNTT.export = {
         }
 
         if (errorCount > 0) {
-            alert('Đã xuất ' + successCount + ' phiếu, ' + errorCount + ' phiếu thất bại.');
+            window.TNTT.toast.warning('Đã xuất ' + successCount + ' phiếu, ' + errorCount + ' phiếu thất bại.');
         }
     },
 

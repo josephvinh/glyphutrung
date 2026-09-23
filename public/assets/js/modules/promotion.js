@@ -156,7 +156,7 @@ window.TNTT.promotion = {
 
     async runPromotion() {
         if (this.unmappedClasses.length > 0) {
-            alert('Còn lớp chưa khai báo lớp kế tiếp:\n' + this.unmappedClasses.join(', '));
+            window.TNTT.toast.warning('Còn lớp chưa khai báo lớp kế tiếp:\n' + this.unmappedClasses.join(', '));
             return;
         }
         const s = this.promoteSummary;
@@ -164,7 +164,7 @@ window.TNTT.promotion = {
         // Chuyển các em sang một NIÊN KHOÁ KHÁC, không ghi đè năm
         // hiện tại — nếu không thì mất lịch sử học của các em.
         if (!this.promoteTargetId) {
-            alert('Vui lòng chọn niên khoá đích để chuyển các em sang.\n'
+            window.TNTT.toast.warning('Vui lòng chọn niên khoá đích để chuyển các em sang.\n'
                 + 'Nếu chưa có, hãy mở niên khoá mới ở màn Cài đặt.');
             return;
         }
@@ -174,7 +174,7 @@ window.TNTT.promotion = {
                   + '• Ở lại lớp: ' + s.stay + ' em\n'
                   + '• Ra trường: ' + s.graduate + ' em\n\n'
                   + 'Thao tác này KHÔNG hoàn tác được. Tiếp tục?';
-        if (!confirm(msg)) return;
+        if (!await window.TNTT.toast.confirm(msg, { danger: true, confirmText: 'Chuyển lớp' })) return;
 
         const results = {};
         this.promoteStudents.forEach(st => { results[st.id] = this.promoteVerdict(st.id).final; });

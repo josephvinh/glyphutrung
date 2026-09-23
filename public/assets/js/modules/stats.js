@@ -262,7 +262,7 @@ window.TNTT.stats = {
         cat = cat || this.statCategory;
         const sum = this.summaryFor(cat);
         if (sum.countedSessions === 0) {
-            alert('Tháng này chưa có buổi ' + this.categoryText(cat).toLowerCase() + ' nào để thống kê!');
+            window.TNTT.toast.warning('Tháng này chưa có buổi ' + this.categoryText(cat).toLowerCase() + ' nào để thống kê!');
             return;
         }
         const headers = ['Mã số', 'Tên Thánh', 'Họ và Tên', 'Lớp', 'Số buổi', 'Có mặt', 'Đi trễ', 'Vắng có phép', 'Vắng không phép', 'Tỷ lệ có mặt (%)'];
@@ -310,7 +310,7 @@ window.TNTT.stats = {
         const catText = this.categoryText(cat);
         const sessions = this.sessionsForCategory(cat);
         if (sessions.length === 0) {
-            alert('Tháng này chưa có buổi ' + catText.toLowerCase() + ' nào đã qua giờ chốt để xuất!');
+            window.TNTT.toast.warning('Tháng này chưa có buổi ' + catText.toLowerCase() + ' nào đã qua giờ chốt để xuất!');
             return;
         }
 

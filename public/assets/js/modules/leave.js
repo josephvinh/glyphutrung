@@ -98,7 +98,7 @@ window.TNTT.leave = {
 
     openLeaveForm(student) {
         if (this.leaveRequestOf(student.id)) {
-            alert('Em này đã có đơn cho buổi đó rồi.');
+            window.TNTT.toast.warning('Em này đã có đơn cho buổi đó rồi.');
             return;
         }
         this.leaveForm = { studentId: student.id, reason: '' };
@@ -107,7 +107,7 @@ window.TNTT.leave = {
 
     submitLeave() {
         if (!this.leaveForm.reason.trim()) {
-            alert('Vui lòng ghi lý do xin phép!');
+            window.TNTT.toast.warning('Vui lòng ghi lý do xin phép!');
             return;
         }
         this.leaveRequests.push({
@@ -174,7 +174,7 @@ window.TNTT.leave = {
 
     confirmReject() {
         if (!this.rejectForm.reason.trim()) {
-            alert('Vui lòng ghi lý do từ chối để GLV biết mà giải thích với phụ huynh.');
+            window.TNTT.toast.warning('Vui lòng ghi lý do từ chối để GLV biết mà giải thích với phụ huynh.');
             return;
         }
         const req = this.leaveRequests.find(r => r.id === this.rejectForm.requestId);

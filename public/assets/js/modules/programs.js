@@ -73,16 +73,16 @@ window.TNTT.programs = {
     async saveProgram() {
         const f = this.programForm;
         if (!f.name.trim() || !f.startTime) {
-            alert('Vui lòng nhập tên chương trình và giờ bắt đầu!');
+            window.TNTT.toast.warning('Vui lòng nhập tên chương trình và giờ bắt đầu!');
             return;
         }
         if (f.type === 'chiến dịch' && !f.eventDate) {
-            alert('Chương trình dạng chiến dịch cần chọn ngày diễn ra!');
+            window.TNTT.toast.warning('Chương trình dạng chiến dịch cần chọn ngày diễn ra!');
             return;
         }
         // Giờ chốt (nếu nhập) phải sau giờ bắt đầu
         if (f.cutoffTime && f.cutoffTime <= f.startTime) {
-            alert('Giờ chốt phải sau giờ bắt đầu!');
+            window.TNTT.toast.warning('Giờ chốt phải sau giờ bắt đầu!');
             return;
         }
         f.name = f.name.trim();
@@ -99,7 +99,7 @@ window.TNTT.programs = {
             f.dayOfWeek = null;
             f.daysOfWeek = [];
         }
-        if (f.absentTime && f.absentTime <= f.startTime) { alert('Giờ "tính vắng" phải sau giờ bắt đầu!'); return; }
+        if (f.absentTime && f.absentTime <= f.startTime) { window.TNTT.toast.warning('Giờ "tính vắng" phải sau giờ bắt đầu!'); return; }
 
         // LƯU LÊN MÁY CHỦ (trước đây chỉ đổi cục bộ -> mất khi tải lại).
         const r = await this.api('programs', 'save', this.programPayload(f));
@@ -122,7 +122,7 @@ window.TNTT.programs = {
     async deleteProgram(id) {
         const prog = this.programs.find(p => p.id === id);
         if (!prog) return;
-        if (!confirm('Xóa chương trình "' + prog.name + '"?')) return;
+        if (!await window.TNTT.toast.confirm('Xóa chương trình "' + prog.name + '"?', { danger: true, confirmText: 'Xoá' })) return;
 
         const r = await this.api('programs', 'delete', { id: id });
         if (!r || !r.ok) { window.TNTT.toast.error(r && r.error || 'Không xoá được chương trình.'); return; }

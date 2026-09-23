@@ -179,11 +179,11 @@ window.TNTT.reports = {
     saveReport(send) {
         const f = this.reportForm;
         if (f.score !== '' && (isNaN(Number(f.score)) || Number(f.score) < 0 || Number(f.score) > 10)) {
-            alert('Điểm học lực phải là số từ 0 đến 10, hoặc để trống nếu chưa có.');
+            window.TNTT.toast.warning('Điểm học lực phải là số từ 0 đến 10, hoặc để trống nếu chưa có.');
             return;
         }
         if (send && !f.remark.trim()) {
-            alert('Vui lòng ghi nhận xét trước khi gửi phiếu cho phụ huynh.');
+            window.TNTT.toast.warning('Vui lòng ghi nhận xét trước khi gửi phiếu cho phụ huynh.');
             return;
         }
         f.remark = f.remark.trim();
@@ -212,10 +212,10 @@ window.TNTT.reports = {
         this.showReportForm = false;
     },
 
-    deleteReport(studentId) {
+    async deleteReport(studentId) {
         const r = this.reportOf(studentId);
         if (!r) return;
-        if (confirm('Xóa phiếu liên lạc của em này?')) {
+        if (await window.TNTT.toast.confirm('Xóa phiếu liên lạc của em này?', { danger: true, confirmText: 'Xoá' })) {
             this.reports = this.reports.filter(x => x.id !== r.id);
             if (this.reportIndex) this.reportIndex.delete(this.reportKey(r.studentId, r.termId));
             this.showReportForm = false;
@@ -244,7 +244,7 @@ window.TNTT.reports = {
 
     printClassReports() {
         if (this.reportClass === '') {
-            alert('Vui lòng chọn lớp trước.');
+            window.TNTT.toast.warning('Vui lòng chọn lớp trước.');
             return;
         }
         let url = 'print.php?type=class_reports&termId=' + this.reportTermId + '&className=' + encodeURIComponent(this.reportClass);
