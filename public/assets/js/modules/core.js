@@ -229,7 +229,7 @@ window.TNTT.core = {
 
     // Đăng xuất thật, gọi lên máy chủ để hủy phiên
     async logout() {
-        if (!confirm('Đăng xuất khỏi hệ thống?')) return;
+        if (!await window.TNTT.toast.confirm('Đăng xuất khỏi hệ thống?', { confirmText: 'Đăng xuất' })) return;
         try {
             await fetch('api/auth.php?action=logout', { method: 'POST' });
         } catch (e) { /* mất mạng thì vẫn tải lại để về màn đăng nhập */ }
@@ -522,8 +522,8 @@ window.TNTT.core = {
         return Math.floor(s / 86400) + ' ngày trước';
     },
 
-    clearLogs() {
-        if (confirm('Xóa toàn bộ nhật ký thao tác?\nViệc này không hoàn tác được.')) {
+    async clearLogs() {
+        if (await window.TNTT.toast.confirm('Xóa toàn bộ nhật ký thao tác?\nViệc này không hoàn tác được.', { danger: true, confirmText: 'Xoá hết' })) {
             this.logs = [];
             this.save('settings', 'clearLogs', {});
             this.logAction('xoa', 'settings', 'Xóa toàn bộ nhật ký thao tác', '');
@@ -800,7 +800,7 @@ window.TNTT.core = {
     // trên màn hình đều thuộc về năm cũ.
     async activateYear(y) {
         if (this.yearBusy) return;
-        if (!confirm('Chuyển sang niên khoá ' + y.name + '?\n\nToàn bộ dữ liệu hiển thị sẽ đổi theo năm này.')) return;
+        if (!await window.TNTT.toast.confirm('Chuyển sang niên khoá ' + y.name + '?\n\nToàn bộ dữ liệu hiển thị sẽ đổi theo năm này.', { confirmText: 'Chuyển' })) return;
         this.yearBusy = true;
         try {
             const r = await this.apiYear('activate', { id: y.id });
@@ -819,7 +819,7 @@ window.TNTT.core = {
         const msg = locking
             ? 'Khoá sổ niên khoá ' + y.name + '?\n\nDữ liệu năm này chuyển sang chỉ đọc.'
             : 'Mở lại niên khoá ' + y.name + '?';
-        if (!confirm(msg)) return;
+        if (!await window.TNTT.toast.confirm(msg, { danger: locking, confirmText: locking ? 'Khoá sổ' : 'Mở lại' })) return;
         this.yearBusy = true;
         try {
             const r = await this.apiYear(locking ? 'lock' : 'unlock', { id: y.id });
@@ -914,8 +914,8 @@ window.TNTT.core = {
         return this.moduleDefs.filter(m => !this.moduleEnabled[m.key]).length;
     },
 
-    resetPermissions() {
-        if (!confirm('Đưa toàn bộ phân quyền về mặc định ban đầu?')) return;
+    async resetPermissions() {
+        if (!await window.TNTT.toast.confirm('Đưa toàn bộ phân quyền về mặc định ban đầu?', { danger: true, confirmText: 'Đặt lại' })) return;
         this.permissions = JSON.parse(JSON.stringify(this.defaultPermissions));
         this.save('settings', 'resetPerms', {})
             .then(r => { if (!r || !r.ok) this.loadData(); });

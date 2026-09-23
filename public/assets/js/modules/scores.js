@@ -107,7 +107,7 @@ window.TNTT.scores = {
 
     onScoreInput(studentId, type, event) {
         if (!this.setScore(studentId, type, event.target.value)) {
-            alert('Điểm phải là số từ 0 đến 10.');
+            window.TNTT.toast.warning('Điểm phải là số từ 0 đến 10.');
             event.target.value = this.scoreOf(studentId, type);
         }
     },
@@ -157,7 +157,7 @@ window.TNTT.scores = {
 
     exportScoresCSV() {
         const list = this.scoreStudents;
-        if (list.length === 0) { alert('Lớp này chưa có em nào!'); return; }
+        if (list.length === 0) { window.TNTT.toast.warning('Lớp này chưa có em nào!'); return; }
         const term = this.terms.find(t => t.id === Number(this.scoreTermId));
         const headers = ['Mã số', 'Tên Thánh', 'Họ và Tên', 'Lớp', 'Học kỳ']
             .concat(this.scoreTypes.map(t => t.label + ' (hệ số ' + t.weight + ')'))

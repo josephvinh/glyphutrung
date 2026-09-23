@@ -199,13 +199,16 @@
             </div>
         </div>
 
-        <!-- Hai chế độ điểm danh - dùng role="tablist" để hỗ trợ accessibility -->
-        <div role="tablist" class="grid grid-cols-2 gap-3 mb-4">
-            <button @click="moQuetQR()" type="button" role="tab" aria-selected="false"
+        <!-- Hai lối điểm danh: "Quét QR" mở máy quét (một hành động, không
+             phải tab), "Điểm danh tay" là màn đang xem. Trước đây gắn
+             role="tab"/aria-selected cứng nên trình đọc màn hình báo sai
+             trạng thái — bỏ đi, để chúng là hai nút hành động bình thường. -->
+        <div class="grid grid-cols-2 gap-3 mb-4">
+            <button @click="moQuetQR()" type="button"
                     class="flex items-center justify-center gap-2 py-3 rounded-2xl border shadow-sm font-bold text-xs active:scale-95 transition-transform bg-white border-slate-200 text-slate-600">
                 <i data-lucide="scan-line" class="w-4 h-4"></i> Quét QR
             </button>
-            <button @click="attendanceMode = 'manual'" type="button" role="tab" aria-selected="true"
+            <button @click="attendanceMode = 'manual'" type="button" aria-current="page"
                     class="flex items-center justify-center gap-2 py-3 bg-blue-600 rounded-2xl border border-blue-600 shadow-md shadow-blue-200 text-white font-bold text-xs">
                 <i data-lucide="hand" class="w-4 h-4"></i> Điểm danh tay
             </button>

@@ -60,7 +60,7 @@ $pastAbsent = !empty($prog['absent_time'] ?? '')
 
 // Lớp tham gia chương trình (rỗng/NULL = áp dụng toàn đoàn)
 $progClassIds = null;
-if (db_one("SHOW TABLES LIKE 'program_classes'")) {
+if (db_has_table('program_classes')) {
     $pcRows = db_all('SELECT class_id FROM program_classes WHERE program_id=?', [$programId]);
     if ($pcRows) $progClassIds = array_map(fn($r) => (int) $r['class_id'], $pcRows);
 }

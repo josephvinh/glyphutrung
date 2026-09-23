@@ -49,6 +49,30 @@ window.TNTT.students = {
         this.editData = JSON.parse(JSON.stringify(student));
         this.editData.isNew = false;
         this.showEditModal = true;
+        this._snapEdit();
+    },
+
+    // ---- Chống mất dữ liệu khi lỡ đóng cửa sổ đang sửa dở ----
+    // Chụp lại nội dung form lúc mở để so sánh khi đóng. Bỏ qua `code`
+    // (máy chủ tự cấp, đổi sau khi mở) và `isNew` để không báo nhầm.
+    _editSnapshot: '',
+    _snapEditKey(o) {
+        const c = Object.assign({}, o || {});
+        delete c.code; delete c.isNew;
+        return JSON.stringify(c);
+    },
+    _snapEdit() { this._editSnapshot = this._snapEditKey(this.editData); },
+    _editDirty() {
+        return this.showEditModal && this._snapEditKey(this.editData) !== this._editSnapshot;
+    },
+    async tryCloseEdit() {
+        if (this._editDirty()) {
+            const bo = await window.TNTT.toast.confirm(
+                'Bỏ các thay đổi chưa lưu?',
+                { danger: true, confirmText: 'Bỏ thay đổi', cancelText: 'Tiếp tục sửa' });
+            if (!bo) return;
+        }
+        this.showEditModal = false;
     },
 
     /**
@@ -75,6 +99,7 @@ window.TNTT.students = {
             status: 'đang sinh hoạt'
         };
         this.showEditModal = true;
+        this._snapEdit();
         this.fillNextStudentCode();
     },
 
@@ -92,8 +117,8 @@ window.TNTT.students = {
     async saveEdit() {
         const e = this.editData;
 
-        if (!String(e.name || '').trim())  return alert('Vui lòng nhập họ và tên.');
-        if (!e.className)                 return alert('Vui lòng chọn lớp cho em.');
+        if (!String(e.name || '').trim())  return window.TNTT.toast.warning('Vui lòng nhập họ và tên.');
+        if (!e.className)                 return window.TNTT.toast.warning('Vui lòng chọn lớp cho em.');
 
         e.name = String(e.name).trim();
 
@@ -111,7 +136,7 @@ window.TNTT.students = {
             }
         } catch (err) {
             console.error(err);
-            alert('Lưu không thành công. Xin kiểm tra kết nối mạng và thử lại.');
+            window.TNTT.toast.error('Lưu không thành công. Xin kiểm tra kết nối mạng và thử lại.');
         } finally {
             this.busy = false;
         }
@@ -268,10 +293,10 @@ window.TNTT.students = {
         this.taiFileCSV(lines,
             'Mau_Nhap_Danh_Sach' + (lop ? '_' + this.tenFileAnToan(lop) : '') + '_' + this.todayStamp() + '.csv');
 
-        alert('Lớp này chưa có em nào.\n\n'
+        window.TNTT.toast.info('Lớp này chưa có em nào.\n\n'
             + 'Đã tải về FILE MẪU đúng định dạng'
             + (lop ? ' cho lớp ' + lop : '') + '.\n'
-            + 'Điền vào rồi bấm Nhập để đưa danh sách lên.');
+            + 'Điền vào rồi bấm Nhập để đưa danh sách lên.', 7000);
     },
 
     // Tách CSV thủ công (xử lý ô bọc nháy kép, dấu phẩy và xuống dòng nằm bên trong ô)
@@ -308,12 +333,12 @@ window.TNTT.students = {
         if (!file) return;
 
         if (!/\.csv$/i.test(file.name)) {
-            alert('Hiện chỉ nhận file .csv.\nTrong Excel bạn chọn "Lưu dưới dạng" -> CSV UTF-8 rồi tải lên lại nhé.');
+            window.TNTT.toast.warning('Hiện chỉ nhận file .csv.\nTrong Excel bạn chọn "Lưu dưới dạng" -> CSV UTF-8 rồi tải lên lại nhé.');
             return;
         }
 
         const reader = new FileReader();
-        reader.onerror = () => alert('Không đọc được file. Vui lòng thử lại.');
+        reader.onerror = () => window.TNTT.toast.error('Không đọc được file. Vui lòng thử lại.');
         reader.onload = (e) => this.applyImport(e.target.result, file.name);
         reader.readAsText(file, 'UTF-8');
     },
@@ -325,7 +350,7 @@ window.TNTT.students = {
         const rows = this.parseCSV(text)
             .filter(r => !String(r[0] || "").trim().startsWith("#"));
         if (rows.length < 2) {
-            alert('File không có dòng dữ liệu nào.');
+            window.TNTT.toast.warning('File không có dòng dữ liệu nào.');
             return;
         }
 
@@ -338,7 +363,7 @@ window.TNTT.students = {
         });
 
         if (colIndex.name === undefined) {
-            alert('File thiếu cột bắt buộc "Họ và Tên".\nHãy bấm nút Xuất để lấy file mẫu đúng định dạng.');
+            window.TNTT.toast.warning('File thiếu cột bắt buộc "Họ và Tên".\nHãy bấm nút Xuất để lấy file mẫu đúng định dạng.');
             return;
         }
 

@@ -308,7 +308,7 @@ window.TNTT.library = {
     },
 
     async libDelete(item) {
-        if (!confirm('Gỡ "' + item.title + '"? Thao tác này không hoàn tác được.')) return;
+        if (!await window.TNTT.toast.confirm('Gỡ "' + item.title + '"? Thao tác này không hoàn tác được.', { danger: true, confirmText: 'Gỡ bỏ' })) return;
         const r = await this.save('library', 'delete', { id: item.id });
         if (r.ok) {
             window.TNTT.toast.success('Đã gỡ tài liệu.');

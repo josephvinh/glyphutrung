@@ -138,10 +138,10 @@ window.TNTT.qrcard = {
     },
 
     async inTheQR() {
-        if (!this.qrReady) { alert('Bộ sinh mã chưa sẵn sàng, thử lại sau giây lát.'); return; }
+        if (!this.qrReady) { window.TNTT.toast.warning('Bộ sinh mã chưa sẵn sàng, thử lại sau giây lát.'); return; }
         const ds = this.qrPrintStudents;
-        if (!ds.length) { alert('Không có em nào trong phạm vi đã chọn.'); return; }
-        if (ds.length > 200 && !confirm('Sẽ in thẻ cho ' + ds.length + ' em. Tiếp tục?')) return;
+        if (!ds.length) { window.TNTT.toast.warning('Không có em nào trong phạm vi đã chọn.'); return; }
+        if (ds.length > 200 && !await window.TNTT.toast.confirm('Sẽ in thẻ cho ' + ds.length + ' em. Tiếp tục?', { confirmText: 'In thẻ' })) return;
 
         this.qrTheDangLam = true;
         const cards = ds.map(s => this.qrCardHtml(s)).join('');
@@ -161,7 +161,7 @@ window.TNTT.qrcard = {
         const cs = window.open('', '_blank');
         if (!cs) {
             this.qrTheDangLam = false;
-            alert('Trình duyệt đã chặn cửa sổ in.\nHãy cho phép mở cửa sổ mới rồi thử lại.');
+            window.TNTT.toast.error('Trình duyệt đã chặn cửa sổ in.\nHãy cho phép mở cửa sổ mới rồi thử lại.');
             return;
         }
         cs.document.write(html);
@@ -238,7 +238,7 @@ window.printSingleQrcard = function(student) {
         + '<div class="wrapper"><div class="the">' + cardHtml + '</div></div>'
         + '<scr' + 'ipt>window.onload=function(){window.print()};</scr' + 'ipt></body></html>';
     const win = window.open('', '_blank');
-    if (!win) { alert('Trình duyệt đã chặn cửa sổ in.'); return; }
+    if (!win) { window.TNTT.toast.error('Trình duyệt đã chặn cửa sổ in.'); return; }
     win.document.write(html);
     win.document.close();
 };

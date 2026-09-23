@@ -37,13 +37,13 @@
     </div>
 
     <!-- 3. HAI TAB -->
-    <div x-show="scoreClass !== ''" style="display: none;" class="bg-white rounded-field p-1.5 shadow-sm border border-slate-100 flex gap-1.5 mb-4">
-        <button @click="scoreTab = 'enter'" type="button"
+    <div x-show="scoreClass !== ''" style="display: none;" role="tablist" aria-label="Chế độ điểm số" class="bg-white rounded-field p-1.5 shadow-sm border border-slate-100 flex gap-1.5 mb-4">
+        <button @click="scoreTab = 'enter'" type="button" role="tab" :aria-selected="scoreTab === 'enter' ? 'true' : 'false'"
                 class="flex-1 py-2.5 rounded-2xl font-bold text-xs transition-colors flex items-center justify-center gap-1.5"
                 :class="scoreTab === 'enter' ? 'bg-blue-600 text-white shadow-md shadow-blue-200' : 'text-slate-500'">
             <i data-lucide="pencil" class="w-4 h-4"></i> Nhập điểm
         </button>
-        <button @click="scoreTab = 'table'" type="button"
+        <button @click="scoreTab = 'table'" type="button" role="tab" :aria-selected="scoreTab === 'table' ? 'true' : 'false'"
                 class="flex-1 py-2.5 rounded-2xl font-bold text-xs transition-colors flex items-center justify-center gap-1.5"
                 :class="scoreTab === 'table' ? 'bg-blue-600 text-white shadow-md shadow-blue-200' : 'text-slate-500'">
             <i data-lucide="table" class="w-4 h-4"></i> Bảng điểm
@@ -55,7 +55,7 @@
          Chấm xong bài nào nhập cột đó, gõ một mạch từ trên xuống —
          nhanh hơn nhiều so với mở popup từng em.
          ========================================================== -->
-    <div x-show="scoreClass !== '' && scoreTab === 'enter'" style="display: none;">
+    <div x-show="scoreClass !== '' && scoreTab === 'enter'" style="display: none;" role="tabpanel" aria-label="Nhập điểm">
 
         <!-- Chọn đầu điểm -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
@@ -84,6 +84,20 @@
         </div>
 
         <div class="space-y-2.5">
+            <!-- Skeleton khi đang nạp lại số liệu (vd đổi niên khoá) -->
+            <template x-if="syncing && scoreStudents.length === 0">
+                <div class="space-y-2.5">
+                    <template x-for="i in 5" :key="'sk-sc-' + i">
+                        <div class="bg-white rounded-field p-3.5 shadow-sm border border-slate-100 flex items-center gap-3">
+                            <div class="flex-1 min-w-0">
+                                <div class="skeleton skeleton-text-sm w-16 mb-1"></div>
+                                <div class="skeleton skeleton-text w-32"></div>
+                            </div>
+                            <div class="skeleton w-20 h-10 rounded-xl shrink-0"></div>
+                        </div>
+                    </template>
+                </div>
+            </template>
             <template x-for="s in scoreStudents" :key="s.id">
                 <div style="content-visibility: auto; contain-intrinsic-size: auto 76px;"
                      class="bg-white rounded-field p-3.5 shadow-sm border flex items-center gap-3"
@@ -108,7 +122,7 @@
                 </div>
             </template>
 
-            <div x-show="scoreStudents.length === 0" style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
+            <div x-show="scoreStudents.length === 0 && !syncing" style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
                 <i data-lucide="users-x" class="w-12 h-12 mx-auto text-slate-300 mb-4"></i>
                 <p class="text-slate-600 font-semibold text-base mb-1">Lớp này chưa có em nào</p>
                 <p class="text-slate-400 text-sm">Hãy kiểm tra lớp đã chọn hoặc thêm thiếu nhi vào lớp</p>
@@ -124,9 +138,9 @@
     <!-- ==========================================================
          TAB 2: BẢNG ĐIỂM
          ========================================================== -->
-    <div x-show="scoreClass !== '' && scoreTab === 'table'" style="display: none;">
+    <div x-show="scoreClass !== '' && scoreTab === 'table'" style="display: none;" role="tabpanel" aria-label="Bảng điểm">
         <div class="scroll-x bg-white rounded-card border border-slate-100 shadow-sm overflow-x-auto">
-            <table class="w-full text-sm">
+            <table class="w-full text-sm score-table-sticky">
                 <thead>
                     <tr class="bg-slate-50 border-b border-slate-100">
                         <th class="text-left px-4 py-3 text-micro font-bold text-slate-500 uppercase tracking-wide">Họ và tên</th>

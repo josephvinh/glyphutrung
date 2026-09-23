@@ -65,7 +65,7 @@ window.TNTT.stats = {
     // đếm thành vắng và tỷ lệ chuyên cần tụt oan.
     // Các buổi ĐÃ QUA GIỜ CHỐT trong một khoảng ngày bất kỳ.
     // Dùng chung cho Thống kê (theo tháng) và Sổ liên lạc (theo học kỳ).
-    sessionsBetween(fromDate, toDate) {
+    sessionsBetween(fromDate, toDate, className = null) {
         if (!fromDate || !toDate) return [];
         const out = [];
         const cursor = new Date(fromDate + 'T00:00:00');
@@ -73,7 +73,10 @@ window.TNTT.stats = {
 
         while (cursor <= end) {
             const ds = this.toDateInput(cursor);
-            this.programsOn(ds).forEach(prog => {
+            // className != null: chỉ lấy buổi ÁP DỤNG cho lớp đó (buổi gắn lớp
+            // khác bị loại). programsOn đã lọc sẵn qua programAppliesToClass —
+            // dùng cho Sổ liên lạc tính mẫu số theo lịch riêng của từng lớp.
+            this.programsOn(ds, className).forEach(prog => {
                 const session = { programId: prog.id, date: ds };
                 if (this.isPastCutoffFor(session)) {
                     out.push({
@@ -124,7 +127,17 @@ window.TNTT.stats = {
     // để màn Thống kê và các nút Xuất đều dùng chung, số liệu không bao giờ lệch.
     summaryFor(cat) {
         const students = this.accessibleStudents.filter(s => s.status === 'đang sinh hoạt');
-        const sessions = this.sessionsForCategory(cat);
+
+        // Buổi gắn lớp (program_classes) chỉ tính học sinh của ĐÚNG các lớp đó
+        // — khớp với màn Điểm danh (programScopeStudents). Buổi không gắn lớp =
+        // toàn đoàn. Buổi gắn lớp mà không đụng em nào trong phạm vi đang xem
+        // thì bỏ hẳn khỏi mẫu số, tránh đếm oan vắng cho lớp khác.
+        const sessions = this.sessionsForCategory(cat)
+            .map(ss => ({
+                ss,
+                sess: students.filter(st => this.programAppliesToClass({ id: ss.programId }, st.className))
+            }))
+            .filter(x => x.sess.length > 0);
 
         // TÁI DÙNG chỉ số điểm danh dựng sẵn (O(1) tra cứu) thay vì quét lại
         // cả chục nghìn dòng mỗi lần đọc getter — nguyên nhân render treo.
@@ -145,16 +158,17 @@ window.TNTT.stats = {
 
         students.forEach(st => { byStudent[st.id] = blank(); });
 
-        sessions.forEach(ss => {
+        sessions.forEach(({ ss, sess }) => {
             // Buổi không có lấy một bản ghi nào trong phạm vi đang xem thì
             // gần như chắc chắn là GLV quên điểm danh, chứ không phải cả
             // lớp cùng nghỉ. Bỏ ra khỏi phép tính và đếm riêng, nếu không
             // một buổi bị quên sẽ kéo tỷ lệ chuyên cần xuống đáy.
-            const wasTaken = students.some(st => attIndex.has(ss.programId + '|' + ss.date + '|' + st.id))
-                || students.some(st => leaveIndex.has(ss.programId + '|' + ss.date + '|' + st.id));
+            // (sess = học sinh thuộc lớp gắn của buổi.)
+            const wasTaken = sess.some(st => attIndex.has(ss.programId + '|' + ss.date + '|' + st.id))
+                || sess.some(st => leaveIndex.has(ss.programId + '|' + ss.date + '|' + st.id));
             if (!wasTaken) { untaken++; return; }
 
-            students.forEach(st => {
+            sess.forEach(st => {
                 const key = ss.programId + '|' + ss.date + '|' + st.id;
                 const rec = attIndex.get(key);
                 let bucket;
@@ -262,7 +276,7 @@ window.TNTT.stats = {
         cat = cat || this.statCategory;
         const sum = this.summaryFor(cat);
         if (sum.countedSessions === 0) {
-            alert('Tháng này chưa có buổi ' + this.categoryText(cat).toLowerCase() + ' nào để thống kê!');
+            window.TNTT.toast.warning('Tháng này chưa có buổi ' + this.categoryText(cat).toLowerCase() + ' nào để thống kê!');
             return;
         }
         const headers = ['Mã số', 'Tên Thánh', 'Họ và Tên', 'Lớp', 'Số buổi', 'Có mặt', 'Đi trễ', 'Vắng có phép', 'Vắng không phép', 'Tỷ lệ có mặt (%)'];
@@ -310,7 +324,7 @@ window.TNTT.stats = {
         const catText = this.categoryText(cat);
         const sessions = this.sessionsForCategory(cat);
         if (sessions.length === 0) {
-            alert('Tháng này chưa có buổi ' + catText.toLowerCase() + ' nào đã qua giờ chốt để xuất!');
+            window.TNTT.toast.warning('Tháng này chưa có buổi ' + catText.toLowerCase() + ' nào đã qua giờ chốt để xuất!');
             return;
         }
 
@@ -336,6 +350,17 @@ window.TNTT.stats = {
             .sort((a, b) =>
                 (a.className || '').localeCompare(b.className || '', 'vi') ||
                 String(a.code || '').localeCompare(String(b.code || ''), 'vi'));
+
+        // Bỏ cột chương trình gắn lớp mà không đụng em nào trong phạm vi đang
+        // xuất (vd buổi của lớp khác), rồi bỏ luôn tuần trống sau khi lọc —
+        // tránh cột toàn dấu "·" vô nghĩa.
+        weeks.forEach(w => {
+            w.programs = w.programs.filter(p =>
+                students.some(st => this.programAppliesToClass({ id: p.programId }, st.className)));
+        });
+        for (let i = weeks.length - 1; i >= 0; i--) {
+            if (weeks[i].programs.length === 0) weeks.splice(i, 1);
+        }
 
         const dow  = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
         const ddmm = ds => ds.slice(8, 10) + '/' + ds.slice(5, 7);
@@ -401,6 +426,12 @@ window.TNTT.stats = {
 
             let present = 0, late = 0, absent = 0;
             weeks.forEach(w => w.programs.forEach(p => {
+                // Buổi gắn lớp khác: em này không thuộc buổi -> ô trung tính,
+                // KHÔNG tính là vắng, không cộng vào tổng.
+                if (!this.programAppliesToClass({ id: p.programId }, s.className)) {
+                    html += cell('·', 'background:#f3f4f6;color:#c7cdd6;text-align:center;');
+                    return;
+                }
                 const key = p.programId + '|' + w.date + '|' + s.id;
                 const rec = att.get(key);
                 let m;

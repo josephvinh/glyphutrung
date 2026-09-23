@@ -228,7 +228,7 @@ window.TNTT.org = {
 
     async removeClassAssignment(assignmentId) {
         if (!assignmentId) return;
-        if (!confirm('Gỡ phân công này khỏi lớp?')) return;
+        if (!await window.TNTT.toast.confirm('Gỡ phân công này khỏi lớp?', { danger: true, confirmText: 'Gỡ' })) return;
         await this.save('assignments', 'end', { assignmentId });
         await this.loadAllAssignments();
     },
@@ -273,8 +273,8 @@ window.TNTT.org = {
     saveBlock() {
         const name = this.blockForm.name.trim();
         const old = this.blockForm.original;
-        if (!name) { alert('Vui lòng nhập tên khối!'); return; }
-        if (this.blocks.some(b => b === name && b !== old)) { alert('Tên khối này đã tồn tại!'); return; }
+        if (!name) { window.TNTT.toast.warning('Vui lòng nhập tên khối!'); return; }
+        if (this.blocks.some(b => b === name && b !== old)) { window.TNTT.toast.warning('Tên khối này đã tồn tại!'); return; }
 
         this.busyBlock = true;
         this.save('org', 'saveBlock', { original: old, name }).then(r => {
@@ -298,13 +298,13 @@ window.TNTT.org = {
         this.showBlockModal = false;
     },
 
-    deleteBlock(name) {
+    async deleteBlock(name) {
         const classCount = this.classesInBlock(name).length;
         if (classCount > 0) {
-            alert('Khối "' + name + '" còn ' + classCount + ' lớp.\nHãy chuyển hoặc xóa hết lớp trước khi xóa khối.');
+            window.TNTT.toast.warning('Khối "' + name + '" còn ' + classCount + ' lớp.\nHãy chuyển hoặc xóa hết lớp trước khi xóa khối.');
             return;
         }
-        if (!confirm('Xóa khối "' + name + '"?')) return;
+        if (!await window.TNTT.toast.confirm('Xóa khối "' + name + '"?', { danger: true, confirmText: 'Xoá' })) return;
         this.busyBlock = true;
         this.save('org', 'deleteBlock', { name }).then(r => {
             this.busyBlock = false;
@@ -329,9 +329,9 @@ window.TNTT.org = {
     saveClass() {
         const name = this.classForm.name.trim();
         const old = this.classForm.original;
-        if (!name) { alert('Vui lòng nhập tên lớp!'); return; }
-        if (!this.classForm.block) { alert('Vui lòng chọn khối cho lớp!'); return; }
-        if (this.classes.some(c => c.name === name && c.name !== old)) { alert('Tên lớp này đã tồn tại!'); return; }
+        if (!name) { window.TNTT.toast.warning('Vui lòng nhập tên lớp!'); return; }
+        if (!this.classForm.block) { window.TNTT.toast.warning('Vui lòng chọn khối cho lớp!'); return; }
+        if (this.classes.some(c => c.name === name && c.name !== old)) { window.TNTT.toast.warning('Tên lớp này đã tồn tại!'); return; }
 
         this.busyClass = true;
         this.save('org', 'saveClass', { original: old, name, block: this.classForm.block }).then(r => {
@@ -360,18 +360,18 @@ window.TNTT.org = {
         this.showClassModal = false;
     },
 
-    deleteClass(cls) {
+    async deleteClass(cls) {
         const n = this.classSize(cls.name);
         if (n > 0) {
-            alert('Lớp "' + cls.name + '" còn ' + n + ' em trong danh sách.\nHãy chuyển các em sang lớp khác trước khi xóa.');
+            window.TNTT.toast.warning('Lớp "' + cls.name + '" còn ' + n + ' em trong danh sách.\nHãy chuyển các em sang lớp khác trước khi xóa.');
             return;
         }
         const glvCount = this.membersInClass(cls.name).length;
         if (glvCount > 0) {
-            alert('Lớp "' + cls.name + '" còn ' + glvCount + ' GLV đang phụ trách.\nHãy chuyển họ sang lớp khác trước khi xóa.');
+            window.TNTT.toast.warning('Lớp "' + cls.name + '" còn ' + glvCount + ' GLV đang phụ trách.\nHãy chuyển họ sang lớp khác trước khi xóa.');
             return;
         }
-        if (!confirm('Xóa lớp "' + cls.name + '"?')) return;
+        if (!await window.TNTT.toast.confirm('Xóa lớp "' + cls.name + '"?', { danger: true, confirmText: 'Xoá' })) return;
         this.busyClass = true;
         this.save('org', 'deleteClass', { name: cls.name }).then(r => {
             this.busyClass = false;
@@ -408,7 +408,7 @@ window.TNTT.org = {
     },
 
     async rejectMember(m) {
-        if (!confirm('Từ chối đăng ký của "' + this.memberFullName(m) + '"?\n\nTài khoản sẽ bị xóa hẳn.')) return;
+        if (!await window.TNTT.toast.confirm('Từ chối đăng ký của "' + this.memberFullName(m) + '"?\n\nTài khoản sẽ bị xóa hẳn.', { danger: true, confirmText: 'Từ chối' })) return;
         const r = await this.save('org', 'rejectMember', { id: m.id });
         if (!r.ok) return;
         await this.loadData();
@@ -416,19 +416,21 @@ window.TNTT.org = {
 
     // ---- CẤP LẠI MẬT KHẨU ----
     async resetMemberPassword(m) {
-        if (!confirm('Cấp lại mật khẩu cho "' + this.memberFullName(m) + '"?\n\n'
-                   + 'Mật khẩu cũ sẽ hết hiệu lực ngay.')) return;
+        if (!await window.TNTT.toast.confirm('Cấp lại mật khẩu cho "' + this.memberFullName(m) + '"?\n\n'
+                   + 'Mật khẩu cũ sẽ hết hiệu lực ngay.', { confirmText: 'Cấp lại' })) return;
 
         const r = await this.save('org', 'resetPassword', { id: m.id });
         if (!r.ok) return;
 
         // Hiện một lần duy nhất để BĐH đọc cho GLV — máy chủ chỉ lưu bản băm,
         // đóng hộp này là không xem lại được nữa.
-        alert('Đã cấp lại mật khẩu cho ' + r.name + '\n\n'
+        // duration 0: KHÔNG tự tắt — mật khẩu tạm chỉ hiện một lần, BĐH phải
+        // đọc xong rồi tự chạm đóng, không để nó biến mất giữa chừng.
+        window.TNTT.toast.info('Đã cấp lại mật khẩu cho ' + r.name + '\n\n'
             + 'Số điện thoại: ' + r.phone + '\n'
             + 'Mật khẩu tạm:  ' + r.password + '\n\n'
             + 'Đọc cho GLV ghi lại. Lần đăng nhập tới hệ thống sẽ buộc họ đổi mật khẩu.\n'
-            + 'Đóng hộp này là không xem lại được nữa.');
+            + 'Chạm để đóng — đóng rồi là không xem lại được nữa.', 0);
     },
 
     get filteredMembers() {
@@ -465,14 +467,14 @@ window.TNTT.org = {
 
     saveMember() {
         const f = this.memberForm;
-        if (!f.fullName.trim()) { alert('Vui lòng nhập họ và tên!'); return; }
+        if (!f.fullName.trim()) { window.TNTT.toast.warning('Vui lòng nhập họ và tên!'); return; }
         const scope = this.roleScope(f.role);
         // Người đã kiêm nhiệm: ô vai trò + lớp/khối bị khóa (chỉ sửa danh tính),
         // nên KHÔNG đòi chọn lớp/khối — nếu đòi thì một GLV kiêm nhiệm không có
         // lớp gốc sẽ không sửa nổi cả số điện thoại. Backend cũng bỏ qua tương ứng.
         if (!this.isRoleLockedByAssignment(f)) {
-            if (scope === 'khối' && !f.block) { alert('Vai trò Trưởng Khối cần chọn khối phụ trách!'); return; }
-            if (scope === 'lớp' && !f.className) { alert('Vai trò này cần chọn lớp phụ trách!'); return; }
+            if (scope === 'khối' && !f.block) { window.TNTT.toast.warning('Vai trò Trưởng Khối cần chọn khối phụ trách!'); return; }
+            if (scope === 'lớp' && !f.className) { window.TNTT.toast.warning('Vai trò này cần chọn lớp phụ trách!'); return; }
         }
 
         f.holyName = f.holyName.trim();
@@ -538,12 +540,12 @@ window.TNTT.org = {
         });
     },
 
-    deleteMember(m) {
+    async deleteMember(m) {
         if (this.isProtectedMember(m)) {
-            alert('Không thể xóa thành viên Ban Điều Hành hoặc Quản trị từ màn này.');
+            window.TNTT.toast.error('Không thể xóa thành viên Ban Điều Hành hoặc Quản trị từ màn này.');
             return;
         }
-        if (confirm('Xóa thành viên "' + this.memberFullName(m) + '"?')) {
+        if (await window.TNTT.toast.confirm('Xóa thành viên "' + this.memberFullName(m) + '"?', { danger: true, confirmText: 'Xoá' })) {
             this.members = this.members.filter(x => x.id !== m.id);
             this.logAction('xoa', 'org', 'Xóa thành viên ' + m.fullName, this.roleLabel(m.role));
             this.save('org', 'deleteMember', { id: m.id }).then(r => { if (!r || !r.ok) this.loadData(); });

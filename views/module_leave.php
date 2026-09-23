@@ -144,6 +144,23 @@
         </div>
 
         <div class="space-y-4 xl:space-y-0 xl:grid xl:grid-cols-2 xl:gap-4 xl:items-start">
+            <!-- Skeleton khi đang nạp lại số liệu (vd đổi niên khoá) -->
+            <template x-if="syncing && visibleLeaveRequests.length === 0">
+                <div class="space-y-4 xl:contents">
+                    <template x-for="i in 4" :key="'sk-lv-' + i">
+                        <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100">
+                            <div class="flex justify-between items-start mb-3">
+                                <div class="flex-1 min-w-0 pr-3">
+                                    <div class="skeleton skeleton-text-sm w-20 mb-1"></div>
+                                    <div class="skeleton skeleton-title w-2/3"></div>
+                                </div>
+                                <div class="skeleton skeleton-badge shrink-0"></div>
+                            </div>
+                            <div class="skeleton w-full h-20 rounded-2xl"></div>
+                        </div>
+                    </template>
+                </div>
+            </template>
             <template x-for="req in visibleLeaveRequests" :key="req.id">
                 <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100">
 
@@ -207,7 +224,7 @@
                 </div>
             </template>
 
-            <div x-show="visibleLeaveRequests.length === 0" style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
+            <div x-show="visibleLeaveRequests.length === 0 && !syncing" style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
                 <i data-lucide="inbox" class="w-10 h-10 mx-auto text-slate-300 mb-3"></i>
                 <p class="text-slate-500 font-medium text-sm">Không có đơn nào.</p>
             </div>

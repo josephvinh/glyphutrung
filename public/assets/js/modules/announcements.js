@@ -10,6 +10,7 @@ window.TNTT.announcements = {
     announcements: [],   // máy chủ nạp qua loadData()
 
     readAnnouncements: [],   // sau này lưu theo từng tài khoản dưới DB
+    announcementSearch: '',  // ô tìm nhanh theo tiêu đề/nội dung
     showAnnouncementModal: false,
     isEditingAnnouncement: false,
     announcementForm: { id: null, title: '', body: '', level: 'thường', audienceType: 'toàn đoàn', audienceValue: '', status: 'đã phát', publishedAt: '', expiresAt: '', createdBy: '', isMeeting: false, meetingAt: '', meetingPlace: '' },
@@ -51,6 +52,20 @@ window.TNTT.announcements = {
         return this.announcements
             .filter(a => a.status === 'đã phát' && !this.isAnnouncementExpired(a) && this.matchesAudience(a))
             .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
+    },
+
+    // Lọc theo ô tìm (tiêu đề + nội dung). Giữ RIÊNG khỏi visibleAnnouncements
+    // để chấm đỏ "chưa đọc" và thẻ Trang chủ không bị ô tìm ảnh hưởng.
+    _annMatchSearch(a) {
+        const q = (this.announcementSearch || '').trim().toLowerCase();
+        if (!q) return true;
+        return ((a.title || '') + ' ' + (a.body || '')).toLowerCase().includes(q);
+    },
+    get filteredAnnouncements() {
+        return this.visibleAnnouncements.filter(a => this._annMatchSearch(a));
+    },
+    get filteredManageableAnnouncements() {
+        return this.manageableAnnouncements.filter(a => this._annMatchSearch(a));
     },
 
     // BĐH thấy hết kể cả bản nháp và bản đã hết hạn.
@@ -152,15 +167,15 @@ window.TNTT.announcements = {
     saveAnnouncement() {
         const f = this.announcementForm;
         if (!f.title.trim() || !f.body.trim()) {
-            alert('Vui lòng nhập tiêu đề và nội dung thông báo!');
+            window.TNTT.toast.warning('Vui lòng nhập tiêu đề và nội dung thông báo!');
             return;
         }
         if (f.audienceType !== 'toàn đoàn' && !f.audienceValue) {
-            alert('Vui lòng chọn ' + (f.audienceType === 'khối' ? 'khối' : 'lớp') + ' nhận thông báo!');
+            window.TNTT.toast.warning('Vui lòng chọn ' + (f.audienceType === 'khối' ? 'khối' : 'lớp') + ' nhận thông báo!');
             return;
         }
         if (f.isMeeting && !f.meetingAt) {
-            alert('Buổi họp cần chọn ngày và giờ họp!');
+            window.TNTT.toast.warning('Buổi họp cần chọn ngày và giờ họp!');
             return;
         }
         f.title = f.title.trim();
@@ -198,10 +213,10 @@ window.TNTT.announcements = {
         });
     },
 
-    deleteAnnouncement(id) {
+    async deleteAnnouncement(id) {
         const a = this.announcements.find(x => x.id === id);
         if (!a) return;
-        if (confirm('Xóa thông báo "' + a.title + '"?')) {
+        if (await window.TNTT.toast.confirm('Xóa thông báo "' + a.title + '"?', { danger: true, confirmText: 'Xoá' })) {
             this.announcements = this.announcements.filter(x => x.id !== id);
             this.logAction('xoa', 'announcements', 'Xóa thông báo "' + a.title + '"', '');
             this.save('announcements', 'delete', { id: id }).then(r => { if (!r || !r.ok) this.loadData(); });

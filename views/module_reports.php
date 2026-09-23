@@ -75,6 +75,22 @@
 
     <!-- 4. DANH SÁCH EM -->
     <div class="space-y-2.5 xl:space-y-0 xl:grid xl:grid-cols-2 xl:gap-2.5 xl:items-start">
+        <!-- Skeleton khi đang nạp lại số liệu (vd đổi niên khoá) -->
+        <template x-if="reportClass !== '' && syncing && reportStudents.length === 0">
+            <div class="space-y-2.5 xl:contents">
+                <template x-for="i in 6" :key="'sk-rp-' + i">
+                    <div class="bg-white rounded-field p-4 shadow-sm border border-slate-100 flex items-center gap-3">
+                        <div class="skeleton w-5 h-5 rounded shrink-0"></div>
+                        <div class="skeleton w-12 h-12 rounded-2xl shrink-0"></div>
+                        <div class="flex-1 min-w-0">
+                            <div class="skeleton skeleton-text-sm w-24 mb-1"></div>
+                            <div class="skeleton skeleton-text w-32"></div>
+                        </div>
+                        <div class="skeleton skeleton-badge shrink-0"></div>
+                    </div>
+                </template>
+            </div>
+        </template>
         <template x-for="student in reportStudents" :key="student.id">
             <button @click="canWriteReports ? openReportForm(student) : (reportOf(student.id) && openReportPreview(student.id))"
                     type="button"
@@ -120,7 +136,7 @@
             </button>
         </template>
 
-        <div x-show="reportClass !== '' && reportStudents.length === 0" style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
+        <div x-show="reportClass !== '' && reportStudents.length === 0 && !syncing" style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
             <i data-lucide="users" class="w-10 h-10 mx-auto text-slate-300 mb-3"></i>
             <p class="text-slate-500 font-medium text-sm">Lớp này chưa có em nào.</p>
         </div>

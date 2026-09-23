@@ -15,6 +15,20 @@
         </button>
     </div>
 
+    <!-- Ô TÌM NHANH — lọc theo tiêu đề/nội dung, dùng chung cho cả hai khung -->
+    <div class="relative mb-4">
+        <i data-lucide="search" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+        <input x-model="announcementSearch" type="text" placeholder="Tìm thông báo theo tiêu đề, nội dung..."
+               aria-label="Tìm thông báo"
+               class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-10 pr-10 text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder:font-normal">
+        <button aria-label="Xóa ô tìm kiếm" x-show="announcementSearch !== ''" @click="announcementSearch = ''" style="display: none;"
+                class="tap-safe absolute right-1 top-1/2 -translate-y-1/2 p-2 flex items-center justify-center text-slate-400 active:scale-90 transition-transform">
+            <div class="w-6 h-6 bg-slate-100 rounded-full flex items-center justify-center">
+                <i data-lucide="x" class="w-3.5 h-3.5"></i>
+            </div>
+        </button>
+    </div>
+
     <!-- ==========================================================
          KHUNG NHÌN CỦA GLV: chỉ đọc
          ========================================================== -->
@@ -26,7 +40,7 @@
         </div>
 
         <div class="space-y-4 xl:space-y-0 xl:grid xl:grid-cols-2 xl:gap-4 xl:items-start">
-            <template x-for="a in visibleAnnouncements" :key="a.id">
+            <template x-for="a in filteredAnnouncements" :key="a.id">
                 <div @click="markAnnouncementRead(a)"
                      style="content-visibility: auto; contain-intrinsic-size: auto 180px;"
                      class="bg-white rounded-card p-5 shadow-sm border transition-colors"
@@ -82,10 +96,10 @@
                 </div>
             </template>
 
-            <div x-show="visibleAnnouncements.length === 0" style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
+            <div x-show="filteredAnnouncements.length === 0" style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
                 <i data-lucide="bell-ring" class="w-12 h-12 mx-auto text-slate-300 mb-4"></i>
-                <p class="text-slate-600 font-semibold text-base mb-1">Chưa có thông báo nào</p>
-                <p class="text-slate-400 text-sm">Thông báo mới sẽ xuất hiện ở đây</p>
+                <p class="text-slate-600 font-semibold text-base mb-1" x-text="announcementSearch ? 'Không tìm thấy thông báo phù hợp' : 'Chưa có thông báo nào'"></p>
+                <p class="text-slate-400 text-sm" x-text="announcementSearch ? 'Thử từ khóa khác hoặc xóa ô tìm' : 'Thông báo mới sẽ xuất hiện ở đây'"></p>
             </div>
         </div>
     </div>
@@ -96,7 +110,7 @@
          ========================================================== -->
     <div x-show="canManageAnnouncements" style="display: none;">
         <div class="space-y-4 xl:space-y-0 xl:grid xl:grid-cols-2 xl:gap-4 xl:items-start">
-            <template x-for="a in manageableAnnouncements" :key="a.id">
+            <template x-for="a in filteredManageableAnnouncements" :key="a.id">
                 <div style="content-visibility: auto; contain-intrinsic-size: auto 240px;"
                      class="bg-white rounded-card p-5 shadow-sm border"
                      :class="a.status === 'nháp' ? 'border-slate-200 border-dashed' : 'border-slate-100'">
@@ -162,9 +176,9 @@
                 </div>
             </template>
 
-            <div x-show="manageableAnnouncements.length === 0" style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
+            <div x-show="filteredManageableAnnouncements.length === 0" style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
                 <i data-lucide="megaphone" class="w-10 h-10 mx-auto text-slate-300 mb-3"></i>
-                <p class="text-slate-500 font-medium text-sm">Chưa có thông báo nào.</p>
+                <p class="text-slate-500 font-medium text-sm" x-text="announcementSearch ? 'Không tìm thấy thông báo phù hợp.' : 'Chưa có thông báo nào.'"></p>
             </div>
         </div>
     </div>

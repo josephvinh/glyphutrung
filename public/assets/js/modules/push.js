@@ -86,7 +86,7 @@ window.TNTT.push = {
         const quyen = await Notification.requestPermission();
         if (quyen !== 'granted') {
             this.tbBiChan = quyen === 'denied';
-            alert(this.tbBiChan
+            window.TNTT.toast.warning(this.tbBiChan
                 ? 'Trình duyệt đang chặn thông báo của trang này.\n\n'
                 + 'Mở lại ở: Cài đặt trình duyệt → Thông báo → tìm địa chỉ trang này → Cho phép.'
                 : 'Chưa được cho phép nên chưa bật được thông báo.');
@@ -96,7 +96,7 @@ window.TNTT.push = {
         const r = await window.TNTT.csrfFetch('api/push.php?action=key');
         const k = await r.json();
         if (!k.ok || !k.key) {
-            alert('Máy chủ chưa cấu hình khoá thông báo.\n\n'
+            window.TNTT.toast.error('Máy chủ chưa cấu hình khoá thông báo.\n\n'
                 + 'Người quản trị cần chạy: php config/tao_khoa_push.php');
             return;
         }
@@ -109,7 +109,7 @@ window.TNTT.push = {
         const luu = await this.api('push', 'subscribe', { endpoint: dk.endpoint });
         if (!luu.ok) {
             await dk.unsubscribe();                   // máy chủ không nhận thì đừng để lại rác
-            alert(luu.error || 'Không lưu được đăng ký.');
+            window.TNTT.toast.error(luu.error || 'Không lưu được đăng ký.');
             return;
         }
         this.tbDaBat = true;
@@ -128,10 +128,10 @@ window.TNTT.push = {
 
     /** Gửi thử cho chính mình, để biết chắc là chạy được */
     async pushThu() {
-        if (!this.tbDaBat) { alert('Bật thông báo trên máy này trước đã.'); return; }
+        if (!this.tbDaBat) { window.TNTT.toast.warning('Bật thông báo trên máy này trước đã.'); return; }
         const r = await this.api('push', 'test', {});
-        if (!r.ok) { alert(r.error || 'Không gửi được.'); return; }
-        alert('Đã gửi tới ' + r.devices + ' máy.\n\n'
+        if (!r.ok) { window.TNTT.toast.error(r.error || 'Không gửi được.'); return; }
+        window.TNTT.toast.success('Đã gửi tới ' + r.devices + ' máy.\n\n'
             + 'Thông báo có thể chậm vài giây. Thử khoá màn hình rồi chờ xem.');
     },
 
