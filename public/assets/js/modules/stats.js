@@ -13,9 +13,39 @@ window.TNTT.stats = {
     // ==========================================
     statMonth: '',
 
+    // MẢNG BÁO CÁO đang xem: 'chuyen_can' (buổi tính chuyên cần) hay
+    // 'thi_dua' (buổi tính thi đua đi lễ). Hai cờ độc lập trên chương trình
+    // (count_for_attendance / count_for_emulation) — nên hai loại buổi tách
+    // biệt hoàn toàn, không đụng nhau. Mọi con số trên màn Thống kê và mọi
+    // file xuất ra đều theo đúng mảng đang chọn.
+    statCategory: 'chuyen_can',
+
     openStats(khongDoiMan = false) {
         if (!this.statMonth) this.statMonth = this.toDateInput(new Date()).slice(0, 7);
         if (!khongDoiMan) this.changeModule('stats');
+    },
+
+    // Cờ chương trình tương ứng mảng đang chọn.
+    categoryFlag(cat) {
+        return (cat || this.statCategory) === 'thi_dua' ? 'countForEmulation' : 'countForAttendance';
+    },
+
+    get statCategoryLabel() {
+        return this.statCategory === 'thi_dua' ? 'Thi đua đi lễ' : 'Chuyên cần';
+    },
+
+    // Nhãn ngắn để đặt tên file / tiêu đề bảng.
+    categoryText(cat) {
+        return (cat || this.statCategory) === 'thi_dua' ? 'Thi đua đi lễ' : 'Chuyên cần';
+    },
+    categorySlug(cat) {
+        return (cat || this.statCategory) === 'thi_dua' ? 'Thi_Dua_Di_Le' : 'Chuyen_Can';
+    },
+
+    // Các buổi trong tháng thuộc mảng đang chọn (đã qua giờ chốt).
+    sessionsForCategory(cat) {
+        const flag = this.categoryFlag(cat);
+        return this.statSessions.filter(s => s[flag]);
     },
 
     shiftStatMonth(delta) {
@@ -46,7 +76,11 @@ window.TNTT.stats = {
             this.programsOn(ds).forEach(prog => {
                 const session = { programId: prog.id, date: ds };
                 if (this.isPastCutoffFor(session)) {
-                    out.push({ programId: prog.id, date: ds, name: prog.name, countForAttendance: prog.countForAttendance });
+                    out.push({
+                        programId: prog.id, date: ds, name: prog.name,
+                        countForAttendance: prog.countForAttendance,
+                        countForEmulation: prog.countForEmulation
+                    });
                 }
             });
             cursor.setDate(cursor.getDate() + 1);
@@ -83,8 +117,14 @@ window.TNTT.stats = {
     // Dùng Map để tra cứu O(1) thay vì find() lồng nhau, tránh chậm khi
     // đoàn có cả ngàn em nhân với vài chục buổi.
     get statSummary() {
+        return this.summaryFor(this.statCategory);
+    },
+
+    // Tính toàn bộ số liệu cho MỘT mảng (chuyên cần / thi đua). Tách riêng
+    // để màn Thống kê và các nút Xuất đều dùng chung, số liệu không bao giờ lệch.
+    summaryFor(cat) {
         const students = this.accessibleStudents.filter(s => s.status === 'đang sinh hoạt');
-        const sessions = this.statSessions.filter(s => s.countForAttendance);
+        const sessions = this.sessionsForCategory(cat);
 
         // TÁI DÙNG chỉ số điểm danh dựng sẵn (O(1) tra cứu) thay vì quét lại
         // cả chục nghìn dòng mỗi lần đọc getter — nguyên nhân render treo.
@@ -138,7 +178,7 @@ window.TNTT.stats = {
 
         return {
             students: students.length,
-            sessionCount: this.statSessions.length,
+            sessionCount: sessions.length,
             countedSessions: sessions.length - untaken,
             untakenSessions: untaken,
             total: total,
@@ -216,10 +256,13 @@ window.TNTT.stats = {
         return 'bg-rose-500';
     },
 
-    exportStatsCSV() {
-        const sum = this.statSummary;
+    // Xuất bảng TỔNG KẾT (CSV, mỗi em một dòng) cho mảng đang chọn — hoặc
+    // truyền 'chuyen_can' / 'thi_dua' để xuất đích danh một mảng.
+    exportStatsCSV(cat) {
+        cat = cat || this.statCategory;
+        const sum = this.summaryFor(cat);
         if (sum.countedSessions === 0) {
-            alert('Tháng này chưa có buổi nào để thống kê!');
+            alert('Tháng này chưa có buổi ' + this.categoryText(cat).toLowerCase() + ' nào để thống kê!');
             return;
         }
         const headers = ['Mã số', 'Tên Thánh', 'Họ và Tên', 'Lớp', 'Số buổi', 'Có mặt', 'Đi trễ', 'Vắng có phép', 'Vắng không phép', 'Tỷ lệ có mặt (%)'];
@@ -238,7 +281,7 @@ window.TNTT.stats = {
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = 'Thong_Ke_Chuyen_Can_' + this.statMonth + '.csv';
+        link.download = 'Tong_Ket_' + this.categorySlug(cat) + '_' + this.statMonth + '.csv';
         link.click();
         URL.revokeObjectURL(url);
     },
@@ -249,22 +292,25 @@ window.TNTT.stats = {
     // Khác với "Tổng kết" (CSV, một dòng mỗi em), bản này mô phỏng đúng
     // cuốn SỔ ĐIỂM DANH giấy và giữ được MÀU/VIỀN/Ô GỘP:
     //   - Cột đầu: Mã thiếu nhi · Tên Thánh · Họ và Tên
-    //   - Mỗi TUẦN là một ô lớn (gộp) đè lên các CHƯƠNG TRÌNH tính chuyên
-    //     cần của buổi hôm đó (Thánh Lễ, Giáo Lý Sáng/Chiều...)
+    //   - Mỗi TUẦN là một ô lớn (gộp) đè lên các CHƯƠNG TRÌNH của mảng đang
+    //     xuất (chuyên cần hoặc thi đua đi lễ) diễn ra hôm đó
     //   - Ô đánh dấu:  ✓ = có mặt · T = đi trễ · P = vắng có phép ·
     //     để TRỐNG = vắng (không phép)
     //   - Khối TỔNG KẾT (Có mặt / Đi trễ / Vắng / Tỷ lệ) ở cuối.
     //
+    // Tham số cat: 'chuyen_can' | 'thi_dua' (mặc định = mảng đang chọn).
     // Kỹ thuật: xuất một BẢNG HTML rồi đặt đuôi .xls + MIME của Excel.
     // Excel/Google Sheets mở file HTML này như bảng tính bình thường, giữ
     // nguyên màu nền, viền và ô gộp — không cần thêm thư viện nào.
     // Chỉ lấy các buổi ĐÃ QUA GIỜ CHỐT trong tháng đang xem, đúng phạm vi
     // quyền như màn Thống kê nên số liệu không bao giờ lệch.
     // ==========================================
-    exportAttendanceGridXLS() {
-        const sessions = this.statSessions.filter(s => s.countForAttendance);
+    exportAttendanceGridXLS(cat) {
+        cat = cat || this.statCategory;
+        const catText = this.categoryText(cat);
+        const sessions = this.sessionsForCategory(cat);
         if (sessions.length === 0) {
-            alert('Tháng này chưa có buổi chuyên cần nào đã qua giờ chốt để xuất!');
+            alert('Tháng này chưa có buổi ' + catText.toLowerCase() + ' nào đã qua giờ chốt để xuất!');
             return;
         }
 
@@ -311,7 +357,7 @@ window.TNTT.stats = {
 
         // Tiêu đề + phụ đề + chú thích (gộp toàn bộ chiều ngang).
         html += '<tr><td colspan="' + totalCols + '" style="padding:8px;text-align:center;font-size:16px;font-weight:bold;color:#1f3864;">'
-             + 'SỔ ĐIỂM DANH CHUYÊN CẦN</td></tr>';
+             + 'SỔ ĐIỂM DANH — ' + esc(catText.toUpperCase()) + '</td></tr>';
         html += '<tr><td colspan="' + totalCols + '" style="padding:2px 8px;text-align:center;font-style:italic;color:#595959;">'
              + esc(this.statMonthLabel) + '</td></tr>';
         html += '<tr><td colspan="' + totalCols + '" style="padding:6px 8px;text-align:center;font-weight:bold;color:#404040;background:#fff7e6;border:' + BRD + ';">'
@@ -381,7 +427,7 @@ window.TNTT.stats = {
         const doc = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">'
             + '<head><meta charset="utf-8">'
             + '<!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>'
-            + '<x:Name>Chuyên cần</x:Name>'
+            + '<x:Name>' + esc(catText) + '</x:Name>'
             + '<x:WorksheetOptions><x:FrozenNoSplit/><x:SplitHorizontal>7</x:SplitHorizontal>'
             + '<x:TopRowBottomPane>7</x:TopRowBottomPane><x:SplitVertical>3</x:SplitVertical>'
             + '<x:LeftColumnRightPane>3</x:LeftColumnRightPane><x:ActivePane>0</x:ActivePane>'
@@ -393,7 +439,7 @@ window.TNTT.stats = {
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = 'So_Diem_Danh_Chuyen_Can_' + this.statMonth + '.xls';
+        link.download = 'So_Diem_Danh_' + this.categorySlug(cat) + '_' + this.statMonth + '.xls';
         link.click();
         URL.revokeObjectURL(url);
     },
