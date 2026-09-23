@@ -69,8 +69,70 @@ window.TNTT.attendance = {
             .sort((a, b) => a.startTime.localeCompare(b.startTime));
     },
 
+    // Chương trình có nằm trong phạm vi LỚP của người đăng nhập không.
+    //
+    // Yêu cầu: thành viên gắn lớp (không phải toàn đoàn) chỉ thấy đúng
+    // những chương trình đã gắn lớp của mình ở module Chương trình. Buổi
+    // gắn cho lớp khác thì KHÔNG hiện trên màn điểm danh — khớp với chặn
+    // phía máy chủ (attendance.php lọc scan/lookup/toggle theo program_classes).
+    //
+    // Chương trình KHÔNG gắn lớp nào = toàn đoàn -> ai cũng thấy.
+    programInMyScope(p) {
+        if (this.isUnrestrictedScope) return true;      // Quản Trị / BĐH: thấy hết
+        const ids = (this.programClasses && this.programClasses[p.id]) || [];
+        if (!ids.length) return true;                   // toàn đoàn
+        const mine = this.myClasses;
+        const myIds = new Set(
+            (this.classes || []).filter(c => mine.includes(c.name)).map(c => c.id)
+        );
+        return ids.some(id => myIds.has(id));
+    },
+
+    // Đã tới giờ bắt đầu buổi chưa — để CHỈ hiện buổi khi tới giờ, tránh
+    // mở/quét nhầm buổi khác (yêu cầu người dùng).
+    //   - Ngày quá khứ: hiện hết (để sửa / đối chiếu).
+    //   - Ngày tương lai: chưa tới -> ẩn.
+    //   - Hôm nay: so giờ hiện tại với giờ bắt đầu (nowTs cập nhật 30s/lần
+    //     nên buổi tự hiện ra khi tới giờ, không cần tải lại trang).
+    programStarted(p, dateStr) {
+        const today = this.toDateInput(new Date());
+        if (dateStr < today) return true;
+        if (dateStr > today) return false;
+        if (!p.startTime) return true;   // thiếu giờ bắt đầu -> không chặn
+        return this.nowTs >= new Date(dateStr + 'T' + p.startTime + ':00').getTime();
+    },
+
+    // Buổi trong ngày thuộc phạm vi LỚP của mình (chưa xét giờ bắt đầu).
+    // Tính MỘT lần rồi tách "đã tới giờ" / "chưa tới giờ" bên dưới, tránh
+    // lặp lại programsOn + programInMyScope cho cả hai danh sách.
+    get scopedProgramsOnDate() {
+        return this.programsOn(this.attendanceDate, this.attendanceClass || null)
+            .filter(p => this.programInMyScope(p));
+    },
+
+    // Danh sách buổi HIỆN được (đúng phạm vi lớp + đã tới giờ bắt đầu).
     get programsOnDate() {
-        return this.programsOn(this.attendanceDate, this.attendanceClass || null);
+        return this.scopedProgramsOnDate.filter(p => this.programStarted(p, this.attendanceDate));
+    },
+
+    // Buổi thuộc phạm vi nhưng CHƯA tới giờ (hôm nay chưa tới giờ, hoặc ngày
+    // mai trở đi). Hiện mờ để người dùng biết "sắp có", nhưng chưa mở được —
+    // vừa nhắc lịch, vừa tránh mở nhầm buổi.
+    get pendingProgramsOnDate() {
+        return this.scopedProgramsOnDate.filter(p => !this.programStarted(p, this.attendanceDate));
+    },
+
+    // Học sinh đang sinh hoạt trong phạm vi mình VÀ thuộc lớp gắn của buổi.
+    // Buổi có gắn lớp -> chỉ đếm học sinh của đúng các lớp đó (khớp mẫu số
+    // mà GLV thật sự điểm danh được); buổi không gắn lớp = toàn đoàn.
+    programScopeStudents(prog) {
+        let scope = this.accessibleStudents.filter(s => s.status === 'đang sinh hoạt');
+        const ids = (this.programClasses && this.programClasses[prog.id]) || [];
+        if (ids.length) {
+            const names = new Set((this.classes || []).filter(c => ids.includes(c.id)).map(c => c.name));
+            scope = scope.filter(s => names.has(s.className));
+        }
+        return scope;
     },
 
     // Nhảy tới Chúa Nhật gần nhất (đa số chương trình rơi vào Chúa Nhật)
@@ -91,6 +153,12 @@ window.TNTT.attendance = {
         // sẽ hiện mọi em "chưa điểm danh" và dễ điểm danh đè lên bản ghi cũ.
         if (!this.heavyLoaded) {
             window.TNTT.toast.info('Đang tải số liệu điểm danh, đợi một chút rồi bắt đầu nhé.');
+            return;
+        }
+        // Chỉ mở buổi khi đã tới giờ bắt đầu (tránh mở/quét nhầm buổi khác).
+        // Danh sách đã ẩn buổi chưa tới giờ; chặn thêm ở đây phòng gọi từ nơi khác.
+        if (!this.programStarted(prog, this.attendanceDate)) {
+            window.TNTT.toast.info('Buổi "' + prog.name + '" chưa tới giờ bắt đầu (' + prog.startTime + ').');
             return;
         }
         this.activeSession = { programId: prog.id, date: this.attendanceDate };
@@ -320,19 +388,25 @@ window.TNTT.attendance = {
     get attendanceTodoCount() {
         if (!this.canAccess('attendance') || this.isUnderMaintenance('attendance')) return 0;
         const today = this.toDateInput(new Date());
-        const scope = this.accessibleStudents.filter(s => s.status === 'đang sinh hoạt');
-        if (scope.length === 0) return 0;
         let n = 0;
-        this.programsOn(today).forEach(p => {
-            const done = scope.filter(s => this.attendanceRecord(s.id, { programId: p.id, date: today })).length;
-            if (done < scope.length) n++;
-        });
+        // Chỉ nhắc những buổi thật sự mở được: đúng phạm vi lớp của mình +
+        // đã tới giờ bắt đầu. Nếu không, chấm nhắc sẽ đòi làm buổi mà danh
+        // sách đã ẩn / chưa cho mở -> không bao giờ tắt được.
+        this.programsOn(today)
+            .filter(p => this.programInMyScope(p) && this.programStarted(p, today))
+            .forEach(p => {
+                // Mẫu số theo lớp gắn của buổi, không phải mọi lớp mình phụ trách.
+                const scope = this.programScopeStudents(p);
+                if (scope.length === 0) return;
+                const done = scope.filter(s => this.attendanceRecord(s.id, { programId: p.id, date: today })).length;
+                if (done < scope.length) n++;
+            });
         return n;
     },
 
     // Tiến độ hiển thị ngay trên thẻ chọn chương trình
     sessionProgress(prog) {
-        const scope = this.accessibleStudents.filter(s => s.status === 'đang sinh hoạt');
+        const scope = this.programScopeStudents(prog);
         const done = scope.filter(s => this.attendanceRecord(s.id, { programId: prog.id, date: this.attendanceDate })).length;
         return { done: done, total: scope.length };
     },
