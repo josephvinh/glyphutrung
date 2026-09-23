@@ -19,9 +19,9 @@ function tntt_nen_tinh(): void
     $accept = $_SERVER['HTTP_ACCEPT_ENCODING'] ?? '';
 
     // Brotli nén mạnh hơn gzip ~20% — ưu tiên nếu có extension và trình duyệt nhận.
-    // Dùng số 0 thay cho hằng BROTLI_GENERIC để tránh "undefined constant" ở vài host.
     if (extension_loaded('brotli') && stripos($accept, 'br') !== false) {
-        @ob_start(fn($buf) => brotli_compress($buf, 0, 5)); // level 5: cân bằng tốc độ/nén
+        $ok = @ob_start(fn($buf) => brotli_compress($buf, 0, 5)); // level 5: cân bằng tốc độ/nén
+        if (!$ok) return; // Fallback: phục vụ thô nếu buffer lỗi
         header('Content-Encoding: br');
         header('Vary: Accept-Encoding');
         return;
@@ -29,6 +29,7 @@ function tntt_nen_tinh(): void
 
     // gzip: ob_gzhandler tự đặt Content-Encoding và Vary giúp.
     if (extension_loaded('zlib') && stripos($accept, 'gzip') !== false) {
-        @ob_start('ob_gzhandler');
+        $ok = @ob_start('ob_gzhandler');
+        if (!$ok) return; // Fallback: phục vụ thô nếu buffer lỗi
     }
 }
