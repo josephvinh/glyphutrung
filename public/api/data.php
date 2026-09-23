@@ -103,71 +103,64 @@ foreach (db_all(
 // ---------------------------------------------------------------
 // Chương trình
 // ---------------------------------------------------------------
+// Tự đóng các chương trình "chiến dịch" đã qua ngày (nếu bật auto_close).
+// Lười: chỉ chạy khi cột tồn tại; một UPDATE gọn, không đụng chương trình khác.
+// Bỏ qua ở bước 'heavy' (chỉ trả điểm danh/điểm, KHÔNG gửi programs) để khỏi
+// ghi thừa vào một endpoint đọc.
+if ($part !== 'heavy' && db_one("SHOW COLUMNS FROM programs LIKE 'auto_close_after_event'")) {
+    db_run("UPDATE programs SET status='đã đóng'
+             WHERE year_id=? AND type='chiến dịch' AND status='kích hoạt'
+               AND auto_close_after_event=1 AND event_date IS NOT NULL AND event_date < CURDATE()",
+           [$yid]);
+}
+
 $programs = array_map(fn($p) => [
     'id'                 => (int) $p['id'],
     'name'               => $p['name'],
     'type'               => $p['type'],
     'status'             => $p['status'],
     'countForAttendance' => (bool) $p['count_for_attendance'],
+    'countForEmulation'  => (bool) ($p['count_for_emulation'] ?? 0),
     'startTime'          => substr($p['start_time'], 0, 5),
     'cutoffTime'         => !empty($p['cutoff_time']) ? substr($p['cutoff_time'], 0, 5) : '',
+    'absentTime'         => !empty($p['absent_time']) ? substr($p['absent_time'], 0, 5) : '',
     'dayOfWeek'          => $p['day_of_week'] === null ? null : (int) $p['day_of_week'],
+    'daysOfWeek'         => !empty($p['days_of_week'])
+                              ? array_map('intval', explode(',', $p['days_of_week']))
+                              : ($p['day_of_week'] === null ? [] : [(int) $p['day_of_week']]),
     'eventDate'          => $p['event_date'] ?? '',
-], db_all('SELECT * FROM programs WHERE year_id = ? ORDER BY start_time', [$yid]));
+    'allowQr'            => (bool) ($p['allow_qr'] ?? 1),
+    'color'              => $p['color'] ?? '',
+    'icon'               => $p['icon'] ?? '',
+    'sortOrder'          => (int) ($p['sort_order'] ?? 1),
+    'effectiveFrom'      => $p['effective_from'] ?? '',
+    'effectiveTo'        => $p['effective_to'] ?? '',
+    'autoCloseAfterEvent'=> (bool) ($p['auto_close_after_event'] ?? 0),
+], db_all(
+    db_one("SHOW COLUMNS FROM programs LIKE 'sort_order'")
+        ? 'SELECT * FROM programs WHERE year_id = ? ORDER BY sort_order, start_time'
+        : 'SELECT * FROM programs WHERE year_id = ? ORDER BY start_time',
+    [$yid]));
 
 // ---------------------------------------------------------------
-// Thời khóa biểu lớp (Hướng B) — lịch sinh hoạt riêng của từng lớp
-// Chỉ gửi lịch trong phạm vi người này được xem.
+// Chương trình gắn lớp — lớp nào tham gia chương trình nào.
+// RỖNG với một chương trình = áp dụng toàn đoàn.
+// Gửi map programId -> [classId,...] để client lọc buổi theo lớp.
 // ---------------------------------------------------------------
-$classSchedules = [];
-$csScopeIds = allowed_class_ids($me);
-// Người có phạm vi rỗng (không phụ trách lớp nào) -> bỏ qua, tránh IN () lỗi SQL
-if (db_one("SHOW TABLES LIKE 'class_schedules'") && !($csScopeIds !== null && !$csScopeIds)) {   // phòng khi bảng chưa tạo
-    $csSql      = 'SELECT cs.*, c.name AS class_name, p.name AS program_name
-                    FROM class_schedules cs
-                    JOIN classes c ON c.id = cs.class_id
-                    LEFT JOIN programs p ON p.id = cs.program_id
-                   WHERE cs.year_id = ? AND cs.status = "kích hoạt"';
-    $csParams   = [$yid];
-
-    if ($csScopeIds !== null) {
-        $csSql .= ' AND cs.class_id IN (' . implode(',', array_fill(0, count($csScopeIds), '?')) . ')';
-        $csParams = array_merge($csParams, $csScopeIds);
+$programClasses = [];
+if (db_one("SHOW TABLES LIKE 'program_classes'")) {
+    foreach (db_all(
+        'SELECT pc.program_id, pc.class_id
+           FROM program_classes pc
+           JOIN programs p ON p.id = pc.program_id
+          WHERE p.year_id = ?', [$yid]) as $r) {
+        $pid = (int) $r['program_id'];
+        if (!isset($programClasses[$pid])) $programClasses[$pid] = [];
+        $programClasses[$pid][] = (int) $r['class_id'];
     }
-
-    $csSql .= ' ORDER BY c.sort_order, cs.day_of_week, cs.start_time';
-
-    $classSchedules = array_map(fn($r) => [
-        'id'          => (int) $r['id'],
-        'classId'     => (int) $r['class_id'],
-        'className'   => $r['class_name'],
-        'programId'   => $r['program_id'] !== null ? (int) $r['program_id'] : null,
-        'programName' => $r['program_name'] ?? '',
-        'dayOfWeek'   => (int) $r['day_of_week'],
-        'startTime'   => substr($r['start_time'], 0, 5),
-        'cutoffTime'  => !empty($r['cutoff_time']) ? substr($r['cutoff_time'], 0, 5) : null,
-        'slot'        => $r['slot'],
-        'activeFrom'  => $r['active_from'] ?? '',
-        'activeTo'    => $r['active_to'] ?? '',
-    ], db_all($csSql, $csParams));
 }
-
-// ---------------------------------------------------------------
-// Ngoại lệ lịch (GĐ4) — gửi kèm để client tính đúng mẫu số chuyên cần
-// (loại các ngày NGHỈ) mà không phải nạp lười từng lịch một.
-// ---------------------------------------------------------------
-$scheduleExceptions = [];
-if ($classSchedules && db_one("SHOW TABLES LIKE 'schedule_exceptions'")) {
-    $csIds = array_map(fn($r) => (int) $r['id'], $classSchedules);
-    $ph    = implode(',', array_fill(0, count($csIds), '?'));
-    $scheduleExceptions = array_map(fn($e) => [
-        'scheduleId' => (int) $e['schedule_id'],
-        'onDate'     => $e['on_date'],
-        'kind'       => $e['kind'],
-        'newStart'   => !empty($e['new_start'])  ? substr($e['new_start'], 0, 5)  : null,
-        'newCutoff'  => !empty($e['new_cutoff']) ? substr($e['new_cutoff'], 0, 5) : null,
-    ], db_all("SELECT * FROM schedule_exceptions WHERE schedule_id IN ($ph) ORDER BY on_date", $csIds));
-}
+// Ép thành object {pid: [..]} khi rỗng để JSON ra {} thay vì []
+$programClasses = (object) $programClasses;
 
 // ---------------------------------------------------------------
 // Điểm danh — chỉ các em CÓ TỚI.
@@ -405,8 +398,7 @@ $result = [
     'students'      => $students,
     'classCounts'   => $classCounts,
     'programs'      => $programs,
-    'classSchedules' => $classSchedules,
-    'scheduleExceptions' => $scheduleExceptions,
+    'programClasses' => $programClasses,
     'attendances'   => $attendances,
     'leaveRequests' => $leaves,
     'scores'        => $scores,

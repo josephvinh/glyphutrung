@@ -32,18 +32,40 @@ switch ($action) {
         $type    = ($in['type'] ?? 'bắt buộc') === 'chiến dịch' ? 'chiến dịch' : 'bắt buộc';
         $status  = ($in['status'] ?? 'kích hoạt') === 'đã đóng' ? 'đã đóng' : 'kích hoạt';
         $countFA = !empty($in['countForAttendance']) ? 1 : 0;
+        $countEm = !empty($in['countForEmulation'])  ? 1 : 0;
         $start   = (string) ($in['startTime'] ?? '');
         $cutoff  = trim((string) ($in['cutoffTime'] ?? ''));
+        $absent  = trim((string) ($in['absentTime'] ?? ''));
+
+        // Tùy chọn hiển thị / hành vi
+        $allowQr = !empty($in['allowQr']) || !isset($in['allowQr']) ? 1 : 0;   // mặc định bật
+        $color   = trim((string) ($in['color'] ?? '')) ?: null;
+        $icon    = trim((string) ($in['icon'] ?? '')) ?: null;
+        $sortOrd = (int) ($in['sortOrder'] ?? 1);
+        $autoClose = !empty($in['autoCloseAfterEvent']) ? 1 : 0;
 
         if ($name === '')                            json_fail('Vui lòng nhập tên chương trình.');
         if (!preg_match('/^\d{2}:\d{2}$/', $start))  json_fail('Giờ bắt đầu không hợp lệ.');
         if ($cutoff !== '' && !preg_match('/^\d{2}:\d{2}$/', $cutoff)) json_fail('Giờ chốt không hợp lệ.');
         if ($cutoff !== '' && $cutoff <= $start)      json_fail('Giờ chốt phải sau giờ bắt đầu.');
+        if ($absent !== '' && !preg_match('/^\d{2}:\d{2}$/', $absent)) json_fail('Giờ "tính vắng" không hợp lệ.');
+        if ($absent !== '' && $absent <= $start)      json_fail('Giờ "tính vắng" phải sau giờ bắt đầu.');
 
-        // Bắt buộc -> lặp theo thứ; chiến dịch -> một ngày cụ thể
+        // Bắt buộc -> lặp theo thứ (một hoặc NHIỀU thứ); chiến dịch -> một ngày
+        $daysCsv = null;
         if ($type === 'bắt buộc') {
-            $dow = (int) ($in['dayOfWeek'] ?? 0);
-            if ($dow < 0 || $dow > 6) json_fail('Thứ trong tuần không hợp lệ.');
+            $days = is_array($in['daysOfWeek'] ?? null)
+                  ? array_values(array_unique(array_filter(array_map('intval', $in['daysOfWeek']),
+                        fn($d) => $d >= 0 && $d <= 6)))
+                  : [];
+            if (!$days) {                                  // tương thích: chỉ 1 thứ
+                $dow1 = (int) ($in['dayOfWeek'] ?? 0);
+                if ($dow1 < 0 || $dow1 > 6) json_fail('Thứ trong tuần không hợp lệ.');
+                $days = [$dow1];
+            }
+            sort($days);
+            $dow = $days[0];                               // thứ "chính" (tương thích cột cũ)
+            $daysCsv = implode(',', $days);
             $eventDate = null;
         } else {
             $dow = null;
@@ -53,27 +75,50 @@ switch ($action) {
             }
         }
 
+        // Khoảng ngày áp dụng (buổi lặp)
+        $effFrom = trim((string) ($in['effectiveFrom'] ?? ''));
+        $effTo   = trim((string) ($in['effectiveTo'] ?? ''));
+        $effFrom = preg_match('/^\d{4}-\d{2}-\d{2}$/', $effFrom) ? $effFrom : null;
+        $effTo   = preg_match('/^\d{4}-\d{2}-\d{2}$/', $effTo)   ? $effTo   : null;
+        if ($effFrom && $effTo && $effFrom > $effTo) json_fail('Ngày áp dụng: "từ" phải trước "đến".');
+
         $cutoffVal = $cutoff === '' ? null : $cutoff;
+        $absentVal = $absent === '' ? null : $absent;
+
+        // Lớp gắn (rỗng = toàn đoàn). Lọc còn các lớp thật.
+        $classIds = is_array($in['classIds'] ?? null)
+            ? array_values(array_unique(array_filter(array_map('intval', $in['classIds']), fn($c) => $c > 0)))
+            : [];
+
+        $cols = 'name=?, type=?, status=?, count_for_attendance=?, count_for_emulation=?,
+                 start_time=?, cutoff_time=?, absent_time=?, day_of_week=?, days_of_week=?, event_date=?,
+                 allow_qr=?, color=?, icon=?, sort_order=?, effective_from=?, effective_to=?, auto_close_after_event=?';
+        $vals = [$name, $type, $status, $countFA, $countEm, $start, $cutoffVal, $absentVal,
+                 $dow, $daysCsv, $eventDate, $allowQr, $color, $icon, $sortOrd, $effFrom, $effTo, $autoClose];
 
         if ($id > 0) {
             if (!db_one('SELECT id FROM programs WHERE id=? AND year_id=?', [$id, $yid])) {
                 json_fail('Không tìm thấy chương trình.', 404);
             }
-            db_run('UPDATE programs
-                       SET name=?, type=?, status=?, count_for_attendance=?,
-                           start_time=?, cutoff_time=?, day_of_week=?, event_date=?
-                     WHERE id=? AND year_id=?',
-                   [$name, $type, $status, $countFA, $start, $cutoffVal, $dow, $eventDate, $id, $yid]);
+            db_run("UPDATE programs SET $cols WHERE id=? AND year_id=?", array_merge($vals, [$id, $yid]));
             log_action('sua', 'programs', 'Sửa chương trình ' . $name,
                        $start . ($cutoffVal ? ' – ' . $cutoffVal : ''));
         } else {
-            $id = db_insert('INSERT INTO programs
-                       (year_id, name, type, status, count_for_attendance,
-                        start_time, cutoff_time, day_of_week, event_date)
-                     VALUES (?,?,?,?,?,?,?,?,?)',
-                   [$yid, $name, $type, $status, $countFA, $start, $cutoffVal, $dow, $eventDate]);
+            $id = db_insert("INSERT INTO programs SET year_id=?, $cols", array_merge([$yid], $vals));
             log_action('tao', 'programs', 'Tạo chương trình ' . $name,
                        $start . ($cutoffVal ? ' – ' . $cutoffVal : ''));
+        }
+
+        // Đồng bộ lớp gắn: xoá hết rồi chèn lại theo lựa chọn (rỗng = toàn đoàn)
+        db_run('DELETE FROM program_classes WHERE program_id=?', [$id]);
+        if ($classIds) {
+            // chỉ chèn lớp thật sự tồn tại
+            $ph  = implode(',', array_fill(0, count($classIds), '?'));
+            $ok  = db_all("SELECT id FROM classes WHERE id IN ($ph)", $classIds);
+            $okIds = array_map(fn($r) => (int) $r['id'], $ok);
+            foreach ($okIds as $cid) {
+                db_run('INSERT IGNORE INTO program_classes (program_id, class_id) VALUES (?,?)', [$id, $cid]);
+            }
         }
 
         Cache::flush();   // chương trình đổi -> mọi người nạp lại thấy ngay

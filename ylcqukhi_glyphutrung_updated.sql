@@ -593,11 +593,32 @@ CREATE TABLE `programs` (
   `start_time` time NOT NULL,
   `cutoff_time` time DEFAULT NULL,
   `day_of_week` tinyint(4) DEFAULT NULL COMMENT '0 Chúa Nhật ... 6 Thứ Bảy',
+  `days_of_week` varchar(16) DEFAULT NULL COMMENT 'CSV các thứ 0-6 (lặp nhiều ngày); NULL = dùng day_of_week',
   `event_date` date DEFAULT NULL,
+  `allow_qr` tinyint(1) NOT NULL DEFAULT 1 COMMENT 'Cho phép quét QR',
+  `absent_time` time DEFAULT NULL COMMENT 'Sau giờ này không ghi được (tính vắng)',
+  `color` varchar(20) DEFAULT NULL COMMENT 'Màu nhãn',
+  `icon` varchar(32) DEFAULT NULL COMMENT 'Tên icon lucide',
+  `sort_order` tinyint(4) NOT NULL DEFAULT 1 COMMENT 'Thứ tự hiển thị',
+  `effective_from` date DEFAULT NULL COMMENT 'Áp dụng từ ngày',
+  `effective_to` date DEFAULT NULL COMMENT 'Áp dụng đến ngày',
+  `auto_close_after_event` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Chiến dịch tự đóng sau ngày',
+  `count_for_emulation` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Tính vào thi đua đi lễ',
   PRIMARY KEY (`id`),
   KEY `idx_prog_year` (`year_id`,`status`),
   CONSTRAINT `fk_prog_year` FOREIGN KEY (`year_id`) REFERENCES `school_years` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+-- Chương trình gắn lớp (rỗng = toàn đoàn)
+CREATE TABLE `program_classes` (
+  `program_id` int(11) NOT NULL,
+  `class_id` int(11) NOT NULL,
+  PRIMARY KEY (`program_id`,`class_id`),
+  KEY `idx_pc_class` (`class_id`),
+  CONSTRAINT `fk_pc_prog` FOREIGN KEY (`program_id`) REFERENCES `programs` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_pc_class` FOREIGN KEY (`class_id`) REFERENCES `classes` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --

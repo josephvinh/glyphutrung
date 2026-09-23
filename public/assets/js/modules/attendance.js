@@ -33,50 +33,44 @@ window.TNTT.attendance = {
         this.changeModule('attendance');
     },
 
-    // Các chương trình đang kích hoạt có diễn ra vào một ngày bất kỳ
-    // HƯỚNG B: Ưu tiên dùng classSchedules (lịch riêng của lớp) nếu có
-    programsOn(dateStr) {
-        if (!dateStr) return [];
-
-        // HƯỚNG B: Nếu có classSchedules và đang chọn lớp, dùng lịch lớp
-        if (this.attendanceClass && this.classSchedules?.length > 0) {
-            const dow = new Date(dateStr + 'T00:00:00').getDay();
-            // Lọc schedules của lớp đang chọn
-            const todaySchedules = this.classSchedules.filter(cs => {
-                if (cs.dayOfWeek !== dow) return false;
-                if (cs.className !== this.attendanceClass) return false;
-                // Kiểm tra active_from/active_to
-                if (cs.activeFrom && dateStr < cs.activeFrom) return false;
-                if (cs.activeTo && dateStr > cs.activeTo) return false;
-                return true;
-            });
-            if (todaySchedules.length > 0) {
-                // Chuyển đổi schedule thành "program-like" object để tương thích
-                return todaySchedules.map(cs => ({
-                    id: cs.programId || null,
-                    name: cs.programName || (cs.slot ? `Ca ${cs.slot}` : 'Giáo lý'),
-                    type: cs.programId ? 'bắt buộc' : 'chiến dịch',
-                    status: 'kích hoạt',
-                    startTime: cs.startTime,
-                    cutoffTime: cs.cutoffTime,
-                    dayOfWeek: cs.dayOfWeek,
-                    scheduleId: cs.id,  // HƯỚNG B: đánh dấu đây là schedule
-                    slot: cs.slot,
-                })).sort((a, b) => a.startTime.localeCompare(b.startTime));
-            }
-        }
-
-        // Fallback: dùng program toàn đoàn (cách cũ)
+    // Chương trình có diễn ra vào ngày này không.
+    // Hỗ trợ LẶP NHIỀU THỨ (daysOfWeek) + KHOẢNG NGÀY áp dụng (effectiveFrom/To).
+    programOccursOn(p, dateStr) {
+        if (p.status !== 'kích hoạt') return false;
+        if (p.type === 'chiến dịch') return p.eventDate === dateStr;
         const dow = new Date(dateStr + 'T00:00:00').getDay();
-        return this.programs.filter(p => {
-            if (p.status !== 'kích hoạt') return false;
-            if (p.type === 'chiến dịch') return p.eventDate === dateStr;
-            return p.dayOfWeek === dow;
-        }).sort((a, b) => a.startTime.localeCompare(b.startTime));
+        const days = (p.daysOfWeek && p.daysOfWeek.length)
+            ? p.daysOfWeek
+            : (p.dayOfWeek === null || p.dayOfWeek === undefined ? [] : [p.dayOfWeek]);
+        if (!days.includes(dow)) return false;
+        if (p.effectiveFrom && dateStr < p.effectiveFrom) return false;
+        if (p.effectiveTo   && dateStr > p.effectiveTo)   return false;
+        return true;
+    },
+
+    // Lớp (theo TÊN) có tham gia chương trình không. RỖNG gắn lớp = toàn đoàn.
+    programAppliesToClass(p, className) {
+        if (!className) return true;
+        const ids = (this.programClasses && this.programClasses[p.id]) || [];
+        if (!ids.length) return true;
+        // Chương trình CÓ gắn lớp cụ thể: lớp không tra ra id thì coi như
+        // KHÔNG thuộc buổi (fail-closed) — khớp với chặn phía máy chủ
+        // (attendance.php lọc theo program_classes), tránh hiện buổi cho
+        // lớp không được ghi.
+        const cls = (this.classes || []).find(c => c.name === className);
+        return cls ? ids.includes(cls.id) : false;
+    },
+
+    // Các chương trình đang kích hoạt diễn ra vào một ngày; lọc theo lớp nếu có.
+    programsOn(dateStr, className = null) {
+        if (!dateStr) return [];
+        return this.programs
+            .filter(p => this.programOccursOn(p, dateStr) && this.programAppliesToClass(p, className))
+            .sort((a, b) => a.startTime.localeCompare(b.startTime));
     },
 
     get programsOnDate() {
-        return this.programsOn(this.attendanceDate);
+        return this.programsOn(this.attendanceDate, this.attendanceClass || null);
     },
 
     // Nhảy tới Chúa Nhật gần nhất (đa số chương trình rơi vào Chúa Nhật)
@@ -99,16 +93,7 @@ window.TNTT.attendance = {
             window.TNTT.toast.info('Đang tải số liệu điểm danh, đợi một chút rồi bắt đầu nhé.');
             return;
         }
-        // HƯỚNG B: Bao gồm scheduleId + giờ của chính buổi này (từ classSchedules)
-        // để giờ chốt/quá giờ tính đúng theo lịch lớp, không tra ngược program.
-        this.activeSession = {
-            programId: prog.id || null,
-            scheduleId: prog.scheduleId || null,
-            date: this.attendanceDate,
-            name: prog.name,
-            startTime: prog.startTime,
-            cutoffTime: prog.cutoffTime || null
-        };
+        this.activeSession = { programId: prog.id, date: this.attendanceDate };
         this.attendanceSearch = '';
         // Bắt chọn lớp cho điểm danh TAY (giống Danh sách): một lớp thì tự mở,
         // nhiều lớp để trống, chọn lớp nào điểm danh lớp đó. Bộ chọn chỉ hiện
@@ -124,17 +109,7 @@ window.TNTT.attendance = {
 
     get sessionProgram() {
         if (!this.activeSession) return null;
-        const p = this.activeSession.programId
-            ? this.programs.find(p => p.id === this.activeSession.programId)
-            : null;
-        if (p) return p;
-        // Buổi theo lịch lớp (có thể không gắn program): dựng object từ session
-        return {
-            id: this.activeSession.programId,
-            name: this.activeSession.name || 'Giáo lý',
-            startTime: this.activeSession.startTime,
-            cutoffTime: this.activeSession.cutoffTime
-        };
+        return this.programs.find(p => p.id === this.activeSession.programId) || null;
     },
 
     cutoffOf(prog) {
@@ -152,19 +127,9 @@ window.TNTT.attendance = {
     // Ngày quá khứ thì đương nhiên rồi, ngày tương lai thì chưa.
     isPastCutoffFor(session) {
         if (!session) return false;
-        // HƯỚNG B: nếu session mang sẵn giờ (buổi theo lịch lớp) thì dùng chính
-        // giờ đó; ngược lại tra program như cũ.
-        let startTime = session.startTime;
-        let cutoffTime = session.cutoffTime;
-        if (startTime === undefined) {
-            const prog = this.programs.find(p => p.id === session.programId);
-            if (!prog) return false;
-            startTime = prog.startTime;
-            cutoffTime = prog.cutoffTime;
-        }
-        if (!startTime) return false;
-        const cutoff = cutoffTime ? cutoffTime : this.addMinutes(startTime, this.CUTOFF_MINUTES);
-        return this.nowTs >= new Date(session.date + 'T' + cutoff + ':00').getTime();
+        const prog = this.programs.find(p => p.id === session.programId);
+        if (!prog) return false;
+        return this.nowTs >= new Date(session.date + 'T' + this.cutoffOf(prog) + ':00').getTime();
     },
 
     get isPastCutoff() {
@@ -187,12 +152,19 @@ window.TNTT.attendance = {
     },
 
     // ---- Index điểm danh (O(1)) ----
-    // HƯỚNG B: attKey hỗ trợ cả programId và scheduleId
-    attKey(session) {
-        if (session.scheduleId) {
-            return 's:' + session.scheduleId + '|' + session.date + '|' + session.studentId;
+    // Khoá tra cứu: chương-trình|ngày|em. Nhận CẢ hai kiểu gọi —
+    // attKey(programId, date, studentId) (attendance.js dùng) và
+    // attKey({programId, date, studentId}) (reports.js/promotion.js dùng).
+    // Mô hình nay là program-centric nên scheduleId (nếu có) bị bỏ qua.
+    // attendance/stats/reports/promotion GỘP chung một component (app.js),
+    // nên CHỈ giữ MỘT định nghĩa ở đây — tránh hai bản đè lẫn nhau làm
+    // hỏng toàn bộ index (bản nạp sau thắng, đổi luôn chữ ký hàm).
+    attKey(programId, date, studentId) {
+        if (programId !== null && typeof programId === 'object') {
+            const s = programId;
+            return s.programId + '|' + s.date + '|' + s.studentId;
         }
-        return session.programId + '|' + session.date + '|' + session.studentId;
+        return programId + '|' + date + '|' + studentId;
     },
 
     // Dựng lại toàn bộ index từ this.attendances. Gọi sau loadData.
@@ -200,9 +172,7 @@ window.TNTT.attendance = {
         const idx = new Map();
         const byStu = new Map();
         for (const a of this.attendances) {
-            // HƯỚNG B: một khoá duy nhất cho mỗi bản ghi (s:<scheduleId> theo lịch,
-            // ngược lại theo programId) — tránh để lại key rác khi gỡ điểm danh.
-            idx.set(this.attKey({ programId: a.programId, date: a.date, studentId: a.studentId, scheduleId: a.scheduleId }), a);
+            idx.set(this.attKey(a.programId, a.date, a.studentId), a);
             let arr = byStu.get(a.studentId);
             if (!arr) { arr = []; byStu.set(a.studentId, arr); }
             arr.push(a);
@@ -214,24 +184,17 @@ window.TNTT.attendance = {
     // Thêm/xoá 1 bản ghi: cập nhật CẢ mảng lẫn index để không lệch.
     _attThem(rec) {
         this.attendances.push(rec);
-        // HƯỚNG B: một khoá duy nhất (khớp rebuildAttendanceIndex)
-        if (this.attIndex) {
-            this.attIndex.set(this.attKey({ programId: rec.programId, date: rec.date, studentId: rec.studentId, scheduleId: rec.scheduleId }), rec);
-        }
+        if (this.attIndex) this.attIndex.set(this.attKey(rec.programId, rec.date, rec.studentId), rec);
         if (this.attByStudent) {
             let arr = this.attByStudent.get(rec.studentId);
             if (!arr) { arr = []; this.attByStudent.set(rec.studentId, arr); }
             arr.push(rec);
         }
     },
-    _attXoa(programId, date, studentId, scheduleId = null) {
-        const key = this.attKey({ programId, date, studentId, scheduleId });
+    _attXoa(programId, date, studentId) {
+        const key = this.attKey(programId, date, studentId);
         const rec = this.attIndex ? this.attIndex.get(key) : null;
-        // Khớp đúng bản ghi của buổi này: theo scheduleId nếu có, ngược lại
-        // theo programId + phải là bản ghi KHÔNG thuộc lịch nào.
-        const i = this.attendances.findIndex(a =>
-            a.date === date && a.studentId === studentId &&
-            (scheduleId ? a.scheduleId === scheduleId : (!a.scheduleId && a.programId === programId)));
+        const i = this.attendances.findIndex(a => a.programId === programId && a.date === date && a.studentId === studentId);
         if (i !== -1) this.attendances.splice(i, 1);
         if (this.attIndex) this.attIndex.delete(key);
         if (this.attByStudent && rec) {
@@ -248,12 +211,8 @@ window.TNTT.attendance = {
     attendanceRecord(studentId, session) {
         const ss = session || this.activeSession;
         if (!ss) return null;
-        // HƯỚNG B: một khoá duy nhất theo scheduleId (nếu có) hoặc programId
-        if (this.attIndex) {
-            return this.attIndex.get(this.attKey({ programId: ss.programId, date: ss.date, studentId, scheduleId: ss.scheduleId })) || null;
-        }
-        return this.attendances.find(a => a.date === ss.date && a.studentId === studentId &&
-            (ss.scheduleId ? a.scheduleId === ss.scheduleId : (!a.scheduleId && a.programId === ss.programId))) || null;
+        if (this.attIndex) return this.attIndex.get(this.attKey(ss.programId, ss.date, studentId)) || null;
+        return this.attendances.find(a => a.programId === ss.programId && a.date === ss.date && a.studentId === studentId) || null;
     },
 
     // Trạng thái cuối cùng của 1 em trong 1 buổi bất kỳ (suy ra, không lưu).
@@ -293,14 +252,13 @@ window.TNTT.attendance = {
         const cu = this.attendanceRecord(student.id, this.activeSession);
 
         if (cu) {
-            this._attXoa(this.activeSession.programId, this.activeSession.date, student.id, this.activeSession.scheduleId);
+            this._attXoa(this.activeSession.programId, this.activeSession.date, student.id);
             if (this.isPastCutoff) {
                 this.logAction('diemdanh', 'attendance', 'Gỡ điểm danh của ' + student.name,
                                this.sessionProgram.name + ' · ' + this.formatDate(this.activeSession.date) + ' · đang là ' + cu.status);
             }
             this.save('attendance', 'toggle', {
                 programId: this.activeSession.programId,
-                scheduleId: this.activeSession.scheduleId || null,
                 date: this.activeSession.date,
                 studentId: student.id
             }).then(r => {
@@ -330,15 +288,14 @@ window.TNTT.attendance = {
 
         this.save('attendance', 'toggle', {
             programId: this.activeSession.programId,
-            scheduleId: this.activeSession.scheduleId || null,
             date: this.activeSession.date,
             studentId: student.id
         }).then(r => {
             if (!r || !r.ok) {
-                this._attXoa(this.activeSession.programId, this.activeSession.date, student.id, this.activeSession.scheduleId);
+                this._attXoa(this.activeSession.programId, this.activeSession.date, student.id);
             } else if (r.status) {
                 // Cập nhật lại chính xác trạng thái từ server (tránh đồng hồ client lệch)
-                this._attXoa(this.activeSession.programId, this.activeSession.date, student.id, this.activeSession.scheduleId);
+                this._attXoa(this.activeSession.programId, this.activeSession.date, student.id);
                 newRec.status = r.status;
                 newRec.markedAt = r.markedAt;
                 newRec.markedBy = r.markedBy;
@@ -367,7 +324,7 @@ window.TNTT.attendance = {
         if (scope.length === 0) return 0;
         let n = 0;
         this.programsOn(today).forEach(p => {
-            const done = scope.filter(s => this.attendanceRecord(s.id, { programId: p.id, scheduleId: p.scheduleId || null, date: today })).length;
+            const done = scope.filter(s => this.attendanceRecord(s.id, { programId: p.id, date: today })).length;
             if (done < scope.length) n++;
         });
         return n;
@@ -376,7 +333,7 @@ window.TNTT.attendance = {
     // Tiến độ hiển thị ngay trên thẻ chọn chương trình
     sessionProgress(prog) {
         const scope = this.accessibleStudents.filter(s => s.status === 'đang sinh hoạt');
-        const done = scope.filter(s => this.attendanceRecord(s.id, { programId: prog.id, scheduleId: prog.scheduleId || null, date: this.attendanceDate })).length;
+        const done = scope.filter(s => this.attendanceRecord(s.id, { programId: prog.id, date: this.attendanceDate })).length;
         return { done: done, total: scope.length };
     },
 
