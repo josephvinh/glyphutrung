@@ -107,7 +107,12 @@ foreach (db_all(
 // Lười: chỉ chạy khi cột tồn tại; một UPDATE gọn, không đụng chương trình khác.
 // Bỏ qua ở bước 'heavy' (chỉ trả điểm danh/điểm, KHÔNG gửi programs) để khỏi
 // ghi thừa vào một endpoint đọc.
-if ($part !== 'heavy' && db_one("SHOW COLUMNS FROM programs LIKE 'auto_close_after_event'")) {
+// Bỏ qua khi niên khoá ĐÃ KHOÁ SỔ (chỉ đọc): mọi endpoint ghi khác đều chặn
+// năm khoá, endpoint đọc này không được là ngoại lệ tự sửa dữ liệu. Đặt điều
+// kiện khoá TRƯỚC để năm khoá không tốn cả truy vấn SHOW COLUMNS.
+if ($part !== 'heavy'
+    && $year['status'] !== 'đã khóa'
+    && db_has_column('programs', 'auto_close_after_event')) {
     db_run("UPDATE programs SET status='đã đóng'
              WHERE year_id=? AND type='chiến dịch' AND status='kích hoạt'
                AND auto_close_after_event=1 AND event_date IS NOT NULL AND event_date < CURDATE()",
@@ -137,7 +142,7 @@ $programs = array_map(fn($p) => [
     'effectiveTo'        => $p['effective_to'] ?? '',
     'autoCloseAfterEvent'=> (bool) ($p['auto_close_after_event'] ?? 0),
 ], db_all(
-    db_one("SHOW COLUMNS FROM programs LIKE 'sort_order'")
+    db_has_column('programs', 'sort_order')
         ? 'SELECT * FROM programs WHERE year_id = ? ORDER BY sort_order, start_time'
         : 'SELECT * FROM programs WHERE year_id = ? ORDER BY start_time',
     [$yid]));
@@ -148,7 +153,7 @@ $programs = array_map(fn($p) => [
 // Gửi map programId -> [classId,...] để client lọc buổi theo lớp.
 // ---------------------------------------------------------------
 $programClasses = [];
-if (db_one("SHOW TABLES LIKE 'program_classes'")) {
+if (db_has_table('program_classes')) {
     foreach (db_all(
         'SELECT pc.program_id, pc.class_id
            FROM program_classes pc

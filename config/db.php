@@ -132,3 +132,53 @@ function db_insert(string $sql, array $params = []): int
     db_run($sql, $params);
     return (int) db()->lastInsertId();
 }
+
+/**
+ * Bảng/cột có tồn tại không — dùng cho các nhánh "chỉ chạy khi đã migrate".
+ *
+ * Vì sao có hàm này: vài endpoint NÓNG (điểm danh, nạp dữ liệu) hỏi schema
+ * (SHOW TABLES / SHOW COLUMNS) trên MỖI request để biết tính năng đã cài
+ * chưa. Bảng/cột một khi đã thêm thì không mất, nên ta CACHE kết quả DƯƠNG:
+ *   - static: khỏi hỏi lại trong cùng một request (nhiều chỗ cùng hỏi).
+ *   - APCu (bộ nhớ tiến trình, KHÔNG bị Cache::flush() của cache tệp xoá):
+ *     khỏi hỏi lại giữa các request sau khi đã thấy "có".
+ * CHỈ cache khi CÓ: nếu chưa có (chưa chạy migration) thì vẫn hỏi lại mỗi
+ * lần, để bảng/cột vừa thêm được nhận ngay, không phải chờ cache hết hạn.
+ * Tên bảng/cột lọc còn [A-Za-z0-9_] (chỉ dùng cho định danh nội bộ, chống
+ * chèn SQL vì SHOW ... LIKE không nhận tham số ràng buộc).
+ */
+function db_has_table(string $name): bool
+{
+    static $memo = [];
+    $name = preg_replace('/[^A-Za-z0-9_]/', '', $name);
+    if (isset($memo[$name])) return $memo[$name];
+
+    $apcuKey = 'tntt_has_tbl_' . $name;
+    if (function_exists('apcu_fetch')) {
+        $ok = false; $v = apcu_fetch($apcuKey, $ok);
+        if ($ok && $v) return $memo[$name] = true;
+    }
+
+    $exists = db_one("SHOW TABLES LIKE '" . $name . "'") !== null;
+    if ($exists && function_exists('apcu_store')) apcu_store($apcuKey, true, 86400);
+    return $memo[$name] = $exists;
+}
+
+function db_has_column(string $table, string $col): bool
+{
+    static $memo = [];
+    $table = preg_replace('/[^A-Za-z0-9_]/', '', $table);
+    $col   = preg_replace('/[^A-Za-z0-9_]/', '', $col);
+    $key   = $table . '.' . $col;
+    if (isset($memo[$key])) return $memo[$key];
+
+    $apcuKey = 'tntt_has_col_' . $key;
+    if (function_exists('apcu_fetch')) {
+        $ok = false; $v = apcu_fetch($apcuKey, $ok);
+        if ($ok && $v) return $memo[$key] = true;
+    }
+
+    $exists = db_one("SHOW COLUMNS FROM `" . $table . "` LIKE '" . $col . "'") !== null;
+    if ($exists && function_exists('apcu_store')) apcu_store($apcuKey, true, 86400);
+    return $memo[$key] = $exists;
+}
