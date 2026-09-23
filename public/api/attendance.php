@@ -66,27 +66,22 @@ $dow = (int) date('w', strtotime($date));
 $cutoffMin = (int) app_config('cutoff_minutes');
 
 if ($schedule) {
-    // HƯỚNG B (GĐ4): xét NGOẠI LỆ của lịch cho đúng ngày này
-    $exc = db_one('SELECT * FROM schedule_exceptions WHERE schedule_id = ? AND on_date = ?',
-                  [$scheduleId, $date]);
-
-    if ($exc && $exc['kind'] === 'nghỉ') {
+    // Buổi đã BÁO NGHỈ vào ngày này -> không điểm danh
+    if (db_one('SELECT id FROM schedule_exceptions WHERE schedule_id = ? AND on_date = ?',
+               [$scheduleId, $date])) {
         json_fail('Buổi ngày ' . $date . ' đã báo NGHỈ theo lịch, không điểm danh.');
     }
 
-    // Buổi thường / dời giờ: phải khớp thứ + trong khoảng hiệu lực
+    // Buổi phải khớp thứ + trong khoảng hiệu lực
     $hopLe = ((int) $schedule['day_of_week'] === $dow);
     if ($schedule['active_from'] && $date < $schedule['active_from']) $hopLe = false;
     if ($schedule['active_to']   && $date > $schedule['active_to'])   $hopLe = false;
     if (!$hopLe) json_fail('Buổi này không diễn ra vào ngày ' . $date . '.');
 
-    // Giờ chốt: ưu tiên giờ của NGOẠI LỆ (dời giờ), rồi giờ chốt riêng của lịch
-    // lớp, cuối cùng suy ra từ giờ bắt đầu + số phút ân hạn.
-    $effStart  = ($exc && $exc['new_start'])  ? $exc['new_start']  : $schedule['start_time'];
-    $effCutoff = ($exc && $exc['new_cutoff']) ? $exc['new_cutoff'] : $schedule['cutoff_time'];
-    $cutoffTs  = $effCutoff
-        ? strtotime($date . ' ' . $effCutoff)
-        : strtotime($date . ' ' . $effStart) + $cutoffMin * 60;
+    // Giờ chốt theo lịch lớp (giờ chốt riêng, hoặc giờ bắt đầu + số phút ân hạn)
+    $cutoffTs = $schedule['cutoff_time']
+        ? strtotime($date . ' ' . $schedule['cutoff_time'])
+        : strtotime($date . ' ' . $schedule['start_time']) + $cutoffMin * 60;
 } else {
     // Cũ: kiểm tra theo program
     $hopLe = $prog['type'] === 'chiến dịch'
@@ -211,14 +206,12 @@ if (($_GET['action'] ?? '') === 'scan') {
 
         $sc = $schedByClass[(int) $em['class_id']] ?? null;
         if ($sc) {
-            $ex = $excBySched[(int) $sc['id']] ?? null;
-            if ($ex && $ex['kind'] === 'nghỉ') {
+            // Có ngoại lệ nghĩa là buổi đã báo NGHỈ -> bỏ qua em này
+            if (isset($excBySched[(int) $sc['id']])) {
                 $bo[] = [$ma, $em['full_name'] . ' — buổi lớp báo nghỉ']; continue;
             }
-            $effStart  = ($ex && $ex['new_start'])  ? $ex['new_start']  : $sc['start_time'];
-            $effCutoff = ($ex && $ex['new_cutoff']) ? $ex['new_cutoff'] : $sc['cutoff_time'];
-            $cts = $effCutoff ? strtotime($date . ' ' . $effCutoff)
-                              : strtotime($date . ' ' . $effStart) + $cutoffMin * 60;
+            $cts = $sc['cutoff_time'] ? strtotime($date . ' ' . $sc['cutoff_time'])
+                                      : strtotime($date . ' ' . $sc['start_time']) + $cutoffMin * 60;
             $rows2[] = [(int) $em['id'], (int) $sc['id'], time() >= $cts ? 'đi trễ' : 'có mặt'];
         } else {
             $rows2[] = [(int) $em['id'], null, $status];   // không lịch riêng -> theo program

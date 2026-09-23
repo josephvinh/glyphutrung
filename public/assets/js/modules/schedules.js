@@ -30,14 +30,11 @@ window.TNTT.schedules = {
         status: 'kích hoạt'
     },
 
-    // Form ngoại lệ
+    // Form ngoại lệ (chỉ BÁO NGHỈ một buổi)
     exceptionForm: {
         id: null,
         scheduleId: null,
         onDate: '',
-        kind: 'nghỉ',
-        newStart: '',
-        newCutoff: '',
         note: ''
     },
 
@@ -64,22 +61,9 @@ window.TNTT.schedules = {
         return exceptions.find(e => e.onDate === dateStr) || null;
     },
 
-    // Kiểm tra schedule có ngoại lệ "nghỉ" vào ngày này không
+    // Buổi có bị BÁO NGHỈ vào ngày này không (mọi ngoại lệ đều là "nghỉ")
     async isScheduleCancelled(scheduleId, dateStr) {
-        const exc = await this.checkException(scheduleId, dateStr);
-        return exc && exc.kind === 'nghỉ';
-    },
-
-    // Lấy giờ điều chỉnh nếu có ngoại lệ "dời_giờ"
-    async getExceptionTime(scheduleId, dateStr, defaultStart, defaultCutoff) {
-        const exc = await this.checkException(scheduleId, dateStr);
-        if (exc && exc.kind === 'dời_giờ') {
-            return {
-                start: exc.newStart || defaultStart,
-                cutoff: exc.newCutoff || this.addMinutes(exc.newStart || defaultStart, this.CUTOFF_MINUTES || 30)
-            };
-        }
-        return null;
+        return !!(await this.checkException(scheduleId, dateStr));
     },
 
     // ==========================================
@@ -298,15 +282,7 @@ window.TNTT.schedules = {
         // Tải ngoại lệ từ API
         await this.getExceptions(sch.id);
         // Reset form
-        this.exceptionForm = {
-            id: null,
-            scheduleId: sch.id,
-            onDate: '',
-            kind: 'nghỉ',
-            newStart: '',
-            newCutoff: '',
-            note: ''
-        };
+        this.exceptionForm = { id: null, scheduleId: sch.id, onDate: '', note: '' };
         this.editingException = null;
         this.showExceptionModal = true;
     },
@@ -318,22 +294,15 @@ window.TNTT.schedules = {
             id: exc.id,
             scheduleId: exc.scheduleId,
             onDate: exc.onDate,
-            kind: exc.kind,
-            newStart: exc.newStart || '',
-            newCutoff: exc.newCutoff || '',
             note: exc.note || ''
         };
     },
 
-    // Lưu ngoại lệ
+    // Lưu báo nghỉ
     async saveException() {
         const f = this.exceptionForm;
         if (!f.onDate) {
-            window.TNTT.toast.error('Vui lòng chọn ngày ngoại lệ!');
-            return;
-        }
-        if (f.kind !== 'nghỉ' && !f.newStart) {
-            window.TNTT.toast.error('Vui lòng nhập giờ mới!');
+            window.TNTT.toast.error('Vui lòng chọn ngày báo nghỉ!');
             return;
         }
 
@@ -341,14 +310,11 @@ window.TNTT.schedules = {
             id: f.id,
             scheduleId: f.scheduleId,
             onDate: f.onDate,
-            kind: f.kind,
-            newStart: f.newStart || '',
-            newCutoff: f.newCutoff || '',
             note: f.note || ''
         });
 
         if (!r || !r.ok) {
-            window.TNTT.toast.error(r && r.error || 'Không lưu được ngoại lệ.');
+            window.TNTT.toast.error(r && r.error || 'Không lưu được.');
             return;
         }
 
@@ -361,9 +327,7 @@ window.TNTT.schedules = {
             id: r.id || f.id,
             scheduleId: f.scheduleId,
             onDate: f.onDate,
-            kind: f.kind,
-            newStart: f.newStart || null,
-            newCutoff: f.newCutoff || null,
+            kind: 'nghỉ',
             note: f.note || ''
         };
 
@@ -375,22 +339,14 @@ window.TNTT.schedules = {
         }
 
         // Reset form
-        this.exceptionForm = {
-            id: null,
-            scheduleId: f.scheduleId,
-            onDate: '',
-            kind: 'nghỉ',
-            newStart: '',
-            newCutoff: '',
-            note: ''
-        };
+        this.exceptionForm = { id: null, scheduleId: f.scheduleId, onDate: '', note: '' };
         this.editingException = null;
 
         this.logAction(
             f.id ? 'sua' : 'tao',
             'schedule_exceptions',
-            (f.id ? 'Sửa' : 'Tạo') + ' ngoại lệ lịch',
-            `ngày=${f.onDate}, loại=${f.kind}`
+            (f.id ? 'Sửa' : 'Tạo') + ' báo nghỉ',
+            `ngày=${f.onDate}`
         );
 
         window.TNTT.toast.success('Đã lưu ngoại lệ!');

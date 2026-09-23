@@ -163,10 +163,8 @@ if ($classSchedules && db_one("SHOW TABLES LIKE 'schedule_exceptions'")) {
     $scheduleExceptions = array_map(fn($e) => [
         'scheduleId' => (int) $e['schedule_id'],
         'onDate'     => $e['on_date'],
-        'kind'       => $e['kind'],
-        'newStart'   => !empty($e['new_start'])  ? substr($e['new_start'], 0, 5)  : null,
-        'newCutoff'  => !empty($e['new_cutoff']) ? substr($e['new_cutoff'], 0, 5) : null,
-    ], db_all("SELECT * FROM schedule_exceptions WHERE schedule_id IN ($ph) ORDER BY on_date", $csIds));
+        'kind'       => 'nghỉ',
+    ], db_all("SELECT schedule_id, on_date FROM schedule_exceptions WHERE schedule_id IN ($ph) ORDER BY on_date", $csIds));
 }
 
 // ---------------------------------------------------------------

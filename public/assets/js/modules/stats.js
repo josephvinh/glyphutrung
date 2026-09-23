@@ -63,19 +63,12 @@ window.TNTT.stats = {
                 });
 
                 todaySchedules.forEach(cs => {
-                    // HƯỚNG B: Kiểm tra ngoại lệ "nghỉ" - bỏ qua buổi này
+                    // Buổi đã BÁO NGHỈ vào ngày này -> bỏ qua (không tính mẫu số)
                     const excs = this.scheduleExceptions[cs.id] || [];
-                    const exc = excs.find(e => e.onDate === ds);
-                    if (exc && exc.kind === 'nghỉ') return;  // Nghỉ -> bỏ qua
+                    if (excs.some(e => e.onDate === ds)) return;
 
-                    // Kiểm tra đã qua giờ chốt chưa. Dùng giờ mới nếu có "dời giờ".
-                    let effectiveStart = cs.startTime;
-                    let effectiveCutoff = cs.cutoffTime || this.addMinutes(cs.startTime, this.CUTOFF_MINUTES || 30);
-                    if (exc && exc.kind === 'dời_giờ') {
-                        effectiveStart = exc.newStart || cs.startTime;
-                        effectiveCutoff = exc.newCutoff || this.addMinutes(exc.newStart || cs.startTime, this.CUTOFF_MINUTES || 30);
-                    }
-
+                    // Đã qua giờ chốt chưa (giờ chốt riêng, hoặc giờ bắt đầu + ân hạn)
+                    const effectiveCutoff = cs.cutoffTime || this.addMinutes(cs.startTime, this.CUTOFF_MINUTES || 30);
                     const cutoffTs = new Date(ds + 'T' + effectiveCutoff + ':00').getTime();
                     if (Date.now() >= cutoffTs) {
                         out.push({
@@ -83,12 +76,10 @@ window.TNTT.stats = {
                             scheduleId: cs.id,
                             date: ds,
                             name: cs.programName || (cs.slot ? `Ca ${cs.slot}` : 'Giáo lý'),
-                            startTime: effectiveStart,
+                            startTime: cs.startTime,
                             cutoffTime: effectiveCutoff,
                             countForAttendance: true,
-                            type: 'schedule',
-                            isException: !!exc,
-                            exceptionKind: exc?.kind || null
+                            type: 'schedule'
                         });
                     }
                 });

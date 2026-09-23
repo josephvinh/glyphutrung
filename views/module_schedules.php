@@ -253,10 +253,8 @@
                     <div class="flex items-center justify-between bg-slate-50 rounded-xl px-3 py-2 mb-2">
                         <div>
                             <span class="text-sm font-medium" x-text="exc.onDate"></span>
-                            <span class="text-xs px-2 py-0.5 rounded-full ml-2"
-                                  :class="exc.kind === 'nghỉ' ? 'bg-rose-100 text-rose-600' : exc.kind === 'dời_giờ' ? 'bg-amber-100 text-amber-600' : 'bg-blue-100 text-blue-600'"
-                                  x-text="exc.kind === 'nghỉ' ? 'Nghỉ' : exc.kind === 'dời_giờ' ? 'Dời giờ' : 'Học bù'"></span>
-                            <span x-show="exc.newStart" class="text-xs text-slate-500 ml-2" x-text="'→ ' + exc.newStart"></span>
+                            <span class="text-xs px-2 py-0.5 rounded-full ml-2 bg-rose-100 text-rose-600">Nghỉ</span>
+                            <span x-show="exc.note" class="text-xs text-slate-500 ml-2" x-text="exc.note"></span>
                         </div>
                         <div class="flex items-center gap-2">
                             <button @click="openEditException(exc)" class="tap-safe w-6 h-6 bg-white rounded-full flex items-center justify-center text-slate-400 border border-slate-200">
@@ -273,29 +271,12 @@
             <!-- Form thêm ngoại lệ -->
             <div class="p-4 space-y-4">
                 <div>
-                    <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Ngày ngoại lệ</label>
+                    <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Ngày nghỉ</label>
                     <input x-model="exceptionForm.onDate" type="date" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800">
                 </div>
                 <div>
-                    <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Loại</label>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button @click="exceptionForm.kind = 'nghỉ'" type="button" class="py-2 rounded-xl text-sm font-bold border-2" :class="exceptionForm.kind === 'nghỉ' ? 'bg-rose-100 border-rose-500 text-rose-700' : 'bg-slate-50 border-slate-200 text-slate-500'">Nghỉ</button>
-                        <button @click="exceptionForm.kind = 'dời_giờ'" type="button" class="py-2 rounded-xl text-sm font-bold border-2" :class="exceptionForm.kind === 'dời_giờ' ? 'bg-amber-100 border-amber-500 text-amber-700' : 'bg-slate-50 border-slate-200 text-slate-500'">Dời giờ</button>
-                    </div>
-                </div>
-                <div x-show="exceptionForm.kind !== 'nghỉ'" class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Giờ mới</label>
-                        <input x-model="exceptionForm.newStart" type="time" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800">
-                    </div>
-                    <div>
-                        <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Giờ chốt mới</label>
-                        <input x-model="exceptionForm.newCutoff" type="time" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800">
-                    </div>
-                </div>
-                <div>
                     <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Ghi chú</label>
-                    <input x-model="exceptionForm.note" type="text" placeholder="VD: Nghỉ Tết, Học bù CN tuần sau..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800">
+                    <input x-model="exceptionForm.note" type="text" placeholder="VD: Nghỉ Tết" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800">
                 </div>
             </div>
 

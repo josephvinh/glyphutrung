@@ -250,9 +250,7 @@ switch ($action) {
             'id'         => (int) $e['id'],
             'scheduleId' => (int) $e['schedule_id'],
             'onDate'     => $e['on_date'],
-            'kind'       => $e['kind'],
-            'newStart'   => !empty($e['new_start']) ? substr($e['new_start'], 0, 5) : null,
-            'newCutoff'  => !empty($e['new_cutoff']) ? substr($e['new_cutoff'], 0, 5) : null,
+            'kind'       => 'nghỉ',
             'note'       => $e['note'] ?? '',
         ], db_all(
             'SELECT * FROM schedule_exceptions WHERE schedule_id=? ORDER BY on_date',
@@ -270,53 +268,36 @@ switch ($action) {
         $id         = (int) ($in['id'] ?? 0);
         $scheduleId = (int) ($in['scheduleId'] ?? 0);
         $onDate     = trim((string) ($in['onDate'] ?? ''));
-        $kind       = $in['kind'] ?? '';
-        $newStart   = trim((string) ($in['newStart'] ?? ''));
-        $newCutoff  = trim((string) ($in['newCutoff'] ?? ''));
         $note       = trim((string) ($in['note'] ?? ''));
 
-        // Validation
+        // Validation — ngoại lệ chỉ là BÁO NGHỈ một buổi
         if ($scheduleId <= 0) json_fail('Thiếu scheduleId.');
         if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $onDate)) json_fail('Ngày không hợp lệ.');
-        if (!in_array($kind, ['nghỉ','dời_giờ'], true)) json_fail('Loại ngoại lệ không hợp lệ.');
 
         // Kiểm tra schedule tồn tại
         if (!db_one('SELECT id FROM class_schedules WHERE id=? AND year_id=?', [$scheduleId, $yid])) {
             json_fail('Không tìm thấy lịch.', 404);
         }
 
-        // Validation giờ
-        if ($kind !== 'nghỉ') {
-            if (!preg_match('/^\d{2}:\d{2}$/', $newStart)) json_fail('Giờ mới không hợp lệ.');
-            if ($newCutoff !== '' && !preg_match('/^\d{2}:\d{2}$/', $newCutoff)) json_fail('Giờ chốt mới không hợp lệ.');
-            if ($newCutoff !== '' && $newCutoff <= $newStart) json_fail('Giờ chốt mới phải sau giờ bắt đầu.');
-        }
-
-        $newStartVal  = ($kind !== 'nghỉ' && $newStart !== '')  ? $newStart  : null;
-        $newCutoffVal = ($kind !== 'nghỉ' && $newCutoff !== '') ? $newCutoff : null;
-
         if ($id > 0) {
-            // Cập nhật
+            // Cập nhật (chỉ ghi chú)
             if (!db_one('SELECT id FROM schedule_exceptions WHERE id=? AND schedule_id=?', [$id, $scheduleId])) {
                 json_fail('Không tìm thấy ngoại lệ.', 404);
             }
-            db_run('UPDATE schedule_exceptions
-                       SET kind=?, new_start=?, new_cutoff=?, note=?
-                     WHERE id=? AND schedule_id=?',
-                   [$kind, $newStartVal, $newCutoffVal, $note ?: null, $id, $scheduleId]);
-            log_action('sua', 'schedule_exceptions', 'Sửa ngoại lệ lịch', "id=$id, ngày=$onDate, loại=$kind");
+            db_run('UPDATE schedule_exceptions SET note=? WHERE id=? AND schedule_id=?',
+                   [$note ?: null, $id, $scheduleId]);
+            log_action('sua', 'schedule_exceptions', 'Sửa báo nghỉ', "id=$id, ngày=$onDate");
         } else {
-            // Chặn trùng ngoại lệ cùng (lịch, ngày) -> tránh đụng khoá uq_se (500)
+            // Chặn trùng báo nghỉ cùng (lịch, ngày) -> tránh đụng khoá uq_se (500)
             if (db_one('SELECT id FROM schedule_exceptions WHERE schedule_id=? AND on_date=?',
                        [$scheduleId, $onDate])) {
-                json_fail('Ngày này đã có ngoại lệ cho lịch. Hãy sửa ngoại lệ hiện có.');
+                json_fail('Ngày này đã báo nghỉ cho lịch. Hãy sửa hoặc xoá mục hiện có.');
             }
             // Tạo mới
-            $id = db_insert('INSERT INTO schedule_exceptions
-                              (schedule_id, on_date, kind, new_start, new_cutoff, note)
-                            VALUES (?,?,?,?,?,?)',
-                [$scheduleId, $onDate, $kind, $newStartVal, $newCutoffVal, $note ?: null]);
-            log_action('tao', 'schedule_exceptions', 'Tạo ngoại lệ lịch', "lịch=$scheduleId, ngày=$onDate, loại=$kind");
+            $id = db_insert('INSERT INTO schedule_exceptions (schedule_id, on_date, kind, note)
+                            VALUES (?,?,?,?)',
+                [$scheduleId, $onDate, 'nghỉ', $note ?: null]);
+            log_action('tao', 'schedule_exceptions', 'Báo nghỉ buổi', "lịch=$scheduleId, ngày=$onDate");
         }
 
         Cache::flush();
