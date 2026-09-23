@@ -27,11 +27,6 @@ window.TNTT.calendar = {
         return monthNames[month] + ', ' + year;
     },
 
-    // HƯỚNG B: Lấy lịch của lớp đang chọn (hoặc tất cả nếu không chọn)
-    get calendarSchedules() {
-        return this.classSchedules || [];
-    },
-
     // Tạo lưới ngày cho lịch tháng
     get calendarDays() {
         const year = this.currentDate.getFullYear();
@@ -64,70 +59,8 @@ window.TNTT.calendar = {
             const dateStr = this.toDateInput(dateObj);
             const dow = dateObj.getDay();
 
-            // HƯỚNG B: Ưu tiên lịch lớp nếu có, không thì dùng programs
-            const events = [];
-
-            // Lịch lớp áp dụng cho ngày này (để tránh vẽ TRÙNG với program toàn
-            // đoàn mà nó bắt nguồn): thu các programId đã được lịch lớp phủ.
-            const daySchedules = this.calendarSchedules.filter(cs => {
-                if (cs.dayOfWeek !== dow) return false;
-                if (cs.activeFrom && dateStr < cs.activeFrom) return false;
-                if (cs.activeTo && dateStr > cs.activeTo) return false;
-                return true;
-            });
-            const coveredProgramIds = new Set(daySchedules.map(cs => cs.programId).filter(Boolean));
-
-            // 1) Chương trình bắt buộc (cách cũ - toàn đoàn), bỏ cái đã có lịch lớp phủ
-            this.programs.filter(p => {
-                if (p.status !== 'kích hoạt') return false;
-                if (p.type === 'bắt buộc') return p.dayOfWeek === dow && !coveredProgramIds.has(p.id);
-                return false;
-            }).forEach(p => {
-                events.push({
-                    id: p.id,
-                    title: p.name,
-                    time: p.startTime,
-                    color: 'amber',
-                    type: 'program',
-                    scheduleId: null
-                });
-            });
-
-            // 2) Chiến dịch (ngày cụ thể)
-            this.programs.filter(p => {
-                if (p.status !== 'kích hoạt') return false;
-                if (p.type === 'chiến dịch') return p.eventDate === dateStr;
-                return false;
-            }).forEach(p => {
-                events.push({
-                    id: p.id,
-                    title: p.name,
-                    time: p.startTime,
-                    color: 'rose',
-                    type: 'program',
-                    scheduleId: null
-                });
-            });
-
-            // 3) HƯỚNG B: Lịch lớp riêng (classSchedules) — đã lọc ở daySchedules
-            daySchedules.forEach(cs => {
-                // Gộp nếu cùng giờ và program, hoặc hiện cả hai
-                events.push({
-                    id: cs.id,
-                    title: cs.className + (cs.slot ? ` (${cs.slot})` : ''),
-                    time: cs.startTime,
-                    color: cs.slot === 'sáng' ? 'amber' : cs.slot === 'chiều' ? 'blue' : 'indigo',
-                    type: 'schedule',
-                    scheduleId: cs.id,
-                    programId: cs.programId,
-                    programName: cs.programName,
-                    classId: cs.classId,
-                    slot: cs.slot
-                });
-            });
-
-            // Sắp xếp theo giờ
-            events.sort((a, b) => a.time.localeCompare(b.time));
+            // Lấy các chương trình diễn ra trong ngày này (đa-thứ + khoảng ngày)
+            const events = this.programs.filter(p => this.programOccursOn(p, dateStr));
 
             days.push({
                 key: dateStr,
@@ -153,41 +86,9 @@ window.TNTT.calendar = {
 
         return this.programs.filter(p => {
             if (p.status !== 'kích hoạt') return false;
-            if (p.type === 'bắt buộc') {
-                // Chương trình bắt buộc: hiện nếu có ngày trong tháng rơi vào thứ đó
-                // Lấy tất cả các ngày trong tháng có cùng dayOfWeek
-                for (let d = firstDay; d <= lastDay; d.setDate(d.getDate() + 7)) {
-                    if (d.getMonth() === month) return true;
-                }
-                return false;
-            } else {
-                // Chiến dịch: kiểm tra ngày có trong tháng không
-                return p.eventDate >= firstStr && p.eventDate <= lastStr;
-            }
-        });
-    },
-
-    // HƯỚNG B: Các lịch lớp diễn ra trong tháng hiện tại
-    get schedulesInMonth() {
-        const year = this.currentDate.getFullYear();
-        const month = this.currentDate.getMonth();
-        const firstDay = new Date(year, month, 1);
-        const lastDay = new Date(year, month + 1, 0);
-        const firstStr = this.toDateInput(firstDay);
-        const lastStr = this.toDateInput(lastDay);
-
-        // Với lịch theo thứ, kiểm tra có ngày nào trong tháng khớp
-        return this.calendarSchedules.filter(cs => {
-            const dow = cs.dayOfWeek;
-            // Kiểm tra từng ngày trong tháng
+            // Hiện nếu chương trình diễn ra vào bất kỳ ngày nào trong tháng
             for (let d = new Date(firstDay); d <= lastDay; d.setDate(d.getDate() + 1)) {
-                if (d.getMonth() !== month) continue;
-                const dateStr = this.toDateInput(d);
-                if (d.getDay() !== dow) continue;
-                // Kiểm tra active_from/active_to
-                if (cs.activeFrom && dateStr < cs.activeFrom) continue;
-                if (cs.activeTo && dateStr > cs.activeTo) continue;
-                return true;
+                if (this.programOccursOn(p, this.toDateInput(d))) return true;
             }
             return false;
         });

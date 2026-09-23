@@ -159,6 +159,13 @@ window.TNTT.qrscan = {
     async moQuetQR() {
         if (!this.activeSession) { alert('Hãy chọn buổi điểm danh trước khi quét.'); return; }
 
+        // Buổi có thể tắt quét QR (chỉ điểm danh tay)
+        const _prog = this.sessionProgram;
+        if (_prog && _prog.allowQr === false) {
+            alert('Buổi này không cho phép quét QR — hãy điểm danh bằng cách chạm tên.');
+            return;
+        }
+
         // KHÔNG bắt chọn lớp. Các em xếp hàng theo khối, bắt dừng lại
         // đổi lớp mỗi lần là hỏng cả nhịp. Quét theo khối của mình.
         const lopQuet = this.qrLopQuetDuoc;

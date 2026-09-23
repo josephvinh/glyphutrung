@@ -109,12 +109,17 @@
 
                 <!-- Bắt buộc thì lặp hàng tuần, chiến dịch thì gắn vào một ngày cụ thể -->
                 <div x-show="programForm.type === 'bắt buộc'">
-                    <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Lặp lại vào</label>
-                    <select x-model.number="programForm.dayOfWeek" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800">
+                    <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Lặp lại vào các thứ</label>
+                    <div class="grid grid-cols-4 gap-2">
                         <template x-for="w in weekdays" :key="w.value">
-                            <option :value="w.value" x-text="w.label + ' hàng tuần'"></option>
+                            <button type="button"
+                                @click="programForm.daysOfWeek = programForm.daysOfWeek.includes(w.value) ? programForm.daysOfWeek.filter(d => d !== w.value) : [...programForm.daysOfWeek, w.value]"
+                                class="py-2 rounded-xl text-xs font-bold border-2 transition-colors"
+                                :class="programForm.daysOfWeek.includes(w.value) ? 'bg-blue-100 border-blue-500 text-blue-700' : 'bg-slate-50 border-slate-200 text-slate-500'"
+                                x-text="w.value === 0 ? 'CN' : 'T' + (w.value + 1)"></button>
                         </template>
-                    </select>
+                    </div>
+                    <p class="text-micro text-slate-500 mt-1 ml-1">Chọn một hoặc nhiều thứ (VD thi đua đi lễ cả tuần).</p>
                 </div>
                 <div x-show="programForm.type === 'chiến dịch'" style="display: none;">
                     <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Ngày diễn ra</label>
@@ -130,6 +135,81 @@
                         Để trống = giờ bắt đầu + <span x-text="CUTOFF_MINUTES"></span> phút
                         <span x-show="programForm.startTime && !programForm.cutoffTime">(<span class="font-bold text-rose-500" x-text="addMinutes(programForm.startTime, CUTOFF_MINUTES)"></span>)</span>
                     </p>
+                </div>
+
+                <!-- Ngưỡng "tính vắng" (mốc 2) -->
+                <div>
+                    <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Giờ "tính vắng" (tùy chọn)</label>
+                    <input x-model="programForm.absentTime" type="time" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800">
+                    <p class="text-micro text-slate-500 mt-1 ml-1">Sau giờ này không ghi được nữa (em tính vắng). Để trống = không dùng.</p>
+                </div>
+
+                <!-- Khoảng ngày áp dụng (buổi lặp) -->
+                <div x-show="programForm.type === 'bắt buộc'" class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Áp dụng từ</label>
+                        <input x-model="programForm.effectiveFrom" type="date" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800">
+                    </div>
+                    <div>
+                        <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Đến ngày</label>
+                        <input x-model="programForm.effectiveTo" type="date" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800">
+                    </div>
+                </div>
+
+                <!-- Lớp áp dụng (bỏ trống = toàn đoàn) -->
+                <div>
+                    <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Lớp áp dụng</label>
+                    <div class="max-h-40 overflow-y-auto border border-slate-200 rounded-xl p-2 space-y-1">
+                        <template x-for="c in classes" :key="c.id">
+                            <label class="flex items-center gap-2 text-sm text-slate-700">
+                                <input type="checkbox" :checked="programForm.classIds.includes(c.id)"
+                                    @change="programForm.classIds = $event.target.checked ? [...programForm.classIds, c.id] : programForm.classIds.filter(x => x !== c.id)">
+                                <span x-text="c.name"></span>
+                                <span class="text-micro text-slate-400" x-text="c.block"></span>
+                            </label>
+                        </template>
+                        <p x-show="!classes.length" class="text-micro text-slate-400 italic">Chưa có lớp nào.</p>
+                    </div>
+                    <p class="text-micro text-slate-500 mt-1 ml-1">Bỏ trống = áp dụng cho toàn đoàn.</p>
+                </div>
+
+                <!-- Các công tắc tùy chọn -->
+                <div class="space-y-2">
+                    <label class="flex items-center justify-between bg-slate-50 rounded-xl px-3 py-2.5">
+                        <span class="text-sm font-medium text-slate-700">Tính chuyên cần</span>
+                        <input type="checkbox" x-model="programForm.countForAttendance">
+                    </label>
+                    <label class="flex items-center justify-between bg-slate-50 rounded-xl px-3 py-2.5">
+                        <span class="text-sm font-medium text-slate-700">Tính vào thi đua đi lễ</span>
+                        <input type="checkbox" x-model="programForm.countForEmulation">
+                    </label>
+                    <label class="flex items-center justify-between bg-slate-50 rounded-xl px-3 py-2.5">
+                        <span class="text-sm font-medium text-slate-700">Cho phép quét QR</span>
+                        <input type="checkbox" x-model="programForm.allowQr">
+                    </label>
+                    <label x-show="programForm.type === 'chiến dịch'" class="flex items-center justify-between bg-slate-50 rounded-xl px-3 py-2.5">
+                        <span class="text-sm font-medium text-slate-700">Tự đóng sau ngày diễn ra</span>
+                        <input type="checkbox" x-model="programForm.autoCloseAfterEvent">
+                    </label>
+                </div>
+
+                <!-- Màu nhãn + thứ tự hiển thị -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Màu nhãn</label>
+                        <select x-model="programForm.color" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800">
+                            <option value="">Mặc định</option>
+                            <option value="rose">Đỏ</option>
+                            <option value="amber">Vàng</option>
+                            <option value="emerald">Xanh lá</option>
+                            <option value="blue">Xanh dương</option>
+                            <option value="indigo">Tím</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Thứ tự hiển thị</label>
+                        <input x-model.number="programForm.sortOrder" type="number" min="1" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800">
+                    </div>
                 </div>
             </div>
             <div class="p-4 border-t border-slate-100">

@@ -169,14 +169,8 @@ window.TNTT.core = {
             // gồm phạm vi mình được xem, không đếm được lớp ngoài phạm vi.
             this.classCounts       = d.classCounts || {};
             this.programs          = d.programs;
-            // HƯỚNG B: thời khóa biểu lớp + ngoại lệ (nạp ngay để điểm danh &
-            // thống kê dùng đúng lịch riêng, và loại ngày NGHỈ khỏi mẫu số).
-            this.classSchedules    = d.classSchedules || [];
-            const _excMap = {};
-            (d.scheduleExceptions || []).forEach(e => {
-                (_excMap[e.scheduleId] = _excMap[e.scheduleId] || []).push(e);
-            });
-            this.scheduleExceptions = _excMap;
+            // Chương trình gắn lớp: map programId -> [classId,...] (rỗng = toàn đoàn)
+            this.programClasses    = d.programClasses || {};
             this.leaveRequests     = d.leaveRequests;
             this.reports           = d.reports;
             this.rebuildReportIndex();  // chỉ số phiếu O(1) — tránh chậm thao tác (myTasks + danh sách Phiếu LC)
@@ -563,7 +557,6 @@ window.TNTT.core = {
         // Khu điều hành (icon màu để dùng chung lưới phẳng + thanh bên)
         { key: 'promotion',     label: 'Lên lớp',      icon: 'trending-up',     color: 'text-violet-600', area: 'bdh', group: 'Chương trình' },
         { key: 'programs',      label: 'Chương trình', icon: 'calendar-plus',   color: 'text-amber-600',  area: 'bdh', group: 'Chương trình' },
-        { key: 'schedules',    label: 'TKB Lớp',      icon: 'clock',           color: 'text-orange-500', area: 'bdh', group: 'Chương trình' },
         { key: 'calendar',      label: 'Lịch trình',   icon: 'calendar-days',   color: 'text-teal-600',   area: 'bdh', group: 'Chương trình', hidden: true },
         { key: 'announcements', label: 'Thông báo',    icon: 'megaphone',       color: 'text-rose-500',   area: 'bdh', group: 'Điều hành' },
         { key: 'staff',         label: 'Nhân sự',      icon: 'user-cog',        color: 'text-cyan-600',   area: 'bdh', group: 'Điều hành', badge: 'staff' },
@@ -575,7 +568,7 @@ window.TNTT.core = {
     moduleEnabled: {
         students: true, attendance: true, leave: true, birthdays: true,
         stats: true, analytics: true, org: true, reports: true, reporthub: true, programs: true, announcements: true,
-        scores: true, promotion: true, calendar: true, notes: true, guide: true, thu_vien: true, schedules: true
+        scores: true, promotion: true, calendar: true, notes: true, guide: true, thu_vien: true
     },
 
     // ==========================================
@@ -937,6 +930,8 @@ window.TNTT.core = {
     blocks: ['Khai Tâm', 'Rước Lễ', 'Thêm Sức', 'Bao Đồng'],
 
     classes: [],   // máy chủ nạp qua loadData()
+
+    programClasses: {},   // programId -> [classId,...] (rỗng = toàn đoàn)
 
     statusOptions: ['đang sinh hoạt', 'dừng sinh hoạt', 'chuyển xứ', 'đã ra trường'],
 };

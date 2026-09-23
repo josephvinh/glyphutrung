@@ -13,10 +13,6 @@ window.TNTT.stats = {
     // ==========================================
     statMonth: '',
 
-    // HƯỚNG B: ngoại lệ lịch (scheduleId -> exceptions[]) dùng chung một
-    // property phản ứng do module schedules khai báo, được loadData nạp sẵn
-    // từ data.php (không còn getter đọc singleton — tránh mất tính reactive).
-
     openStats(khongDoiMan = false) {
         if (!this.statMonth) this.statMonth = this.toDateInput(new Date()).slice(0, 7);
         if (!khongDoiMan) this.changeModule('stats');
@@ -39,10 +35,7 @@ window.TNTT.stats = {
     // đếm thành vắng và tỷ lệ chuyên cần tụt oan.
     // Các buổi ĐÃ QUA GIỜ CHỐT trong một khoảng ngày bất kỳ.
     // Dùng chung cho Thống kê (theo tháng) và Sổ liên lạc (theo học kỳ).
-    //
-    // HƯỚNG B: Tham số className cho phép tính theo lịch riêng của lớp.
-    // Khi có classSchedules cho lớp đó, dùng schedule thay vì program toàn đoàn.
-    sessionsBetween(fromDate, toDate, className = null) {
+    sessionsBetween(fromDate, toDate) {
         if (!fromDate || !toDate) return [];
         const out = [];
         const cursor = new Date(fromDate + 'T00:00:00');
@@ -50,64 +43,12 @@ window.TNTT.stats = {
 
         while (cursor <= end) {
             const ds = this.toDateInput(cursor);
-
-            // HƯỚNG B: Ưu tiên classSchedules nếu có lịch riêng cho lớp
-            if (className && this.classSchedules?.length > 0) {
-                const dow = cursor.getDay();
-                const todaySchedules = this.classSchedules.filter(cs => {
-                    if (cs.dayOfWeek !== dow) return false;
-                    if (cs.className !== className) return false;
-                    if (cs.activeFrom && ds < cs.activeFrom) return false;
-                    if (cs.activeTo && ds > cs.activeTo) return false;
-                    return true;
-                });
-
-                todaySchedules.forEach(cs => {
-                    // HƯỚNG B: Kiểm tra ngoại lệ "nghỉ" - bỏ qua buổi này
-                    const excs = this.scheduleExceptions[cs.id] || [];
-                    const exc = excs.find(e => e.onDate === ds);
-                    if (exc && exc.kind === 'nghỉ') return;  // Nghỉ -> bỏ qua
-
-                    // HƯỚNG B: Nếu là học bù, đây là buổi BÙ, không phải buổi THƯỜNG
-                    const isHocBu = exc && exc.kind === 'học_bù';
-
-                    // Kiểm tra đã qua giờ chốt chưa
-                    // Dùng giờ mới nếu có ngoại lệ dời_giờ
-                    let effectiveStart = cs.startTime;
-                    let effectiveCutoff = cs.cutoffTime || this.addMinutes(cs.startTime, this.CUTOFF_MINUTES || 30);
-                    if (exc && exc.kind === 'dời_giờ') {
-                        effectiveStart = exc.newStart || cs.startTime;
-                        effectiveCutoff = exc.newCutoff || this.addMinutes(exc.newStart || cs.startTime, this.CUTOFF_MINUTES || 30);
-                    } else if (isHocBu) {
-                        effectiveStart = exc.newStart || cs.startTime;
-                        effectiveCutoff = exc.newCutoff || this.addMinutes(exc.newStart || cs.startTime, this.CUTOFF_MINUTES || 30);
-                    }
-
-                    const cutoffTs = new Date(ds + 'T' + effectiveCutoff + ':00').getTime();
-                    if (Date.now() >= cutoffTs) {
-                        out.push({
-                            programId: cs.programId || 0,
-                            scheduleId: cs.id,
-                            date: ds,
-                            name: (isHocBu ? '🔄 ' : '') + (cs.programName || (cs.slot ? `Ca ${cs.slot}` : 'Giáo lý')),
-                            startTime: effectiveStart,
-                            cutoffTime: effectiveCutoff,
-                            countForAttendance: true,
-                            type: isHocBu ? 'học_bù' : 'schedule',
-                            isException: !!exc,
-                            exceptionKind: exc?.kind || null
-                        });
-                    }
-                });
-            } else {
-                // Fallback: dùng program toàn đoàn
-                this.programsOn(ds).forEach(prog => {
-                    const session = { programId: prog.id, date: ds };
-                    if (this.isPastCutoffFor(session)) {
-                        out.push({ programId: prog.id, date: ds, name: prog.name, countForAttendance: prog.countForAttendance });
-                    }
-                });
-            }
+            this.programsOn(ds).forEach(prog => {
+                const session = { programId: prog.id, date: ds };
+                if (this.isPastCutoffFor(session)) {
+                    out.push({ programId: prog.id, date: ds, name: prog.name, countForAttendance: prog.countForAttendance });
+                }
+            });
             cursor.setDate(cursor.getDate() + 1);
         }
         return out;
@@ -126,31 +67,23 @@ window.TNTT.stats = {
     // TÁI DÙNG chỉ số attIndex đã dựng sẵn ở loadData (rebuildAttendanceIndex)
     // thay vì quét lại vài chục nghìn dòng mỗi lần gọi — vốn làm render treo
     // vài giây với đoàn lớn. Chạm .length để vẫn nhận thay đổi khi thêm/bớt.
+    // Khoá tra cứu điểm danh: chương-trình|ngày|em. (scheduleId nếu có sẽ bị bỏ
+    // qua — mô hình nay là program-centric; giữ hàm để reports/promotion dùng chung.)
+    attKey(session) {
+        return session.programId + '|' + session.date + '|' + session.studentId;
+    },
+
     buildAttendanceIndex() {
         void this.attendances.length;
         let att = this.attIndex;
         if (!att) {
             att = new Map();
-            this.attendances.forEach(a => {
-                // HƯỚNG B: Index bằng cả programId và scheduleId
-                att.set(a.programId + '|' + a.date + '|' + a.studentId, a);
-                if (a.scheduleId) {
-                    att.set('s:' + a.scheduleId + '|' + a.date + '|' + a.studentId, a);
-                }
-            });
+            this.attendances.forEach(a => att.set(a.programId + '|' + a.date + '|' + a.studentId, a));
         }
         const leave = new Map();
         this.leaveRequests.filter(r => r.status === 'đã duyệt')
             .forEach(r => leave.set(r.programId + '|' + r.date + '|' + r.studentId, r));
         return { att: att, leave: leave };
-    },
-
-    // HƯỚNG B: Tạo key cho attendance lookup, hỗ trợ scheduleId
-    attKey(session) {
-        if (session.scheduleId) {
-            return 's:' + session.scheduleId + '|' + session.date + '|' + session.studentId;
-        }
-        return session.programId + '|' + session.date + '|' + session.studentId;
     },
 
     // Một lượt duyệt duy nhất, trả về mọi con số cần cho màn thống kê.
