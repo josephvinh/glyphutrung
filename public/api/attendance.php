@@ -216,14 +216,11 @@ if (!can_access_class($me, 'attendance', (int) $st['class_id'], 'edit')) {
     json_fail('Bạn không phụ trách lớp của em ' . $st['full_name'] . '.', 403);
 }
 
-// Lớp của em phải tham gia chương trình (nếu chương trình có gắn lớp)
-if ($progClassIds !== null && !in_array((int) $st['class_id'], $progClassIds, true)) {
-    json_fail('Lớp của em ' . $st['full_name'] . ' không thuộc buổi này.', 400);
-}
-
 $existing = db_one('SELECT * FROM attendances WHERE program_id=? AND session_date=? AND student_id=?',
                    [$programId, $date, $studentId]);
 
+// GỠ bản ghi cũ luôn được, KỂ CẢ khi lớp đã bị gỡ khỏi chương trình sau
+// đó — nếu chặn trước bước này thì bản ghi cũ sẽ kẹt, không tài nào xoá.
 if ($existing) {
     db_run('DELETE FROM attendances WHERE id = ?', [$existing['id']]);
     if ($pastCutoff) {
@@ -232,6 +229,11 @@ if ($existing) {
     }
     Cache::flush();
     json_out(['ok' => true, 'removed' => true]);
+}
+
+// GHI MỚI: lớp của em phải tham gia chương trình (nếu chương trình có gắn lớp)
+if ($progClassIds !== null && !in_array((int) $st['class_id'], $progClassIds, true)) {
+    json_fail('Lớp của em ' . $st['full_name'] . ' không thuộc buổi này.', 400);
 }
 
 // Sau ngưỡng "vắng" thì không ghi có mặt nữa (em tính vắng)

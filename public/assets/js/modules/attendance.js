@@ -53,8 +53,12 @@ window.TNTT.attendance = {
         if (!className) return true;
         const ids = (this.programClasses && this.programClasses[p.id]) || [];
         if (!ids.length) return true;
+        // Chương trình CÓ gắn lớp cụ thể: lớp không tra ra id thì coi như
+        // KHÔNG thuộc buổi (fail-closed) — khớp với chặn phía máy chủ
+        // (attendance.php lọc theo program_classes), tránh hiện buổi cho
+        // lớp không được ghi.
         const cls = (this.classes || []).find(c => c.name === className);
-        return cls ? ids.includes(cls.id) : true;
+        return cls ? ids.includes(cls.id) : false;
     },
 
     // Các chương trình đang kích hoạt diễn ra vào một ngày; lọc theo lớp nếu có.
@@ -148,7 +152,20 @@ window.TNTT.attendance = {
     },
 
     // ---- Index điểm danh (O(1)) ----
-    attKey(programId, date, studentId) { return programId + '|' + date + '|' + studentId; },
+    // Khoá tra cứu: chương-trình|ngày|em. Nhận CẢ hai kiểu gọi —
+    // attKey(programId, date, studentId) (attendance.js dùng) và
+    // attKey({programId, date, studentId}) (reports.js/promotion.js dùng).
+    // Mô hình nay là program-centric nên scheduleId (nếu có) bị bỏ qua.
+    // attendance/stats/reports/promotion GỘP chung một component (app.js),
+    // nên CHỈ giữ MỘT định nghĩa ở đây — tránh hai bản đè lẫn nhau làm
+    // hỏng toàn bộ index (bản nạp sau thắng, đổi luôn chữ ký hàm).
+    attKey(programId, date, studentId) {
+        if (programId !== null && typeof programId === 'object') {
+            const s = programId;
+            return s.programId + '|' + s.date + '|' + s.studentId;
+        }
+        return programId + '|' + date + '|' + studentId;
+    },
 
     // Dựng lại toàn bộ index từ this.attendances. Gọi sau loadData.
     rebuildAttendanceIndex() {

@@ -59,8 +59,10 @@ T5-bắt-buộc-một-số-lớp = một chương trình gắn đúng các lớp
   `programAppliesToClass` (lọc theo lớp gắn).
 - `calendar.js` — dùng chung `programOccursOn` (đa-thứ).
 - `qrscan.js` — chặn quét nếu buổi tắt QR.
-- `stats.js` — khôi phục pre-B (program-centric) + thêm shim `attKey`
-  (program-centric) để `reports.js`/`promotion.js` chạy không cần sửa.
+- `stats.js` — khôi phục pre-B (program-centric). `attKey` do `attendance.js`
+  định nghĩa dùng chung (nhận cả kiểu positional lẫn object) nên
+  `reports.js`/`promotion.js` chạy không cần sửa; KHÔNG khai lại `attKey` ở
+  `stats.js` để tránh hai bản đè lẫn nhau (từng làm hỏng index điểm danh).
 - `programs.js` — form đủ trường mới + `programPayload()` dùng chung + đồng bộ
   `programClasses` cục bộ (kể cả khi bật/tắt nhanh).
 - `views/module_programs.php` — form: chọn nhiều thứ, giờ "tính vắng", khoảng

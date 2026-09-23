@@ -105,7 +105,9 @@ foreach (db_all(
 // ---------------------------------------------------------------
 // Tự đóng các chương trình "chiến dịch" đã qua ngày (nếu bật auto_close).
 // Lười: chỉ chạy khi cột tồn tại; một UPDATE gọn, không đụng chương trình khác.
-if (db_one("SHOW COLUMNS FROM programs LIKE 'auto_close_after_event'")) {
+// Bỏ qua ở bước 'heavy' (chỉ trả điểm danh/điểm, KHÔNG gửi programs) để khỏi
+// ghi thừa vào một endpoint đọc.
+if ($part !== 'heavy' && db_one("SHOW COLUMNS FROM programs LIKE 'auto_close_after_event'")) {
     db_run("UPDATE programs SET status='đã đóng'
              WHERE year_id=? AND type='chiến dịch' AND status='kích hoạt'
                AND auto_close_after_event=1 AND event_date IS NOT NULL AND event_date < CURDATE()",

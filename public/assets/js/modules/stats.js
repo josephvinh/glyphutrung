@@ -63,15 +63,8 @@ window.TNTT.stats = {
         return this.sessionsBetween(y + '-' + p(m) + '-01', y + '-' + p(m) + '-' + p(last));
     },
 
-    // Bảng tra cứu nhanh cho việc tính chuyên cần: tránh find() lồng nhau.
-    // TÁI DÙNG chỉ số attIndex đã dựng sẵn ở loadData (rebuildAttendanceIndex)
-    // thay vì quét lại vài chục nghìn dòng mỗi lần gọi — vốn làm render treo
-    // vài giây với đoàn lớn. Chạm .length để vẫn nhận thay đổi khi thêm/bớt.
-    // Khoá tra cứu điểm danh: chương-trình|ngày|em. (scheduleId nếu có sẽ bị bỏ
-    // qua — mô hình nay là program-centric; giữ hàm để reports/promotion dùng chung.)
-    attKey(session) {
-        return session.programId + '|' + session.date + '|' + session.studentId;
-    },
+    // Khoá tra cứu điểm danh (attKey) do attendance.js định nghĩa dùng chung
+    // cho cả component — KHÔNG khai lại ở đây để tránh hai bản đè lẫn nhau.
 
     buildAttendanceIndex() {
         void this.attendances.length;
