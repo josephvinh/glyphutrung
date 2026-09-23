@@ -1,9 +1,10 @@
-# HANDOFF — Chương trình gắn lớp (thay Thời khóa biểu lớp)
+# Thiết kế: Chương trình gắn lớp (thay Thời khóa biểu lớp)
 
-_Cập nhật: 2026-09-23 · Nhánh: `program-classes`_
+_Cập nhật: 2026-09-23 · Nhánh: `program-classes` · PR #13_
 
-Tài liệu bàn giao cho session sau. Ghi lại toàn bộ quyết định, việc đã làm,
-việc còn treo, và cách kiểm chứng.
+Tài liệu thiết kế cho tính năng "Chương trình gắn lớp" (thay mô hình Thời khóa
+biểu lớp / Hướng B). Ghi lại quyết định, mô hình dữ liệu, phần đã triển khai,
+phần chưa làm, cách deploy và checklist kiểm chứng.
 
 ## 1. Bối cảnh & quyết định (đã chốt với người dùng)
 
@@ -30,7 +31,7 @@ tách theo chương trình (mỗi ngày một chương trình / hoặc chương 
 dùng `count_for_attendance` cho chuyên cần và `count_for_emulation` cho thi đua;
 T5-bắt-buộc-một-số-lớp = một chương trình gắn đúng các lớp đó.
 
-## 2. Đã làm trong đợt này (nhánh `program-classes`)
+## 2. Phần đã triển khai (PR #13)
 
 ### CSDL
 - `docs/migrate_program_classes.sql` (MỚI): bảng `program_classes(program_id,
@@ -73,7 +74,7 @@ T5-bắt-buộc-một-số-lớp = một chương trình gắn đúng các lớp
 - **PR #12** (QR + gỡ học bù/dời giờ trên nền TKB) — người dùng đã đóng vì bị
   thay thế. KHÔNG mở lại.
 
-## 3. CÒN TREO — cho session sau
+## 3. Phần chưa làm / còn treo
 
 ### A. Báo cáo / Sổ liên lạc (người dùng yêu cầu bàn ở session riêng)
 Hiện `stats.js`/`reports.js`/`promotion.js` là **program-centric toàn đoàn** —
