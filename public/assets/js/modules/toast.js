@@ -109,15 +109,20 @@ window.TNTT.toast = {
             const backdrop = document.createElement('div');
             backdrop.className = 'tntt-dialog-backdrop';
 
+            // id duy nhất cho mỗi lần mở: nếu hai hộp thoại chồng nhau (một cái
+            // đang mờ dần khi cái kia mở ra) thì không bị trùng id, aria-labelledby
+            // vẫn trỏ đúng tiêu đề của chính hộp thoại đó.
+            const titleId = 'tntt-dialog-title-' + (this._dialogSeq = (this._dialogSeq || 0) + 1);
+
             const dialog = document.createElement('div');
             dialog.className = 'tntt-dialog';
             dialog.setAttribute('role', 'dialog');
             dialog.setAttribute('aria-modal', 'true');
-            dialog.setAttribute('aria-labelledby', 'tntt-dialog-title');
+            dialog.setAttribute('aria-labelledby', titleId);
 
             const h = document.createElement('h2');
             h.className = 'tntt-dialog-title';
-            h.id = 'tntt-dialog-title';
+            h.id = titleId;
             h.textContent = title;
 
             const p = document.createElement('p');
