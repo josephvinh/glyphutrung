@@ -223,12 +223,12 @@
 
     <!-- POPUP CHỈNH SỬA -->
     <div x-show="showEditModal" style="display: none;" class="fixed inset-0 z-[200] flex items-end justify-center sm:items-center sm:p-6">
-        <div x-show="showEditModal" x-transition.opacity.duration.300ms @click="showEditModal = false" class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+        <div x-show="showEditModal" x-transition.opacity.duration.300ms @click="tryCloseEdit()" class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
         <div x-show="showEditModal" x-transition:enter="transform transition ease-out duration-300" x-transition:enter-start="translate-y-full opacity-0" x-transition:enter-end="translate-y-0 opacity-100" x-transition:leave="transform transition ease-in duration-200" x-transition:leave-start="translate-y-0 opacity-100" x-transition:leave-end="translate-y-full opacity-0" class="modal-sheet relative w-full max-w-md sm:max-w-lg bg-white rounded-t-sheet sm:rounded-sheet shadow-2xl h-[88dvh] sm:h-[80dvh] flex flex-col overflow-hidden">
             <div class="flex justify-center pt-3 pb-2 bg-white"><div class="w-12 h-1.5 bg-slate-200 rounded-full"></div></div>
             <div class="flex justify-between items-center px-5 pb-4 border-b border-slate-100 bg-white">
                 <h3 class="text-lg font-black text-slate-800" x-text="editModalTitle"></h3>
-                <button aria-label="Đóng" @click="showEditModal = false" class="tap-safe w-8 h-8 flex items-center justify-center bg-slate-100 rounded-full text-slate-500 active:scale-90 transition-transform"><i data-lucide="x" class="w-4 h-4"></i></button>
+                <button aria-label="Đóng" @click="tryCloseEdit()" class="tap-safe w-8 h-8 flex items-center justify-center bg-slate-100 rounded-full text-slate-500 active:scale-90 transition-transform"><i data-lucide="x" class="w-4 h-4"></i></button>
             </div>
             <div class="flex-1 overflow-y-auto p-5 space-y-4">
                 <input type="hidden" name="_csrf" :value="window.TNTT.csrfToken">
@@ -285,7 +285,7 @@
             </div>
             <div class="shrink-0 p-4 border-t border-slate-100 flex gap-3 bg-white"
                  style="padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px))">
-                <button @click="showEditModal = false" type="button" class="flex-1 py-3.5 bg-slate-100 text-slate-700 font-bold rounded-2xl active:scale-[0.98] transition-transform">
+                <button @click="tryCloseEdit()" type="button" class="flex-1 py-3.5 bg-slate-100 text-slate-700 font-bold rounded-2xl active:scale-[0.98] transition-transform">
                     Hủy
                 </button>
                 <button @click="saveEdit()" type="button" :disabled="busy" class="flex-1 py-3.5 bg-blue-600 text-white font-bold rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-blue-200 disabled:opacity-50">

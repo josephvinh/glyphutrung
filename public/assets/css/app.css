@@ -604,6 +604,29 @@ a,
 }
 
 /* ==========================================================
+   GHIM CỘT TÊN Ở BẢNG ĐIỂM
+   Bảng điểm cuộn ngang trên điện thoại; nếu không ghim, cuộn sang
+   phải là mất luôn tên em -> không biết đang xem điểm của ai. Ghim
+   ô đầu mỗi hàng (kể cả hàng tiêu đề) dính vào mép trái.
+   ========================================================== */
+.score-table-sticky thead th:first-child,
+.score-table-sticky tbody td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+}
+.score-table-sticky thead th:first-child {
+    background-color: #f8fafc;                       /* khớp nền thead */
+    box-shadow: 1px 0 0 #f1f5f9;                       /* đường ngăn nhẹ khi cuộn */
+}
+.score-table-sticky tbody td:first-child {
+    background-color: #fff;                           /* khớp nền thẻ */
+    box-shadow: 1px 0 0 #f1f5f9;
+}
+.dark .score-table-sticky thead th:first-child { background-color: var(--bg-secondary); }
+.dark .score-table-sticky tbody td:first-child { background-color: var(--bg-card); }
+
+/* ==========================================================
    BỔ SUNG UTILITY cho module Thư viện & Sổ tay.
    Vài class Tailwind này KHÔNG có trong tailwind.css tạo sẵn
    (chỉ dùng ở module thư viện) nên khai bù ở đây. Giá trị chuẩn
@@ -611,6 +634,9 @@ a,
    ========================================================== */
 .max-w-3xl    { max-width: 48rem; }
 .grid-cols-1  { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+/* Cho khối bọc skeleton "tàng hình" trước lưới, để thẻ chờ xếp đúng cột
+   như thẻ thật trên desktop (không có sẵn trong bản Tailwind dựng tĩnh). */
+@media (min-width: 1280px) { .xl\:contents { display: contents; } }
 .cursor-pointer { cursor: pointer; }
 .inline-block { display: inline-block; }
 .active\:scale-\[0\.99\]:active { transform: scale(.99); }

@@ -5,33 +5,33 @@
     <?php include __DIR__ . '/partial_student_profile_header.php'; ?>
 
     <!-- 5 TAB ĐIỀU HƯỚNG (Kiểu dáng Segmented Control / Cuộn ngang mượt) -->
-    <div class="bg-slate-50/80 rounded-[20px] p-1.5 border border-slate-100 flex gap-1.5 mb-5 overflow-x-auto hide-scrollbar scroll-smooth snap-x snap-mandatory">
+    <div role="tablist" aria-label="Hồ sơ thiếu nhi" class="bg-slate-50/80 rounded-[20px] p-1.5 border border-slate-100 flex gap-1.5 mb-5 overflow-x-auto hide-scrollbar scroll-smooth snap-x snap-mandatory">
         <!-- INFO -->
-        <button @click="profileTab = 'info'; $el.scrollIntoView({behavior: 'smooth', block: 'nearest', inline: 'center'})" type="button"
+        <button @click="profileTab = 'info'; $el.scrollIntoView({behavior: 'smooth', block: 'nearest', inline: 'center'})" type="button" role="tab" :aria-selected="profileTab === 'info' ? 'true' : 'false'"
                 class="shrink-0 snap-start whitespace-nowrap px-4 py-2.5 rounded-2xl font-bold text-sm transition-all duration-200 flex items-center justify-center gap-2"
                 :class="profileTab === 'info' ? 'bg-white text-blue-600 shadow-[0_2px_8px_rgba(0,0,0,0.08)] border border-slate-200/60' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100/50 border border-transparent'">
             <i data-lucide="user-circle" class="w-4 h-4"></i> Tổng quan
         </button>
         <!-- SCORES -->
-        <button @click="profileTab = 'scores'; $el.scrollIntoView({behavior: 'smooth', block: 'nearest', inline: 'center'})" type="button"
+        <button @click="profileTab = 'scores'; $el.scrollIntoView({behavior: 'smooth', block: 'nearest', inline: 'center'})" type="button" role="tab" :aria-selected="profileTab === 'scores' ? 'true' : 'false'"
                 class="shrink-0 snap-start whitespace-nowrap px-4 py-2.5 rounded-2xl font-bold text-sm transition-all duration-200 flex items-center justify-center gap-2"
                 :class="profileTab === 'scores' ? 'bg-white text-violet-600 shadow-[0_2px_8px_rgba(0,0,0,0.08)] border border-slate-200/60' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100/50 border border-transparent'">
             <i data-lucide="graduation-cap" class="w-4 h-4"></i> Điểm số
         </button>
         <!-- ATTENDANCE -->
-        <button @click="profileTab = 'attendance'; $el.scrollIntoView({behavior: 'smooth', block: 'nearest', inline: 'center'})" type="button"
+        <button @click="profileTab = 'attendance'; $el.scrollIntoView({behavior: 'smooth', block: 'nearest', inline: 'center'})" type="button" role="tab" :aria-selected="profileTab === 'attendance' ? 'true' : 'false'"
                 class="shrink-0 snap-start whitespace-nowrap px-4 py-2.5 rounded-2xl font-bold text-sm transition-all duration-200 flex items-center justify-center gap-2"
                 :class="profileTab === 'attendance' ? 'bg-white text-emerald-600 shadow-[0_2px_8px_rgba(0,0,0,0.08)] border border-slate-200/60' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100/50 border border-transparent'">
             <i data-lucide="check-circle" class="w-4 h-4"></i> Điểm danh
         </button>
         <!-- REPORT -->
-        <button @click="profileTab = 'report'; $el.scrollIntoView({behavior: 'smooth', block: 'nearest', inline: 'center'})" type="button"
+        <button @click="profileTab = 'report'; $el.scrollIntoView({behavior: 'smooth', block: 'nearest', inline: 'center'})" type="button" role="tab" :aria-selected="profileTab === 'report' ? 'true' : 'false'"
                 class="shrink-0 snap-start whitespace-nowrap px-4 py-2.5 rounded-2xl font-bold text-sm transition-all duration-200 flex items-center justify-center gap-2"
                 :class="profileTab === 'report' ? 'bg-white text-amber-600 shadow-[0_2px_8px_rgba(0,0,0,0.08)] border border-slate-200/60' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100/50 border border-transparent'">
             <i data-lucide="file-text" class="w-4 h-4"></i> Phiếu Đ.Giá
         </button>
         <!-- QRCARD -->
-        <button @click="profileTab = 'qrcard'; $el.scrollIntoView({behavior: 'smooth', block: 'nearest', inline: 'center'})" type="button"
+        <button @click="profileTab = 'qrcard'; $el.scrollIntoView({behavior: 'smooth', block: 'nearest', inline: 'center'})" type="button" role="tab" :aria-selected="profileTab === 'qrcard' ? 'true' : 'false'"
                 class="shrink-0 snap-start whitespace-nowrap px-4 py-2.5 rounded-2xl font-bold text-sm transition-all duration-200 flex items-center justify-center gap-2"
                 :class="profileTab === 'qrcard' ? 'bg-white text-slate-800 shadow-[0_2px_8px_rgba(0,0,0,0.08)] border border-slate-200/60' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100/50 border border-transparent'">
             <i data-lucide="qr-code" class="w-4 h-4"></i> Thẻ mã QR

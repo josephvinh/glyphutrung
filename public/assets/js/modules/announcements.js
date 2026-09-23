@@ -10,6 +10,7 @@ window.TNTT.announcements = {
     announcements: [],   // máy chủ nạp qua loadData()
 
     readAnnouncements: [],   // sau này lưu theo từng tài khoản dưới DB
+    announcementSearch: '',  // ô tìm nhanh theo tiêu đề/nội dung
     showAnnouncementModal: false,
     isEditingAnnouncement: false,
     announcementForm: { id: null, title: '', body: '', level: 'thường', audienceType: 'toàn đoàn', audienceValue: '', status: 'đã phát', publishedAt: '', expiresAt: '', createdBy: '', isMeeting: false, meetingAt: '', meetingPlace: '' },
@@ -51,6 +52,20 @@ window.TNTT.announcements = {
         return this.announcements
             .filter(a => a.status === 'đã phát' && !this.isAnnouncementExpired(a) && this.matchesAudience(a))
             .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
+    },
+
+    // Lọc theo ô tìm (tiêu đề + nội dung). Giữ RIÊNG khỏi visibleAnnouncements
+    // để chấm đỏ "chưa đọc" và thẻ Trang chủ không bị ô tìm ảnh hưởng.
+    _annMatchSearch(a) {
+        const q = (this.announcementSearch || '').trim().toLowerCase();
+        if (!q) return true;
+        return ((a.title || '') + ' ' + (a.body || '')).toLowerCase().includes(q);
+    },
+    get filteredAnnouncements() {
+        return this.visibleAnnouncements.filter(a => this._annMatchSearch(a));
+    },
+    get filteredManageableAnnouncements() {
+        return this.manageableAnnouncements.filter(a => this._annMatchSearch(a));
     },
 
     // BĐH thấy hết kể cả bản nháp và bản đã hết hạn.

@@ -14,22 +14,22 @@
 </div>
 
 <div class="bg-white rounded-field p-1.5 shadow-sm border border-slate-100 flex gap-1.5 mb-5 overflow-x-auto hide-scrollbar">
-    <button @click="changeModule('students')" type="button"
+    <button @click="changeModule('students')" type="button" :aria-current="currentModule === 'students' ? 'page' : 'false'"
             class="shrink-0 whitespace-nowrap px-4 py-2.5 sm:flex-1 rounded-2xl font-bold text-micro transition-colors flex items-center justify-center gap-1.5"
             :class="currentModule === 'students' ? 'bg-blue-600 text-white shadow-md shadow-blue-200' : 'text-slate-500'">
         <i data-lucide="users" class="w-4 h-4"></i> Danh sách
     </button>
-    <button x-show="canAccess('scores')" @click="openScores()" type="button"
+    <button x-show="canAccess('scores')" @click="openScores()" type="button" :aria-current="currentModule === 'scores' ? 'page' : 'false'"
             class="shrink-0 whitespace-nowrap px-4 py-2.5 sm:flex-1 rounded-2xl font-bold text-micro transition-colors flex items-center justify-center gap-1.5"
             :class="currentModule === 'scores' ? 'bg-blue-600 text-white shadow-md shadow-blue-200' : 'text-slate-500'">
         <i data-lucide="graduation-cap" class="w-4 h-4"></i> Điểm số
     </button>
-    <button x-show="canAccess('reports')" @click="openReports()" type="button"
+    <button x-show="canAccess('reports')" @click="openReports()" type="button" :aria-current="currentModule === 'reports' ? 'page' : 'false'"
             class="shrink-0 whitespace-nowrap px-4 py-2.5 sm:flex-1 rounded-2xl font-bold text-micro transition-colors flex items-center justify-center gap-1.5"
             :class="currentModule === 'reports' ? 'bg-blue-600 text-white shadow-md shadow-blue-200' : 'text-slate-500'">
         <i data-lucide="clipboard-list" class="w-4 h-4"></i> Phiếu liên lạc
     </button>
-    <button @click="openQrcard()" type="button"
+    <button @click="openQrcard()" type="button" :aria-current="currentModule === 'qrcard' ? 'page' : 'false'"
             class="shrink-0 whitespace-nowrap px-4 py-2.5 sm:flex-1 rounded-2xl font-bold text-micro transition-colors flex items-center justify-center gap-1.5"
             :class="currentModule === 'qrcard' ? 'bg-blue-600 text-white shadow-md shadow-blue-200' : 'text-slate-500'">
         <i data-lucide="qr-code" class="w-4 h-4"></i> In thẻ QR

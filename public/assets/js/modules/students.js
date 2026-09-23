@@ -49,6 +49,30 @@ window.TNTT.students = {
         this.editData = JSON.parse(JSON.stringify(student));
         this.editData.isNew = false;
         this.showEditModal = true;
+        this._snapEdit();
+    },
+
+    // ---- Chống mất dữ liệu khi lỡ đóng cửa sổ đang sửa dở ----
+    // Chụp lại nội dung form lúc mở để so sánh khi đóng. Bỏ qua `code`
+    // (máy chủ tự cấp, đổi sau khi mở) và `isNew` để không báo nhầm.
+    _editSnapshot: '',
+    _snapEditKey(o) {
+        const c = Object.assign({}, o || {});
+        delete c.code; delete c.isNew;
+        return JSON.stringify(c);
+    },
+    _snapEdit() { this._editSnapshot = this._snapEditKey(this.editData); },
+    _editDirty() {
+        return this.showEditModal && this._snapEditKey(this.editData) !== this._editSnapshot;
+    },
+    async tryCloseEdit() {
+        if (this._editDirty()) {
+            const bo = await window.TNTT.toast.confirm(
+                'Bỏ các thay đổi chưa lưu?',
+                { danger: true, confirmText: 'Bỏ thay đổi', cancelText: 'Tiếp tục sửa' });
+            if (!bo) return;
+        }
+        this.showEditModal = false;
     },
 
     /**
@@ -75,6 +99,7 @@ window.TNTT.students = {
             status: 'đang sinh hoạt'
         };
         this.showEditModal = true;
+        this._snapEdit();
         this.fillNextStudentCode();
     },
 
