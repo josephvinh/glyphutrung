@@ -18,6 +18,7 @@ return [
     // Thứ tự KHÔNG đổi tuỳ tiện: nền tảng trước, shell/dashboard sau.
     'js_modules' => [
         'core', 'programs', 'students', 'student_profile', 'attendance', 'qrscan', 'qrcard',
+        'custom-qrcard',
         'leave', 'birthdays', 'announcements', 'stats', 'analytics', 'scores',
         'reports', 'promotion', 'org', 'push', 'access', 'dashboard', 'shell',
         'calendar', 'notes', 'passkey', 'library',
