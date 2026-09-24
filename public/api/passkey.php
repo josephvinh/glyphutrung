@@ -50,6 +50,8 @@ switch ($action) {
         $clientDataJSON = base64_decode($in['clientDataJSON']);
         $attestationObject = base64_decode($in['attestationObject']);
         $challenge = $_SESSION['webauthn_challenge'] ?? '';
+        // Dùng một lần: xoá ngay để không thể tái dùng challenge cũ.
+        unset($_SESSION['webauthn_challenge']);
 
         try {
             // Arg 4 is requireUserVerification. Set to false to match getCreateArgs (which defaults to false).
@@ -103,6 +105,8 @@ switch ($action) {
         // JS often sends raw base64url. We should decode and encode to standard base64 for DB
         $credentialId = base64_encode(WebAuthn_Base64UrlDecode($credentialIdBase64));
         $challenge = $_SESSION['webauthn_challenge'] ?? '';
+        // Dùng một lần: xoá ngay để không thể tái dùng challenge cũ.
+        unset($_SESSION['webauthn_challenge']);
 
         $passkey = db_one("SELECT * FROM member_passkeys WHERE credential_id = ?", [$credentialId]);
         if (!$passkey) {
