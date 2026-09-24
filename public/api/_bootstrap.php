@@ -75,10 +75,16 @@ function json_fail(string $message, int $code = 400): never
 function json_input(): array
 {
     $raw = file_get_contents('php://input');
-    if ($raw !== false && $raw !== '') {
-        $data = json_decode($raw, true);
-        if (is_array($data)) return $data;
+    if ($raw === false || $raw === '') {
+        return $_POST;
     }
+    // Bảo vệ DoS: giới hạn kích thước request body
+    $maxSize = 1 * 1024 * 1024; // 1MB
+    if (strlen($raw) > $maxSize) {
+        json_fail('Request body too large (max 1MB).', 413);
+    }
+    $data = json_decode($raw, true);
+    if (is_array($data)) return $data;
     return $_POST;
 }
 
@@ -220,8 +226,49 @@ function login_ok(string $phone): void
     db_run('DELETE FROM login_attempts WHERE phone = ?', [$phone]);
 }
 
-/**
- * Bắt buộc dùng POST cho mọi hành động làm thay đổi dữ liệu.
+/* ================================================================
+   CHỐNG ĐĂNG KÝ SPAM
+   Giới hạn số lần đăng ký từ cùng một IP trong khoảng thời gian.
+   ================================================================ */
+
+/** Giới hạn đăng ký: tối đa 3 lần/giờ/IP */
+function register_throttle(): void
+{
+    $ip = client_ip();
+    $moc = date('Y-m-d H:i:s', time() - 3600); // 1 giờ
+
+    // Kiểm tra trong bảng login_attempts với prefix 'reg:'
+    $theoIp = (int) db_one(
+        'SELECT COUNT(*) n FROM login_attempts
+         WHERE phone LIKE ? AND ip = ? AND tried_at > ?',
+        ['reg:%', $ip, $moc]
+    )['n'];
+
+    if ($theoIp >= 3) {
+        json_fail('Bạn đã đăng ký quá nhiều lần trong giờ qua. '
+                . 'Vui lòng thử lại sau hoặc liên hệ Ban Điều Hành.', 429);
+    }
+}
+
+/** Ghi một lần đăng ký thành công để track */
+function register_ok(): void
+{
+    // Xóa các lần thử đăng ký từ IP này
+    db_run('DELETE FROM login_attempts WHERE phone LIKE ? AND ip = ?', ['reg:%', client_ip()]);
+}
+
+/** Ghi một lần đăng ký thất bại */
+function register_failed(): void
+{
+    db_run('INSERT INTO login_attempts (phone, ip, tried_at) VALUES (?,?,NOW())',
+           ['reg:' . substr(md5(client_ip()), 0, 8), client_ip()]);
+
+    // Dọn rác
+    db_run('DELETE FROM login_attempts WHERE tried_at < ?',
+           [date('Y-m-d H:i:s', time() - 3600)]);
+}
+
+/** Bắt buộc dùng POST cho mọi hành động làm thay đổi dữ liệu.
  *
  * $action lấy từ query string, nên nếu không chặn thì một đường link
  * bình thường cũng chạy được hành động ghi: người quản trị đang đăng

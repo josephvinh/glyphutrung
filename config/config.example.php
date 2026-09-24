@@ -29,9 +29,11 @@ return [
     'default_password' => 'CHANGE_ME_BEFORE_PRODUCTION',
 
     // Khoá để chạy install.php qua trình duyệt khi máy chủ không có
-    // Terminal. Đặt một chuỗi ngẫu nhiên dài. Để rỗng nghĩa là CẤM hẳn,
-    // chỉ chạy trình cài đặt bằng dòng lệnh.
-    'setup_key' => 'ĐIỀN_CHUỖI_NGẪU_NHIÊN',
+    // Terminal. Đặt một chuỗi ngẫu nhiên dài (tối thiểu 32 ký tự).
+    // Để rỗng nghĩa là CẤM hẳn, chỉ chạy trình cài đặt bằng dòng lệnh.
+    // ⚠️ QUAN TRỌNG: Đổi thành giá trị ngẫu nhiên khác trước khi deploy!
+    // Sinh khoá: php -r "echo bin2hex(random_bytes(32));"
+    'setup_key' => 'CHANGE_ME_TO_RANDOM_32_PLUS_CHARS',
 
     // ĐỂ NGUYÊN true khi chạy trên máy chủ thật. Cờ này:
     //   - cấm chạy install.php / seed_demo.php qua trình duyệt
@@ -41,6 +43,7 @@ return [
     // Sinh khoá bằng:  php config/tao_khoa_push.php
     // Để trống thì app vẫn chạy bình thường, chỉ là không gửi thông báo.
     'push' => [
+        // ⚠️ QUAN TRỌNG: Thay bằng VAPID keys thật từ https://web-push-codelab.glitch.me/
         'public'  => '',
         'private' => '',
         'subject' => 'mailto:ĐIỀN_EMAIL_CỦA_BẠN',
