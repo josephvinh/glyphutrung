@@ -17,6 +17,29 @@
 
     <!-- 2. DANH SÁCH CHƯƠNG TRÌNH -->
     <div class="space-y-4 xl:space-y-0 xl:grid xl:grid-cols-2 xl:gap-4 xl:items-start">
+        <!-- Loading skeleton -->
+        <template x-if="syncing">
+            <template x-for="i in 2" :key="'skel-' + i">
+                <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100">
+                    <div class="flex justify-between items-start">
+                        <div class="space-y-3 flex-1">
+                            <div class="flex gap-2">
+                                <div class="skeleton h-5 w-20 rounded"></div>
+                                <div class="skeleton h-5 w-16 rounded"></div>
+                            </div>
+                            <div class="skeleton h-6 w-48 rounded"></div>
+                            <div class="skeleton h-4 w-32 rounded"></div>
+                            <div class="skeleton h-4 w-40 rounded"></div>
+                        </div>
+                        <div class="flex gap-2">
+                            <div class="skeleton w-8 h-8 rounded-full"></div>
+                            <div class="skeleton w-8 h-8 rounded-full"></div>
+                        </div>
+                    </div>
+                    <div class="skeleton h-20 w-full rounded-2xl mt-4"></div>
+                </div>
+            </template>
+        </template>
         <template x-for="prog in programs" :key="prog.id">
             <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100 relative overflow-hidden flex flex-col gap-4">
                 
@@ -90,13 +113,19 @@
             </div>
             <div class="p-5 space-y-4">
                 <div>
-                    <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Tên Chương trình</label>
-                    <input x-model="programForm.name" type="text" placeholder="VD: Lễ Chúa Nhật..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                    <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Tên Chương trình <span class="text-rose-500">*</span></label>
+                    <input x-model="programForm.name" type="text" required placeholder="VD: Lễ Chúa Nhật..."
+                           aria-required="true"
+                           class="w-full bg-slate-50 border rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                           :class="!programForm.name.trim() && showProgramModal ? 'border-rose-300 bg-rose-50' : 'border-slate-200'">
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Giờ Bắt đầu</label>
-                        <input x-model="programForm.startTime" type="time" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800">
+                        <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Giờ Bắt đầu <span class="text-rose-500">*</span></label>
+                        <input x-model="programForm.startTime" type="time" required
+                               aria-required="true"
+                               class="w-full bg-slate-50 border rounded-xl px-3 py-2.5 text-sm text-slate-800"
+                               :class="!programForm.startTime && showProgramModal ? 'border-rose-300 bg-rose-50' : 'border-slate-200'">
                     </div>
                     <div>
                         <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Loại</label>
