@@ -142,6 +142,10 @@ switch ($action) {
     // nhà và số điện thoại phụ huynh — không thể để ai đăng ký cũng xem.
     case 'register':
         require_post();
+
+        // Rate limiting: giới hạn số lần đăng ký từ cùng một IP
+        register_throttle();
+
         $holy  = mb_convert_case(preg_replace('/\s+/', ' ', trim((string) ($in['holyName'] ?? ''))), MB_CASE_TITLE, 'UTF-8');
         $name  = mb_convert_case(preg_replace('/\s+/', ' ', trim((string) ($in['fullName'] ?? ''))), MB_CASE_TITLE, 'UTF-8');
         $phone = chuan_hoa_sdt((string) ($in['phone'] ?? ''));
@@ -192,6 +196,9 @@ switch ($action) {
 
         // Xoá cache để Admin/BĐH thấy ngay hồ sơ mới mà không phải chờ 5 phút
         Cache::flush();
+
+        // Xóa track đăng ký để IP đó được đăng ký tiếp
+        register_ok();
 
         json_out(['ok' => true, 'code' => $code]);
 
