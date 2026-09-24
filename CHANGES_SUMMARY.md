@@ -11,7 +11,7 @@
 | **Lines of Code (API)** | 5167 | ~4500 | **-12.9%** |
 | **Files changed** | - | 28 | +28 |
 | **Commits** | - | 4 | +4 |
-| **Unit tests** | 0 | 17 | **✅ 100%** |
+| **Unit tests** | 0 | 43 | **✅ 100%** |
 | **Type coverage** | 0% | 40+ types | **✅ Added** |
 | **Activity logs pagination** | 300 records | 50 + API | **-83% data transfer** |
 
@@ -143,6 +143,53 @@
 
 ---
 
+## 🚄 PHASE 4: ATTENDANCE CSV EXPORT
+
+### 4.1 Xuất báo cáo điểm danh chi tiết CSV
+
+| Thông số | Chi tiết |
+|-----------|----------|
+| **Files affected** | `public/api/export.php`, `public/assets/js/modules/attendance.js`, `public/assets/js/modules/export.js`, `views/module_attendance.php`, `tests/unit/ExportTest.php` |
+| **Endpoint** | `GET /api/export.php?action=attendance-detail` |
+| **Parameters** | `classId`, `fromDate`, `toDate`, `programId` |
+
+#### CSV Format
+| Column | Description |
+|--------|-------------|
+| STT | Số thứ tự |
+| Mã số | Mã học sinh |
+| Họ tên | Tên đầy đủ |
+| Lớp | Tên lớp |
+| Ngày | Ngày điểm danh (YYYY-MM-DD) |
+| Buổi | Ca học |
+| Trạng thái | Có mặt / Vắng mặt / Đi muộn |
+| Ghi chú | Ghi chú điểm danh |
+| Người ghi | Người thực hiện điểm danh |
+
+#### Tính năng
+- Tự động tính "Vắng mặt" cho học sinh không có attendance record
+- CSV injection protection
+- Authorization check (chỉ admin/ban_dieu_hanh)
+
+### 4.2 Database Changes
+
+| Thông số | Chi tiết |
+|-----------|----------|
+| **File** | `docs/nang-cap-attendance-note.sql` |
+| **Migration** | Thêm cột `note` vào bảng `attendances` |
+| **Index** | Thêm `idx_att_date_prog` (attendance_date, program_id) |
+
+### 4.3 Unit Tests
+
+| Thông số | Chi tiết |
+|-----------|----------|
+| **File** | `tests/unit/ExportTest.php` |
+| **Test count** | 43 tests |
+| **Categories** | CSV escape, validation, authorization |
+| **Pass rate** | **100% (43/43)** |
+
+---
+
 ## 📋 COMMITS SUMMARY
 
 | Commit | Description | Files | Changes |
@@ -150,8 +197,6 @@
 | `fceedda` | Phase 1: Quick wins | 21 | +39/-35 |
 | `2d1f267` | Phase 3: OrgService + logs API | 4 | +354/-151 |
 | `1cbf9a0` | Final: StaffService + TypeScript + Migrations + Tests | 6 | +xxx/-xx |
-
----
 
 ## ⚠️ KNOWN ISSUES & LIMITATIONS
 
@@ -190,7 +235,7 @@ npm run typecheck  # TypeScript
 
 ### Code Quality
 - **Code duplication**: Giảm ~150 lines duplicate code
-- **Test coverage**: 17 unit tests
+- **Test coverage**: 43 unit tests
 - **Type coverage**: 40+ types defined
 
 ### Security
