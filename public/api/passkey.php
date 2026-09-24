@@ -109,21 +109,21 @@ switch ($action) {
         // Query passkey TRƯỚC để lấy member_id, sau đó mới throttle
         $passkey = db_one("SELECT * FROM member_passkeys WHERE credential_id = ?", [$credentialId]);
 
-        // Rate limiting: chặn brute-force theo member_id (hoặc credential nếu chưa có passkey)
-        // Gọi SAU DB lookup để có member_id chính xác
-        // Throttle TRƯỚC khi trả response để tránh timing leak
-        passkey_throttle($passkey['member_id'] ?? 0, $credentialIdBase64);
+        // Rate limiting: dùng member_id nếu có, không thì dùng IP để throttle
+        // Tránh null access bằng cách check $passkey trước
+        $memberIdForThrottle = $passkey ? $passkey['member_id'] : 0;
+        passkey_throttle($memberIdForThrottle, $credentialIdBase64, client_ip());
 
         if (!$passkey) {
-            passkey_failed(0, $credentialIdBase64);
+            passkey_failed($memberIdForThrottle, $credentialIdBase64, client_ip());
             json_fail('Không tìm thấy dữ liệu sinh trắc học này trên hệ thống.');
         }
 
         try {
             $WebAuthn->processGet($clientDataJSON, $authenticatorData, $signature, $passkey['public_key'], $challenge, null, false);
-            
+
             db_run("UPDATE member_passkeys SET sign_count = sign_count + 1, last_used_at = NOW() WHERE id = ?", [$passkey['id']]);
-            
+
             $m = db_one(
                 'SELECT m.*, r.label AS role_label, r.level AS role_level, r.scope AS role_scope,
                         t.label AS title_label, b.name AS block_name, c.name AS class_name
@@ -136,7 +136,9 @@ switch ($action) {
                 [$passkey['member_id']]
             );
 
+            // Check status TRƯỚC khi gọi login_ok()
             if (!$m || $m['status'] === 'đã nghỉ') {
+                passkey_failed($passkey['member_id'], $credentialIdBase64, client_ip());
                 json_fail('Tài khoản bị khóa hoặc không tồn tại.');
             }
 
@@ -150,7 +152,7 @@ switch ($action) {
             json_out(['ok' => true, 'user' => passkey_member_payload($m)]);
 
         } catch (\Throwable $ex) {
-            passkey_failed($passkey['member_id'] ?? 0, $credentialIdBase64);
+            passkey_failed($passkey['member_id'], $credentialIdBase64, client_ip());
             json_fail('Lỗi xác thực vân tay: ' . $ex->getMessage());
         }
         break;
@@ -162,27 +164,27 @@ switch ($action) {
  *
  * @param int $memberId ID của thành viên (0 nếu chưa xác định)
  * @param string $credentialIdBase64 Credential ID để throttle nếu memberId = 0
+ * @param string|null $ip IP của client (để tránh gọi nhiều lần)
  */
-function passkey_throttle(int $memberId, string $credentialIdBase64 = ''): void
+function passkey_throttle(int $memberId, string $credentialIdBase64 = '', ?string $ip = null): void
 {
-    $ip = client_ip();
+    $ip = $ip ?? client_ip();
     $moc = date('Y-m-d H:i:s', time() - 15 * 60); // 15 phút
 
-    // Tracking ID: dùng member_id nếu đã xác định, hash credential nếu chưa và không rỗng
+    // Tracking ID: dùng member_id nếu đã xác định, hash credential nếu chưa
+    // KHÔNG dùng random token - phá vỡ rate limiting
     if ($memberId > 0) {
         $trackingId = 'pk:' . $memberId;
-    } elseif ($credentialIdBase64 !== '') {
-        $trackingId = 'pk:' . substr(hash('sha256', $credentialIdBase64), 0, 16);
     } else {
-        // Credential rỗng/invalid: dùng random token để tránh cross-user throttle
-        $trackingId = 'pk:' . bin2hex(random_bytes(8));
+        // Dùng hash của credential + IP để tránh cross-user collision
+        $trackingId = 'pk:' . substr(hash('sha256', ($credentialIdBase64 ?: '') . $ip), 0, 16);
     }
 
-    // Throttle theo tracking ID (member_id hoặc credential hash)
+    // Throttle theo tracking ID (member_id hoặc credential+IP hash)
     $theoTracking = (int) db_one(
         'SELECT COUNT(*) n FROM login_attempts
-         WHERE phone = ? AND tried_at > ?',
-        [$trackingId, $moc]
+         WHERE phone = ? AND ip = ? AND tried_at > ?',
+        [$trackingId, $ip, $moc]
     )['n'];
 
     // Throttle theo IP (chặn tất cả prefix 'pk:')
@@ -203,21 +205,22 @@ function passkey_throttle(int $memberId, string $credentialIdBase64 = ''): void
  *
  * @param int $memberId ID của thành viên (0 nếu chưa xác định)
  * @param string $credentialIdBase64 Credential ID để track nếu memberId = 0
+ * @param string|null $ip IP của client
  */
-function passkey_failed(int $memberId, string $credentialIdBase64 = ''): void
+function passkey_failed(int $memberId, string $credentialIdBase64 = '', ?string $ip = null): void
 {
+    $ip = $ip ?? client_ip();
+
     // Lưu với prefix 'pk:' để phân biệt với login thường
-    // Dùng hash của credential để có entropy đủ, random token nếu credential rỗng
+    // Dùng hash credential + IP để tránh cross-user collision
     if ($memberId > 0) {
         $trackingId = 'pk:' . $memberId;
-    } elseif ($credentialIdBase64 !== '') {
-        $trackingId = 'pk:' . substr(hash('sha256', $credentialIdBase64), 0, 16);
     } else {
-        $trackingId = 'pk:' . bin2hex(random_bytes(8));
+        $trackingId = 'pk:' . substr(hash('sha256', ($credentialIdBase64 ?: '') . $ip), 0, 16);
     }
 
     db_run('INSERT INTO login_attempts (phone, ip, tried_at) VALUES (?,?,NOW())',
-           [$trackingId, client_ip()]);
+           [$trackingId, $ip]);
 
     // Dọn rác
     db_run('DELETE FROM login_attempts WHERE tried_at < ?',
