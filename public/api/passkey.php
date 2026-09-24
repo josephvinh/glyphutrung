@@ -106,14 +106,15 @@ switch ($action) {
         $credentialId = base64_encode(WebAuthn_Base64UrlDecode($credentialIdBase64));
         $challenge = $_SESSION['webauthn_challenge'] ?? '';
 
-        // Rate limiting: chặn brute-force theo member_id (hoặc credential nếu chưa có passkey)
-        // Gọi TRƯỚC DB lookup để tránh timing attack
-        passkey_throttle($passkey['member_id'] ?? 0, $credentialIdBase64);
-
+        // Query passkey TRƯỚC để lấy member_id, sau đó mới throttle
         $passkey = db_one("SELECT * FROM member_passkeys WHERE credential_id = ?", [$credentialId]);
 
+        // Rate limiting: chặn brute-force theo member_id (hoặc credential nếu chưa có passkey)
+        // Gọi SAU DB lookup để có member_id chính xác
+        passkey_throttle($passkey['member_id'] ?? 0, $credentialIdBase64);
+
         if (!$passkey) {
-            passkey_failed(0);
+            passkey_failed(0, $credentialIdBase64);
             json_fail('Không tìm thấy dữ liệu sinh trắc học này trên hệ thống.');
         }
 
@@ -148,7 +149,7 @@ switch ($action) {
             json_out(['ok' => true, 'user' => passkey_member_payload($m)]);
 
         } catch (\Throwable $ex) {
-            passkey_failed($passkey['member_id'] ?? 0);
+            passkey_failed($passkey['member_id'] ?? 0, $credentialIdBase64);
             json_fail('Lỗi xác thực vân tay: ' . $ex->getMessage());
         }
         break;
@@ -166,31 +167,27 @@ function passkey_throttle(int $memberId, string $credentialIdBase64 = ''): void
     $ip = client_ip();
     $moc = date('Y-m-d H:i:s', time() - 15 * 60); // 15 phút
 
-    // Throttle theo member_id nếu đã xác định, thay vì credential (credential có thể thay đổi)
-    if ($memberId > 0) {
-        $theoMember = (int) db_one(
-            'SELECT COUNT(*) n FROM login_attempts
-             WHERE phone = ? AND tried_at > ?',
-            ['pk:' . $memberId, $moc]
-        )['n'];
-    } else {
-        // Chưa xác định member: throttle theo credential prefix (ít hiệu quả hơn nhưng vẫn chặn được)
-        $theoMember = (int) db_one(
-            'SELECT COUNT(*) n FROM login_attempts
-             WHERE phone = ? AND tried_at > ?',
-            ['pk_unknown:' . substr($credentialIdBase64, 0, 20), $moc]
-        )['n'];
-    }
+    // Tracking ID: dùng member_id nếu đã xác định, hash credential nếu chưa
+    $trackingId = $memberId > 0
+        ? 'pk:' . $memberId
+        : 'pk:' . substr(hash('sha256', $credentialIdBase64), 0, 16);
 
-    // Throttle theo IP
+    // Throttle theo tracking ID (member_id hoặc credential hash)
+    $theoTracking = (int) db_one(
+        'SELECT COUNT(*) n FROM login_attempts
+         WHERE phone = ? AND tried_at > ?',
+        [$trackingId, $moc]
+    )['n'];
+
+    // Throttle theo IP (chặn tất cả prefix 'pk:')
     $theoIp = (int) db_one(
         'SELECT COUNT(*) n FROM login_attempts
          WHERE phone LIKE ? AND ip = ? AND tried_at > ?',
         ['pk:%', $ip, $moc]
     )['n'];
 
-    // Giới hạn: 10 lần/member, 30 lần/IP
-    if ($theoMember >= 10 || $theoIp >= 30) {
+    // Giới hạn: 10 lần/tracking_id, 30 lần/IP trong 15 phút
+    if ($theoTracking >= 10 || $theoIp >= 30) {
         json_fail('Bạn đã thử quá nhiều lần. Vui lòng đợi 15 phút rồi thử lại.', 429);
     }
 }
@@ -198,20 +195,23 @@ function passkey_throttle(int $memberId, string $credentialIdBase64 = ''): void
 /**
  * Ghi một lần thử passkey thất bại.
  *
- * @param int $memberId ID của thành viên
+ * @param int $memberId ID của thành viên (0 nếu chưa xác định)
+ * @param string $credentialIdBase64 Credential ID để track nếu memberId = 0
  */
-function passkey_failed(int $memberId): void
+function passkey_failed(int $memberId, string $credentialIdBase64 = ''): void
 {
     // Lưu với prefix 'pk:' để phân biệt với login thường
+    // Dùng hash của credential để có entropy đủ, prefix ngắn để tránh quá dài
+    $trackingId = $memberId > 0
+        ? 'pk:' . $memberId
+        : 'pk:' . substr(hash('sha256', $credentialIdBase64), 0, 16);
+
     db_run('INSERT INTO login_attempts (phone, ip, tried_at) VALUES (?,?,NOW())',
-           ['pk:' . $memberId, client_ip()]);
+           [$trackingId, client_ip()]);
 
     // Dọn rác
     db_run('DELETE FROM login_attempts WHERE tried_at < ?',
            [date('Y-m-d H:i:s', time() - 15 * 60)]);
-
-    // Làm chậm
-    usleep(300000);
 }
 
 function WebAuthn_Base64UrlDecode(string $data): string {
