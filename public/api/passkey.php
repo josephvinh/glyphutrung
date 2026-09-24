@@ -106,12 +106,14 @@ switch ($action) {
         $credentialId = base64_encode(WebAuthn_Base64UrlDecode($credentialIdBase64));
         $challenge = $_SESSION['webauthn_challenge'] ?? '';
 
-        $passkey = db_one("SELECT * FROM member_passkeys WHERE credential_id = ?", [$credentialId]);
-
         // Rate limiting: chặn brute-force theo member_id (hoặc credential nếu chưa có passkey)
+        // Gọi TRƯỚC DB lookup để tránh timing attack
         passkey_throttle($passkey['member_id'] ?? 0, $credentialIdBase64);
 
+        $passkey = db_one("SELECT * FROM member_passkeys WHERE credential_id = ?", [$credentialId]);
+
         if (!$passkey) {
+            passkey_failed(0);
             json_fail('Không tìm thấy dữ liệu sinh trắc học này trên hệ thống.');
         }
 
@@ -146,6 +148,7 @@ switch ($action) {
             json_out(['ok' => true, 'user' => passkey_member_payload($m)]);
 
         } catch (\Throwable $ex) {
+            passkey_failed($passkey['member_id'] ?? 0);
             json_fail('Lỗi xác thực vân tay: ' . $ex->getMessage());
         }
         break;

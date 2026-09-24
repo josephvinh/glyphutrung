@@ -158,19 +158,19 @@ switch ($action) {
         // BĐH, Chủ nhiệm...) do Ban Điều Hành gán khi duyệt.
         $danhXung = ($in['danhXung'] ?? 'glv') === 'du_bi' ? 'du_bi' : 'glv';
 
-        if ($name === '')  json_fail('Vui lòng nhập họ và tên.');
-        if ($birth === '') json_fail('Vui lòng nhập ngày sinh.');
-        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $birth)) json_fail('Ngày sinh không hợp lệ.');
+        if ($name === '')  { register_failed(); json_fail('Vui lòng nhập họ và tên.'); }
+        if ($birth === '') { register_failed(); json_fail('Vui lòng nhập ngày sinh.'); }
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $birth)) { register_failed(); json_fail('Ngày sinh không hợp lệ.'); }
         // Chặn nhầm ngày kiểu 2020; thành viên phải đủ tuổi tối thiểu
         $tuoi = (int) ((time() - strtotime($birth)) / 31556952);
-        if ($tuoi < 13 || $tuoi > 90) json_fail('Ngày sinh không hợp lý — thành viên phải từ 13 tuổi trở lên.');
+        if ($tuoi < 13 || $tuoi > 90) { register_failed(); json_fail('Ngày sinh không hợp lý — thành viên phải từ 13 tuổi trở lên.'); }
         if (!preg_match('/^0\d{8,10}$/', $phone)) {
-            json_fail('Số điện thoại không hợp lệ. Nhập dạng 09xxxxxxxx.');
+            register_failed(); json_fail('Số điện thoại không hợp lệ. Nhập dạng 09xxxxxxxx.');
         }
-        if (strlen($pass) < 6) json_fail('Mật khẩu phải từ 6 ký tự trở lên.');
+        if (strlen($pass) < 6) { register_failed(); json_fail('Mật khẩu phải từ 6 ký tự trở lên.'); }
 
         if (db_one('SELECT id FROM members WHERE phone = ?', [$phone])) {
-            json_fail('Số điện thoại này đã được đăng ký. Nếu quên mật khẩu, liên hệ Ban Điều Hành để cấp lại.');
+            register_failed(); json_fail('Số điện thoại này đã được đăng ký. Nếu quên mật khẩu, liên hệ Ban Điều Hành để cấp lại.');
         }
 
         // Mã GLV cấp sẵn để BĐH có cái mà gọi, dù chưa duyệt
