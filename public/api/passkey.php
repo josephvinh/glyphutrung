@@ -111,6 +111,7 @@ switch ($action) {
 
         // Rate limiting: chặn brute-force theo member_id (hoặc credential nếu chưa có passkey)
         // Gọi SAU DB lookup để có member_id chính xác
+        // Throttle TRƯỚC khi trả response để tránh timing leak
         passkey_throttle($passkey['member_id'] ?? 0, $credentialIdBase64);
 
         if (!$passkey) {
@@ -167,10 +168,15 @@ function passkey_throttle(int $memberId, string $credentialIdBase64 = ''): void
     $ip = client_ip();
     $moc = date('Y-m-d H:i:s', time() - 15 * 60); // 15 phút
 
-    // Tracking ID: dùng member_id nếu đã xác định, hash credential nếu chưa
-    $trackingId = $memberId > 0
-        ? 'pk:' . $memberId
-        : 'pk:' . substr(hash('sha256', $credentialIdBase64), 0, 16);
+    // Tracking ID: dùng member_id nếu đã xác định, hash credential nếu chưa và không rỗng
+    if ($memberId > 0) {
+        $trackingId = 'pk:' . $memberId;
+    } elseif ($credentialIdBase64 !== '') {
+        $trackingId = 'pk:' . substr(hash('sha256', $credentialIdBase64), 0, 16);
+    } else {
+        // Credential rỗng/invalid: dùng random token để tránh cross-user throttle
+        $trackingId = 'pk:' . bin2hex(random_bytes(8));
+    }
 
     // Throttle theo tracking ID (member_id hoặc credential hash)
     $theoTracking = (int) db_one(
@@ -201,10 +207,14 @@ function passkey_throttle(int $memberId, string $credentialIdBase64 = ''): void
 function passkey_failed(int $memberId, string $credentialIdBase64 = ''): void
 {
     // Lưu với prefix 'pk:' để phân biệt với login thường
-    // Dùng hash của credential để có entropy đủ, prefix ngắn để tránh quá dài
-    $trackingId = $memberId > 0
-        ? 'pk:' . $memberId
-        : 'pk:' . substr(hash('sha256', $credentialIdBase64), 0, 16);
+    // Dùng hash của credential để có entropy đủ, random token nếu credential rỗng
+    if ($memberId > 0) {
+        $trackingId = 'pk:' . $memberId;
+    } elseif ($credentialIdBase64 !== '') {
+        $trackingId = 'pk:' . substr(hash('sha256', $credentialIdBase64), 0, 16);
+    } else {
+        $trackingId = 'pk:' . bin2hex(random_bytes(8));
+    }
 
     db_run('INSERT INTO login_attempts (phone, ip, tried_at) VALUES (?,?,NOW())',
            [$trackingId, client_ip()]);
