@@ -44,6 +44,27 @@
 
         <!-- THẺ: CÁ NHÂN (ai cũng thấy) -->
         <div x-show="settingsTab === 'profile'">
+            <!-- Dark mode toggle -->
+            <div class="bg-white rounded-card p-4 shadow-sm border border-slate-100 mb-4 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 shrink-0 rounded-2xl flex items-center justify-center border transition-colors"
+                         :class="dark ? 'bg-slate-700 border-slate-600 text-yellow-400' : 'bg-slate-50 border-slate-200 text-slate-500'">
+                        <i :data-lucide="dark ? 'sun' : 'moon'" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-slate-700">Chế độ tối</p>
+                        <p class="text-micro text-slate-500">Giảm mỏi mắt khi dùng ban đêm</p>
+                    </div>
+                </div>
+                <button @click="toggleDark()" type="button" role="switch"
+                        :aria-label="dark ? 'Tắt chế độ tối' : 'Bật chế độ tối'"
+                        :aria-checked="dark ? 'true' : 'false'"
+                        class="w-11 h-6 shrink-0 rounded-full relative transition-colors duration-200"
+                        :class="dark ? 'bg-emerald-500' : 'bg-slate-300'">
+                    <div class="w-4 h-4 bg-white rounded-full absolute top-1 shadow-sm transition-transform duration-200"
+                         :class="dark ? 'translate-x-6' : 'translate-x-1'"></div>
+                </button>
+            </div>
             <?php include __DIR__ . '/module_profile.php'; ?>
         </div>
 
