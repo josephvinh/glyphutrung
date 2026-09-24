@@ -11,6 +11,31 @@ jobs:
     name: PHPUnit Tests
     runs-on: ubuntu-latest
 
+    # DB test: các unit test (Scope/Permission/Assignment…) tự tạo fixture
+    # nhưng cần schema + seed nền (roles/modules/permissions) do install.php
+    # dựng. Kết nối trỏ về service này qua biến môi trường TNTT_DB_* mà
+    # config/db.php hỗ trợ sẵn.
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: tntt_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=15
+
+    env:
+      TNTT_DB_HOST: 127.0.0.1
+      TNTT_DB_PORT: 3306
+      TNTT_DB_NAME: tntt_test
+      TNTT_DB_USER: root
+      TNTT_DB_PASS: root
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -20,6 +45,18 @@ jobs:
         with:
           php-version: '8.2'
           extensions: pdo_mysql
+
+      - name: Chờ MySQL sẵn sàng
+        run: |
+          for i in $(seq 1 30); do
+            if mysqladmin ping -h 127.0.0.1 -P 3306 -uroot -proot --silent; then
+              echo "MySQL sẵn sàng"; break
+            fi
+            echo "Chờ MySQL... ($i)"; sleep 2
+          done
+
+      - name: Dựng schema + seed vào DB test
+        run: php config/install.php
 
       - name: Download PHPUnit PHAR
         run: |
