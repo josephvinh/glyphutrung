@@ -44,8 +44,12 @@ jobs:
 
       - name: Check PHP Syntax
         run: |
-          find . -name "*.php" -not -path "./vendor/*" -exec php -l {} \; 2>&1 | grep -v "No syntax errors" || true
-          echo "Syntax check completed"
+          fail=0
+          while IFS= read -r f; do
+            php -l "$f" > /dev/null 2>&1 || { echo "❌ Syntax error in: $f"; php -l "$f"; fail=1; }
+          done < <(find . -path ./vendor -prune -o -path ./node_modules -prune -o -name '*.php' -print)
+          if [ "$fail" -ne 0 ]; then echo "PHP syntax check FAILED"; exit 1; fi
+          echo "✅ PHP syntax check passed"
 
   js-lint:
     name: JavaScript Lint

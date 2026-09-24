@@ -112,7 +112,8 @@ if (php_sapi_name() === 'cli') {
         exit(0);
     }
 
-    echo "📋 {$count = count($pending)} migration(s) chờ:\n";
+    $count = count($pending);
+    echo "📋 {$count} migration(s) chờ:\n";
     foreach ($pending as $f) {
         echo "  - {$f}\n";
     }
