@@ -16,6 +16,14 @@ Rủi ro cao nhất **không nằm ở code mà ở vận hành**: secret bị c
 | 3 | Escape thêm vài trường phiếu liên lạc (defense-in-depth) | A | `export.php`, `print.php` |
 | 4 | **Sửa bug parse** làm crash migration runner | F | `config/migrations/index.php:115` |
 | 5 | Siết CI `php -l` thành chặn lỗi (bỏ `\|\| true`) | F | `.github/workflows/ci.yml` |
+| 6 | **CI chạy PHPUnit với MySQL + seed qua install.php** (test thực sự chạy) | F | `.github/workflows/ci.yml` |
+| 7 | WebAuthn: challenge dùng một lần (`unset` sau khi đọc) | A | `passkey.php` |
+
+## Đã RÀ SÂU thêm (theo yêu cầu, tài liệu mới)
+- **Bảo mật chuyên sâu** (`review/A2-bao-mat-chuyen-sau.md`): upload thư viện & IDOR/scope
+  **an toàn, không lỗ hổng**; WebAuthn vững (còn 1 ghi chú tuỳ chọn: so sánh sign counter).
+- **Spec hợp nhất migration** (`../HE-THONG-MIGRATION.md`): bảng ánh xạ 12 script →
+  numbered migration + quy trình thực hiện có kiểm chứng trên staging.
 
 ## CÒN ĐỂ NGỎ — theo mức ưu tiên
 
