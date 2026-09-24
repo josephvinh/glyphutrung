@@ -50,6 +50,34 @@ window.TNTT.export = {
     },
 
     /**
+     * Xuất báo cáo điểm danh chi tiết (mỗi dòng là 1 bản ghi)
+     * @param {number|null} classId - ID lớp (null = tất cả)
+     * @param {string} fromDate - Ngày bắt đầu (YYYY-MM-DD)
+     * @param {string} toDate - Ngày kết thúc (YYYY-MM-DD)
+     * @param {number|null} programId - ID chương trình (null = tất cả)
+     */
+    async attendanceDetail(classId = null, fromDate = '', toDate = '', programId = null) {
+        const params = new URLSearchParams({
+            action: 'attendance-detail'
+        });
+        if (classId) params.set('classId', classId);
+        if (fromDate) params.set('fromDate', fromDate);
+        if (toDate) params.set('toDate', toDate);
+        if (programId) params.set('programId', programId);
+
+        const resp = await fetch('/api/export.php?' + params.toString());
+        const data = await resp.json();
+
+        if (data.ok && data.url) {
+            this._download(data.url, data.filename);
+            return true;
+        } else {
+            window.TNTT.toast.error(data.error || 'Không thể xuất báo cáo điểm danh.');
+            return false;
+        }
+    },
+
+    /**
      * Xuất tất cả phiếu liên lạc của một lớp
      * @param {string} className - Tên lớp
      * @param {string} format - 'csv' hoặc 'excel'
