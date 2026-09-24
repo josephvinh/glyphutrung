@@ -177,6 +177,211 @@ switch ($action) {
         json_out(['ok' => true, 'url' => $url, 'filename' => 'Bang_Diem_' . preg_replace('/\s+/', '_', $term['name']) . '_' . date('Y-m-d') . '.' . $ext]);
 
     // -------------------------------------------------------------
+    // EXPORT ATTENDANCE DETAIL (CSV)
+    // each row = 1 attendance record with full details
+    // -------------------------------------------------------------
+    case 'attendance-detail':
+        // GET params
+        $classId  = isset($_GET['classId']) && $_GET['classId'] !== '' ? (int) $_GET['classId'] : null;
+        $fromDate = $_GET['fromDate'] ?? '';
+        $toDate   = $_GET['toDate'] ?? '';
+        $programId = isset($_GET['programId']) && $_GET['programId'] !== '' ? (int) $_GET['programId'] : null;
+
+        // Validate date range
+        $today = date('Y-m-d');
+        $yearStart = null;
+
+        // Get school year start date
+        $schoolYear = db_one('SELECT from_date, to_date FROM school_years WHERE is_current = 1 LIMIT 1');
+        if ($schoolYear) {
+            $yearStart = $schoolYear['from_date'];
+        }
+
+        // Default dates
+        if ($fromDate === '') $fromDate = $yearStart ?: date('Y-01-01');
+        if ($toDate === '')   $toDate   = $today;
+
+        // Validate format
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $fromDate) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $toDate)) {
+            json_fail('Định dạng ngày không hợp lệ. Dùng YYYY-MM-DD.', 400);
+        }
+
+        // Validate range
+        if ($fromDate > $toDate) {
+            json_fail('Ngày bắt đầu phải trước ngày kết thúc.', 400);
+        }
+
+        // Max 365 days
+        $daysDiff = (strtotime($toDate) - strtotime($fromDate)) / 86400;
+        if ($daysDiff > 365) {
+            json_fail('Khoảng thời gian không được vượt quá 365 ngày.', 400);
+        }
+
+        // Authorization check
+        $allow = accessible_class_ids($me, 'attendance', 'view');
+        if ($classId !== null) {
+            if ($allow !== null && !in_array($classId, $allow, true)) {
+                json_fail('Bạn không phụ trách lớp này.', 403);
+            }
+        } elseif ($allow !== null && empty($allow)) {
+            json_fail('Bạn chưa được phân công lớp nào.', 403);
+        }
+
+        // Build query params
+        $params = [$year['id'], $fromDate, $toDate];
+        $dk = 'a.year_id = ? AND a.session_date BETWEEN ? AND ?';
+
+        if ($classId !== null) {
+            $dk .= ' AND e.class_id = ?';
+            $params[] = $classId;
+        } elseif ($allow !== null) {
+            $dk .= ' AND e.class_id IN (' . implode(',', array_fill(0, count($allow), '?')) . ')';
+            $params = array_merge($params, $allow);
+        }
+
+        if ($programId !== null) {
+            $dk .= ' AND a.program_id = ?';
+            $params[] = $programId;
+        }
+
+        // Get attendance records with student + program info
+        $records = db_all(
+            "SELECT
+                a.session_date,
+                s.code AS student_code,
+                CONCAT(COALESCE(s.holy_name, ''), ' ', s.full_name) AS full_name,
+                c.name AS class_name,
+                p.name AS program_name,
+                a.status,
+                COALESCE(a.note, '') AS note,
+                m.full_name AS marked_by_name
+             FROM attendances a
+             JOIN students s ON s.id = a.student_id
+             JOIN enrollments e ON e.student_id = s.id AND e.year_id = a.year_id
+             JOIN classes c ON c.id = e.class_id
+             JOIN programs p ON p.id = a.program_id
+             LEFT JOIN members m ON m.id = a.marked_by
+             WHERE {$dk}
+             ORDER BY a.session_date DESC, c.name, s.code",
+            $params);
+
+        // Get approved leave requests for the same period/class
+        $lrParams = [$year['id'], $fromDate, $toDate];
+        $lrDk = 'lr.year_id = ? AND lr.session_date BETWEEN ? AND ? AND lr.status = ?';
+
+        if ($classId !== null) {
+            $lrDk .= ' AND e.class_id = ?';
+            $lrParams[] = $classId;
+        } elseif ($allow !== null) {
+            $lrDk .= ' AND e.class_id IN (' . implode(',', array_fill(0, count($allow), '?')) . ')';
+            $lrParams = array_merge($lrParams, $allow);
+        }
+
+        if ($programId !== null) {
+            $lrDk .= ' AND lr.program_id = ?';
+            $lrParams[] = $programId;
+        }
+
+        $leaveRequests = db_all(
+            "SELECT
+                lr.session_date,
+                s.code AS student_code,
+                CONCAT(COALESCE(s.holy_name, ''), ' ', s.full_name) AS full_name,
+                c.name AS class_name,
+                p.name AS program_name,
+                lr.reason
+             FROM leave_requests lr
+             JOIN students s ON s.id = lr.student_id
+             JOIN enrollments e ON e.student_id = s.id AND e.year_id = lr.year_id
+             JOIN classes c ON c.id = e.class_id
+             JOIN programs p ON p.id = lr.program_id
+             WHERE {$lrDk}
+             ORDER BY lr.session_date DESC, c.name, s.code",
+            $lrParams);
+
+        // Build attendance index to track existing records
+        $attendedKeys = [];
+        foreach ($records as $r) {
+            $key = $r['student_code'] . '|' . $r['session_date'] . '|' . $r['program_name'];
+            $attendedKeys[$key] = true;
+        }
+
+        // Build leave request index
+        $leaveKeys = [];
+        foreach ($leaveRequests as $lr) {
+            $key = $lr['student_code'] . '|' . $lr['session_date'] . '|' . $lr['program_name'];
+            $leaveKeys[$key] = $lr['reason'];
+        }
+
+        // Combine records: attendance + leave requests not already in attendance
+        $rows = [];
+        foreach ($records as $r) {
+            $statusLabel = $r['status'];
+            if ($r['status'] === 'có mặt') $statusLabel = 'Có mặt';
+            elseif ($r['status'] === 'đi trễ') $statusLabel = 'Đi trễ';
+            elseif ($r['status'] === 'vắng có phép') $statusLabel = 'Vắng mặt';
+            elseif ($r['status'] === 'vắng không phép') $statusLabel = 'Vắng mặt';
+
+            $rows[] = [
+                'date'      => date('d/m/Y', strtotime($r['session_date'])),
+                'code'      => $r['student_code'],
+                'name'      => $r['full_name'],
+                'class'     => $r['class_name'],
+                'program'   => $r['program_name'],
+                'status'    => $statusLabel,
+                'note'      => $r['note'],
+                'marked_by' => $r['marked_by_name'] ?? '',
+            ];
+        }
+
+        // Add leave requests that are not already in attendance
+        foreach ($leaveRequests as $lr) {
+            $key = $lr['student_code'] . '|' . $lr['session_date'] . '|' . $lr['program_name'];
+            if (!isset($attendedKeys[$key])) {
+                $rows[] = [
+                    'date'      => date('d/m/Y', strtotime($lr['session_date'])),
+                    'code'      => $lr['student_code'],
+                    'name'      => $lr['full_name'],
+                    'class'     => $lr['class_name'],
+                    'program'   => $lr['program_name'],
+                    'status'    => 'Vắng mặt',
+                    'note'      => $lr['reason'] ?? '',
+                    'marked_by' => '',
+                ];
+            }
+        }
+
+        // Sort by date desc, then class, then code
+        usort($rows, function($a, $b) {
+            $dateA = DateTime::createFromFormat('d/m/Y', $a['date']);
+            $dateB = DateTime::createFromFormat('d/m/Y', $b['date']);
+            $dateCmp = $dateB <=> $dateA; // desc
+            if ($dateCmp !== 0) return $dateCmp;
+            $classCmp = strcmp($a['class'], $b['class']);
+            if ($classCmp !== 0) return $classCmp;
+            return strcmp($a['code'], $b['code']);
+        });
+
+        // Build CSV
+        $csv = build_attendance_detail_csv($rows, $classId);
+
+        $url = 'data:text/csv;charset=utf-8;base64,' . base64_encode($csv);
+
+        // Filename - sanitize special characters
+        $className = '';
+        if ($classId !== null) {
+            $cls = db_one('SELECT name FROM classes WHERE id = ?', [$classId]);
+            if ($cls) {
+                // Remove unsafe characters: / \ : * ? " < > |
+                $safeClassName = preg_replace('/[\/\\\\:*?"<>|]/u', '', $cls['name']);
+                $className = preg_replace('/\s+/', '_', $safeClassName) . '_';
+            }
+        }
+        $filename = 'Diem_Danh_' . $className . $fromDate . '_' . $toDate . '.csv';
+
+        json_out(['ok' => true, 'url' => $url, 'filename' => $filename, 'count' => count($rows)]);
+
+    // -------------------------------------------------------------
     default:
         json_fail('Hành động không hợp lệ.', 404);
 }
@@ -396,4 +601,28 @@ function csv_escape(string $value): string
         return '"' . str_replace('"', '""', $value) . '"';
     }
     return $value;
+}
+
+function build_attendance_detail_csv(array $rows, ?int $classId): string
+{
+    // CSV header
+    $headers = ['STT', 'Mã số', 'Họ tên', 'Lớp', 'Ngày', 'Buổi', 'Trạng thái', 'Ghi chú', 'Người ghi'];
+    $csv = "\xEF\xBB\xBF" . implode(',', array_map('csv_escape', $headers)) . "\r\n";
+
+    $seq = 1;
+    foreach ($rows as $r) {
+        $csv .= implode(',', [
+            $seq++,
+            csv_escape($r['code'] ?? ''),
+            csv_escape($r['name'] ?? ''),
+            csv_escape($r['class'] ?? ''),
+            csv_escape($r['date'] ?? ''),
+            csv_escape($r['program'] ?? ''),
+            csv_escape($r['status'] ?? ''),
+            csv_escape($r['note'] ?? ''),
+            csv_escape($r['marked_by'] ?? ''),
+        ]) . "\r\n";
+    }
+
+    return $csv;
 }

@@ -24,6 +24,16 @@ window.TNTT.attendance = {
     activeSession: null,      // { programId, date }
     attendanceSearch: '',
     attendanceClass: '',
+
+    // Export CSV modal state
+    showExportCSVModal: false,
+    exportCSV: {
+        classId: '',
+        fromDate: '',
+        toDate: '',
+        loading: false,
+        error: ''
+    },
     nowTs: Date.now(),        // nhịp đồng hồ, cập nhật 30 giây/lần để badge giờ chốt tự đổi
 
     openAttendance() {
@@ -425,5 +435,58 @@ window.TNTT.attendance = {
         if (status === 'vắng có phép')    return 'bg-blue-50 text-blue-600 border-blue-100';
         if (status === 'vắng không phép') return 'bg-rose-50 text-rose-600 border-rose-100';
         return 'bg-slate-50 text-slate-400 border-slate-200';
+    },
+
+    // Open export CSV modal with default values
+    openExportCSVModal() {
+        const today = this.toDateInput(new Date());
+        // Default: from first day of month to today
+        const firstOfMonth = today.substring(0, 8) + '01';
+        this.exportCSV = {
+            classId: '',
+            fromDate: firstOfMonth,
+            toDate: today,
+            loading: false,
+            error: ''
+        };
+        this.showExportCSVModal = true;
+    },
+
+    // Export attendance to CSV
+    async exportAttendanceCSV() {
+        const ec = this.exportCSV;
+
+        // Validation
+        if (ec.fromDate && ec.toDate && ec.fromDate > ec.toDate) {
+            ec.error = 'Ngày bắt đầu phải trước ngày kết thúc.';
+            return;
+        }
+
+        ec.error = '';
+        ec.loading = true;
+
+        try {
+            // Convert class name to class ID
+            let classId = null;
+            if (ec.classId) {
+                const cls = (this.classes || []).find(c => c.name === ec.classId);
+                classId = cls ? cls.id : null;
+            }
+
+            const success = await window.TNTT.export.attendanceDetail(
+                classId,
+                ec.fromDate || '',
+                ec.toDate || ''
+            );
+
+            if (success) {
+                this.showExportCSVModal = false;
+                window.TNTT.toast.success('Đã tải báo cáo điểm danh.');
+            }
+        } catch (e) {
+            ec.error = 'Đã xảy ra lỗi khi xuất file.';
+        } finally {
+            ec.loading = false;
+        }
     },
 };
