@@ -1,0 +1,23 @@
+[
+  {
+    "name": "dashboard-desktop.png",
+    "model": "gemini-3.1-pro-preview",
+    "raw": "{\n  \"doc_duoc_anh\": true,\n  \"kich_thuoc_uoc_luong\": \"desktop\",\n  \"mo_ta_tong_quan\": \"Giao diện dashboard tổng quan của ứng dụng web trên màn hình desktop. Bố cục gồm sidebar bên trái chứa thanh điều hướng chia theo nhóm chức năng, và vùng nội dung chính bên phải. Vùng nội dung có phần header nền đỏ chứa thông tin người dùng, bên dưới là các thẻ thống kê dạng nổi đè lên viền, một banner 'Bảng thi đua', cùng hai khối thông tin sự kiện và thông báo ở dưới cùng.\",\n  \"chu_de_trang\": \"GLY PHÚ TRUNG\",\n  \"thanh_menu\": [\n    \"Danh sách\",\n    \"Điểm danh\",\n    \"Xin phép\",\n    \"Báo cáo\",\n    \"Thư viện\",\n    \"Khối lớp\",\n    \"Lịch của tôi\",\n    \"Hướng dẫn\",\n    \"Lên lớp\",\n    \"Chương trình\",\n    \"Thông báo\",\n    \"Nhân sự\",\n    \"Niên khoá\",\n    \"Cài đặt\"\n  ],\n  \"cac_nut_hanh_dong\": [\n    \"Nút icon vòng lặp (Làm mới/Refresh)\",\n    \"Nút icon mũi tên thoát (Đăng xuất)\",\n    \"Bảng thi đua (Banner có thể click)\",\n    \"Mở lịch >\",\n    \"Xem tất cả >\"\n  ],\n  \"so_lieu_thong_ke\": [\n    \"2 MỚI (Thông báo từ BĐH)\",\n    \"180 em (Tổng sĩ số toàn đoàn)\",\n    \"18 em (Sinh nhật tháng này)\"\n  ],\n  \"van_de\": [],\n  \"khong_thay_van_de\": true,\n  \"ghi_chu_do_tin_cay\": \"Ảnh hiển thị rất sắc nét, đọc được",
+    "usage": {
+      "prompt_tokens": 2491,
+      "completion_tokens": 3446,
+      "total_tokens": 5936,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "text_tokens": 1046,
+        "audio_tokens": 0,
+        "image_tokens": 0
+      },
+      "completion_tokens_details": {
+        "text_tokens": 438,
+        "audio_tokens": 0,
+        "reasoning_tokens": 2942
+      }
+    }
+  }
+]

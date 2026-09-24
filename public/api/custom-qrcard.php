@@ -6,14 +6,17 @@
  * Authorization: User phải có quyền trong phạm vi lớp/khối được phân công.
  *
  * Actions:
- *   - preview      : Generate preview HTML
- *   - export_png   : Export cards as PNG
- *   - export_pdf   : Export cards as PDF
- *   - save_preset : Lưu preset tùy chỉnh
- *   - list_presets : Danh sách presets của user
- *   - delete_preset: Xóa preset
- *   - upload_logo  : Upload logo tùy chỉnh
- *   - list_logos   : Danh sách logos của user
+ *   - preview           : Generate preview HTML
+ *   - export_png        : Export cards as PNG
+ *   - export_pdf        : Export cards as PDF
+ *   - export_svg_inline: Export all cards as single SVG
+ *   - export_svg_zip   : Export cards as ZIP of SVG files
+ *   - save_preset      : Lưu preset tùy chỉnh
+ *   - list_presets     : Danh sách presets của user
+ *   - delete_preset    : Xóa preset
+ *   - upload_logo      : Upload logo tùy chỉnh
+ *   - list_logos       : Danh sách logos của user
+ *   - delete_logo      : Xóa logo
  */
 
 require_once __DIR__ . '/_bootstrap.php';
@@ -22,7 +25,7 @@ require_once __DIR__ . '/_bootstrap.php';
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
 
 // Các action cần POST
-$writeActions = ['export_png', 'export_pdf', 'save_preset', 'delete_preset', 'upload_logo'];
+$writeActions = ['export_png', 'export_pdf', 'export_svg_inline', 'export_svg_zip', 'save_preset', 'delete_preset', 'upload_logo', 'delete_logo'];
 
 // Validate request method
 if (in_array($action, $writeActions, true)) {
@@ -42,6 +45,14 @@ switch ($action) {
 
     case 'export_pdf':
         handleExportPdf();
+        break;
+
+    case 'export_svg_inline':
+        handleExportSvgInline();
+        break;
+
+    case 'export_svg_zip':
+        handleExportSvgZip();
         break;
 
     case 'save_preset':
@@ -185,6 +196,180 @@ function handleExportPdf(): void
         'count' => count($students),
         'format' => 'pdf'
     ]);
+}
+
+/**
+ * Export SVG Inline: Trả về 1 SVG chứa tất cả thẻ
+ */
+function handleExportSvgInline(): void
+{
+    $me = require_login();
+    require_permission('qrcard', 'view');
+
+    $input = json_input();
+    $studentIds = $input['student_ids'] ?? [];
+    $options = $input['options'] ?? [];
+
+    if (empty($studentIds)) {
+        json_fail('Vui lòng chọn ít nhất một học sinh.', 400);
+    }
+
+    $students = validateStudents($me, $studentIds);
+    if (empty($students)) {
+        json_fail('Không tìm thấy học sinh nào hợp lệ.', 400);
+    }
+
+    // Generate SVG
+    $svg = generateCardsSvg($students, $options);
+
+    json_out([
+        'ok' => true,
+        'svg' => $svg,
+        'count' => count($students),
+        'filename' => 'qrcards_' . date('Ymd') . '.svg'
+    ]);
+}
+
+/**
+ * Export SVG ZIP: Trả về ZIP chứa nhiều file SVG
+ */
+function handleExportSvgZip(): void
+{
+    $me = require_login();
+    require_permission('qrcard', 'view');
+
+    $input = json_input();
+    $studentIds = $input['student_ids'] ?? [];
+    $options = $input['options'] ?? [];
+
+    if (empty($studentIds)) {
+        json_fail('Vui lòng chọn ít nhất một học sinh.', 400);
+    }
+
+    $students = validateStudents($me, $studentIds);
+    if (empty($students)) {
+        json_fail('Không tìm thấy học sinh nào hợp lệ.', 400);
+    }
+
+    // Giới hạn
+    $maxExport = 100;
+    if (count($students) > $maxExport) {
+        json_fail('Chỉ có thể export tối đa ' . $maxExport . ' thẻ một lần.', 400);
+    }
+
+    // Generate individual SVGs
+    $svgFiles = [];
+    foreach ($students as $s) {
+        $svg = generateSingleCardSvg($s, $options);
+        $filename = 'qrcard_' . preg_replace('/[^a-zA-Z0-9]/', '_', $s['code']) . '.svg';
+        $svgFiles[$filename] = $svg;
+    }
+
+    // Return list for frontend to create ZIP
+    json_out([
+        'ok' => true,
+        'files' => $svgFiles,
+        'count' => count($students),
+        'format' => 'svg_zip'
+    ]);
+}
+
+/**
+ * Generate cards SVG (inline - all in one SVG)
+ */
+function generateCardsSvg(array $students, array $options): string
+{
+    $qrSize = intval($options['qrSize'] ?? '25');
+    $cardWidth = $qrSize + 30;
+    $cardHeight = $qrSize + 40;
+    $cardsPerRow = 3;
+    $gap = 5;
+    $padding = 10;
+
+    $cols = $cardsPerRow;
+    $rows = ceil(count($students) / $cols);
+    $width = $cols * ($cardWidth + $gap) + $padding * 2;
+    $height = $rows * ($cardHeight + $gap) + $padding * 2;
+
+    $svg = '<?xml version="1.0" encoding="UTF-8"?>';
+    $svg .= '<svg xmlns="http://www.w3.org/2000/svg" width="' . $width . 'mm" height="' . $height . 'mm" viewBox="0 0 ' . $width . ' ' . $height . '">';
+
+    foreach ($students as $i => $student) {
+        $col = $i % $cardsPerRow;
+        $row = intdiv($i, $cardsPerRow);
+        $x = $padding + $col * ($cardWidth + $gap);
+        $y = $padding + $row * ($cardHeight + $gap);
+
+        $svg .= generateCardSvgElement($student, $options, $x, $y, $cardWidth, $cardHeight, $qrSize);
+    }
+
+    $svg .= '</svg>';
+    return $svg;
+}
+
+/**
+ * Generate single card SVG
+ */
+function generateSingleCardSvg(array $student, array $options): string
+{
+    $qrSize = intval($options['qrSize'] ?? '25');
+    $cardWidth = $qrSize + 30;
+    $cardHeight = $qrSize + 40;
+
+    return '<?xml version="1.0" encoding="UTF-8"?>' .
+           '<svg xmlns="http://www.w3.org/2000/svg" width="' . $cardWidth . 'mm" height="' . $cardHeight . 'mm" viewBox="0 0 ' . $cardWidth . ' ' . $cardHeight . '">' .
+           generateCardSvgElement($student, $options, 0, 0, $cardWidth, $cardHeight, $qrSize) .
+           '</svg>';
+}
+
+/**
+ * Generate SVG element for a card
+ */
+function generateCardSvgElement(array $student, array $options, float $x, float $y, float $w, float $h, int $qrSize): string
+{
+    $bgColor = $options['bgColor'] ?? '#ffffff';
+    $textColor = $options['textColor'] ?? '#1e293b';
+    $headerText = $options['headerText'] ?? '';
+    $fields = $options['fields'] ?? ['code', 'name'];
+
+    $svg = '';
+
+    // Card background
+    $svg .= '<rect x="' . $x . '" y="' . $y . '" width="' . $w . '" height="' . $h . '" fill="' . $bgColor . '" stroke="#e2e8f0" rx="2"/>';
+
+    // Header text
+    if (!empty($headerText)) {
+        $svg .= '<text x="' . ($x + $w/2) . '" y="' . ($y + 5) . '" text-anchor="middle" font-size="2" fill="' . $textColor . '" font-weight="bold">' . htmlspecialchars($headerText, ENT_XML1, 'UTF-8') . '</text>';
+    }
+
+    // QR Code placeholder (will be rendered on client or we generate here)
+    $qrX = $x + ($w - $qrSize) / 2;
+    $qrY = $y + 8;
+    $svg .= '<rect x="' . $qrX . '" y="' . $qrY . '" width="' . $qrSize . '" height="' . $qrSize . '" fill="white" stroke="#ccc"/>';
+    $svg .= '<text x="' . ($x + $w/2) . '" y="' . ($qrY + $qrSize/2 + 1) . '" text-anchor="middle" font-size="3" fill="#999">QR: ' . htmlspecialchars($student['code'], ENT_XML1, 'UTF-8') . '</text>';
+
+    // Text fields
+    $textY = $qrY + $qrSize + 5;
+    foreach ($fields as $field) {
+        $text = '';
+        switch ($field) {
+            case 'code':
+                $text = $student['code'];
+                break;
+            case 'name':
+                $text = ($student['holyName'] ?? '') . ' ' . $student['name'];
+                break;
+            case 'className':
+                $text = 'Lớp: ' . ($student['className'] ?? '');
+                break;
+        }
+        if ($text) {
+            $svg .= '<text x="' . ($x + $w/2) . '" y="' . $textY . '" text-anchor="middle" font-size="2.5" fill="' . $textColor . '">' . htmlspecialchars(trim($text), ENT_XML1, 'UTF-8') . '</text>';
+            $textY += 3;
+        }
+    }
+
+    return $svg;
 }
 
 /**
@@ -638,7 +823,11 @@ function buildCardHtml(array $student, string $template, array $options, array $
     }
 
     // QR Code placeholder (sẽ được render bằng JS)
-    $content .= '<div class="qr-wrapper" data-code="' . htmlspecialchars($student['code'], ENT_QUOTES, 'UTF-8') . '" data-color="' . htmlspecialchars($qrColor, ENT_QUOTES, 'UTF-8') . '"></div>';
+    $logoDataAttr = '';
+    if ($showLogo && $logoPosition === 'center' && !empty($logoUrl)) {
+        $logoDataAttr = ' data-logo="' . htmlspecialchars($logoUrl, ENT_QUOTES, 'UTF-8') . '" data-logo-pos="center"';
+    }
+    $content .= '<div class="qr-wrapper" data-code="' . htmlspecialchars($student['code'], ENT_QUOTES, 'UTF-8') . '" data-color="' . htmlspecialchars($qrColor, ENT_QUOTES, 'UTF-8') . '"' . $logoDataAttr . '></div>';
 
     // Logo (bottom)
     if ($showLogo && $logoPosition === 'bottom' && !empty($logoUrl)) {

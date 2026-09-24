@@ -33,7 +33,8 @@
         headerText: '',
         showLogo: false,
         logoUrl: '',
-        logoPosition: 'top'
+        logoPosition: 'top',
+        qrErrorLevel: 'M'
     },
     customPreviewHtml: '',
     customPreviewLoading: false,
@@ -105,8 +106,8 @@
     // Methods
     async initCustom() {
         // Set defaults
-        if (!this.customHeaderText) {
-            this.customHeaderText = 'Thiếu Nhi Thánh Thể — Phú Trung' + (window.TNTT?.year ? ' · ' + window.TNTT.year.name : '');
+        if (!this.customOptions.headerText) {
+            this.customOptions.headerText = 'Thiếu Nhi Thánh Thể — Phú Trung' + (window.TNTT?.year ? ' · ' + window.TNTT.year.name : '');
         }
         this.loadCustomLibraries();
         this.loadCustomPresets();
@@ -190,11 +191,17 @@
 
     customRenderQRCodes() {
         const containers = document.querySelectorAll('.qr-wrapper[data-code]');
+        const opts = this.customOptions;
+        const errorLevel = opts.logoPosition === 'center' ? (opts.qrErrorLevel === 'H' ? 'H' : 'Q') : (opts.qrErrorLevel || 'M');
+
         containers.forEach(container => {
             const code = container.dataset.code;
             const color = container.dataset.color || '#000000';
+            const logoUrl = container.dataset.logo || '';
+            const logoPos = container.dataset.logoPos || opts.logoPosition || 'top';
+
             if (window.qrcode) {
-                const qr = window.qrcode(0, 'M');
+                const qr = window.qrcode(0, errorLevel);
                 qr.addData(code);
                 qr.make();
                 const moduleCount = qr.getModuleCount();
@@ -202,15 +209,25 @@
                 const cellSize = Math.floor(size / moduleCount);
                 const actualSize = moduleCount * cellSize;
 
-                let svg = '<svg width=\"' + actualSize + '\" height=\"' + actualSize + '\" viewBox=\"0 0 ' + actualSize + ' ' + actualSize + '\">';
-                svg += '<rect width=\"' + actualSize + '\" height=\"' + actualSize + '\" fill=\"white\"/>';
+                let svg = '<svg width="' + actualSize + '" height="' + actualSize + '" viewBox="0 0 ' + actualSize + ' ' + actualSize + '">';
+                svg += '<rect width="' + actualSize + '" height="' + actualSize + '" fill="white"/>';
+
                 for (let r = 0; r < moduleCount; r++) {
                     for (let c = 0; c < moduleCount; c++) {
                         if (qr.isDark(r, c)) {
-                            svg += '<rect x=\"' + (c * cellSize) + '\" y=\"' + (r * cellSize) + '\" width=\"' + cellSize + '\" height=\"' + cellSize + '\" fill=\"' + color + '\"/>';
+                            svg += '<rect x="' + (c * cellSize) + '" y="' + (r * cellSize) + '" width="' + cellSize + '" height="' + cellSize + '" fill="' + color + '"/>';
                         }
                     }
                 }
+
+                if (logoPos === 'center' && logoUrl) {
+                    const logoSize = Math.floor(actualSize * 0.3);
+                    const logoX = (actualSize - logoSize) / 2;
+                    const logoY = (actualSize - logoSize) / 2;
+                    svg += '<circle cx="' + (actualSize/2) + '" cy="' + (actualSize/2) + '" r="' + (logoSize/2 + 2) + '" fill="white"/>';
+                    svg += '<image href="' + logoUrl + '" x="' + logoX + '" y="' + logoY + '" width="' + logoSize + '" height="' + logoSize + '" preserveAspectRatio="xMidYMid meet"/>';
+                }
+
                 svg += '</svg>';
                 container.innerHTML = svg;
             }
@@ -789,6 +806,21 @@
                     <span>Hiển thị logo</span>
                 </label>
                 <div x-show="customOptions.showLogo">
+                    <!-- Vị trí logo -->
+                    <div class="mb-3">
+                        <label class="block text-xs text-slate-500 mb-1">Vị trí</label>
+                        <div class="flex gap-1.5">
+                            <template x-for="pos in [{v:'top',t:'Trên QR'},{v:'center',t:'Trong QR'},{v:'bottom',t:'Dưới QR'}]" :key="pos.v">
+                                <button type="button" @click="customOptions.logoPosition = pos.v; customDebouncePreview()"
+                                        class="flex-1 px-2 py-1.5 rounded-lg text-xs font-medium border transition-colors"
+                                        :class="customOptions.logoPosition === pos.v ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300'"
+                                        x-text="pos.t"></button>
+                            </template>
+                        </div>
+                        <p x-show="customOptions.logoPosition === 'center'" class="text-micro text-amber-700 mt-1">
+                            ⚠️ QR dùng error correction cao, có thể lớn hơn bình thường
+                        </p>
+                    </div>
                     <!-- Logo đã upload -->
                     <div x-show="customLogos.length > 0" class="flex flex-wrap gap-2 mb-3">
                         <template x-for="logo in customLogos" :key="logo.id">

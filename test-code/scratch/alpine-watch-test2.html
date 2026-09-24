@@ -1,0 +1,37 @@
+<!doctype html>
+<!--
+  TEST ĐỐI CHỨNG (scratch) — cùng câu hỏi như alpine-watch-test.html
+  nhưng component KHÔNG gộp mảnh: một object literal thuần.
+
+  Mục đích: phân biệt
+    (a) $watch trong init() chết vì cơ chế gộp defineProperties của app.js, hay
+    (b) chết vì bản thân Alpine (mọi component đều vậy).
+-->
+<html lang="vi">
+<head><meta charset="utf-8"><title>Alpine init-watch control test</title></head>
+<body>
+<div x-data="thuan" id="root">
+  <span id="out" x-text="displayLimit"></span>
+  <input id="q" type="text" x-model="searchQuery">
+  <span id="qecho" x-text="searchQuery"></span>
+</div>
+
+<script defer src="../public/assets/js/vendor/alpine.js"></script>
+<script>
+window.__initRan = false;
+window.__watchFired = 0;
+
+document.addEventListener('alpine:init', () => {
+    Alpine.data('thuan', () => ({
+        searchQuery: '',
+        displayLimit: 20,
+        init() {
+            window.__initRan = true;
+            window.__initCoWatch = typeof this.$watch;
+            this.$watch('searchQuery', () => { window.__watchFired++; this.displayLimit = 20; });
+        }
+    }));
+});
+</script>
+</body>
+</html>
