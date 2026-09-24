@@ -29,8 +29,10 @@
   },
   "homepage": "https://github.com/josephvinh/glyphutrung#readme",
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@types/node": "^26.6.2",
     "esbuild": "^0.28.2",
+    "playwright": "^1.63.0",
     "sharp": "^0.33.5",
     "typescript": "^7.0.2"
   },
