@@ -281,14 +281,25 @@
                         <input x-model="profileForm.holyName" type="text" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                     </div>
                     <div class="col-span-2">
-                        <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Họ và Tên</label>
-                        <input x-model="profileForm.fullName" type="text" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                        <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Họ và Tên <span class="text-rose-500">*</span></label>
+                        <input x-model="profileForm.fullName" type="text" required aria-required="true"
+                               aria-describedby="fullName-hint"
+                               class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                        <p id="fullName-hint" class="text-micro text-slate-400 mt-1">Bắt buộc nhập</p>
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Số điện thoại</label>
-                        <input x-model="profileForm.phone" type="tel" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                        <input x-model="profileForm.phone" type="tel" pattern="0[0-9]{9}" placeholder="0xxxxxxxxx"
+                               x-ref="phoneInput"
+                               :aria-describedby="profileForm.phone && !/^0\d{9}$/.test(profileForm.phone) ? 'phone-error' : undefined"
+                               @input="if (profileForm.phone) { profileForm.phone = profileForm.phone.replace(/^\+84/, '0'); }"
+                               class="w-full bg-slate-50 border rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                               :class="profileForm.phone && !/^0\d{9}$/.test(profileForm.phone) ? 'border-rose-300 bg-rose-50' : 'border-slate-200'">
+                        <p x-show="profileForm.phone && !/^0\d{9}$/.test(profileForm.phone)" id="phone-error" class="text-micro mt-1 text-rose-600" style="display: none;">
+                            SĐT không hợp lệ (cần 10 số, bắt đầu bằng 0)
+                        </p>
                     </div>
                     <div>
                         <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Ngày sinh</label>
@@ -359,11 +370,11 @@
             </div>
 
             <div>
-                <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Mật khẩu mới</label>
-                <input x-model="pwForm.next" :type="pwShow ? 'text' : 'password'"
-                       autocomplete="new-password"
+                <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5" for="pw-new">Mật khẩu mới</label>
+                <input id="pw-new" x-model="pwForm.next" :type="pwShow ? 'text' : 'password'"
+                       autocomplete="new-password" aria-describedby="pw-strength"
                        class="w-full bg-slate-50 border border-slate-200 rounded-field px-3 py-3 text-sm font-semibold text-slate-800 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 transition-all">
-                <p class="text-micro mt-1.5"
+                <p id="pw-strength" class="text-micro mt-1.5" aria-live="polite"
                    :class="pwForm.next.length === 0 ? 'text-slate-400'
                           : (pwForm.next.length < 6 ? 'text-rose-600' : 'text-emerald-600')"
                    x-text="pwForm.next.length === 0 ? 'Từ 6 ký tự trở lên'
@@ -372,14 +383,14 @@
             </div>
 
             <div>
-                <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Nhập lại mật khẩu mới</label>
-                <input x-model="pwForm.confirm" :type="pwShow ? 'text' : 'password'"
-                       autocomplete="new-password"
+                <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5" for="pw-confirm">Nhập lại mật khẩu mới</label>
+                <input id="pw-confirm" x-model="pwForm.confirm" :type="pwShow ? 'text' : 'password'"
+                       autocomplete="new-password" aria-describedby="pw-match"
                        class="w-full bg-slate-50 border rounded-field px-3 py-3 text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-blue-500/30 transition-all"
                        :class="pwForm.confirm !== '' && pwForm.confirm !== pwForm.next
                               ? 'border-rose-300 bg-rose-50' : 'border-slate-200 bg-slate-50'">
-                <p x-show="pwForm.confirm !== '' && pwForm.confirm !== pwForm.next" style="display: none;"
-                   class="text-micro text-rose-600 mt-1.5">Hai ô chưa khớp nhau.</p>
+                <p id="pw-match" x-show="pwForm.confirm !== '' && pwForm.confirm !== pwForm.next" style="display: none;"
+                   class="text-micro text-rose-600 mt-1.5" aria-live="assertive">Hai ô chưa khớp nhau.</p>
             </div>
 
             <button @click="pwShow = !pwShow" type="button"
