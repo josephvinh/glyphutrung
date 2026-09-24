@@ -18,6 +18,19 @@ public/test_runner_ai.php
 .superpowers/sdd/
 .claude/launch.json
 
+# Thư mục nháp/agent — script debug, profile trình duyệt, không phải mã app
+scratch/
+"NGOC VINH/"
+"[working-dir] NGOC VINH/"
+Enter
+
+# File nhạy cảm / rác KHÔNG được lên git
+cookies.txt
+error_log
+**/error_log
+# PHPUnit PHAR — CI tự tải trong workflow, không cần track (~5MB)
+phpunit10.phar
+
 # Bảng đối chiếu migration (chứa tên thật — không đưa lên repo)
 config/backup/
 
