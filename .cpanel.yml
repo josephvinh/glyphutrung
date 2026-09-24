@@ -28,6 +28,14 @@
 #  Migration (thêm module/vai) KHÔNG chạy tự động ở đây — cố ý, vì đó
 #  là việc một lần và cần cân nhắc. Chạy tay qua SSH khi cần
 #  (xem docs/DEPLOY-AZDIGI.md Bước 6).
+#
+#  EXCLUDED TỪ DEPLOY (không cần thiết trên production):
+#    .github/, .claude/, .superpowers/ - CI/CD & workspace
+#    tests/, docs/, build/, scratch/    - Development artifacts
+#    node_modules/                      - Build dependencies
+#    phpunit*, tsconfig.json            - Dev tools
+#    NGOC VINH/, Enter/                 - Workspace artifacts
+#    REVIEW_RESULTS/                    - Agent reports
 # ============================================================
 deployment:
   tasks:
