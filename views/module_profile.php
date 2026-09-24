@@ -292,12 +292,14 @@
                     <div>
                         <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Số điện thoại</label>
                         <input x-model="profileForm.phone" type="tel" pattern="0[0-9]{9}" placeholder="0xxxxxxxxx"
-                               aria-describedby="phone-hint"
+                               x-ref="phoneInput"
+                               :aria-describedby="profileForm.phone && !/^0\d{9}$/.test(profileForm.phone) ? 'phone-error' : undefined"
+                               @input="if (profileForm.phone) { profileForm.phone = profileForm.phone.replace(/^\+84/, '0'); }"
                                class="w-full bg-slate-50 border rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
                                :class="profileForm.phone && !/^0\d{9}$/.test(profileForm.phone) ? 'border-rose-300 bg-rose-50' : 'border-slate-200'">
-                        <p id="phone-hint" class="text-micro mt-1"
-                           :class="profileForm.phone && !/^0\d{9}$/.test(profileForm.phone) ? 'text-rose-600' : 'text-slate-400'"
-                           x-text="profileForm.phone && !/^0\d{9}$/.test(profileForm.phone) ? 'SĐT không hợp lệ (cần 10 số, bắt đầu bằng 0)' : 'Tùy chọn'"></p>
+                        <p x-show="profileForm.phone && !/^0\d{9}$/.test(profileForm.phone)" id="phone-error" class="text-micro mt-1 text-rose-600" style="display: none;">
+                            SĐT không hợp lệ (cần 10 số, bắt đầu bằng 0)
+                        </p>
                     </div>
                     <div>
                         <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Ngày sinh</label>
