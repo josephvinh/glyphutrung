@@ -106,20 +106,24 @@ switch ($action) {
         $credentialId = base64_encode(WebAuthn_Base64UrlDecode($credentialIdBase64));
         $challenge = $_SESSION['webauthn_challenge'] ?? '';
 
+        // Query passkey TRƯỚC để lấy member_id, sau đó mới throttle
         $passkey = db_one("SELECT * FROM member_passkeys WHERE credential_id = ?", [$credentialId]);
 
-        // Rate limiting: chặn brute-force theo member_id (hoặc credential nếu chưa có passkey)
-        passkey_throttle($passkey['member_id'] ?? 0, $credentialIdBase64);
+        // Rate limiting: dùng member_id nếu có, không thì dùng IP để throttle
+        // Tránh null access bằng cách check $passkey trước
+        $memberIdForThrottle = $passkey ? $passkey['member_id'] : 0;
+        passkey_throttle($memberIdForThrottle, $credentialIdBase64, client_ip());
 
         if (!$passkey) {
+            passkey_failed($memberIdForThrottle, $credentialIdBase64, client_ip());
             json_fail('Không tìm thấy dữ liệu sinh trắc học này trên hệ thống.');
         }
 
         try {
             $WebAuthn->processGet($clientDataJSON, $authenticatorData, $signature, $passkey['public_key'], $challenge, null, false);
-            
+
             db_run("UPDATE member_passkeys SET sign_count = sign_count + 1, last_used_at = NOW() WHERE id = ?", [$passkey['id']]);
-            
+
             $m = db_one(
                 'SELECT m.*, r.label AS role_label, r.level AS role_level, r.scope AS role_scope,
                         t.label AS title_label, b.name AS block_name, c.name AS class_name
@@ -132,7 +136,9 @@ switch ($action) {
                 [$passkey['member_id']]
             );
 
+            // Check status TRƯỚC khi gọi login_ok()
             if (!$m || $m['status'] === 'đã nghỉ') {
+                passkey_failed($passkey['member_id'], $credentialIdBase64, client_ip());
                 json_fail('Tài khoản bị khóa hoặc không tồn tại.');
             }
 
@@ -146,6 +152,7 @@ switch ($action) {
             json_out(['ok' => true, 'user' => passkey_member_payload($m)]);
 
         } catch (\Throwable $ex) {
+            passkey_failed($passkey['member_id'], $credentialIdBase64, client_ip());
             json_fail('Lỗi xác thực vân tay: ' . $ex->getMessage());
         }
         break;
@@ -157,37 +164,38 @@ switch ($action) {
  *
  * @param int $memberId ID của thành viên (0 nếu chưa xác định)
  * @param string $credentialIdBase64 Credential ID để throttle nếu memberId = 0
+ * @param string|null $ip IP của client (để tránh gọi nhiều lần)
  */
-function passkey_throttle(int $memberId, string $credentialIdBase64 = ''): void
+function passkey_throttle(int $memberId, string $credentialIdBase64 = '', ?string $ip = null): void
 {
-    $ip = client_ip();
+    $ip = $ip ?? client_ip();
     $moc = date('Y-m-d H:i:s', time() - 15 * 60); // 15 phút
 
-    // Throttle theo member_id nếu đã xác định, thay vì credential (credential có thể thay đổi)
+    // Tracking ID: dùng member_id nếu đã xác định, hash credential nếu chưa
+    // KHÔNG dùng random token - phá vỡ rate limiting
     if ($memberId > 0) {
-        $theoMember = (int) db_one(
-            'SELECT COUNT(*) n FROM login_attempts
-             WHERE phone = ? AND tried_at > ?',
-            ['pk:' . $memberId, $moc]
-        )['n'];
+        $trackingId = 'pk:' . $memberId;
     } else {
-        // Chưa xác định member: throttle theo credential prefix (ít hiệu quả hơn nhưng vẫn chặn được)
-        $theoMember = (int) db_one(
-            'SELECT COUNT(*) n FROM login_attempts
-             WHERE phone = ? AND tried_at > ?',
-            ['pk_unknown:' . substr($credentialIdBase64, 0, 20), $moc]
-        )['n'];
+        // Dùng hash của credential + IP để tránh cross-user collision
+        $trackingId = 'pk:' . substr(hash('sha256', ($credentialIdBase64 ?: '') . $ip), 0, 16);
     }
 
-    // Throttle theo IP
+    // Throttle theo tracking ID (member_id hoặc credential+IP hash)
+    $theoTracking = (int) db_one(
+        'SELECT COUNT(*) n FROM login_attempts
+         WHERE phone = ? AND ip = ? AND tried_at > ?',
+        [$trackingId, $ip, $moc]
+    )['n'];
+
+    // Throttle theo IP (chặn tất cả prefix 'pk:')
     $theoIp = (int) db_one(
         'SELECT COUNT(*) n FROM login_attempts
          WHERE phone LIKE ? AND ip = ? AND tried_at > ?',
         ['pk:%', $ip, $moc]
     )['n'];
 
-    // Giới hạn: 10 lần/member, 30 lần/IP
-    if ($theoMember >= 10 || $theoIp >= 30) {
+    // Giới hạn: 10 lần/tracking_id, 30 lần/IP trong 15 phút
+    if ($theoTracking >= 10 || $theoIp >= 30) {
         json_fail('Bạn đã thử quá nhiều lần. Vui lòng đợi 15 phút rồi thử lại.', 429);
     }
 }
@@ -195,20 +203,28 @@ function passkey_throttle(int $memberId, string $credentialIdBase64 = ''): void
 /**
  * Ghi một lần thử passkey thất bại.
  *
- * @param int $memberId ID của thành viên
+ * @param int $memberId ID của thành viên (0 nếu chưa xác định)
+ * @param string $credentialIdBase64 Credential ID để track nếu memberId = 0
+ * @param string|null $ip IP của client
  */
-function passkey_failed(int $memberId): void
+function passkey_failed(int $memberId, string $credentialIdBase64 = '', ?string $ip = null): void
 {
+    $ip = $ip ?? client_ip();
+
     // Lưu với prefix 'pk:' để phân biệt với login thường
+    // Dùng hash credential + IP để tránh cross-user collision
+    if ($memberId > 0) {
+        $trackingId = 'pk:' . $memberId;
+    } else {
+        $trackingId = 'pk:' . substr(hash('sha256', ($credentialIdBase64 ?: '') . $ip), 0, 16);
+    }
+
     db_run('INSERT INTO login_attempts (phone, ip, tried_at) VALUES (?,?,NOW())',
-           ['pk:' . $memberId, client_ip()]);
+           [$trackingId, $ip]);
 
     // Dọn rác
     db_run('DELETE FROM login_attempts WHERE tried_at < ?',
            [date('Y-m-d H:i:s', time() - 15 * 60)]);
-
-    // Làm chậm
-    usleep(300000);
 }
 
 function WebAuthn_Base64UrlDecode(string $data): string {

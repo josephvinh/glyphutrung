@@ -216,14 +216,14 @@ function login_failed(string $phone): void
     // Dọn rác: chỉ giữ lại phần còn trong cửa sổ xét
     db_run('DELETE FROM login_attempts WHERE tried_at < ?',
            [date('Y-m-d H:i:s', time() - DN_CUA_SO_PHUT * 60)]);
-    // Làm chậm mọi lần thử, kể cả khi chưa chạm ngưỡng
-    usleep(300000);
+    // Làm chậm với jitter để tránh timing attack
+    usleep(200000 + random_int(0, 200000)); // 200-400ms
 }
 
-/** Đăng nhập đúng thì xoá lịch sử sai của số đó. */
+/** Đăng nhập đúng thì xoá lịch sử sai của số đó, CHỈ login thường */
 function login_ok(string $phone): void
 {
-    db_run('DELETE FROM login_attempts WHERE phone = ?', [$phone]);
+    db_run('DELETE FROM login_attempts WHERE phone = ? AND phone NOT LIKE ?', [$phone, 'pk:%']);
 }
 
 /* ================================================================
@@ -260,8 +260,10 @@ function register_ok(): void
 /** Ghi một lần đăng ký thất bại */
 function register_failed(): void
 {
+    // Dùng SHA256 thay vì MD5 để có entropy tốt hơn
+    $trackingId = 'reg:' . substr(hash('sha256', client_ip()), 0, 16);
     db_run('INSERT INTO login_attempts (phone, ip, tried_at) VALUES (?,?,NOW())',
-           ['reg:' . substr(md5(client_ip()), 0, 8), client_ip()]);
+           [$trackingId, client_ip()]);
 
     // Dọn rác
     db_run('DELETE FROM login_attempts WHERE tried_at < ?',
