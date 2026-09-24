@@ -219,7 +219,7 @@ function build_report_card_html(array $student, array $term, ?array $report): st
     $conductDisplay = ($conduct !== '' && $conduct !== null) ? ucfirst($conduct) : '–';
     $rankDisplay = ($rank !== '' && $rank !== null) ? $rank : '–';
     $remarkDisplay = ($remark !== '' && $remark !== null) ? $remark : '(chưa có nhận xét)';
-    $createdBy = $report['created_by'] ?? '';
+    $createdBy = htmlspecialchars($report['created_by'] ?? '');
     $totalLabel = $attendance['total'] ?? 0;
     $attTotal = $attendance['total'];
     $attPresent = $attendance['present'];
@@ -227,9 +227,9 @@ function build_report_card_html(array $student, array $term, ?array $report): st
     $attExcused = $attendance['excused'];
     $attUnexcused = $attendance['unexcused'];
     $attRate = $attendance['rate'];
-    $termName = $term['name'] ?? '';
-    $termFrom = $term['from'] ?? '';
-    $termTo = $term['to'] ?? '';
+    $termName = htmlspecialchars($term['name'] ?? '');
+    $termFrom = htmlspecialchars($term['from'] ?? '');
+    $termTo = htmlspecialchars($term['to'] ?? '');
 
     ob_start();
     require __DIR__ . '/../../views/partial_report_card.php';

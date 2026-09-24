@@ -128,7 +128,7 @@ function build_report_html(array $student, array $term, ?array $report): string
         }
     }
 
-    $termName = $term['name'] ?? '';
+    $termName = htmlspecialchars($term['name'] ?? '');
     $termFrom = isset($term['start_date']) ? date('d/m', strtotime($term['start_date'])) : '';
     $termTo = isset($term['end_date']) ? date('d/m/Y', strtotime($term['end_date'])) : '';
 
