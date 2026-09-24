@@ -879,9 +879,7 @@
                     </span>
                 </div>
                 <div class="bg-slate-50 rounded-2xl p-3 overflow-x-auto min-h-[300px]" x-html="customPreviewHtml"></div>
-                <p class="text-micro text-slate-400 mt-2" x-show="customSelectedIds.length > 6">
-                    Hiển thị 6/${customSelectedIds.length} thẻ
-                </p>
+                <p class="text-micro text-slate-400 mt-2" x-show="customSelectedIds.length > 6" x-text="'Hiển thị 6/' + customSelectedIds.length + ' thẻ'"></p>
             </div>
 
             <!-- Nút xuất -->
