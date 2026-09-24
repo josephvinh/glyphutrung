@@ -45,19 +45,28 @@ function validate_preset(array $data): array {
         $errors[] = 'Tên preset không được quá 50 ký tự.';
     }
 
-    $validTemplates = ['basic', 'classic', 'badge', 'compact', 'minimal'];
-    if (!empty($data['template']) && !in_array($data['template'], $validTemplates)) {
-        $errors[] = 'Template không hợp lệ.';
-    }
+    // Validate config fields
+    $config = $data['config'] ?? [];
+    if (!empty($config)) {
+        $validTemplates = ['basic', 'classic', 'badge', 'compact', 'minimal'];
+        if (!empty($config['template']) && !in_array($config['template'], $validTemplates)) {
+            $errors[] = 'Template không hợp lệ.';
+        }
 
-    $validErrorLevels = ['L', 'M', 'Q', 'H'];
-    if (!empty($data['errorLevel']) && !in_array($data['errorLevel'], $validErrorLevels)) {
-        $errors[] = 'Error level không hợp lệ.';
-    }
+        $validErrorLevels = ['L', 'M', 'Q', 'H'];
+        if (!empty($config['errorLevel']) && !in_array($config['errorLevel'], $validErrorLevels)) {
+            $errors[] = 'Error level không hợp lệ.';
+        }
 
-    $validLogoPositions = ['top', 'center', 'bottom'];
-    if (!empty($data['logoPosition']) && !in_array($data['logoPosition'], $validLogoPositions)) {
-        $errors[] = 'Vị trí logo không hợp lệ.';
+        $validLogoPositions = ['top', 'center', 'bottom'];
+        if (!empty($config['logoPosition']) && !in_array($config['logoPosition'], $validLogoPositions)) {
+            $errors[] = 'Vị trí logo không hợp lệ.';
+        }
+
+        // Validate logoId if provided
+        if (!empty($config['logoId']) && !is_numeric($config['logoId'])) {
+            $errors[] = 'Logo ID không hợp lệ.';
+        }
     }
 
     return $errors;
@@ -88,7 +97,8 @@ try {
 
 
         case 'save-preset':
-            require_permission('students', 'edit');
+            require_write();
+            require_csrf();
 
             $name = trim($in['name'] ?? '');
             $config = $in['config'] ?? [];
@@ -105,10 +115,21 @@ try {
 
             // Nếu là default, bỏ default của các preset khác
             if ($isDefault) {
-                db_run(
-                    'UPDATE qrcard_presets SET config = JSON_SET(config, "$.isDefault", 0) WHERE user_identifier = ?',
-                    [$uid]
+                // Lấy config hiện tại và clear isDefault flag
+                $existingPresets = db_all(
+                    'SELECT id, config FROM qrcard_presets WHERE user_identifier = ? AND id != ?',
+                    [$uid, $presetId ?? 0]
                 );
+                foreach ($existingPresets as $ep) {
+                    $ec = json_decode($ep['config'] ?? '{}', true);
+                    if (!empty($ec['isDefault'])) {
+                        $ec['isDefault'] = false;
+                        db_run(
+                            'UPDATE qrcard_presets SET config = ? WHERE id = ?',
+                            [json_encode($ec, JSON_UNESCAPED_UNICODE), $ep['id']]
+                        );
+                    }
+                }
             }
 
             $config['isDefault'] = $isDefault;
@@ -116,25 +137,23 @@ try {
 
             if ($presetId) {
                 // Update existing
-                db_run(
+                $rows = db_run(
                     'UPDATE qrcard_presets SET name = ?, config = ?, updated_at = NOW() WHERE id = ? AND user_identifier = ?',
                     [$name, $configJson, $presetId, $uid]
                 );
+                if ($rows === 0) {
+                    json_fail('Không tìm thấy preset.', 404);
+                }
                 $result = db_one('SELECT * FROM qrcard_presets WHERE id = ?', [$presetId]);
+                $result['config'] = json_decode($result['config'] ?? '{}', true);
             } else {
-                // Insert new
-                db_run(
+                // Insert new using db_insert (returns the ID)
+                $insertId = db_insert(
                     'INSERT INTO qrcard_presets (user_identifier, name, config, created_at, updated_at) VALUES (?, ?, ?, NOW(), NOW())',
                     [$uid, $name, $configJson]
                 );
-                $result = [
-                    'id' => db_last_insert_id(),
-                    'name' => $name,
-                    'config' => $config,
-                    'created_at' => date('Y-m-d H:i:s'),
-                    'updated_at' => date('Y-m-d H:i:s'),
-                    'is_default' => $isDefault
-                ];
+                $result = db_one('SELECT * FROM qrcard_presets WHERE id = ?', [$insertId]);
+                $result['config'] = json_decode($result['config'] ?? '{}', true);
             }
 
             json_success(['preset' => $result]);
@@ -142,7 +161,8 @@ try {
 
 
         case 'delete-preset':
-            require_permission('students', 'edit');
+            require_write();
+            require_csrf();
 
             $presetId = !empty($in['id']) ? (int) $in['id'] : 0;
             if (!$presetId) {
@@ -150,14 +170,18 @@ try {
             }
 
             $uid = get_user_identifier();
-            $deleted = db_run(
-                'DELETE FROM qrcard_presets WHERE id = ? AND user_identifier = ?',
+
+            // Check if preset exists first
+            $preset = db_one(
+                'SELECT id FROM qrcard_presets WHERE id = ? AND user_identifier = ?',
                 [$presetId, $uid]
             );
-
-            if (!$deleted) {
+            if (!$preset) {
                 json_fail('Không tìm thấy preset.', 404);
             }
+
+            // Delete
+            db_run('DELETE FROM qrcard_presets WHERE id = ? AND user_identifier = ?', [$presetId, $uid]);
 
             json_success(['deleted' => true]);
             break;
@@ -185,7 +209,8 @@ try {
 
 
         case 'upload-logo':
-            require_permission('students', 'edit');
+            require_write();
+            require_csrf();
 
             if (empty($_FILES['logo'])) {
                 json_fail('Không có file được upload.', 400);
@@ -231,14 +256,14 @@ try {
                 json_fail('Không thể lưu file.', 500);
             }
 
-            // Save to database
-            db_run(
+            // Save to database using db_insert (returns the ID)
+            $logoId = db_insert(
                 'INSERT INTO qrcard_logos (user_identifier, filename, original_name, size, created_at) VALUES (?, ?, ?, ?, NOW())',
                 [$uid, $newFilename, $file['name'], $file['size']]
             );
 
             $logo = [
-                'id' => db_last_insert_id(),
+                'id' => $logoId,
                 'filename' => $newFilename,
                 'original_name' => $file['name'],
                 'size' => $file['size'],
@@ -252,7 +277,8 @@ try {
 
 
         case 'delete-logo':
-            require_permission('students', 'edit');
+            require_write();
+            require_csrf();
 
             $logoId = !empty($in['id']) ? (int) $in['id'] : 0;
             if (!$logoId) {

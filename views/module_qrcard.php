@@ -255,7 +255,7 @@
                     <div class="space-y-2" x-show="qrPresets.length > 0">
                         <template x-for="preset in qrPresets" :key="preset.id">
                             <div class="flex items-center gap-3 p-3 rounded-xl border transition-colors cursor-pointer group"
-                                 :class="qrCustom.activePresetId === preset.id ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-slate-300'"
+                                 :class="qrCustomActivePresetId === preset.id ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-slate-300'"
                                  @click="qrLoadPreset(preset)">
                                 <div class="flex-1 min-w-0">
                                     <p class="text-sm font-bold text-slate-700 flex items-center gap-2">
