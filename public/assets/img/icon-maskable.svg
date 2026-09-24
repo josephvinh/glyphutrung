@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Safe area padding (20%) for Android adaptive icon -->
+  <rect width="512" height="512" fill="#c8203a"/>
+  <!-- Centered icon at 80% size -->
+  <g transform="translate(51.2, 51.2) scale(1.6)">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+      <!-- Background circle -->
+      <circle cx="128" cy="128" r="120" fill="#f8fafc"/>
+      <!-- Cross design (religious symbol) -->
+      <rect x="108" y="48" width="40" height="160" fill="#c8203a" rx="4"/>
+      <rect x="48" y="88" width="160" height="40" fill="#c8203a" rx="4"/>
+      <!-- Inner circle -->
+      <circle cx="128" cy="128" r="36" fill="#c8203a"/>
+      <!-- Heart accent (for TNTT) -->
+      <path d="M128 100 C118 85 95 85 95 105 C95 120 128 145 128 145 C128 145 161 120 161 105 C161 85 138 85 128 100Z" fill="#c8203a"/>
+    </svg>
+  </g>
+</svg>

@@ -9,6 +9,7 @@
   "orientation": "portrait",
   "background_color": "#f8fafc",
   "theme_color": "#c8203a",
+  "categories": ["education", "productivity"],
   "icons": [
     {
       "src": "assets/img/icon.svg",
@@ -17,10 +18,46 @@
       "purpose": "any"
     },
     {
-      "src": "assets/img/icon-180.png",
-      "sizes": "180x180",
+      "src": "assets/img/icon-maskable.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    },
+    {
+      "src": "assets/img/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/img/icon-512.png",
+      "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     }
-  ]
+  ],
+  "shortcuts": [
+    {
+      "name": "Điểm danh",
+      "short_name": "Điểm danh",
+      "description": "Quét QR điểm danh nhanh",
+      "url": "/?view=attendance",
+      "icons": [{ "src": "assets/img/icon-qr.svg", "sizes": "96x96" }]
+    },
+    {
+      "name": "Danh sách học sinh",
+      "short_name": "Học sinh",
+      "description": "Xem danh sách học sinh",
+      "url": "/?view=students",
+      "icons": [{ "src": "assets/img/icon-students.svg", "sizes": "96x96" }]
+    },
+    {
+      "name": "Báo cáo",
+      "short_name": "Báo cáo",
+      "description": "Xem thống kê báo cáo",
+      "url": "/?view=reports",
+      "icons": [{ "src": "assets/img/icon-reports.svg", "sizes": "96x96" }]
+    }
+  ],
+  "prefer_related_applications": false
 }
