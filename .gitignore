@@ -34,7 +34,7 @@ public/assets/js/login.min.js
 # ============================================================
 
 # CI/CD workflows (chạy trên GitHub, không cần trên host)
-.github/
+# .github/ - GIỮ LẠI TRONG GIT để GitHub Actions hoạt động
 
 # Claude Code workspace files
 REVIEW_RESULTS/
