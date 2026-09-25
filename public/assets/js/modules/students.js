@@ -4,6 +4,19 @@
 
    Phase 3: Favorites, Auto-save Draft, Keyboard Shortcuts
    ========================================================== */
+
+// i18n constants - Hardcoded strings
+const STUDENTS_I18N = {
+    LOADING_CODE: 'Đang cấp…',
+    SAVING: 'Đang lưu...',
+    ADD_STUDENT: 'Thêm thiếu nhi',
+    EDIT_STUDENT: 'Sửa hồ sơ',
+    NO_DATA_EXPORT: 'Không có dữ liệu để xuất. Vui lòng kiểm tra bộ lọc.',
+    NO_PHONE: 'Không có số điện thoại để sao chép.',
+    COPY_SUCCESS: 'Đã sao chép số điện thoại!',
+    COPY_FAIL: 'Không thể sao chép. Vui lòng sao chép thủ công.',
+};
+
 window.TNTT = window.TNTT || {};
 window.TNTT.students = {
     // ==========================================
@@ -518,7 +531,7 @@ window.TNTT.students = {
 
         this.editData = {
             id: null, isNew: true,
-            code: 'Đang cấp…',      // máy chủ tự cấp; điền ngay bên dưới
+            code: STUDENTS_I18N.LOADING_CODE,      // máy chủ tự cấp; điền ngay bên dưới
             holyName: '', name: '',
             gender: 1, birthDate: '', address: '',
             fatherName: '', fatherPhone: '',
@@ -990,7 +1003,7 @@ window.TNTT.students = {
         this.showPdfMenu = false;
         const students = this.filteredStudents;
         if (students.length === 0) {
-            window.TNTT.toast.warning('Không có dữ liệu để xuất PDF.');
+            window.TNTT.toast.warning(STUDENTS_I18N.NO_DATA_EXPORT);
             return;
         }
 

@@ -180,6 +180,9 @@ switch ($action) {
         require_write();
         $rows = $in['rows'] ?? [];
         if (!is_array($rows) || count($rows) === 0) json_fail('Không có dòng nào để nhập.');
+        // File size limit: max 5MB (roughly 50,000 characters JSON)
+        $jsonSize = strlen(json_encode($in));
+        if ($jsonSize > 5 * 1024 * 1024) json_fail('File quá lớn. Vui lòng chia nhỏ file (tối đa 5MB).');
 
         $added = 0; $updated = 0; $skipped = 0; $errors = [];
 
