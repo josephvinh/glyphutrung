@@ -36,7 +36,6 @@ rsync -a --delete \
   --exclude='config/config.php' \
   --exclude='config/config.local.php' \
   --exclude='config/backup' \
-  --exclude='public/uploads/qrcard-logos' \
   --exclude='"NGOC VINH"' \
   --exclude='"[working-dir] NGOC VINH"' \
   --exclude='Enter' \
