@@ -229,8 +229,15 @@
                             <span x-text="student.code"></span> <span class="text-slate-400 mx-1">•</span> <span class="text-slate-500" x-text="student.className"></span>
                         </p>
                     </div>
-                    <div class="flex items-center gap-2 shrink-0">
+                    <div class="flex items-center gap-1 shrink-0">
                         <span class="text-micro font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg" :class="{'bg-emerald-50 text-emerald-600': student.status === 'đang sinh hoạt', 'bg-rose-50 text-rose-600': student.status === 'dừng sinh hoạt', 'bg-slate-100 text-slate-500': student.status === 'chuyển xứ'}" x-text="student.status"></span>
+                        <!-- Favorite star button -->
+                        <button @click.stop="toggleFavorite(student.id)"
+                                :title="isFavorite(student.id) ? 'Bỏ yêu thích' : 'Yêu thích'"
+                                class="tap-safe w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+                                :class="isFavorite(student.id) ? 'text-amber-500 hover:text-amber-600' : 'text-slate-300 hover:text-amber-500'">
+                            <i data-lucide="star" class="w-5 h-5" :fill="isFavorite(student.id) ? 'currentColor' : 'none'"></i>
+                        </button>
                         <!-- Quick Actions: Copy Phone & Edit -->
                         <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <!-- Copy phone dropdown -->
@@ -361,6 +368,9 @@
                                 </td>
                                 <td class="px-4 py-3 text-center">
                                     <div class="flex items-center justify-center gap-1">
+                                        <button @click="toggleFavorite(student.id)" type="button" :title="isFavorite(student.id) ? 'Bỏ yêu thích' : 'Yêu thích'" class="p-1.5 transition-colors rounded-lg" :class="isFavorite(student.id) ? 'text-amber-500 hover:text-amber-600 hover:bg-amber-50' : 'text-slate-300 hover:text-amber-500 hover:bg-amber-50'">
+                                            <i data-lucide="star" class="w-4 h-4" :fill="isFavorite(student.id) ? 'currentColor' : 'none'"></i>
+                                        </button>
                                         <button @click="copyPhone(student.fatherPhone)" type="button" title="Sao chép SĐT" class="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors">
                                             <i data-lucide="clipboard" class="w-4 h-4"></i>
                                         </button>
@@ -507,12 +517,22 @@
     </div>
 
     <!-- POPUP CHỈNH SỬA -->
-    <div x-show="showEditModal" style="display: none;" class="fixed inset-0 z-[200] flex items-end justify-center sm:items-center sm:p-6">
+    <div x-show="showEditModal" style="display: none;" class="fixed inset-0 z-[200] flex items-end justify-center sm:items-center sm:p-6"
+         @keydown.window.ctrl.s.prevent="if(showEditModal) saveEdit()"
+         @input.window="if(showEditModal) scheduleDraftSave()">
         <div x-show="showEditModal" x-transition.opacity.duration.300ms @click="tryCloseEdit()" class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
         <div x-show="showEditModal" x-transition:enter="transform transition ease-out duration-300" x-transition:enter-start="translate-y-full opacity-0" x-transition:enter-end="translate-y-0 opacity-100" x-transition:leave="transform transition ease-in duration-200" x-transition:leave-start="translate-y-0 opacity-100" x-transition:leave-end="translate-y-full opacity-0" class="modal-sheet relative w-full max-w-md sm:max-w-lg bg-white rounded-t-sheet sm:rounded-sheet shadow-2xl h-[88dvh] sm:h-[80dvh] flex flex-col overflow-hidden">
             <div class="flex justify-center pt-3 pb-2 bg-white"><div class="w-12 h-1.5 bg-slate-200 rounded-full"></div></div>
             <div class="flex justify-between items-center px-5 pb-4 border-b border-slate-100 bg-white">
-                <h3 class="text-lg font-black text-slate-800" x-text="editModalTitle"></h3>
+                <div class="flex items-center gap-2">
+                    <h3 class="text-lg font-black text-slate-800" x-text="editModalTitle"></h3>
+                    <!-- Draft indicator -->
+                    <div x-show="hasDraft" style="display: none;" class="text-xs text-amber-600 flex items-center gap-1">
+                        <i data-lucide="clock" class="w-3 h-3"></i>
+                        <span>Đã lưu nháp</span>
+                        <span x-text="'(' + getDraftAge() + ')'"></span>
+                    </div>
+                </div>
                 <button aria-label="Đóng" @click="tryCloseEdit()" class="tap-safe w-8 h-8 flex items-center justify-center bg-slate-100 rounded-full text-slate-500 active:scale-90 transition-transform"><i data-lucide="x" class="w-4 h-4"></i></button>
             </div>
             <div class="flex-1 overflow-y-auto p-5 space-y-4">

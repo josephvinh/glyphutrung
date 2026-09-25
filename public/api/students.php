@@ -490,6 +490,58 @@ switch ($action) {
         break;
 
     // -------------------------------------------------------------
+    // FAVORITES — Lấy danh sách favorites của user hiện tại
+    case 'favorites_list':
+        $uid = (int) $me['id'];
+        $favs = db_all(
+            'SELECT sf.student_id, sf.created_at,
+                    s.code, s.holy_name, s.full_name, s.gender, s.birth_date,
+                    c.name AS class_name, b.name AS block_name
+               FROM student_favorites sf
+               JOIN students s ON s.id = sf.student_id
+               LEFT JOIN enrollments e ON e.student_id = s.id AND e.year_id = ?
+               LEFT JOIN classes c ON c.id = e.class_id
+               LEFT JOIN blocks b ON b.id = c.block_id
+              WHERE sf.user_id = ?
+           ORDER BY sf.created_at DESC',
+            [$yid, $uid]
+        );
+        json_out(['ok' => true, 'favorites' => $favs]);
+        break;
+
+    // -------------------------------------------------------------
+    // FAVORITES — Toggle favorite (add hoặc remove)
+    case 'favorites_toggle':
+        $inFav = $in ?? [];
+        $studentId = isset($inFav['student_id']) ? (int) $inFav['student_id'] : 0;
+        if ($studentId <= 0) json_fail('Thiếu student_id.', 400);
+
+        // Kiểm tra student tồn tại
+        $student = db_one('SELECT id, full_name FROM students WHERE id = ?', [$studentId]);
+        if (!$student) json_fail('Không tìm thấy thiếu nhi.', 404);
+
+        $uid = (int) $me['id'];
+
+        // Kiểm tra đã favorite chưa
+        $existing = db_one(
+            'SELECT id FROM student_favorites WHERE student_id = ? AND user_id = ?',
+            [$studentId, $uid]
+        );
+
+        if ($existing) {
+            // Xóa favorite
+            db_run('DELETE FROM student_favorites WHERE student_id = ? AND user_id = ?', [$studentId, $uid]);
+            log_action('unfav', 'students', 'Bỏ yêu thích ' . $student['full_name']);
+            json_out(['ok' => true, 'favorited' => false]);
+        } else {
+            // Thêm favorite
+            db_insert('INSERT INTO student_favorites (student_id, user_id) VALUES (?, ?)', [$studentId, $uid]);
+            log_action('fav', 'students', 'Đánh dấu yêu thích ' . $student['full_name']);
+            json_out(['ok' => true, 'favorited' => true]);
+        }
+        break;
+
+    // -------------------------------------------------------------
     default:
         json_fail('Hành động không hợp lệ.', 404);
 }
