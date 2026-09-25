@@ -25,6 +25,10 @@ window.TNTT.attendance = {
     attendanceSearch: '',
     attendanceClass: '',
 
+    // Hàng đợi điểm danh ngoại tuyến (Offline Attendance Resilience)
+    offlineAttendanceCount: 0,
+    _isSyncingOffline: false,
+
     // Export CSV modal state
     showExportCSVModal: false,
     exportCSV: {
@@ -35,6 +39,90 @@ window.TNTT.attendance = {
         error: ''
     },
     nowTs: Date.now(),        // nhịp đồng hồ, cập nhật 30 giây/lần để badge giờ chốt tự đổi
+
+    getOfflineAttendanceQueue() {
+        try {
+            const raw = localStorage.getItem('tntt_offline_attendance_queue');
+            return raw ? JSON.parse(raw) : [];
+        } catch (e) { return []; }
+    },
+    setOfflineAttendanceQueue(queue) {
+        try {
+            localStorage.setItem('tntt_offline_attendance_queue', JSON.stringify(queue));
+            this.offlineAttendanceCount = queue.length;
+        } catch (e) { console.warn('Không thể lưu offline queue', e); }
+    },
+    pushOfflineAttendance(item) {
+        const queue = this.getOfflineAttendanceQueue();
+        const idx = queue.findIndex(q => q.programId === item.programId && q.date === item.date && q.studentId === item.studentId);
+        if (idx !== -1) {
+            queue[idx] = item;
+        } else {
+            queue.push(item);
+        }
+        this.setOfflineAttendanceQueue(queue);
+    },
+    initOfflineAttendance() {
+        this.offlineAttendanceCount = this.getOfflineAttendanceQueue().length;
+        window.addEventListener('online', () => {
+            if (this.offlineAttendanceCount > 0) {
+                this.syncOfflineAttendance();
+            }
+        });
+        setInterval(() => {
+            if (navigator.onLine && this.offlineAttendanceCount > 0 && !this._isSyncingOffline) {
+                this.syncOfflineAttendance();
+            }
+        }, 20000);
+    },
+    async syncOfflineAttendance() {
+        if (this._isSyncingOffline) return;
+        const queue = this.getOfflineAttendanceQueue();
+        if (!queue.length) {
+            this.offlineAttendanceCount = 0;
+            return;
+        }
+        if (!navigator.onLine) {
+            window.TNTT?.toast?.warning('Thiết bị vẫn đang ngoại tuyến. Vui lòng kiểm tra lại kết nối mạng.');
+            return;
+        }
+
+        this._isSyncingOffline = true;
+        let successCount = 0;
+        const failedQueue = [];
+
+        try {
+            for (const item of queue) {
+                try {
+                    const r = await this.api('attendance', 'toggle', {
+                        programId: item.programId,
+                        date: item.date,
+                        studentId: item.studentId
+                    });
+                    if (r && r.ok) {
+                        successCount++;
+                    } else if (r && r.networkError) {
+                        failedQueue.push(item);
+                    } else {
+                        // Lỗi nghiệp vụ từ server (đã khoá sổ hoặc không có quyền), bỏ qua
+                        console.warn('Bỏ qua bản ghi điểm danh offline:', item, r?.error);
+                    }
+                } catch (err) {
+                    failedQueue.push(item);
+                }
+            }
+        } finally {
+            this.setOfflineAttendanceQueue(failedQueue);
+            this._isSyncingOffline = false;
+        }
+
+        if (successCount > 0) {
+            window.TNTT?.toast?.success(`Đã đồng bộ thành công ${successCount} lượt điểm danh lên máy chủ!`);
+            if (this.currentModule === 'attendance' && typeof this.loadData === 'function') {
+                this.loadData();
+            }
+        }
+    },
 
     openAttendance() {
         if (!this.attendanceDate) this.attendanceDate = this.toDateInput(new Date());
@@ -216,17 +304,14 @@ window.TNTT.attendance = {
 
     // Chỉ điểm danh các em đang sinh hoạt, trong phạm vi quyền của người đăng nhập
     get sessionStudents() {
-        const q = this.normalizeText(this.attendanceSearch);
+        const q = (this.attendanceSearch || '').trim();
         // Chưa chọn lớp thì KHÔNG đổ danh sách (giống Danh sách) — trừ khi
         // đang gõ tìm tên. Áp cho mọi vai; bộ chọn chỉ hiện lớp mình phụ trách.
         if (this.attendanceClass === '' && q === '') return [];
         return this.accessibleStudents
             .filter(s => s.status === 'đang sinh hoạt')
             .filter(s => this.attendanceClass === '' || s.className === this.attendanceClass)
-            .filter(s => q === ''
-                || this.normalizeText(s.name).includes(q)
-                || this.normalizeText(s.holyName).includes(q)
-                || this.normalizeText(s.code).includes(q));
+            .filter(s => this.matchStudentSearch(s, q));
     },
 
     // ---- Index điểm danh (O(1)) ----
@@ -335,12 +420,36 @@ window.TNTT.attendance = {
                 this.logAction('diemdanh', 'attendance', 'Gỡ điểm danh của ' + student.name,
                                this.sessionProgram.name + ' · ' + this.formatDate(this.activeSession.date) + ' · đang là ' + cu.status);
             }
+            if (!navigator.onLine) {
+                this.pushOfflineAttendance({
+                    programId: this.activeSession.programId,
+                    date: this.activeSession.date,
+                    studentId: student.id,
+                    studentName: student.name,
+                    action: 'toggle',
+                    createdAt: new Date().toISOString()
+                });
+                return;
+            }
             this.save('attendance', 'toggle', {
                 programId: this.activeSession.programId,
                 date: this.activeSession.date,
                 studentId: student.id
             }).then(r => {
-                if (!r || !r.ok) this._attThem(cu);
+                if (!r || !r.ok) {
+                    if (r && r.networkError) {
+                        this.pushOfflineAttendance({
+                            programId: this.activeSession.programId,
+                            date: this.activeSession.date,
+                            studentId: student.id,
+                            studentName: student.name,
+                            action: 'toggle',
+                            createdAt: new Date().toISOString()
+                        });
+                    } else {
+                        this._attThem(cu);
+                    }
+                }
             });
             return;
         }
@@ -364,13 +473,36 @@ window.TNTT.attendance = {
                            this.sessionProgram.name + ' · ' + this.formatDate(this.activeSession.date) + ' · đi trễ');
         }
 
+        if (!navigator.onLine) {
+            this.pushOfflineAttendance({
+                programId: this.activeSession.programId,
+                date: this.activeSession.date,
+                studentId: student.id,
+                studentName: student.name,
+                action: 'toggle',
+                createdAt: new Date().toISOString()
+            });
+            return;
+        }
+
         this.save('attendance', 'toggle', {
             programId: this.activeSession.programId,
             date: this.activeSession.date,
             studentId: student.id
         }).then(r => {
             if (!r || !r.ok) {
-                this._attXoa(this.activeSession.programId, this.activeSession.date, student.id);
+                if (r && r.networkError) {
+                    this.pushOfflineAttendance({
+                        programId: this.activeSession.programId,
+                        date: this.activeSession.date,
+                        studentId: student.id,
+                        studentName: student.name,
+                        action: 'toggle',
+                        createdAt: new Date().toISOString()
+                    });
+                } else {
+                    this._attXoa(this.activeSession.programId, this.activeSession.date, student.id);
+                }
             } else if (r.status) {
                 // Cập nhật lại chính xác trạng thái từ server (tránh đồng hồ client lệch)
                 this._attXoa(this.activeSession.programId, this.activeSession.date, student.id);

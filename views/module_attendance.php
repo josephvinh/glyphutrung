@@ -14,6 +14,30 @@
             <h2 class="text-xl font-black text-slate-800 tracking-tight">Điểm Danh</h2>
         </div>
 
+        <!-- Thanh thông báo Ngoại tuyến & Hàng đợi đồng bộ -->
+        <div x-show="offlineAttendanceCount > 0" style="display: none;"
+             class="rounded-card p-3 mb-5 bg-amber-50 border border-amber-200/80 flex items-center justify-between shadow-sm">
+            <div class="flex items-center gap-2.5 min-w-0">
+                <div class="w-8 h-8 shrink-0 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center">
+                    <i data-lucide="cloud-off" class="w-4 h-4"></i>
+                </div>
+                <div class="min-w-0">
+                    <p class="text-xs font-bold text-amber-900 leading-tight">
+                        Ngoại tuyến: <span x-text="offlineAttendanceCount"></span> lượt lưu tạm
+                    </p>
+                    <p class="text-micro text-amber-700 mt-0.5 leading-tight">
+                        Dữ liệu an toàn trên máy, sẽ tự gửi khi có mạng.
+                    </p>
+                </div>
+            </div>
+            <button @click="syncOfflineAttendance()" type="button"
+                    :disabled="_isSyncingOffline"
+                    class="shrink-0 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold active:scale-95 transition-transform flex items-center gap-1 shadow-sm">
+                <i data-lucide="refresh-cw" class="w-3.5 h-3.5" :class="_isSyncingOffline ? 'animate-spin' : ''"></i>
+                <span x-text="_isSyncingOffline ? 'Đang gửi…' : 'Đồng bộ ngay'"></span>
+            </button>
+        </div>
+
         <!-- CHỌN NGÀY -->
         <div class="bg-white rounded-card p-4 shadow-sm border border-slate-100 mb-5">
             <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-2">Ngày điểm danh</label>
@@ -257,6 +281,30 @@
             </div>
         </div>
 
+        <!-- Thanh thông báo Ngoại tuyến & Hàng đợi đồng bộ -->
+        <div x-show="offlineAttendanceCount > 0" style="display: none;"
+             class="rounded-card p-3 mb-4 bg-amber-50 border border-amber-200/80 flex items-center justify-between shadow-sm">
+            <div class="flex items-center gap-2.5 min-w-0">
+                <div class="w-8 h-8 shrink-0 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center">
+                    <i data-lucide="cloud-off" class="w-4 h-4"></i>
+                </div>
+                <div class="min-w-0">
+                    <p class="text-xs font-bold text-amber-900 leading-tight">
+                        Chế độ ngoại tuyến: <span x-text="offlineAttendanceCount"></span> lượt lưu tạm
+                    </p>
+                    <p class="text-micro text-amber-700 mt-0.5 leading-tight">
+                        Dữ liệu an toàn trên máy, sẽ tự gửi khi có mạng.
+                    </p>
+                </div>
+            </div>
+            <button @click="syncOfflineAttendance()" type="button"
+                    :disabled="_isSyncingOffline"
+                    class="shrink-0 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold active:scale-95 transition-transform flex items-center gap-1 shadow-sm">
+                <i data-lucide="refresh-cw" class="w-3.5 h-3.5" :class="_isSyncingOffline ? 'animate-spin' : ''"></i>
+                <span x-text="_isSyncingOffline ? 'Đang gửi…' : 'Đồng bộ ngay'"></span>
+            </button>
+        </div>
+
         <!-- Trạng thái giờ chốt -->
         <div class="rounded-card p-4 mb-4 border flex items-center"
              :class="isPastCutoff ? 'bg-rose-50 border-rose-100' : 'bg-emerald-50 border-emerald-100'">
@@ -400,10 +448,18 @@
                 <p class="font-black text-slate-800 text-sm leading-tight">Quét thẻ điểm danh</p>
                 <p class="text-micro font-semibold text-slate-500 truncate" x-text="qrPhamVi"></p>
             </div>
-            <button @click="dongQuetQR()" type="button" aria-label="Đóng, không lưu thêm"
-                    class="tap-safe shrink-0 w-9 h-9 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center active:scale-90 transition-transform">
-                <i data-lucide="x" class="w-5 h-5 text-slate-500"></i>
-            </button>
+            <div class="flex items-center gap-1.5">
+                <!-- Nút bật/tắt đèn pin Flashlight -->
+                <button x-show="qrCoDenPin" style="display: none;" @click="toggleTorch()" type="button" :title="qrDenPin ? 'Tắt đèn pin' : 'Bật đèn pin'"
+                        class="tap-safe shrink-0 w-9 h-9 rounded-xl border flex items-center justify-center active:scale-90 transition-transform"
+                        :class="qrDenPin ? 'bg-amber-100 border-amber-300 text-amber-700' : 'bg-slate-50 border-slate-200 text-slate-600'">
+                    <i data-lucide="zap" class="w-4 h-4" :fill="qrDenPin ? 'currentColor' : 'none'"></i>
+                </button>
+                <button @click="dongQuetQR()" type="button" aria-label="Đóng, không lưu thêm"
+                        class="tap-safe shrink-0 w-9 h-9 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center active:scale-90 transition-transform">
+                    <i data-lucide="x" class="w-5 h-5 text-slate-500"></i>
+                </button>
+            </div>
         </div>
 
         <!-- Khung camera: vuông, vừa phải -->
