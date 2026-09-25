@@ -292,11 +292,19 @@ try {
                 json_fail('Không thể lưu file.', 500);
             }
 
-            // Save to database using db_insert (returns the ID)
-            $logoId = db_insert(
-                'INSERT INTO qrcard_logos (user_identifier, filename, original_name, size, created_at) VALUES (?, ?, ?, ?, NOW())',
-                [$uid, $newFilename, $file['name'], $file['size']]
-            );
+            // Save to database using db_insert (returns the ID). Nếu ghi DB lỗi
+            // thì file đã nằm trên đĩa -> xóa đi để không còn file mồ côi.
+            try {
+                $logoId = db_insert(
+                    'INSERT INTO qrcard_logos (user_identifier, filename, original_name, size, created_at) VALUES (?, ?, ?, ?, NOW())',
+                    [$uid, $newFilename, $file['name'], $file['size']]
+                );
+            } catch (Throwable $e) {
+                if (is_file($uploadPath)) {
+                    unlink($uploadPath);
+                }
+                throw $e;
+            }
 
             $logo = [
                 'id' => $logoId,
@@ -351,9 +359,11 @@ try {
         default:
             json_fail('Action không hợp lệ.', 400);
     }
-} catch (Exception $e) {
+} catch (Throwable $e) {
+    // Log chi tiết ở server, KHÔNG trả nội dung lỗi ra client (tránh lộ
+    // đường dẫn, câu SQL, tên bảng...).
     error_log('Custom QR Card API Error: ' . $e->getMessage());
-    json_fail('Lỗi server: ' . $e->getMessage(), 500);
+    json_fail('Có lỗi xảy ra, vui lòng thử lại sau.', 500);
 }
 
 /**
