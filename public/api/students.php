@@ -180,6 +180,9 @@ switch ($action) {
         require_write();
         $rows = $in['rows'] ?? [];
         if (!is_array($rows) || count($rows) === 0) json_fail('Không có dòng nào để nhập.');
+        // File size limit: max 5MB (roughly 50,000 characters JSON)
+        $jsonSize = strlen(json_encode($in));
+        if ($jsonSize > 5 * 1024 * 1024) json_fail('File quá lớn. Vui lòng chia nhỏ file (tối đa 5MB).');
 
         $added = 0; $updated = 0; $skipped = 0; $errors = [];
 
@@ -365,6 +368,181 @@ switch ($action) {
         json_out(['ok' => true, 'added' => $added, 'updated' => $updated,
                   'skipped' => $skipped, 'errors' => array_slice($errors, 0, 10),
                   'scope' => allowed_class_names($chophep)]);
+
+    // -------------------------------------------------------------
+    // Bulk move students to another class
+    case 'bulk_move':
+        require_write();
+        $ids = $in['student_ids'] ?? [];
+        $targetClass = trim($in['target_class'] ?? '');
+
+        if (!is_array($ids) || count($ids) === 0) {
+            json_fail('Không có em nào được chọn.', 400);
+        }
+        if ($targetClass === '') {
+            json_fail('Vui lòng chọn lớp đích.', 400);
+        }
+
+        // Validate target class exists
+        $targetClassId = class_id_by_name($targetClass);
+
+        // Check write permission on target class
+        $chophep = allowed_class_ids($me);
+        if ($chophep !== null && !in_array($targetClassId, $chophep, true)) {
+            json_fail('Bạn không phụ trách lớp "' . $targetClass . '".', 403);
+        }
+
+        // Validate each student's current class (IDOR prevention)
+        $validIds = [];
+        foreach ($ids as $sid) {
+            $sid = (int) $sid;
+            if ($sid <= 0) continue;
+            $curClass = current_enrollment_class($sid, $yid);
+            // If user has narrow scope, must cover source class; null = not enrolled this year
+            if ($chophep !== null) {
+                if ($curClass === null || !can_access_class($me, 'students', $curClass, 'edit')) {
+                    continue; // skip unauthorized students
+                }
+            }
+            $validIds[] = $sid;
+        }
+
+        if (count($validIds) === 0) {
+            json_fail('Không có em nào bạn được phép chuyển. Có thể các em không thuộc lớp bạn phụ trách.', 403);
+        }
+
+        db()->beginTransaction();
+        try {
+            $ph = implode(',', array_fill(0, count($validIds), '(?, ?, ?, ?)'));
+            $params = [];
+            foreach ($validIds as $sid) {
+                $params[] = $yid;
+                $params[] = $sid;
+                $params[] = $targetClassId;
+                $params[] = 'đang sinh hoạt';
+            }
+            $sql = "INSERT INTO enrollments (year_id, student_id, class_id, status)
+                    VALUES $ph
+                    ON DUPLICATE KEY UPDATE class_id = VALUES(class_id), status = 'đang sinh hoạt'";
+            db_run($sql, $params);
+
+            db()->commit();
+        } catch (Throwable $e) {
+            db()->rollBack();
+            json_fail(safe_error($e, 'Chuyển lớp thất bại: '), 500);
+        }
+
+        log_action('chuyen', 'students', 'Bulk chuyển ' . count($validIds) . ' em sang lớp ' . $targetClass);
+        Cache::flush();
+        json_out(['ok' => true, 'moved' => count($validIds)]);
+        break;
+
+    // -------------------------------------------------------------
+    // Bulk delete students
+    case 'bulk_delete':
+        require_write();
+        $ids = $in['student_ids'] ?? [];
+
+        if (!is_array($ids) || count($ids) === 0) {
+            json_fail('Không có em nào được chọn.', 400);
+        }
+
+        // Permission check for delete (same scope as bulk_move)
+        $chophepDel = allowed_class_ids($me);
+
+        // Validate each student's current class (IDOR prevention)
+        $validIds = [];
+        foreach ($ids as $sid) {
+            $sid = (int) $sid;
+            if ($sid <= 0) continue;
+            $curClass = current_enrollment_class($sid, $yid);
+            if ($chophepDel !== null) {
+                if ($curClass === null || !can_access_class($me, 'students', $curClass, 'edit')) {
+                    continue;
+                }
+            }
+            $validIds[] = $sid;
+        }
+
+        if (count($validIds) === 0) {
+            json_fail('Không có em nào bạn được phép xóa. Có thể các em không thuộc lớp bạn phụ trách.', 403);
+        }
+
+        db()->beginTransaction();
+        try {
+            // Soft delete: mark as 'dừng sinh hoạt' in enrollments (keep student records, just inactive)
+            $ph = implode(',', array_fill(0, count($validIds), '?'));
+            $params = [];
+            foreach ($validIds as $sid) {
+                $params[] = $sid;
+            }
+            db_run(
+                "UPDATE enrollments SET status = 'dừng sinh hoạt' WHERE year_id = ? AND student_id IN ($ph)",
+                array_merge([$yid], $params)
+            );
+
+            db()->commit();
+        } catch (Throwable $e) {
+            db()->rollBack();
+            json_fail(safe_error($e, 'Xóa không thành công: '), 500);
+        }
+
+        log_action('xoa', 'students', 'Bulk xóa ' . count($validIds) . ' em');
+        Cache::flush();
+        json_out(['ok' => true, 'deleted' => count($validIds)]);
+        break;
+
+    // -------------------------------------------------------------
+    // FAVORITES — Lấy danh sách favorites của user hiện tại
+    case 'favorites_list':
+        $uid = (int) $me['id'];
+        $favs = db_all(
+            'SELECT sf.student_id, sf.created_at,
+                    s.code, s.holy_name, s.full_name, s.gender, s.birth_date,
+                    c.name AS class_name, b.name AS block_name
+               FROM student_favorites sf
+               JOIN students s ON s.id = sf.student_id
+               LEFT JOIN enrollments e ON e.student_id = s.id AND e.year_id = ?
+               LEFT JOIN classes c ON c.id = e.class_id
+               LEFT JOIN blocks b ON b.id = c.block_id
+              WHERE sf.user_id = ?
+           ORDER BY sf.created_at DESC',
+            [$yid, $uid]
+        );
+        json_out(['ok' => true, 'favorites' => $favs]);
+        break;
+
+    // -------------------------------------------------------------
+    // FAVORITES — Toggle favorite (add hoặc remove)
+    case 'favorites_toggle':
+        $inFav = $in ?? [];
+        $studentId = isset($inFav['student_id']) ? (int) $inFav['student_id'] : 0;
+        if ($studentId <= 0) json_fail('Thiếu student_id.', 400);
+
+        // Kiểm tra student tồn tại
+        $student = db_one('SELECT id, full_name FROM students WHERE id = ?', [$studentId]);
+        if (!$student) json_fail('Không tìm thấy thiếu nhi.', 404);
+
+        $uid = (int) $me['id'];
+
+        // Kiểm tra đã favorite chưa
+        $existing = db_one(
+            'SELECT id FROM student_favorites WHERE student_id = ? AND user_id = ?',
+            [$studentId, $uid]
+        );
+
+        if ($existing) {
+            // Xóa favorite
+            db_run('DELETE FROM student_favorites WHERE student_id = ? AND user_id = ?', [$studentId, $uid]);
+            log_action('unfav', 'students', 'Bỏ yêu thích ' . $student['full_name']);
+            json_out(['ok' => true, 'favorited' => false]);
+        } else {
+            // Thêm favorite
+            db_insert('INSERT INTO student_favorites (student_id, user_id) VALUES (?, ?)', [$studentId, $uid]);
+            log_action('fav', 'students', 'Đánh dấu yêu thích ' . $student['full_name']);
+            json_out(['ok' => true, 'favorited' => true]);
+        }
+        break;
 
     // -------------------------------------------------------------
     default:

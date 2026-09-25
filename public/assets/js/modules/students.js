@@ -1,7 +1,22 @@
 /* ==========================================================
    STUDENTS — Danh sách thiếu nhi và xuất/nhập CSV
    Một mảnh của component tnttApp. app.js gộp tất cả các mảnh lại.
+
+   Phase 3: Favorites, Auto-save Draft, Keyboard Shortcuts
    ========================================================== */
+
+// i18n constants - Hardcoded strings
+const STUDENTS_I18N = {
+    LOADING_CODE: 'Đang cấp…',
+    SAVING: 'Đang lưu...',
+    ADD_STUDENT: 'Thêm thiếu nhi',
+    EDIT_STUDENT: 'Sửa hồ sơ',
+    NO_DATA_EXPORT: 'Không có dữ liệu để xuất. Vui lòng kiểm tra bộ lọc.',
+    NO_PHONE: 'Không có số điện thoại để sao chép.',
+    COPY_SUCCESS: 'Đã sao chép số điện thoại!',
+    COPY_FAIL: 'Không thể sao chép. Vui lòng sao chép thủ công.',
+};
+
 window.TNTT = window.TNTT || {};
 window.TNTT.students = {
     // ==========================================
@@ -17,16 +32,431 @@ window.TNTT.students = {
     // Dùng cho màn Khối & Lớp, vì students ở trên không đủ để đếm.
     classCounts: {},
 
+    // View mode: 'grid' | 'list' — lưu vào localStorage
+    viewMode: localStorage.getItem('studentsViewMode') || 'grid',
+
     searchQuery: '',
     filterStatus: '',
     filterBlock: '',
     filterClass: '',
+    // Enhanced filters
+    filterGender: '',
+    filterAgeFrom: '',
+    filterAgeTo: '',
+    filterAddress: '',
     showFilter: false,
     showEditModal: false,
     editData: {},
 
     busy: false,
     displayLimit: 20,
+
+    // ==========================================
+    // PHASE 3: FAVORITES
+    // ==========================================
+    favoriteStudents: [],   // array of student IDs that user has favorited
+
+    // Check if a student is favorited
+    isFavorite(studentId) {
+        return this.favoriteStudents.includes(studentId);
+    },
+
+    // Load favorites from API
+    async loadFavorites() {
+        try {
+            const r = await this.api('students', 'favorites_list');
+            if (r && r.ok && Array.isArray(r.favorites)) {
+                this.favoriteStudents = r.favorites.map(f => f.student_id);
+            }
+        } catch (err) {
+            console.warn('Could not load favorites:', err);
+        }
+    },
+
+    // Toggle favorite status for a student
+    async toggleFavorite(studentId) {
+        try {
+            const r = await this.save('students', 'favorites_toggle', { student_id: studentId });
+            if (r && r.ok) {
+                if (r.favorited) {
+                    if (!this.favoriteStudents.includes(studentId)) {
+                        this.favoriteStudents.push(studentId);
+                    }
+                } else {
+                    const idx = this.favoriteStudents.indexOf(studentId);
+                    if (idx > -1) this.favoriteStudents.splice(idx, 1);
+                }
+            }
+        } catch (err) {
+            console.error('Toggle favorite failed:', err);
+            window.TNTT.toast.error('Không cập nhật được yêu thích.');
+        }
+    },
+
+    // ==========================================
+    // PHASE 3: AUTO-SAVE DRAFT
+    // ==========================================
+    draftTimer: null,
+    draftDebounceMs: 1500,  // Save draft 1.5s after last change
+
+    // Get draft storage key for a student
+    _draftKey(studentId) {
+        return 'student_draft_' + (studentId || 'new');
+    },
+
+    // Check if draft exists for current form
+    get hasDraft() {
+        const key = this._draftKey(this.editData?.id);
+        return localStorage.getItem(key) !== null;
+    },
+
+    // Get draft age (for display)
+    getDraftAge() {
+        const key = this._draftKey(this.editData?.id);
+        const stored = localStorage.getItem(key);
+        if (!stored) return null;
+        try {
+            const data = JSON.parse(stored);
+            if (data._savedAt) {
+                const saved = new Date(data._savedAt);
+                const now = new Date();
+                const diffMs = now - saved;
+                const diffMins = Math.floor(diffMs / 60000);
+                if (diffMins < 1) return 'vừa xong';
+                if (diffMins === 1) return '1 phút trước';
+                if (diffMins < 60) return diffMins + ' phút trước';
+                const diffHours = Math.floor(diffMins / 60);
+                if (diffHours === 1) return '1 giờ trước';
+                if (diffHours < 24) return diffHours + ' giờ trước';
+                return null; // Too old, don't show
+            }
+        } catch (e) {}
+        return null;
+    },
+
+    // Save draft to localStorage (debounced)
+    scheduleDraftSave() {
+        if (this.draftTimer) clearTimeout(this.draftTimer);
+        if (!this.showEditModal || !this.editData) return;
+
+        this.draftTimer = setTimeout(() => {
+            this.saveDraft();
+        }, this.draftDebounceMs);
+    },
+
+    // Save current form data to localStorage
+    saveDraft() {
+        if (!this.showEditModal || !this.editData) return;
+
+        const key = this._draftKey(this.editData.id);
+        const draftData = {
+            holyName: this.editData.holyName || '',
+            name: this.editData.name || '',
+            gender: this.editData.gender ?? 1,
+            birthDate: this.editData.birthDate || '',
+            address: this.editData.address || '',
+            fatherName: this.editData.fatherName || '',
+            fatherPhone: this.editData.fatherPhone || '',
+            motherName: this.editData.motherName || '',
+            motherPhone: this.editData.motherPhone || '',
+            className: this.editData.className || '',
+            status: this.editData.status || 'đang sinh hoạt',
+            _savedAt: new Date().toISOString()
+        };
+
+        try {
+            localStorage.setItem(key, JSON.stringify(draftData));
+        } catch (e) {
+            console.warn('Could not save draft:', e);
+        }
+    },
+
+    // Load draft from localStorage (returns true if draft was loaded)
+    loadDraft(studentId) {
+        const key = this._draftKey(studentId);
+        const stored = localStorage.getItem(key);
+        if (!stored) return false;
+
+        try {
+            const draft = JSON.parse(stored);
+            // Check if draft is recent enough (24 hours)
+            if (draft._savedAt) {
+                const saved = new Date(draft._savedAt);
+                const now = new Date();
+                const diffHours = (now - saved) / (1000 * 60 * 60);
+                if (diffHours > 24) {
+                    this.clearDraft(studentId);
+                    return false;
+                }
+            }
+            return draft;
+        } catch (e) {
+            return false;
+        }
+    },
+
+    // Clear draft from localStorage
+    clearDraft(studentId) {
+        const key = this._draftKey(studentId || 'new');
+        localStorage.removeItem(key);
+    },
+
+    // Apply draft to edit form
+    applyDraft(draft) {
+        if (!draft || !this.editData) return;
+        Object.assign(this.editData, {
+            holyName: draft.holyName || '',
+            name: draft.name || '',
+            gender: draft.gender ?? 1,
+            birthDate: draft.birthDate || '',
+            address: draft.address || '',
+            fatherName: draft.fatherName || '',
+            fatherPhone: draft.fatherPhone || '',
+            motherName: draft.motherName || '',
+            motherPhone: draft.motherPhone || '',
+            className: draft.className || '',
+            status: draft.status || 'đang sinh hoạt'
+        });
+    },
+
+    // ==========================================
+    // PHASE 3: KEYBOARD SHORTCUTS
+    // ==========================================
+    keyboardHandler: null,
+
+    // Initialize keyboard shortcuts
+    initKeyboardShortcuts() {
+        if (this.keyboardHandler) return;
+
+        this.keyboardHandler = (e) => {
+            // Don't trigger shortcuts when typing in inputs
+            const tag = e.target.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+            if (e.target.isContentEditable) return;
+
+            switch(e.key.toLowerCase()) {
+                case '/':
+                    e.preventDefault();
+                    // Focus search input
+                    const searchInput = document.querySelector('[x-model="searchQuery"]');
+                    if (searchInput) searchInput.focus();
+                    break;
+
+                case 'j':
+                    e.preventDefault();
+                    this.selectNext();
+                    break;
+
+                case 'k':
+                    e.preventDefault();
+                    this.selectPrev();
+                    break;
+
+                case 'e':
+                    e.preventDefault();
+                    // Edit selected student (only if exactly one selected)
+                    if (this.selectedStudents.length === 1) {
+                        const sid = this.selectedStudents[0];
+                        const student = this.studentIndex?.get(sid);
+                        if (student) this.openEdit(student);
+                    }
+                    break;
+
+                case 'Escape':
+                    e.preventDefault();
+                    this.clearSelection();
+                    break;
+
+                case 'n':
+                    e.preventDefault();
+                    // Open add new student modal (only if user can edit)
+                    if (window.TNTT.canEditModule?.('students')) {
+                        this.openAddStudent();
+                    }
+                    break;
+            }
+        };
+
+        document.addEventListener('keydown', this.keyboardHandler);
+    },
+
+    // Cleanup keyboard shortcuts
+    destroyKeyboardShortcuts() {
+        if (this.keyboardHandler) {
+            document.removeEventListener('keydown', this.keyboardHandler);
+            this.keyboardHandler = null;
+        }
+    },
+
+    // Select next student in list
+    selectNext() {
+        const list = this.filteredStudents;
+        if (list.length === 0) return;
+
+        if (this.selectedStudents.length === 0) {
+            // Select first item
+            this.selectedStudents = [list[0].id];
+        } else {
+            const lastSelected = this.selectedStudents[this.selectedStudents.length - 1];
+            const currentIndex = list.findIndex(s => s.id === lastSelected);
+            if (currentIndex < list.length - 1) {
+                this.selectedStudents = [list[currentIndex + 1].id];
+            }
+        }
+        this.scrollSelectedIntoView();
+    },
+
+    // Select previous student in list
+    selectPrev() {
+        const list = this.filteredStudents;
+        if (list.length === 0) return;
+
+        if (this.selectedStudents.length === 0) {
+            // Select last item
+            this.selectedStudents = [list[list.length - 1].id];
+        } else {
+            const firstSelected = this.selectedStudents[0];
+            const currentIndex = list.findIndex(s => s.id === firstSelected);
+            if (currentIndex > 0) {
+                this.selectedStudents = [list[currentIndex - 1].id];
+            }
+        }
+        this.scrollSelectedIntoView();
+    },
+
+    // Scroll selected student into view
+    scrollSelectedIntoView() {
+        this.$nextTick(() => {
+            const selectedId = this.selectedStudents[0];
+            if (!selectedId) return;
+
+            const card = document.querySelector(`[data-student-id="${selectedId}"]`);
+            if (card) {
+                card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        });
+    },
+
+    // ==========================================
+    // 7. BULK SELECTION & ACTIONS
+    // ==========================================
+    selectedStudents: [],
+    showBulkMoveModal: false,
+    targetClassForMove: '',
+
+    // Toggle selection for a single student
+    toggleStudentSelection(studentId) {
+        const idx = this.selectedStudents.indexOf(studentId);
+        if (idx > -1) {
+            this.selectedStudents.splice(idx, 1);
+        } else {
+            this.selectedStudents.push(studentId);
+        }
+    },
+
+    // Check if a student is selected
+    isStudentSelected(studentId) {
+        return this.selectedStudents.indexOf(studentId) > -1;
+    },
+
+    // Toggle select all / deselect all in current view
+    toggleSelectAll() {
+        if (this.allDisplayedSelected) {
+            // All currently displayed are selected → deselect only those
+            this.selectedStudents = this.selectedStudents.filter(
+                id => !this.filteredStudents.some(s => s.id === id)
+            );
+        } else {
+            // Select all currently displayed (merge with existing selections)
+            const displayedIds = this.filteredStudents.map(s => s.id);
+            for (const id of displayedIds) {
+                if (this.selectedStudents.indexOf(id) === -1) {
+                    this.selectedStudents.push(id);
+                }
+            }
+        }
+    },
+
+    // Check if all currently displayed students are selected
+    get allDisplayedSelected() {
+        if (this.filteredStudents.length === 0) return false;
+        return this.filteredStudents.every(s => this.selectedStudents.indexOf(s.id) > -1);
+    },
+
+    // Open bulk move modal
+    openBulkMoveModal() {
+        this.targetClassForMove = '';
+        this.showBulkMoveModal = true;
+    },
+
+    // Execute bulk move
+    async executeBulkMove() {
+        if (!this.targetClassForMove) {
+            window.TNTT.toast.warning('Vui lòng chọn lớp đích.');
+            return;
+        }
+        if (this.selectedStudents.length === 0) {
+            window.TNTT.toast.warning('Không có em nào được chọn.');
+            return;
+        }
+
+        this.busy = true;
+        try {
+            const r = await this.save('students', 'bulk_move', {
+                student_ids: this.selectedStudents,
+                target_class: this.targetClassForMove
+            });
+            if (r && r.ok) {
+                window.TNTT.toast.info(`Đã chuyển ${r.moved || this.selectedStudents.length} em sang lớp ${this.targetClassForMove}.`);
+                this.selectedStudents = [];
+                this.showBulkMoveModal = false;
+                await this.loadData();
+            }
+        } catch (err) {
+            console.error(err);
+            window.TNTT.toast.error('Chuyển lớp không thành công.');
+        } finally {
+            this.busy = false;
+        }
+    },
+
+    // Confirm and execute bulk delete
+    async confirmBulkDelete() {
+        const count = this.selectedStudents.length;
+        if (count === 0) {
+            window.TNTT.toast.warning('Không có em nào được chọn.');
+            return;
+        }
+
+        const confirmed = await window.TNTT.toast.confirm(
+            `Xóa ${count} em khỏi danh sách?\n\nHành động này không thể hoàn tác.`,
+            { danger: true, confirmText: `Xóa ${count} em`, cancelText: 'Hủy bỏ' }
+        );
+
+        if (!confirmed) return;
+
+        this.busy = true;
+        try {
+            const r = await this.save('students', 'bulk_delete', {
+                student_ids: this.selectedStudents
+            });
+            if (r && r.ok) {
+                window.TNTT.toast.info(`Đã xóa ${r.deleted || count} em.`);
+                this.selectedStudents = [];
+                await this.loadData();
+            }
+        } catch (err) {
+            console.error(err);
+            window.TNTT.toast.error('Xóa không thành công.');
+        } finally {
+            this.busy = false;
+        }
+    },
+
+    // Clear all selections
+    clearSelection() {
+        this.selectedStudents = [];
+    },
 
     // Chỉ số em theo id — cùng khuôn attIndex/scoreIndex/reportIndex.
     // studentById() bị gọi cho TỪNG dòng ở danh sách Xin phép nên find()
@@ -50,6 +480,14 @@ window.TNTT.students = {
         this.editData.isNew = false;
         this.showEditModal = true;
         this._snapEdit();
+
+        // Check for draft and prompt to restore
+        const draft = this.loadDraft(student.id);
+        if (draft) {
+            this.applyDraft(draft);
+            this._snapEdit(); // Update snapshot after applying draft
+            window.TNTT.toast.info('Đã khôi phục nháp trước đó.');
+        }
     },
 
     // ---- Chống mất dữ liệu khi lỡ đóng cửa sổ đang sửa dở ----
@@ -66,11 +504,14 @@ window.TNTT.students = {
         return this.showEditModal && this._snapEditKey(this.editData) !== this._editSnapshot;
     },
     async tryCloseEdit() {
+        if (this.draftTimer) clearTimeout(this.draftTimer);
         if (this._editDirty()) {
             const bo = await window.TNTT.toast.confirm(
                 'Bỏ các thay đổi chưa lưu?',
                 { danger: true, confirmText: 'Bỏ thay đổi', cancelText: 'Tiếp tục sửa' });
             if (!bo) return;
+            // User confirmed to discard changes, don't save draft
+            this.clearDraft(this.editData?.id);
         }
         this.showEditModal = false;
     },
@@ -90,7 +531,7 @@ window.TNTT.students = {
 
         this.editData = {
             id: null, isNew: true,
-            code: 'Đang cấp…',      // máy chủ tự cấp; điền ngay bên dưới
+            code: STUDENTS_I18N.LOADING_CODE,      // máy chủ tự cấp; điền ngay bên dưới
             holyName: '', name: '',
             gender: 1, birthDate: '', address: '',
             fatherName: '', fatherPhone: '',
@@ -101,6 +542,14 @@ window.TNTT.students = {
         this.showEditModal = true;
         this._snapEdit();
         this.fillNextStudentCode();
+
+        // Check for draft and prompt to restore
+        const draft = this.loadDraft(null);
+        if (draft) {
+            this.applyDraft(draft);
+            this._snapEdit();
+            window.TNTT.toast.info('Đã khôi phục nháp trước đó.');
+        }
     },
 
     // Lấy mã kế tiếp từ máy chủ để hiện sẵn (chỉ đọc). Máy chủ vẫn cấp lại
@@ -130,6 +579,8 @@ window.TNTT.students = {
         try {
             const r = await this.save('students', 'save', e);
             if (r && r.ok) {
+                // Clear draft after successful save
+                this.clearDraft(e.id);
                 // Luôn nạp lại dữ liệu từ server sau khi lưu để lấy bản đã được chuẩn hóa (In hoa, số 0 đầu điện thoại...)
                 await this.loadData();
                 this.showEditModal = false;
@@ -378,5 +829,222 @@ window.TNTT.students = {
         this.importToServer(rows.slice(1), colIndex, fileName).finally(() => {
             this.syncing = false;
         });
+    },
+
+    // ==========================================
+    // 4. VIEW MODE (Grid/List Toggle)
+    // ==========================================
+    setViewMode(mode) {
+        this.viewMode = mode;
+        localStorage.setItem('studentsViewMode', mode);
+    },
+
+    // ==========================================
+    // 5. ENHANCED FILTERS
+    // ==========================================
+    // Age options for dropdown (5-25 tuổi)
+    get ageOptions() {
+        const options = [];
+        for (let i = 5; i <= 25; i++) options.push(i);
+        return options;
+    },
+
+    // Check if any filter is active (including new filters)
+    get hasActiveFilter() {
+        return !!(
+            this.filterBlock ||
+            this.filterClass ||
+            this.filterStatus ||
+            this.filterGender ||
+            this.filterAgeFrom ||
+            this.filterAgeTo ||
+            this.filterAddress
+        );
+    },
+
+    // Clear all filters including enhanced ones
+    clearFilters() {
+        this.filterBlock = '';
+        this.filterClass = '';
+        this.filterStatus = '';
+        this.filterGender = '';
+        this.filterAgeFrom = '';
+        this.filterAgeTo = '';
+        this.filterAddress = '';
+    },
+
+    // Calculate age from birthDate
+    calculateAge(birthDate) {
+        if (!birthDate) return '—';
+        const birth = new Date(birthDate);
+        const today = new Date();
+        let age = today.getFullYear() - birth.getFullYear();
+        const monthDiff = today.getMonth() - birth.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+            age--;
+        }
+        return age;
+    },
+
+    // ==========================================
+    // 6. QUICK ACTIONS
+    // ==========================================
+    // Copy phone number to clipboard
+    async copyPhone(phone) {
+        if (!phone) {
+            window.TNTT.toast.warning('Không có số điện thoại để sao chép.');
+            return;
+        }
+        try {
+            await navigator.clipboard.writeText(phone);
+            window.TNTT.toast.info('Đã sao chép số điện thoại!');
+        } catch (err) {
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = phone;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-9999px';
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                window.TNTT.toast.info('Đã sao chép số điện thoại!');
+            } catch (e) {
+                window.TNTT.toast.error('Không thể sao chép. Vui lòng sao chép thủ công.');
+            }
+            document.body.removeChild(textArea);
+        }
+    },
+
+    // ==========================================
+    // 7. PDF EXPORT (Phase 4)
+    // ==========================================
+    showPdfMenu: false,
+
+    escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    },
+
+    generatePdfListHtml(students) {
+        const today = new Date().toLocaleDateString('vi-VN');
+        const year = window.TNTT?.currentYear?.name || 'Niên khoá hiện tại';
+        const block = this.filterBlock || 'Tất cả các khối';
+        const cls = this.filterClass || 'Tất cả các lớp';
+
+        let rows = students.map((s, i) => `
+            <tr>
+                <td>${i + 1}</td>
+                <td>${this.escapeHtml(s.code)}</td>
+                <td>${this.escapeHtml(s.holyName)} ${this.escapeHtml(s.name)}</td>
+                <td>${s.gender === 1 ? 'Nam' : 'Nữ'}</td>
+                <td>${s.birthDate ? new Date(s.birthDate).toLocaleDateString('vi-VN') : '-'}</td>
+                <td>${this.escapeHtml(s.className || '-')}</td>
+                <td>${this.escapeHtml(s.status)}</td>
+            </tr>
+        `).join('');
+
+        return `
+            <div class="header">
+                <h1>DANH SÁCH THIẾU NHI</h1>
+                <p>Khối: ${this.escapeHtml(block)} | Lớp: ${this.escapeHtml(cls)}</p>
+                <p>${this.escapeHtml(year)} | Ngày in: ${today} | Tổng: ${students.length} em</p>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>STT</th>
+                        <th>Mã</th>
+                        <th>Họ tên</th>
+                        <th>GT</th>
+                        <th>Ngày sinh</th>
+                        <th>Lớp</th>
+                        <th>Tình trạng</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+        `;
+    },
+
+    generatePdfCardsHtml(students) {
+        const today = new Date().toLocaleDateString('vi-VN');
+        const year = window.TNTT?.currentYear?.name || 'Niên khoá hiện tại';
+
+        let cards = students.map(s => `
+            <div class="card">
+                <div class="card-header">
+                    <strong>${this.escapeHtml(s.holyName)} ${this.escapeHtml(s.name)}</strong>
+                    <span>${this.escapeHtml(s.code)}</span>
+                </div>
+                <div class="card-body">
+                    <p><strong>Lớp:</strong> ${this.escapeHtml(s.className || '-')}</p>
+                    <p><strong>Giới tính:</strong> ${s.gender === 1 ? 'Nam' : 'Nữ'}</p>
+                    <p><strong>Ngày sinh:</strong> ${s.birthDate ? new Date(s.birthDate).toLocaleDateString('vi-VN') : '-'}</p>
+                    <p><strong>Địa chỉ:</strong> ${this.escapeHtml(s.address || '-')}</p>
+                    <p><strong>Cha:</strong> ${this.escapeHtml(s.fatherName || '-')} - ${this.escapeHtml(s.fatherPhone || '-')}</p>
+                    <p><strong>Mẹ:</strong> ${this.escapeHtml(s.motherName || '-')} - ${this.escapeHtml(s.motherPhone || '-')}</p>
+                </div>
+            </div>
+        `).join('');
+
+        return `
+            <div class="header">
+                <h1>THẺ THIẾU NHI</h1>
+                <p>${this.escapeHtml(year)} | Ngày in: ${today} | Tổng: ${students.length} em</p>
+            </div>
+            <div class="cards-grid">${cards}</div>
+        `;
+    },
+
+    exportPdf(type) {
+        this.showPdfMenu = false;
+        const students = this.filteredStudents;
+        if (students.length === 0) {
+            window.TNTT.toast.warning(STUDENTS_I18N.NO_DATA_EXPORT);
+            return;
+        }
+
+        const content = type === 'cards'
+            ? this.generatePdfCardsHtml(students)
+            : this.generatePdfListHtml(students);
+
+        const printWindow = window.open('', '_blank');
+        if (!printWindow) {
+            window.TNTT.toast.error('Trình duyệt chặn popup. Vui lòng cho phép popup.');
+            return;
+        }
+
+        printWindow.document.write(`
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Danh sách thiếu nhi - ${new Date().toLocaleDateString('vi-VN')}</title>
+    <style>
+        @page { margin: 15mm; size: A4; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Times New Roman', serif; font-size: 11pt; line-height: 1.4; }
+        .header { text-align: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #000; }
+        .header h1 { font-size: 16pt; margin-bottom: 5px; }
+        .header p { font-size: 10pt; color: #555; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #000; padding: 6px 8px; text-align: left; }
+        th { background: #f0f0f0; font-weight: bold; }
+        tr:nth-child(even) { background: #fafafa; }
+        .cards-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 20px; }
+        .card { border: 1px solid #000; padding: 12px; page-break-inside: avoid; }
+        .card-header { display: flex; justify-content: space-between; border-bottom: 1px solid #ccc; padding-bottom: 8px; margin-bottom: 8px; }
+        .card-header span { color: #666; font-size: 9pt; }
+        .card-body p { margin-bottom: 4px; font-size: 10pt; }
+        @media print { body { print-color-adjust: exact; -webkit-print-color-adjust: exact; } }
+    </style>
+</head>
+<body>${content}</body>
+</html>`);
+        printWindow.document.close();
+        setTimeout(() => printWindow.print(), 250);
     },
 };

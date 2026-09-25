@@ -116,17 +116,53 @@ window.TNTT.access = {
             const matchStatus = this.filterStatus === '' || s.status === this.filterStatus;
             const matchBlock  = this.filterBlock === ''  || s.block === this.filterBlock;
             const matchClass  = this.filterClass === ''  || s.className === this.filterClass;
-            return matchSearch && matchStatus && matchBlock && matchClass;
+            // Enhanced filters
+            const matchGender = this.filterGender === '' || String(s.gender) === this.filterGender;
+            const matchAddress = this.filterAddress === '' ||
+                (s.address && this.normalizeText(s.address).includes(this.normalizeText(this.filterAddress)));
+            // Age filter
+            let matchAge = true;
+            if (this.filterAgeFrom !== '' || this.filterAgeTo !== '') {
+                const age = this._calculateAge(s.birthDate);
+                if (this.filterAgeFrom !== '' && age < parseInt(this.filterAgeFrom)) matchAge = false;
+                if (this.filterAgeTo !== '' && age > parseInt(this.filterAgeTo)) matchAge = false;
+            }
+            return matchSearch && matchStatus && matchBlock && matchClass && matchGender && matchAge && matchAddress;
         });
     },
 
+    // Tính tuổi từ ngày sinh
+    _calculateAge(birthDate) {
+        if (!birthDate) return 0;
+        const birth = new Date(birthDate);
+        const today = new Date();
+        let age = today.getFullYear() - birth.getFullYear();
+        const monthDiff = today.getMonth() - birth.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+            age--;
+        }
+        return age;
+    },
+
     get hasActiveFilter() {
-        return this.filterStatus !== '' || this.filterBlock !== '' || this.filterClass !== '';
+        return !!(
+            this.filterBlock ||
+            this.filterClass ||
+            this.filterStatus ||
+            this.filterGender ||
+            this.filterAgeFrom ||
+            this.filterAgeTo ||
+            this.filterAddress
+        );
     },
 
     clearFilters() {
-        this.filterStatus = '';
         this.filterBlock = '';
         this.filterClass = '';
+        this.filterStatus = '';
+        this.filterGender = '';
+        this.filterAgeFrom = '';
+        this.filterAgeTo = '';
+        this.filterAddress = '';
     },
 };
