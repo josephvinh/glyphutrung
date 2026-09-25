@@ -3,12 +3,17 @@
   "short_name": "GĐGLPT",
   "description": "Quản lý Đoàn Thiếu Nhi Thánh Thể",
   "lang": "vi",
-  "start_url": ".",
-  "scope": ".",
+  "id": "glyphutrung-tntt",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#f8fafc",
   "theme_color": "#c8203a",
+  "categories": ["education", "productivity"],
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
   "icons": [
     {
       "src": "assets/img/icon.svg",
@@ -21,6 +26,35 @@
       "sizes": "180x180",
       "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "assets/img/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Điểm Danh",
+      "short_name": "Điểm Danh",
+      "description": "Điểm danh nhanh cho buổi học",
+      "url": "/?m=attendance",
+      "icons": [{ "src": "assets/img/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Danh Sách Thiếu Nhi",
+      "short_name": "Thiếu Nhi",
+      "description": "Xem danh sách Thiếu Nhi",
+      "url": "/?m=students",
+      "icons": [{ "src": "assets/img/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Thông Báo",
+      "short_name": "Thông Báo",
+      "description": "Xem thông báo mới",
+      "url": "/?m=announcements",
+      "icons": [{ "src": "assets/img/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }

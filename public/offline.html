@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#c8203a">
+    <title>Không có mạng — GĐGLPT</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #c8203a 0%, #a01830 100%);
+            min-height: 100dvh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            color: #fff;
+        }
+        .card {
+            background: #fff;
+            border-radius: 1.5rem;
+            padding: 2rem;
+            max-width: 360px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            color: #334155;
+        }
+        .icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1.5rem;
+            background: #fef2f4;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .icon svg {
+            width: 40px;
+            height: 40px;
+            stroke: #c8203a;
+            stroke-width: 1.5;
+            fill: none;
+        }
+        h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 0.5rem;
+        }
+        p {
+            font-size: 0.9rem;
+            color: #64748b;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #c8203a;
+            color: #fff;
+            font-weight: 600;
+            font-size: 0.9rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            transition: transform 0.15s, background 0.15s;
+        }
+        .btn:active { transform: scale(0.96); }
+        .btn:hover { background: #a01830; }
+        .btn svg {
+            width: 18px;
+            height: 18px;
+            stroke: currentColor;
+            stroke-width: 2;
+            fill: none;
+        }
+        .hint {
+            margin-top: 1.25rem;
+            padding: 0.875rem;
+            background: #f8fafc;
+            border-radius: 0.875rem;
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+        .hint strong { color: #475569; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="icon">
+            <!-- WiFi-off icon -->
+            <svg viewBox="0 0 24 24">
+                <path d="M1 1l22 22"/>
+                <path d="M16.72 11.06A10.94 10.94 0 0119 12.55"/>
+                <path d="M5 12.55a10.94 10.94 0 015.17-2.39"/>
+                <path d="M10.71 5.05A16 16 0 0122.58 9"/>
+                <path d="M1.42 9a15.91 15.91 0 014.7-2.88"/>
+                <path d="M8.53 16.11a6 6 0 016.95 0"/>
+                <line x1="12" y1="20" x2="12.01" y2="20"/>
+            </svg>
+        </div>
+        <h1>Không có kết nối mạng</h1>
+        <p>Ứng dụng cần internet để hoạt động. Vui lòng kiểm tra WiFi hoặc dữ liệu di động của bạn.</p>
+        <button class="btn" onclick="retry()">
+            <!-- Refresh icon -->
+            <svg viewBox="0 0 24 24">
+                <polyline points="23 4 23 10 17 10"/>
+                <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
+            </svg>
+            Thử lại
+        </button>
+        <div class="hint">
+            <strong>Mẹo:</strong> Sau khi có mạng, app sẽ tự động tải lại dữ liệu mới nhất.
+        </div>
+    </div>
+    <script>
+        function retry() {
+            if (navigator.onLine) {
+                // Có mạng rồi, thử tải lại trang chính
+                location.href = '/';
+            } else {
+                // Vẫn chưa có mạng, thử reload
+                location.reload();
+            }
+        }
+        // Tự động thử lại khi có mạng trở lại
+        window.addEventListener('online', function() {
+            var btn = document.querySelector('.btn');
+            btn.textContent = 'Đã kết nối — Đang tải...';
+            btn.disabled = true;
+            setTimeout(function() { retry(); }, 500);
+        });
+    </script>
+</body>
+</html>

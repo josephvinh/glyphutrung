@@ -10,15 +10,17 @@
    Vì sao làm vậy: nội dung không phải đi qua máy chủ đẩy của Google hay
    Apple — họ chỉ thấy một tín hiệu rỗng. Và phía PHP đỡ phải mã hoá
    payload, vốn là phần dài và dễ sai nhất của Web Push.
-   
-   TỐI ƯU:
+
+   FEATURES:
      - Cache-first với stale-while-revalidate cho static assets
-     - Preload critical resources
-     - Background sync cho offline actions
+     - Offline fallback page cho navigation requests
+     - Background sync cho offline attendance actions
+     - Message handlers cho cache management
    ========================================================== */
 
-const PHIEN_BAN = 'tntt-sw-8';
+const PHIEN_BAN = 'tntt-sw-9';
 const KHO      = 'tntt-tinh-' + PHIEN_BAN;
+const OFFLINE_PAGE = '/offline.html';
 
 // Critical resources cần preload khi có network
 const CRITICAL_ASSETS = [
@@ -26,12 +28,13 @@ const CRITICAL_ASSETS = [
     '/assets/js/bundle.php',
 ];
 
+// Background sync tag cho attendance
+const BG_SYNC_TAG_ATTENDANCE = 'tntt-attendance-sync';
+
 self.addEventListener('install', (e) => {
     // Precache critical assets khi install
     e.waitUntil((async () => {
         const kho = await caches.open(KHO);
-        // Chỉ cache những gì thực sự cần cho offline
-        // Các file đã có ?v=<timestamp> nên không cần lo cache busting
         try {
             await Promise.allSettled([
                 kho.add('/assets/css/bundle.php'),
@@ -45,8 +48,7 @@ self.addEventListener('install', (e) => {
 });
 
 self.addEventListener('activate', (e) => e.waitUntil((async () => {
-    // Dọn kho của phiên bản cũ, kẻo mỗi lần cập nhật app lại tồn thêm
-    // một bộ tệp cũ trong máy người dùng.
+    // Dọn kho của phiên bản cũ
     for (const ten of await caches.keys()) {
         if (ten.startsWith('tntt-tinh-') && ten !== KHO) await caches.delete(ten);
     }
@@ -66,10 +68,11 @@ self.addEventListener('activate', (e) => e.waitUntil((async () => {
      - Mọi thứ khác (api/, index.php, sw.js) -> LUÔN ĐI MẠNG.
        Điểm danh, điểm số, danh sách phải là số liệu thật của lúc này.
        Đem chúng ra khỏi mạng là sai nghiêm trọng.
-       
+       NGOẠI TRỪ: offline fallback page khi không có mạng.
+
    TỐI ƯU THÊM:
      - Stale-while-revalidate: trả cache ngay, update cache ở nền
-     - Compression cache: lưu cả bản nén để tiết kiệm bandwidth
+     - Offline fallback cho navigation requests
    ========================================================== */
 const CHO_GIU = /.(js|css|png|svg|jpg|jpeg|webp|woff2?)$/i;
 
@@ -79,57 +82,325 @@ self.addEventListener('fetch', (e) => {
 
     const url = new URL(req.url);
 
-    // MÁY PHÁT TRIỂN (localhost / 127.0.0.1): KHÔNG dùng kho, luôn đi mạng.
-    // Kiểu cache-first bên dưới khiến sửa code phải reload hai lần mới thấy
-    // (lần đầu trả bản cũ trong kho). Trên máy dev điều đó rất khó chịu và
-    // dễ tưởng "code không ăn". Bản thật (Apache production) vẫn giữ kho để
-    // mở nhanh + chạy offline.
+    // MÁY PHÁT TRIỂN (localhost / 127.0.0.1): KHÔNG dùng kho
     if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') return;
 
-    // Chỉ giữ tệp của chính mình. Phông chữ Google có bộ đệm riêng của
-    // trình duyệt rồi, xen vào chỉ tổ rắc rối.
+    // Chỉ giữ tệp của chính mình
     if (url.origin !== self.location.origin) return;
 
-    // Những thứ TUYỆT ĐỐI không được lấy từ kho
-    if (url.pathname.startsWith('/api/')) return;
+    // Những thứ TUYỆT ĐỐI không được lấy từ kho (ngoại trừ offline fallback)
     if (url.pathname.endsWith('/sw.js')) return;
+    if (url.pathname.startsWith('/api/')) return;
 
-    // Tệp tĩnh: đuôi .js/.css/ảnh, HOẶC bundle.php (JS/CSS gộp cho bản thật —
-    // đuôi .php nhưng bản chất là tệp tĩnh, cần giữ để chạy offline).
+    // Tệp tĩnh: đuôi .js/.css/ảnh, HOẶC bundle.php
     const laTinh = CHO_GIU.test(url.pathname) || url.pathname.endsWith('/bundle.php');
-    if (!laTinh) return;
+    if (laTinh) {
+        e.respondWith(handleStaticAsset(req));
+        return;
+    }
 
-    e.respondWith((async () => {
-        const kho = await caches.open(KHO);
-        const cu  = await kho.match(req);
+    // Navigation requests (trang HTML): dùng stale-while-revalidate
+    // Nếu offline, trả offline.html
+    if (req.mode === 'navigate') {
+        e.respondWith(handleNavigation(req));
+        return;
+    }
+});
 
-        // Tải bản mới ở nền (stale-while-revalidate pattern)
-        // Đường dẫn đều kèm ?v=<thời điểm sửa tệp>,
-        // nên sửa tệp là thành khoá khác, không lo kẹt bản cũ.
-        const dangTai = fetch(req).then((res) => {
+/**
+ * Xử lý tệp tĩnh: stale-while-revalidate pattern
+ */
+async function handleStaticAsset(req) {
+    const kho = await caches.open(KHO);
+    const cu  = await kho.match(req);
+
+    // Tải bản mới ở nền (stale-while-revalidate)
+    const dangTai = fetch(req).then((res) => {
+        if (res && res.ok) {
+            kho.put(req, res.clone());
+        }
+        return res;
+    }).catch(() => null);
+
+    if (cu) {
+        dangTai; // Fire and forget
+        return cu;
+    }
+
+    const moi = await dangTai;
+    if (moi) return moi;
+
+    return new Response('', { status: 504, statusText: 'Không có mạng' });
+}
+
+/**
+ * Xử lý navigation requests: stale-while-revalidate với offline fallback
+ */
+async function handleNavigation(req) {
+    const kho = await caches.open(KHO);
+    const cu   = await kho.match(req);
+
+    // Luôn thử lấy bản mới ở nền
+    const dangTai = fetch(req)
+        .then((res) => {
             if (res && res.ok) {
-                // Clone response để có thể dùng nhiều lần
                 kho.put(req, res.clone());
             }
             return res;
-        }).catch(() => null);
+        })
+        .catch(() => null);
 
-        // Có trong kho thì trả ngay, không chờ mạng
-        if (cu) {
-            // Vẫn tải bản mới ở nền để lần sau dùng
-            dangTai;
-            return cu;
+    if (cu) {
+        // Trả bản cũ ngay, đồng thời tải bản mới
+        dangTai;
+        return cu;
+    }
+
+    const moi = await dangTai;
+    if (moi) return moi;
+
+    // Không có mạng và cũng không có trong kho: trả offline page
+    const offlineCache = await caches.match(OFFLINE_PAGE);
+    if (offlineCache) return offlineCache;
+
+    // Offline page cũng không cache được: fallback cuối cùng
+    return new Response(getOfflineHTML(), {
+        status: 503,
+        statusText: 'Service Unavailable',
+        headers: { 'Content-Type': 'text/html; charset=utf-8' }
+    });
+}
+
+/**
+ * Inline offline HTML fallback (khi offline.html chưa được cache)
+ */
+function getOfflineHTML() {
+    return `<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Không có mạng</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #c8203a;
+            min-height: 100dvh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            color: #fff;
         }
+        .card {
+            background: #fff;
+            border-radius: 1.5rem;
+            padding: 2rem;
+            max-width: 360px;
+            text-align: center;
+            color: #334155;
+        }
+        h1 { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem; }
+        p { font-size: 0.9rem; color: #64748b; margin-bottom: 1.5rem; }
+        button {
+            background: #c8203a; color: #fff; font-weight: 600;
+            padding: 0.75rem 1.5rem; border-radius: 9999px;
+            border: none; cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Không có kết nối mạng</h1>
+        <p>Ứng dụng cần internet để hoạt động. Vui lòng kiểm tra WiFi.</p>
+        <button onclick="location.reload()">Thử lại</button>
+    </div>
+</body>
+</html>`;
+}
 
-        const moi = await dangTai;
-        if (moi) return moi;
+/* ==========================================================
+   MESSAGE HANDLERS
 
-        // Không có mạng mà cũng không có trong kho: trả lỗi rõ ràng,
-        // đừng để trình duyệt treo.
-        return new Response('', { status: 504, statusText: 'Không có mạng' });
-    })());
+   Nhận message từ app.js để:
+   - Cập nhật cache khi có phiên bản mới
+   - Xoá cache cũ
+   - Đăng ký background sync
+   ========================================================== */
+self.addEventListener('message', (e) => {
+    const { action, data } = e.data || {};
+
+    switch (action) {
+        case 'SKIP_WAITING':
+            // Báo service worker mới rằng nó có thể activate ngay
+            self.skipWaiting();
+            break;
+
+        case 'CACHE_URLS':
+            // App gửi danh sách URL cần cache trước
+            cacheUrls(e.source, data?.urls || []);
+            break;
+
+        case 'CLEAR_CACHE':
+            // Xoá toàn bộ cache
+            clearAllCache(e.source);
+            break;
+
+        case 'GET_VERSION':
+            // Trả về phiên bản SW hiện tại
+            e.source.postMessage({ action: 'VERSION', version: PHIEN_BAN });
+            break;
+
+        case 'PRECACHE_OFFLINE':
+            // Precaches offline page
+            precacheOfflinePage();
+            break;
+    }
 });
 
+/**
+ * Cache danh sách URL được gửi từ app
+ */
+async function cacheUrls(client, urls) {
+    if (!urls || !urls.length) return;
+
+    const kho = await caches.open(KHO);
+    let cached = 0;
+    let failed = 0;
+
+    await Promise.allSettled(urls.map(async (url) => {
+        try {
+            const res = await fetch(url);
+            if (res.ok) {
+                await kho.put(url, res);
+                cached++;
+            } else {
+                failed++;
+            }
+        } catch {
+            failed++;
+        }
+    }));
+
+    // Báo app kết quả
+    if (client && client.postMessage) {
+        client.postMessage({
+            action: 'CACHE_COMPLETE',
+            cached,
+            failed,
+            total: urls.length
+        });
+    }
+}
+
+/**
+ * Xoá toàn bộ cache
+ */
+async function clearAllCache(client) {
+    const deleted = [];
+    for (const ten of await caches.keys()) {
+        if (await caches.delete(ten)) deleted.push(ten);
+    }
+
+    if (client && client.postMessage) {
+        client.postMessage({ action: 'CACHE_CLEARED', caches: deleted });
+    }
+}
+
+/**
+ * Precaches offline page
+ */
+async function precacheOfflinePage() {
+    try {
+        const res = await fetch(OFFLINE_PAGE);
+        if (res.ok) {
+            const kho = await caches.open(KHO);
+            await kho.put(OFFLINE_PAGE, res);
+            console.log('[SW] Offline page cached');
+        }
+    } catch (err) {
+        console.warn('[SW] Cannot cache offline page:', err);
+    }
+}
+
+/* ==========================================================
+   BACKGROUND SYNC
+
+   Cho phép gửi attendance khi offline, tự động sync khi có mạng
+   ========================================================== */
+
+// Đăng ký background sync khi có action cần sync
+self.addEventListener('sync', (e) => {
+    if (e.tag === BG_SYNC_TAG_ATTENDANCE) {
+        e.waitUntil(syncPendingAttendance());
+    }
+});
+
+/**
+ * Sync các attendance action đang chờ
+ */
+async function syncPendingAttendance() {
+    // Lấy danh sách action từ IndexedDB
+    try {
+        const db = await openDB();
+        const tx = db.transaction('pending_actions', 'readonly');
+        const store = tx.objectStore('pending_actions');
+        const actions = await getAllFromStore(store);
+
+        for (const action of actions) {
+            if (action.type === 'attendance') {
+                try {
+                    const res = await fetch('/api/attendance.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(action.data),
+                        credentials: 'include'
+                    });
+
+                    if (res.ok) {
+                        // Xoá action đã sync thành công
+                        const delTx = db.transaction('pending_actions', 'readwrite');
+                        delTx.objectStore('pending_actions').delete(action.id);
+                    }
+                } catch (err) {
+                    console.warn('[SW] Sync attendance failed:', err);
+                }
+            }
+        }
+    } catch (err) {
+        console.warn('[SW] Cannot open pending_actions DB:', err);
+    }
+}
+
+/**
+ * Mở IndexedDB để lưu pending actions
+ */
+function openDB() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open('tntt-sw-db', 1);
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve(request.result);
+        request.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains('pending_actions')) {
+                db.createObjectStore('pending_actions', { keyPath: 'id', autoIncrement: true });
+            }
+        };
+    });
+}
+
+function getAllFromStore(store) {
+    return new Promise((resolve, reject) => {
+        const request = store.getAll();
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve(request.result || []);
+    });
+}
+
+/* ==========================================================
+   PUSH NOTIFICATIONS
+   ========================================================== */
 self.addEventListener('push', (e) => {
     e.waitUntil((async () => {
         let tin = {
@@ -150,13 +421,12 @@ self.addEventListener('push', (e) => {
                 if (d && d.ok && d.item) tin = Object.assign(tin, d.item);
             }
         } catch (err) {
-            // Mất mạng hoặc phiên hết hạn: vẫn hiện thông báo chung,
-            // còn hơn im lặng để người ta lỡ việc.
+            // Mất mạng: vẫn hiện thông báo chung
         }
 
-        // Báo cho các tab đang mở tự tải lại dữ liệu
+        // Báo các tab đang mở tự tải lại dữ liệu
         let isFocused = false;
-        const ds = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+        const ds = await self.clients.matchAll({ type: 'Window', includeUncontrolled: true });
         for (const c of ds) {
             if (c.visibilityState === 'visible') {
                 c.postMessage({ action: 'RELOAD_DATA', url: tin.url });
@@ -164,14 +434,13 @@ self.addEventListener('push', (e) => {
             if (c.focused) isFocused = true;
         }
 
-        // Nếu Admin đang trực tiếp dùng app thì không dội chuông báo hệ thống làm phiền
         if (isFocused) return;
 
         await self.registration.showNotification(tin.title, {
             body: tin.body,
             icon: 'assets/img/icon.svg',
             badge: 'assets/img/icon-32.png',
-            tag: tin.tag,               // cùng tag thì gộp, không dội chuông liên tục
+            tag: tin.tag,
             renotify: false,
             data: { url: tin.url },
             vibrate: [80, 40, 80]
@@ -179,14 +448,13 @@ self.addEventListener('push', (e) => {
     })());
 });
 
-/* Chạm vào thông báo: mở đúng màn hình liên quan.
-   Nếu app đang mở sẵn ở đâu đó thì đưa cửa sổ đó lên, không mở thêm. */
+/* Chạm vào thông báo: mở đúng màn hình liên quan */
 self.addEventListener('notificationclick', (e) => {
     e.notification.close();
     const dich = (e.notification.data && e.notification.data.url) || '/';
 
     e.waitUntil((async () => {
-        const ds = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+        const ds = await self.clients.matchAll({ type: 'Window', includeUncontrolled: true });
         for (const c of ds) {
             if (c.url.includes(self.location.origin)) {
                 await c.focus();

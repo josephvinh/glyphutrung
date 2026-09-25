@@ -20,7 +20,7 @@ return [
         'core', 'programs', 'students', 'student_profile', 'attendance', 'qrscan', 'qrcard',
         'custom-qrcard',
         'leave', 'birthdays', 'announcements', 'stats', 'analytics', 'scores',
-        'reports', 'promotion', 'org', 'push', 'access', 'dashboard', 'shell',
+        'reports', 'promotion', 'org', 'push', 'pwa', 'access', 'dashboard', 'shell',
         'calendar', 'notes', 'passkey', 'library',
     ],
     // Thứ tự CSS = thứ tự cascade: tailwind (nền) trước, phần ghi đè sau.
