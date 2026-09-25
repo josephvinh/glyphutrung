@@ -519,9 +519,8 @@ window.TNTT.qrcard = {
         };
 
         try {
-            const res = await fetch('/api/custom-qrcard.php?action=save-preset', {
+            const res = await window.TNTT.csrfFetch('/api/custom-qrcard.php?action=save-preset', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     name: this.qrPresetName.trim(),
                     config: config,
@@ -549,9 +548,8 @@ window.TNTT.qrcard = {
         if (!await window.TNTT.toast.confirm('Xóa preset này?')) return;
 
         try {
-            const res = await fetch('/api/custom-qrcard.php?action=delete-preset', {
+            const res = await window.TNTT.csrfFetch('/api/custom-qrcard.php?action=delete-preset', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id: id }),
             });
             const data = await res.json();
@@ -575,9 +573,8 @@ window.TNTT.qrcard = {
             if (!preset) return;
 
             // Re-save with isDefault = true
-            const res = await fetch('/api/custom-qrcard.php?action=save-preset', {
+            const res = await window.TNTT.csrfFetch('/api/custom-qrcard.php?action=save-preset', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     id: id,
                     name: preset.name,
@@ -618,8 +615,12 @@ window.TNTT.qrcard = {
             const formData = new FormData();
             formData.append('logo', file);
 
+            // FormData: KHÔNG tự đặt Content-Type (để trình duyệt tự thêm
+            // multipart boundary). Chỉ gắn CSRF token qua header, nếu không
+            // server trả "Invalid CSRF token".
             const res = await fetch('/api/custom-qrcard.php?action=upload-logo', {
                 method: 'POST',
+                headers: { 'X-CSRF-TOKEN': window.TNTT.csrfToken },
                 body: formData,
             });
             const data = await res.json();
@@ -641,9 +642,8 @@ window.TNTT.qrcard = {
         if (!await window.TNTT.toast.confirm('Xóa logo này?')) return;
 
         try {
-            const res = await fetch('/api/custom-qrcard.php?action=delete-logo', {
+            const res = await window.TNTT.csrfFetch('/api/custom-qrcard.php?action=delete-logo', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id: id }),
             });
             const data = await res.json();
