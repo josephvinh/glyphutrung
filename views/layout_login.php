@@ -18,10 +18,11 @@ if (!$__dev) ob_start();
          icon-180   : iOS "Thêm vào màn hình chính" (iOS không nhận SVG)
          manifest   : Android, để cài như một app riêng
          Đổi logo: thay assets/img/icon.svg rồi chạy  node build/tao_icon.cjs -->
-    <link rel="icon" href="/assets/img/icon.svg" type="image/svg+xml">
-    <link rel="icon" href="/assets/img/icon-32.png" sizes="32x32" type="image/png">
-    <link rel="apple-touch-icon" href="/assets/img/icon-180.png">
-    <link rel="manifest" href="/manifest.json">
+    <link rel="preload" href="assets/img/icon.svg" as="image" type="image/svg+xml">
+    <link rel="icon" href="assets/img/icon.svg" type="image/svg+xml">
+    <link rel="icon" href="assets/img/icon-32.png" sizes="32x32" type="image/png">
+    <link rel="apple-touch-icon" href="assets/img/icon-180.png">
+    <link rel="manifest" href="manifest.json">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <title>Đăng nhập · GIA ĐÌNH GIÁO LÝ PHÚ TRUNG</title>

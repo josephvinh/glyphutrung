@@ -162,7 +162,7 @@
             </div>
 
             <!-- PDF Export Dropdown (Phase 4) -->
-            <div class="relative" x-data="{ showPdfMenu: false }">
+            <div class="relative" x-data="{ showPdfMenu: false }" @keydown.escape.window="showPdfMenu = false">
                 <button @click="showPdfMenu = !showPdfMenu" type="button" title="Xuất PDF"
                         class="flex items-center gap-1 px-3 py-2 bg-rose-50 text-rose-600 rounded-xl font-bold text-xs border border-rose-100 hover:bg-rose-100 active:scale-95 transition-all">
                     <i data-lucide="file-text" class="w-4 h-4"></i>
@@ -261,10 +261,10 @@
                                 :class="isFavorite(student.id) ? 'text-amber-500 hover:text-amber-600' : 'text-slate-300 hover:text-amber-500'">
                             <i data-lucide="star" class="w-5 h-5" :fill="isFavorite(student.id) ? 'currentColor' : 'none'"></i>
                         </button>
-                        <!-- Quick Actions: Copy Phone & Edit -->
-                        <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <!-- Quick Actions: Copy Phone & Edit (luôn hiện trên mobile, hover trên desktop) -->
+                        <div class="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                             <!-- Copy phone dropdown -->
-                            <div class="relative" x-data="{ showCopyMenu: false }" @click.away="showCopyMenu = false">
+                            <div class="relative" x-data="{ showCopyMenu: false }" @click.away="showCopyMenu = false" @keydown.escape.window="showCopyMenu = false">
                                 <button @click="showCopyMenu = !showCopyMenu" type="button" title="Sao chép SĐT" class="tap-safe w-8 h-8 bg-slate-50 hover:bg-amber-50 rounded-full flex items-center justify-center text-slate-400 hover:text-amber-600 border border-slate-200 transition-colors">
                                     <i data-lucide="clipboard" class="w-4 h-4"></i>
                                 </button>
@@ -364,7 +364,7 @@
                                 </td>
                                 <td class="px-4 py-3 text-slate-500 font-medium" x-text="index + 1"></td>
                                 <td class="px-4 py-3 text-slate-600" x-text="student.holyName"></td>
-                                <td class="px-4 py-3 font-semibold text-slate-800" x-text="student.name"></td>
+                                <td class="px-4 py-3 font-semibold text-slate-800 hover:text-blue-600 cursor-pointer" @click="openStudentProfile(student)" title="Xem hồ sơ em" x-text="student.name"></td>
                                 <td class="px-4 py-3 text-slate-600" x-text="student.className"></td>
                                 <td class="px-4 py-3">
                                     <span :class="student.gender === 1 ? 'text-blue-600' : 'text-rose-500'" x-text="student.gender === 1 ? 'Nam' : 'Nữ'"></span>
@@ -391,11 +391,11 @@
                                 </td>
                                 <td class="px-4 py-3 text-center">
                                     <div class="flex items-center justify-center gap-1">
+                                        <button @click="openStudentProfile(student)" type="button" title="Xem hồ sơ" class="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                                            <i data-lucide="folder-open" class="w-4 h-4"></i>
+                                        </button>
                                         <button @click="toggleFavorite(student.id)" type="button" :title="isFavorite(student.id) ? 'Bỏ yêu thích' : 'Yêu thích'" class="p-1.5 transition-colors rounded-lg" :class="isFavorite(student.id) ? 'text-amber-500 hover:text-amber-600 hover:bg-amber-50' : 'text-slate-300 hover:text-amber-500 hover:bg-amber-50'">
                                             <i data-lucide="star" class="w-4 h-4" :fill="isFavorite(student.id) ? 'currentColor' : 'none'"></i>
-                                        </button>
-                                        <button @click="copyPhone(student.fatherPhone)" type="button" title="Sao chép SĐT" class="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors">
-                                            <i data-lucide="clipboard" class="w-4 h-4"></i>
                                         </button>
                                         <button x-show="canEditModule('students')" style="display: none;" @click="openEdit(student)" type="button" title="Sửa hồ sơ" class="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
                                             <i data-lucide="pencil" class="w-4 h-4"></i>

@@ -1,5 +1,5 @@
 <!-- MÀN HÌNH THỐNG KÊ — chỉ hiển thị trong hub Báo cáo (tab Thống kê). -->
-<div class="module-panel pt-6 pb-24 relative" x-data="{ statTab: 'tong_quan' }">
+<div class="relative" x-data="{ statTab: 'tong_quan' }">
 
     <!-- 1. THANH ĐIỀU HƯỚNG & CHỌN THÁNG -->
     <div class="flex flex-col gap-3 mb-5">

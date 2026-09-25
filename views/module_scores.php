@@ -112,6 +112,7 @@
                     </div>
 
                     <input type="number" min="0" max="10" step="0.1" inputmode="decimal" placeholder="–"
+                           :aria-label="'Điểm ' + currentScoreType.label + ' của ' + s.name"
                            :disabled="!canWriteScores"
                            :value="scoreOf(s.id, scoreType)"
                            @change="onScoreInput(s.id, scoreType, $event)"
