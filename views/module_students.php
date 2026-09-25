@@ -55,7 +55,46 @@
                     </select>
                 </div>
             </div>
-            
+
+            <!-- Enhanced Filters: Gender, Age, Address -->
+            <div class="mt-4 pt-4 border-t">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <!-- Gender -->
+                    <div>
+                        <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Giới tính</label>
+                        <select x-model="filterGender" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm">
+                            <option value="">Tất cả</option>
+                            <option value="1">Nam</option>
+                            <option value="0">Nữ</option>
+                        </select>
+                    </div>
+                    <!-- Age range -->
+                    <div>
+                        <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Tuổi từ</label>
+                        <select x-model="filterAgeFrom" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm">
+                            <option value="">-</option>
+                            <template x-for="age in Array.from({length: 22}, (_, i) => i + 5)">
+                                <option :value="age" x-text="age"></option>
+                            </template>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Đến tuổi</label>
+                        <select x-model="filterAgeTo" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm">
+                            <option value="">-</option>
+                            <template x-for="age in Array.from({length: 22}, (_, i) => i + 5)">
+                                <option :value="age" x-text="age"></option>
+                            </template>
+                        </select>
+                    </div>
+                </div>
+                <!-- Address -->
+                <div class="mt-4">
+                    <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Địa chỉ</label>
+                    <input x-model="filterAddress" type="text" placeholder="Tìm theo địa chỉ..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm">
+                </div>
+            </div>
+
             <div class="mt-4 flex justify-end" x-show="hasActiveFilter" style="display: none;">
                 <button @click="clearFilters()" type="button" class="flex items-center justify-center gap-1.5 px-4 py-2 bg-slate-100 text-slate-600 rounded-xl font-bold text-xs active:scale-95 transition-transform border border-slate-200">
                     <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Xóa bộ lọc
@@ -124,6 +163,16 @@
                 <span x-show="filteredStudents.length === 0" style="display: none;" class="inline-flex items-center justify-center"><i data-lucide="file-down" class="w-4 h-4"></i></span>
                 <span x-text="filteredStudents.length === 0 ? 'Tải mẫu' : 'Xuất'"></span>
             </button>
+
+            <!-- Grid/List Toggle -->
+            <div class="flex gap-1">
+                <button @click="viewMode = 'grid'; localStorage.setItem('studentsViewMode', 'grid')" :class="viewMode === 'grid' ? 'bg-blue-600 text-white' : 'bg-white text-slate-600'" class="px-3 py-2 rounded-lg border shadow-sm">
+                    <i data-lucide="layout-grid" class="w-4 h-4"></i>
+                </button>
+                <button @click="viewMode = 'list'; localStorage.setItem('studentsViewMode', 'list')" :class="viewMode === 'list' ? 'bg-blue-600 text-white' : 'bg-white text-slate-600'" class="px-3 py-2 rounded-lg border shadow-sm">
+                    <i data-lucide="list" class="w-4 h-4"></i>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -131,8 +180,8 @@
     <!-- Skeleton loading state - chỉ hiện khi đang sync và chưa có dữ liệu -->
     <?php include __DIR__ . '/partial_students_skeleton.php'; ?>
 
-    <!-- Actual student list - hiện khi KHÔNG sync HOẶC đã có dữ liệu -->
-    <div x-show="!syncing || students.length > 0" style="display: none;" class="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-2 xl:grid-cols-3 xl:gap-4 xl:items-start">
+    <!-- GRID VIEW: Card layout -->
+    <div x-show="viewMode === 'grid' && (!syncing || students.length > 0)" style="display: none;" class="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-2 xl:grid-cols-3 xl:gap-4 xl:items-start">
         <template x-for="student in displayedStudents" :key="student.id">
 
             <!-- content-visibility: bỏ qua việc dựng hình các thẻ ngoài màn hình.
@@ -175,6 +224,9 @@
                             <p class="text-sm font-semibold text-slate-700" x-text="student.fatherName"></p>
                         </div>
                         <a :href="'tel:' + student.fatherPhone" :aria-label="'Gọi cha của ' + student.name" class="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 active:scale-90 transition-transform shadow-sm border border-blue-100"><i data-lucide="phone" class="w-4 h-4 fill-blue-100"></i></a>
+                        <button @click="copyToClipboard(student.fatherPhone || student.motherPhone)" class="w-10 h-10 bg-slate-50 hover:bg-blue-50 rounded-full flex items-center justify-center text-slate-400 hover:text-blue-600 active:scale-90 transition-transform shadow-sm border border-slate-100" title="Copy số điện thoại">
+                            <i data-lucide="clipboard" class="w-4 h-4"></i>
+                        </button>
                     </div>
                     <div class="flex justify-between items-center">
                         <div>
@@ -219,6 +271,60 @@
             <p class="text-slate-600 font-semibold text-base mb-1">Không tìm thấy dữ liệu phù hợp</p>
             <p class="text-slate-400 text-sm">Thử thay đổi từ khóa tìm kiếm hoặc xóa bộ lọc</p>
         </div>
+    </div>
+
+    <!-- LIST VIEW: Table layout -->
+    <div x-show="viewMode === 'list' && (filteredStudents.length > 0 || isUnrestrictedScope)" class="overflow-x-auto bg-white rounded-card shadow-sm border border-slate-100">
+        <table class="w-full text-sm">
+            <thead class="bg-slate-100">
+                <tr>
+                    <th class="px-3 py-2 text-left">STT</th>
+                    <th class="px-3 py-2 text-left">Mã</th>
+                    <th class="px-3 py-2 text-left">Tên</th>
+                    <th class="px-3 py-2 text-left">Lớp</th>
+                    <th class="px-3 py-2 text-left">GT</th>
+                    <th class="px-3 py-2 text-left">Tuổi</th>
+                    <th class="px-3 py-2 text-left">Tình trạng</th>
+                    <th class="px-3 py-2 text-center">Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                <template x-for="(student, idx) in filteredStudents" :key="'list-' + student.id">
+                    <tr class="border-b hover:bg-slate-50">
+                        <td class="px-3 py-2" x-text="idx + 1"></td>
+                        <td class="px-3 py-2 font-mono text-xs" x-text="student.code"></td>
+                        <td class="px-3 py-2 font-bold" x-text="student.holyName + ' ' + student.name"></td>
+                        <td class="px-3 py-2" x-text="student.className || '-'"></td>
+                        <td class="px-3 py-2" x-text="student.gender === 1 ? 'Nam' : 'Nữ'"></td>
+                        <td class="px-3 py-2" x-text="calculateAge(student.birthDate)"></td>
+                        <td class="px-3 py-2">
+                            <span class="px-2 py-0.5 rounded-full text-xs font-bold"
+                                  :class="student.status === 'đang sinh hoạt' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'"
+                                  x-text="student.status"></span>
+                        </td>
+                        <td class="px-3 py-2 text-center">
+                            <button @click="openEdit(student)" class="p-1 hover:bg-blue-100 rounded">
+                                <i data-lucide="pencil" class="w-4 h-4 text-blue-600"></i>
+                            </button>
+                        </td>
+                    </tr>
+                </template>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- LIST VIEW: Empty states -->
+    <div x-show="viewMode === 'list' && filteredStudents.length === 0 && !(isUnrestrictedScope && searchQuery === '' && filterBlock === '' && filterClass === '')" style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
+        <i data-lucide="search-x" class="w-12 h-12 mx-auto text-slate-300 mb-4"></i>
+        <p class="text-slate-600 font-semibold text-base mb-1">Không tìm thấy dữ liệu phù hợp</p>
+        <p class="text-slate-400 text-sm">Thử thay đổi từ khóa tìm kiếm hoặc xóa bộ lọc</p>
+    </div>
+
+    <!-- LIST VIEW: Unrestricted scope prompt -->
+    <div x-show="viewMode === 'list' && isUnrestrictedScope && searchQuery === '' && filterBlock === '' && filterClass === ''" style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
+        <i data-lucide="filter" class="w-12 h-12 mx-auto text-slate-300 mb-4"></i>
+        <p class="text-slate-600 font-semibold text-base mb-1">Chọn khối hoặc lớp để xem</p>
+        <p class="text-slate-400 text-sm">Đoàn đông nên danh sách chỉ hiện khi bạn lọc theo khối/lớp, hoặc gõ tìm tên/mã.</p>
     </div>
 
     <!-- POPUP CHỈNH SỬA -->

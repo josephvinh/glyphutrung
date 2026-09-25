@@ -116,17 +116,49 @@ window.TNTT.access = {
             const matchStatus = this.filterStatus === '' || s.status === this.filterStatus;
             const matchBlock  = this.filterBlock === ''  || s.block === this.filterBlock;
             const matchClass  = this.filterClass === ''  || s.className === this.filterClass;
-            return matchSearch && matchStatus && matchBlock && matchClass;
+
+            // Enhanced filters (Phase 1)
+            const matchGender = this.filterGender === '' || String(s.gender) === this.filterGender;
+            let matchAge = true;
+            if (this.filterAgeFrom !== '') {
+                const age = this._calcAge(s.birthDate);
+                if (age === null || age < parseInt(this.filterAgeFrom)) matchAge = false;
+            }
+            if (this.filterAgeTo !== '') {
+                const age = this._calcAge(s.birthDate);
+                if (age === null || age > parseInt(this.filterAgeTo)) matchAge = false;
+            }
+            const matchAddress = this.filterAddress === ''
+                || (s.address || '').toLowerCase().includes(this.filterAddress.toLowerCase());
+
+            return matchSearch && matchStatus && matchBlock && matchClass
+                && matchGender && matchAge && matchAddress;
         });
     },
 
+    _calcAge(birthDate) {
+        if (!birthDate) return null;
+        const birth = new Date(birthDate);
+        const today = new Date();
+        let age = today.getFullYear() - birth.getFullYear();
+        const m = today.getMonth() - birth.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+        return age;
+    },
+
     get hasActiveFilter() {
-        return this.filterStatus !== '' || this.filterBlock !== '' || this.filterClass !== '';
+        return this.filterStatus !== '' || this.filterBlock !== '' || this.filterClass !== ''
+            || this.filterGender !== '' || this.filterAgeFrom !== '' || this.filterAgeTo !== ''
+            || this.filterAddress !== '';
     },
 
     clearFilters() {
         this.filterStatus = '';
         this.filterBlock = '';
         this.filterClass = '';
+        this.filterGender = '';
+        this.filterAgeFrom = '';
+        this.filterAgeTo = '';
+        this.filterAddress = '';
     },
 };

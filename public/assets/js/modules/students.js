@@ -21,9 +21,14 @@ window.TNTT.students = {
     filterStatus: '',
     filterBlock: '',
     filterClass: '',
+    filterGender: '',
+    filterAgeFrom: '',
+    filterAgeTo: '',
+    filterAddress: '',
     showFilter: false,
     showEditModal: false,
     editData: {},
+    viewMode: localStorage.getItem('studentsViewMode') || 'grid',
 
     busy: false,
     displayLimit: 20,
@@ -50,6 +55,49 @@ window.TNTT.students = {
         this.editData.isNew = false;
         this.showEditModal = true;
         this._snapEdit();
+    },
+
+    // ---- View mode persistence ----
+    watchViewMode(val) {
+        localStorage.setItem('studentsViewMode', val);
+    },
+
+    // ---- Calculate age from birth date ----
+    calculateAge(birthDate) {
+        if (!birthDate) return '-';
+        const birth = new Date(birthDate);
+        const today = new Date();
+        let age = today.getFullYear() - birth.getFullYear();
+        const m = today.getMonth() - birth.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+        return age;
+    },
+
+    // ---- Copy text to clipboard ----
+    copyToClipboard(text) {
+        if (!text) return;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(() => {
+                window.TNTT.toast.success('Đã sao chép số điện thoại!');
+            }).catch(() => {
+                this._fallbackCopy(text);
+            });
+        } else {
+            this._fallbackCopy(text);
+        }
+    },
+
+    _fallbackCopy(text) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        try { document.execCommand('copy'); } catch (_) {}
+        document.body.removeChild(ta);
+        window.TNTT.toast.success('Đã sao chép số điện thoại!');
     },
 
     // ---- Chống mất dữ liệu khi lỡ đóng cửa sổ đang sửa dở ----
