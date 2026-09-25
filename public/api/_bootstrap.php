@@ -6,6 +6,11 @@
  * quyền. Mọi file trong api/ đều bắt đầu bằng require file này.
  */
 
+// Định nghĩa ROOT_PATH nếu chưa có
+if (!defined('ROOT_PATH')) {
+    define('ROOT_PATH', dirname(__DIR__, 2));
+}
+
 // Lúc nào cũng dùng giờ Việt Nam, không phụ thuộc cấu hình máy chủ.
 // Nếu server ở Châu Âu, strtotime() vẫn phải hiểu start_time = 07:30 là 7h30 sáng VN.
 date_default_timezone_set('Asia/Ho_Chi_Minh');
@@ -21,6 +26,18 @@ ini_set('log_errors', '1');
 require_once __DIR__ . '/_common.php';
 require_once __DIR__ . '/csrf.php';
 require_once __DIR__ . '/cache.php';
+
+// Khoi tao Logger va Exception Handler
+$debugMode = !app_config('production');
+require_once ROOT_PATH . '/src/Logger.php';
+require_once ROOT_PATH . '/src/ExceptionHandler.php';
+
+TNTT\Logger::bootstrap();
+$exceptionHandler = new TNTT\ExceptionHandler(TNTT\Logger::getInstance(), $debugMode);
+$exceptionHandler->register();
+
+// Register fatal error handler
+register_shutdown_function([TNTT\ExceptionHandler::class, 'handleFatal']);
 
 // Nén phản hồi khi trình duyệt hỗ trợ. data.php có thể tới vài MB (điểm danh
 // cả đoàn); JSON nén gzip giảm ~10 lần → mạng di động đỡ hẳn. Bọc buffer TRƯỚC
