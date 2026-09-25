@@ -17,10 +17,18 @@ window.TNTT.students = {
     // Dùng cho màn Khối & Lớp, vì students ở trên không đủ để đếm.
     classCounts: {},
 
+    // View mode: 'grid' | 'list' — lưu vào localStorage
+    viewMode: localStorage.getItem('studentsViewMode') || 'grid',
+
     searchQuery: '',
     filterStatus: '',
     filterBlock: '',
     filterClass: '',
+    // Enhanced filters
+    filterGender: '',
+    filterAgeFrom: '',
+    filterAgeTo: '',
+    filterAddress: '',
     showFilter: false,
     showEditModal: false,
     editData: {},
@@ -378,5 +386,90 @@ window.TNTT.students = {
         this.importToServer(rows.slice(1), colIndex, fileName).finally(() => {
             this.syncing = false;
         });
+    },
+
+    // ==========================================
+    // 4. VIEW MODE (Grid/List Toggle)
+    // ==========================================
+    setViewMode(mode) {
+        this.viewMode = mode;
+        localStorage.setItem('studentsViewMode', mode);
+    },
+
+    // ==========================================
+    // 5. ENHANCED FILTERS
+    // ==========================================
+    // Age options for dropdown (5-25 tuổi)
+    get ageOptions() {
+        const options = [];
+        for (let i = 5; i <= 25; i++) options.push(i);
+        return options;
+    },
+
+    // Check if any filter is active (including new filters)
+    get hasActiveFilter() {
+        return !!(
+            this.filterBlock ||
+            this.filterClass ||
+            this.filterStatus ||
+            this.filterGender ||
+            this.filterAgeFrom ||
+            this.filterAgeTo ||
+            this.filterAddress
+        );
+    },
+
+    // Clear all filters including enhanced ones
+    clearFilters() {
+        this.filterBlock = '';
+        this.filterClass = '';
+        this.filterStatus = '';
+        this.filterGender = '';
+        this.filterAgeFrom = '';
+        this.filterAgeTo = '';
+        this.filterAddress = '';
+    },
+
+    // Calculate age from birthDate
+    calculateAge(birthDate) {
+        if (!birthDate) return '—';
+        const birth = new Date(birthDate);
+        const today = new Date();
+        let age = today.getFullYear() - birth.getFullYear();
+        const monthDiff = today.getMonth() - birth.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+            age--;
+        }
+        return age;
+    },
+
+    // ==========================================
+    // 6. QUICK ACTIONS
+    // ==========================================
+    // Copy phone number to clipboard
+    async copyPhone(phone) {
+        if (!phone) {
+            window.TNTT.toast.warning('Không có số điện thoại để sao chép.');
+            return;
+        }
+        try {
+            await navigator.clipboard.writeText(phone);
+            window.TNTT.toast.info('Đã sao chép số điện thoại!');
+        } catch (err) {
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = phone;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-9999px';
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                window.TNTT.toast.info('Đã sao chép số điện thoại!');
+            } catch (e) {
+                window.TNTT.toast.error('Không thể sao chép. Vui lòng sao chép thủ công.');
+            }
+            document.body.removeChild(textArea);
+        }
     },
 };

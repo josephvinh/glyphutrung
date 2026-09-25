@@ -26,7 +26,7 @@
 
         <!-- BẢNG LỌC -->
         <div x-show="showFilter" style="display: none;" x-collapse class="mt-3 bg-white p-4 rounded-card shadow-sm border border-slate-100 border-t-4 border-t-blue-500">
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
                 <div x-show="availableBlocks.length > 1" style="display: none;">
                     <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Khối</label>
                     <select x-model="filterBlock" @change="filterClass = ''" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700">
@@ -54,8 +54,44 @@
                         <option value="chuyển xứ">Chuyển xứ</option>
                     </select>
                 </div>
+                <!-- Enhanced: Giới tính -->
+                <div>
+                    <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Giới tính</label>
+                    <select x-model="filterGender" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700">
+                        <option value="">Tất cả</option>
+                        <option value="1">Nam</option>
+                        <option value="0">Nữ</option>
+                    </select>
+                </div>
             </div>
-            
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-end mt-4">
+                <!-- Enhanced: Tuổi từ -->
+                <div>
+                    <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Tuổi từ</label>
+                    <select x-model="filterAgeFrom" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700">
+                        <option value="">Tất cả</option>
+                        <template x-for="age in ageOptions" :key="age">
+                            <option :value="age" x-text="age + ' tuổi'"></option>
+                        </template>
+                    </select>
+                </div>
+                <!-- Enhanced: Tuổi đến -->
+                <div>
+                    <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Tuổi đến</label>
+                    <select x-model="filterAgeTo" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700">
+                        <option value="">Tất cả</option>
+                        <template x-for="age in ageOptions" :key="age">
+                            <option :value="age" x-text="age + ' tuổi'"></option>
+                        </template>
+                    </select>
+                </div>
+                <!-- Enhanced: Địa chỉ -->
+                <div>
+                    <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Địa chỉ</label>
+                    <input x-model="filterAddress" type="text" placeholder="Tìm theo địa chỉ..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                </div>
+            </div>
+
             <div class="mt-4 flex justify-end" x-show="hasActiveFilter" style="display: none;">
                 <button @click="clearFilters()" type="button" class="flex items-center justify-center gap-1.5 px-4 py-2 bg-slate-100 text-slate-600 rounded-xl font-bold text-xs active:scale-95 transition-transform border border-slate-200">
                     <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Xóa bộ lọc
@@ -88,10 +124,26 @@
         </p>
     </div>
 
-    <!-- HÀNG NÚT CÔNG CỤ: THỐNG KÊ & NHẬP/XUẤT -->
+    <!-- HÀNG NÚT CÔNG CỤ: THỐNG KÊ, VIEW MODE, NHẬP/XUẤT -->
     <div class="flex justify-between items-center mb-6">
         <div class="text-sm font-bold text-slate-500">Tổng: <span x-text="filteredStudents.length" class="text-blue-600 text-base"></span> em</div>
         <div class="flex gap-2">
+            <!-- Grid/List Toggle -->
+            <div class="flex items-center bg-slate-100 rounded-xl p-1 gap-0.5">
+                <button @click="setViewMode('grid')" type="button" :title="'Xem dạng lưới'"
+                        :class="viewMode === 'grid' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+                        class="px-3 py-1.5 rounded-lg font-bold text-xs transition-all flex items-center gap-1.5">
+                    <i data-lucide="layout-grid" class="w-4 h-4"></i>
+                    <span class="hidden sm:inline">Lưới</span>
+                </button>
+                <button @click="setViewMode('list')" type="button" :title="'Xem dạng danh sách'"
+                        :class="viewMode === 'list' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+                        class="px-3 py-1.5 rounded-lg font-bold text-xs transition-all flex items-center gap-1.5">
+                    <i data-lucide="list" class="w-4 h-4"></i>
+                    <span class="hidden sm:inline">DS</span>
+                </button>
+            </div>
+
             <!-- In thẻ QR nay là thẻ riêng trong module Thiếu Nhi -->
             <button x-show="canEditModule('students')" style="display: none;"
                     @click="openAddStudent()" type="button"
@@ -132,7 +184,10 @@
     <?php include __DIR__ . '/partial_students_skeleton.php'; ?>
 
     <!-- Actual student list - hiện khi KHÔNG sync HOẶC đã có dữ liệu -->
-    <div x-show="!syncing || students.length > 0" style="display: none;" class="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-2 xl:grid-cols-3 xl:gap-4 xl:items-start">
+    <div x-show="!syncing || students.length > 0" style="display: none;">
+
+        <!-- ===== GRID VIEW (Card Layout) ===== -->
+        <div x-show="viewMode === 'grid'" style="display: none;" class="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-2 xl:grid-cols-3 xl:gap-4 xl:items-start">
         <template x-for="student in displayedStudents" :key="student.id">
 
             <!-- content-visibility: bỏ qua việc dựng hình các thẻ ngoài màn hình.
@@ -150,9 +205,30 @@
                     </div>
                     <div class="flex items-center gap-2 shrink-0">
                         <span class="text-micro font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg" :class="{'bg-emerald-50 text-emerald-600': student.status === 'đang sinh hoạt', 'bg-rose-50 text-rose-600': student.status === 'dừng sinh hoạt', 'bg-slate-100 text-slate-500': student.status === 'chuyển xứ'}" x-text="student.status"></span>
-                        <button aria-label="Sửa hồ sơ thiếu nhi" x-show="canEditModule('students')" style="display: none;" @click="openEdit(student)" class="tap-safe w-8 h-8 bg-slate-50 hover:bg-blue-50 rounded-full flex items-center justify-center text-slate-400 hover:text-blue-600 border border-slate-200 transition-colors">
-                            <i data-lucide="pencil" class="w-4 h-4"></i>
-                        </button>
+                        <!-- Quick Actions: Copy Phone & Edit -->
+                        <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <!-- Copy phone dropdown -->
+                            <div class="relative" x-data="{ showCopyMenu: false }" @click.away="showCopyMenu = false">
+                                <button @click="showCopyMenu = !showCopyMenu" type="button" title="Sao chép SĐT" class="tap-safe w-8 h-8 bg-slate-50 hover:bg-amber-50 rounded-full flex items-center justify-center text-slate-400 hover:text-amber-600 border border-slate-200 transition-colors">
+                                    <i data-lucide="clipboard" class="w-4 h-4"></i>
+                                </button>
+                                <div x-show="showCopyMenu" style="display: none;" x-transition class="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-lg border border-slate-200 py-1 z-50 min-w-[140px]">
+                                    <button @click="copyPhone(student.fatherPhone); showCopyMenu = false" type="button" class="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 flex items-center gap-2">
+                                        <i data-lucide="user" class="w-3.5 h-3.5 text-slate-400"></i>
+                                        <span class="font-medium">Cha:</span>
+                                        <span class="text-slate-600" x-text="student.fatherPhone || '—'"></span>
+                                    </button>
+                                    <button @click="copyPhone(student.motherPhone); showCopyMenu = false" type="button" class="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 flex items-center gap-2">
+                                        <i data-lucide="user" class="w-3.5 h-3.5 text-slate-400"></i>
+                                        <span class="font-medium">Mẹ:</span>
+                                        <span class="text-slate-600" x-text="student.motherPhone || '—'"></span>
+                                    </button>
+                                </div>
+                            </div>
+                            <button aria-label="Sửa hồ sơ thiếu nhi" x-show="canEditModule('students')" style="display: none;" @click="openEdit(student)" class="tap-safe w-8 h-8 bg-slate-50 hover:bg-blue-50 rounded-full flex items-center justify-center text-slate-400 hover:text-blue-600 border border-slate-200 transition-colors">
+                                <i data-lucide="pencil" class="w-4 h-4"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <div class="space-y-2 mb-4 bg-slate-50 p-3.5 rounded-2xl">
@@ -194,9 +270,75 @@
                 </div>
             </div>
         </template>
+        </div>
+
+        <!-- ===== LIST VIEW (Table Layout) ===== -->
+        <div x-show="viewMode === 'list'" style="display: none;" class="bg-white rounded-card shadow-sm border border-slate-100 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-slate-50 border-b border-slate-200">
+                        <tr>
+                            <th class="px-4 py-3 text-left font-bold text-slate-600 uppercase tracking-wide text-micro">STT</th>
+                            <th class="px-4 py-3 text-left font-bold text-slate-600 uppercase tracking-wide text-micro">Tên Thánh</th>
+                            <th class="px-4 py-3 text-left font-bold text-slate-600 uppercase tracking-wide text-micro">Họ Tên</th>
+                            <th class="px-4 py-3 text-left font-bold text-slate-600 uppercase tracking-wide text-micro">Lớp</th>
+                            <th class="px-4 py-3 text-left font-bold text-slate-600 uppercase tracking-wide text-micro">GT</th>
+                            <th class="px-4 py-3 text-left font-bold text-slate-600 uppercase tracking-wide text-micro">Tuổi</th>
+                            <th class="px-4 py-3 text-left font-bold text-slate-600 uppercase tracking-wide text-micro">Tình trạng</th>
+                            <th class="px-4 py-3 text-left font-bold text-slate-600 uppercase tracking-wide text-micro">SĐT Cha</th>
+                            <th class="px-4 py-3 text-left font-bold text-slate-600 uppercase tracking-wide text-micro">SĐT Mẹ</th>
+                            <th class="px-4 py-3 text-center font-bold text-slate-600 uppercase tracking-wide text-micro">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        <template x-for="(student, index) in displayedStudents" :key="student.id">
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="px-4 py-3 text-slate-500 font-medium" x-text="index + 1"></td>
+                                <td class="px-4 py-3 text-slate-600" x-text="student.holyName"></td>
+                                <td class="px-4 py-3 font-semibold text-slate-800" x-text="student.name"></td>
+                                <td class="px-4 py-3 text-slate-600" x-text="student.className"></td>
+                                <td class="px-4 py-3">
+                                    <span :class="student.gender === 1 ? 'text-blue-600' : 'text-rose-500'" x-text="student.gender === 1 ? 'Nam' : 'Nữ'"></span>
+                                </td>
+                                <td class="px-4 py-3 text-slate-600" x-text="calculateAge(student.birthDate)"></td>
+                                <td class="px-4 py-3">
+                                    <span class="text-micro font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg" :class="{'bg-emerald-50 text-emerald-600': student.status === 'đang sinh hoạt', 'bg-rose-50 text-rose-600': student.status === 'dừng sinh hoạt', 'bg-slate-100 text-slate-500': student.status === 'chuyển xứ'}" x-text="student.status"></span>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <div class="flex items-center gap-1">
+                                        <span class="text-slate-600" x-text="student.fatherPhone || '—'"></span>
+                                        <button @click="copyPhone(student.fatherPhone)" type="button" title="Sao chép SĐT Cha" class="p-1 text-slate-400 hover:text-amber-600 transition-colors">
+                                            <i data-lucide="clipboard" class="w-3.5 h-3.5"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <div class="flex items-center gap-1">
+                                        <span class="text-slate-600" x-text="student.motherPhone || '—'"></span>
+                                        <button @click="copyPhone(student.motherPhone)" type="button" title="Sao chép SĐT Mẹ" class="p-1 text-slate-400 hover:text-amber-600 transition-colors">
+                                            <i data-lucide="clipboard" class="w-3.5 h-3.5"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3 text-center">
+                                    <div class="flex items-center justify-center gap-1">
+                                        <button @click="copyPhone(student.fatherPhone)" type="button" title="Sao chép SĐT" class="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors">
+                                            <i data-lucide="clipboard" class="w-4 h-4"></i>
+                                        </button>
+                                        <button x-show="canEditModule('students')" style="display: none;" @click="openEdit(student)" type="button" title="Sửa hồ sơ" class="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                                            <i data-lucide="pencil" class="w-4 h-4"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
         <!-- NÚT TẢI THÊM: Chỉ hiện ra khi số lượng đang hiển thị nhỏ hơn tổng số kết quả lọc -->
-        <div x-show="displayLimit < filteredStudents.length" style="display: none;" class="text-center pt-2 pb-6 col-span-full">
+        <div x-show="displayLimit < filteredStudents.length" style="display: none;" class="text-center pt-2 pb-6">
             <button @click="loadMore()" type="button" class="px-6 py-2.5 bg-slate-200 text-slate-600 rounded-full font-bold text-sm active:scale-95 transition-transform border border-slate-300 shadow-sm">
                 Tải thêm danh sách...
             </button>
@@ -206,7 +348,7 @@
         <!-- Vai toàn đoàn (Quản Trị/BĐH) chưa chọn lọc: mời chọn khối/lớp,
              KHÔNG đổ cả đoàn ra cho nhẹ -->
         <div x-show="isUnrestrictedScope && searchQuery === '' && filterBlock === '' && filterClass === ''"
-             style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed col-span-full">
+             style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
             <i data-lucide="filter" class="w-12 h-12 mx-auto text-slate-300 mb-4"></i>
             <p class="text-slate-600 font-semibold text-base mb-1">Chọn khối hoặc lớp để xem</p>
             <p class="text-slate-400 text-sm">Đoàn đông nên danh sách chỉ hiện khi bạn lọc theo khối/lớp, hoặc gõ tìm tên/mã.</p>
@@ -214,7 +356,7 @@
 
         <!-- Đã lọc/tìm nhưng không ra kết quả -->
         <div x-show="filteredStudents.length === 0 && !(isUnrestrictedScope && searchQuery === '' && filterBlock === '' && filterClass === '')"
-             style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed col-span-full">
+             style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
             <i data-lucide="search-x" class="w-12 h-12 mx-auto text-slate-300 mb-4"></i>
             <p class="text-slate-600 font-semibold text-base mb-1">Không tìm thấy dữ liệu phù hợp</p>
             <p class="text-slate-400 text-sm">Thử thay đổi từ khóa tìm kiếm hoặc xóa bộ lọc</p>
