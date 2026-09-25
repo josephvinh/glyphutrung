@@ -134,6 +134,23 @@ function db_insert(string $sql, array $params = []): int
 }
 
 /**
+ * Trả về MỘT giá trị vô hướng (cột đầu của dòng đầu), hoặc null nếu không có
+ * dòng nào. Dùng cho COUNT(*), SELECT một cột... để khỏi phải bóc mảng.
+ */
+function db_val(string $sql, array $params = [])
+{
+    try {
+        $st = db()->prepare($sql);
+        $st->execute($params);
+        $v = $st->fetchColumn();
+        return $v === false ? null : $v;
+    } catch (PDOException $e) {
+        db_bao_chua_cai_dat($e);
+        throw $e;
+    }
+}
+
+/**
  * Bảng/cột có tồn tại không — dùng cho các nhánh "chỉ chạy khi đã migrate".
  *
  * Vì sao có hàm này: vài endpoint NÓNG (điểm danh, nạp dữ liệu) hỏi schema
