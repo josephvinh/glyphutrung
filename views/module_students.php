@@ -173,6 +173,31 @@
                     <i data-lucide="list" class="w-4 h-4"></i>
                 </button>
             </div>
+
+            <!-- PDF Export Dropdown -->
+            <div class="relative" x-data="{ showPdfMenu: false }">
+                <button @click="showPdfMenu = !showPdfMenu; $nextTick(() => setupPdfMenuClose())" type="button"
+                        class="flex items-center gap-1.5 px-3 py-2 bg-rose-50 text-rose-600 rounded-xl font-bold text-xs border border-rose-100 active:scale-95 transition-transform shadow-sm">
+                    <i data-lucide="file-text" class="w-4 h-4"></i> PDF
+                    <i data-lucide="chevron-down" class="w-3 h-3"></i>
+                </button>
+                <div x-show="showPdfMenu"
+                     x-transition:enter="transition ease-out duration-100"
+                     x-transition:enter-start="opacity-0 scale-95"
+                     x-transition:enter-end="opacity-100 scale-100"
+                     x-transition:leave="transition ease-in duration-75"
+                     x-transition:leave-start="opacity-100 scale-100"
+                     x-transition:leave-end="opacity-0 scale-95"
+                     @click.outside="showPdfMenu = false"
+                     class="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-lg border p-2 z-50 min-w-[180px]">
+                    <button @click="showPdfMenu = false; exportPdf('list')" class="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 rounded-lg flex items-center gap-2">
+                        <i data-lucide="list" class="w-4 h-4 text-slate-400"></i> Danh sách lớp
+                    </button>
+                    <button @click="showPdfMenu = false; exportPdf('cards')" class="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 rounded-lg flex items-center gap-2">
+                        <i data-lucide="id-card" class="w-4 h-4 text-slate-400"></i> Thẻ từng em
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -181,8 +206,11 @@
     <?php include __DIR__ . '/partial_students_skeleton.php'; ?>
 
     <!-- GRID VIEW: Card layout -->
-    <div x-show="viewMode === 'grid' && (!syncing || students.length > 0)" style="display: none;" class="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-2 xl:grid-cols-3 xl:gap-4 xl:items-start">
-        <template x-for="student in displayedStudents" :key="student.id">
+    <div x-show="viewMode === 'grid' && (!syncing || students.length > 0)" style="display: none;"
+         x-init="setupIntersectionObserver()"
+         x-effect="filteredStudents.length; resetVirtualScroll()"
+         class="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-2 xl:grid-cols-3 xl:gap-4 xl:items-start">
+        <template x-for="student in visibleStudents" :key="student.id">
 
             <!-- content-visibility: bỏ qua việc dựng hình các thẻ ngoài màn hình.
                  contain-intrinsic-size: báo trước chiều cao ước lượng để thanh cuộn khỏi giật. -->
@@ -247,11 +275,15 @@
             </div>
         </template>
 
+        <!-- Virtual scrolling sentinel - Invisible trigger for IntersectionObserver -->
+        <div id="load-more-sentinel" class="h-1 col-span-full"></div>
+
         <!-- NÚT TẢI THÊM: Chỉ hiện ra khi số lượng đang hiển thị nhỏ hơn tổng số kết quả lọc -->
-        <div x-show="displayLimit < filteredStudents.length" style="display: none;" class="text-center pt-2 pb-6 col-span-full">
-            <button @click="loadMore()" type="button" class="px-6 py-2.5 bg-slate-200 text-slate-600 rounded-full font-bold text-sm active:scale-95 transition-transform border border-slate-300 shadow-sm">
-                Tải thêm danh sách...
-            </button>
+        <div x-show="hasMoreStudents" style="display: none;" class="text-center pt-2 pb-6 col-span-full">
+            <span class="inline-flex items-center gap-2 px-4 py-2 text-sm text-slate-500">
+                <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>
+                Đang tải thêm...
+            </span>
         </div>
 
         <!-- Empty state với icon rõ ràng -->

@@ -32,6 +32,8 @@ window.TNTT.students = {
 
     busy: false,
     displayLimit: 20,
+    batchSize: 20,
+    visibleRange: [0, 20],
 
     // Chỉ số em theo id — cùng khuôn attIndex/scoreIndex/reportIndex.
     // studentById() bị gọi cho TỪNG dòng ở danh sách Xin phép nên find()
@@ -48,6 +50,53 @@ window.TNTT.students = {
 
     loadMore() {
         this.displayLimit += 20;
+    },
+
+    // Virtual scrolling computed properties (used for both grid and list views)
+    get visibleStudents() {
+        return this.filteredStudents.slice(this.visibleRange[0], this.visibleRange[1]);
+    },
+
+    get hasMoreStudents() {
+        return this.visibleRange[1] < this.filteredStudents.length;
+    },
+
+    loadMoreVirtual() {
+        this.visibleRange[1] = Math.min(
+            this.visibleRange[1] + this.batchSize,
+            this.filteredStudents.length
+        );
+    },
+
+    setupIntersectionObserver() {
+        const self = this;
+        const sentinel = document.getElementById('load-more-sentinel');
+        if (!sentinel) return;
+
+        // Disconnect any previous observer
+        if (this._observer) {
+            this._observer.disconnect();
+        }
+
+        this._observer = new IntersectionObserver(function(entries) {
+            if (entries[0].isIntersecting && self.hasMoreStudents) {
+                self.loadMoreVirtual();
+            }
+        }, { rootMargin: '200px' });
+
+        this._observer.observe(sentinel);
+    },
+
+    // Called when filters or search change — resets virtual scroll and re-observes sentinel
+    resetVirtualScroll() {
+        const self = this;
+        this.visibleRange = [0, this.batchSize];
+        // Wait for Alpine to update the DOM before re-observing
+        requestAnimationFrame(function() {
+            requestAnimationFrame(function() {
+                self.setupIntersectionObserver();
+            });
+        });
     },
 
     openEdit(student) {
@@ -261,6 +310,151 @@ window.TNTT.students = {
         link.download = tenFile;
         link.click();
         URL.revokeObjectURL(url);
+    },
+
+    // ==========================================
+    // XUẤT PDF — dùng print CSS (không cần thư viện ngoài)
+    // ==========================================
+    exportPdf(type) {
+        if (this.filteredStudents.length === 0) {
+            window.TNTT.toast.warning('Không có dữ liệu để xuất PDF.');
+            return;
+        }
+        const html = type === 'list' ? this.generatePdfListHtml() : this.generatePdfCardsHtml();
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(html);
+        printWindow.document.close();
+        printWindow.onload = () => printWindow.print();
+    },
+
+    generatePdfListHtml() {
+        const dateStr = new Date().toLocaleDateString('vi-VN');
+        const org = window.TNTT.org || {};
+        const classLabel = this.filterClass || 'Tất cả các lớp';
+        const blockLabel = this.filterBlock || '';
+        const total = this.filteredStudents.length;
+
+        let rows = '';
+        this.filteredStudents.forEach((s, i) => {
+            rows += `
+                <tr>
+                    <td style="text-align:center">${i + 1}</td>
+                    <td style="font-family:monospace;font-size:9pt">${this.escapeHtml(s.code || '')}</td>
+                    <td>${this.escapeHtml(s.holyName + ' ' + s.name)}</td>
+                    <td>${this.escapeHtml(s.className || '-')}</td>
+                    <td style="text-align:center">${s.gender === 1 ? 'Nam' : 'Nữ'}</td>
+                    <td style="text-align:center">${this.calculateAge(s.birthDate)}</td>
+                    <td>${this.escapeHtml(s.status || '')}</td>
+                </tr>`;
+        });
+
+        return `<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Danh sách lớp - ${dateStr}</title>
+    <style>
+        @page { margin: 15mm; size: A4; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Times New Roman', Times, serif; font-size: 10pt; color: #000; }
+        .header { text-align: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #333; }
+        .header h1 { font-size: 14pt; font-weight: bold; margin-bottom: 4px; }
+        .header p { font-size: 9pt; color: #555; }
+        table { width: 100%; border-collapse: collapse; font-size: 9pt; }
+        th, td { border: 1px solid #333; padding: 5px 7px; vertical-align: middle; }
+        th { background: #f0f0f0; font-weight: bold; text-align: left; }
+        tr:nth-child(even) td { background: #fafafa; }
+        .footer { margin-top: 12px; font-size: 8pt; color: #777; text-align: right; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>${this.escapeHtml(org.name || 'Danh sách Thiếu Nhi')}</h1>
+        <p>${this.escapeHtml(blockLabel ? blockLabel + ' · ' : '')}${this.escapeHtml(classLabel)} &nbsp;|&nbsp; Ngày: ${dateStr} &nbsp;|&nbsp; Tổng: ${total} em</p>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th style="width:5%">STT</th>
+                <th style="width:10%">Mã số</th>
+                <th>Họ và Tên</th>
+                <th style="width:12%">Lớp</th>
+                <th style="width:6%">GT</th>
+                <th style="width:6%">Tuổi</th>
+                <th style="width:14%">Tình trạng</th>
+            </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+    </table>
+    <div class="footer">TNTT Super App · ${dateStr}</div>
+</body>
+</html>`;
+    },
+
+    generatePdfCardsHtml() {
+        const dateStr = new Date().toLocaleDateString('vi-VN');
+        const org = window.TNTT.org || {};
+
+        let cards = '';
+        this.filteredStudents.forEach(s => {
+            const age = this.calculateAge(s.birthDate);
+            cards += `
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-name">${this.escapeHtml(s.holyName)} ${this.escapeHtml(s.name)}</span>
+                    <span class="card-code">${this.escapeHtml(s.code || '')}</span>
+                </div>
+                <div class="card-row"><span class="label">Lớp</span><span class="value">${this.escapeHtml(s.className || '-')}</span></div>
+                <div class="card-row"><span class="label">GT</span><span class="value">${s.gender === 1 ? 'Nam' : 'Nữ'}</span><span class="label" style="margin-left:12px">Tuổi</span><span class="value">${age}</span></div>
+                <div class="card-row"><span class="label">Ngày sinh</span><span class="value">${this.formatDate(s.birthDate)}</span></div>
+                <div class="card-row"><span class="label">Địa chỉ</span><span class="value">${this.escapeHtml(s.address || '-')}</span></div>
+                <div class="card-row"><span class="label">Tình trạng</span><span class="value">${this.escapeHtml(s.status || '')}</span></div>
+                <div class="card-divider"></div>
+                <div class="card-row"><span class="label">Cha</span><span class="value">${this.escapeHtml(s.fatherName || '-')}</span><span class="phone">${this.escapeHtml(s.fatherPhone || '-')}</span></div>
+                <div class="card-row"><span class="label">Mẹ</span><span class="value">${this.escapeHtml(s.motherName || '-')}</span><span class="phone">${this.escapeHtml(s.motherPhone || '-')}</span></div>
+            </div>`;
+        });
+
+        return `<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Thẻ thiếu nhi - ${dateStr}</title>
+    <style>
+        @page { margin: 12mm; size: A4; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Times New Roman', Times, serif; font-size: 9pt; color: #000; background: #fff; }
+        .org-name { text-align: center; font-size: 12pt; font-weight: bold; margin-bottom: 4px; }
+        .org-sub { text-align: center; font-size: 8pt; color: #666; margin-bottom: 16px; }
+        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .card { border: 1px solid #333; border-radius: 4px; padding: 10px 12px; background: #fff; page-break-inside: avoid; }
+        .card-header { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid #ddd; padding-bottom: 6px; margin-bottom: 6px; }
+        .card-name { font-weight: bold; font-size: 10pt; }
+        .card-code { font-family: monospace; font-size: 8pt; color: #555; }
+        .card-row { display: flex; gap: 6px; margin-bottom: 3px; font-size: 8.5pt; }
+        .label { font-weight: bold; color: #555; min-width: 60px; }
+        .value { flex: 1; }
+        .phone { color: #333; }
+        .card-divider { border-top: 1px dashed #ccc; margin: 5px 0; }
+        .footer { margin-top: 16px; font-size: 8pt; color: #999; text-align: right; }
+    </style>
+</head>
+<body>
+    <div class="org-name">${this.escapeHtml(org.name || 'Danh sách Thiếu Nhi')}</div>
+    <div class="org-sub">Thẻ từng em · Ngày: ${dateStr} · Tổng: ${this.filteredStudents.length} em</div>
+    <div class="grid">${cards}</div>
+    <div class="footer">TNTT Super App</div>
+</body>
+</html>`;
+    },
+
+    escapeHtml(str) {
+        if (str === null || str === undefined) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
     },
 
     /**
