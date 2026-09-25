@@ -23,7 +23,7 @@ require_once __DIR__ . '/csrf.php';
 require_once __DIR__ . '/cache.php';
 
 // Rate Limiting - giới hạn số request
-require_once __DIR__ . '/../../../src/RateLimiter.php';
+require_once __DIR__ . '/../../src/RateLimiter.php';
 
 // Nén phản hồi khi trình duyệt hỗ trợ. data.php có thể tới vài MB (điểm danh
 // cả đoàn); JSON nén gzip giảm ~10 lần → mạng di động đỡ hẳn. Bọc buffer TRƯỚC
