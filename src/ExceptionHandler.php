@@ -11,6 +11,10 @@ declare(strict_types=1);
 namespace TNTT;
 
 use Throwable;
+use TNTT\UnauthorizedException;
+use TNTT\ForbiddenException;
+use TNTT\NotFoundException;
+use TNTT\ValidationException;
 
 class ExceptionHandler
 {
@@ -109,16 +113,16 @@ class ExceptionHandler
         if ($e instanceof \InvalidArgumentException) {
             return 400;
         }
-        if ($e instanceof \UnauthorizedException) {
+        if ($e instanceof UnauthorizedException) {
             return 401;
         }
-        if ($e instanceof \ForbiddenException) {
+        if ($e instanceof ForbiddenException) {
             return 403;
         }
-        if ($e instanceof \NotFoundException) {
+        if ($e instanceof NotFoundException) {
             return 404;
         }
-        if ($e instanceof \ValidationException) {
+        if ($e instanceof ValidationException) {
             return 422;
         }
         if ($e instanceof \PDOException) {
@@ -175,9 +179,10 @@ class ExceptionHandler
     }
 }
 
-/**
- * Custom Exception Classes
- */
+// ================================================================
+// Custom Exception Classes (trong namespace TNTT)
+// ================================================================
+
 class UnauthorizedException extends \Exception
 {
     public function getPublicMessage(): string
