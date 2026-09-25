@@ -424,7 +424,7 @@ window.TNTT.qrcard = {
         iframeDoc.write(html);
         iframeDoc.close();
 
-        setTimeout(() => {
+        setTimeout(async () => {
             try {
                 if (window.html2canvas && window.jspdf) {
                     const canvas = await html2canvas(iframeDoc.body);
