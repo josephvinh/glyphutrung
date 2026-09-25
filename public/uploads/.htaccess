@@ -1,0 +1,51 @@
+# ============================================================
+#  THƯ MỤC UPLOAD — chỉ chứa ảnh do người dùng tải lên.
+#  TUYỆT ĐỐI không cho thực thi mã ở đây: một file .php lọt vào
+#  mà chạy được là chiếm được máy chủ.
+#
+#  Mọi chỉ thị bọc trong <IfModule> để không làm sập web trên
+#  hosting dùng chung (xem lý do ở public/.htaccess).
+# ============================================================
+
+# --- Cấm truy cập mọi loại tệp có thể thực thi / là mã nguồn ---
+<IfModule mod_authz_core.c>
+    <FilesMatch "(?i)\.(php[0-9]?|phtml|phps|phar|pl|py|cgi|sh|bash|asp|aspx|jsp|jspx|htaccess|html?|xhtml|xml|shtml)$">
+        Require all denied
+    </FilesMatch>
+</IfModule>
+<IfModule !mod_authz_core.c>
+    <IfModule mod_authz_host.c>
+        <FilesMatch "(?i)\.(php[0-9]?|phtml|phps|phar|pl|py|cgi|sh|bash|asp|aspx|jsp|jspx|htaccess|html?|xhtml|xml|shtml)$">
+            Order allow,deny
+            Deny from all
+        </FilesMatch>
+    </IfModule>
+</IfModule>
+
+# --- Tắt bộ thông dịch PHP trong thư mục này (nếu host cho phép) ---
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php7.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php8.c>
+    php_flag engine off
+</IfModule>
+
+# --- Gỡ handler thực thi ---
+<IfModule mod_mime.c>
+    RemoveHandler .php .phtml .phar .cgi .pl .py
+    RemoveType .php .phtml .phar
+</IfModule>
+
+# --- Chặn liệt kê thư mục ---
+<IfModule mod_autoindex.c>
+    Options -Indexes
+</IfModule>
+
+# --- Mở trực tiếp một tệp (kể cả SVG) cũng không chạy được JavaScript ---
+<IfModule mod_headers.c>
+    Header always set Content-Security-Policy "default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; sandbox"
+    Header always set X-Content-Type-Options "nosniff"
+</IfModule>

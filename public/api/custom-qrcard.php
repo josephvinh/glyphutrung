@@ -217,20 +217,50 @@ try {
             }
 
             $file = $_FILES['logo'];
-            $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
             $maxSize = 2 * 1024 * 1024; // 2MB
 
             // Validate file
             if ($file['error'] !== UPLOAD_ERR_OK) {
-                json_fail('Lỗi upload: ' . $file['error'], 400);
+                json_fail('Không tải được file lên, hãy thử lại.', 400);
             }
 
-            if (!in_array($file['type'], $allowedTypes)) {
-                json_fail('Chỉ chấp nhận file ảnh: JPG, PNG, GIF, WebP, SVG.', 400);
+            // Chắc chắn là file gửi qua HTTP upload thật (nhánh SVG không dùng
+            // move_uploaded_file nên phải tự kiểm tra ở đây).
+            if (!is_uploaded_file($file['tmp_name'])) {
+                json_fail('File không hợp lệ.', 400);
             }
 
             if ($file['size'] > $maxSize) {
                 json_fail('File quá lớn. Tối đa 2MB.', 400);
+            }
+
+            // ⚠️ BẢO MẬT: KHÔNG tin $file['type'] (client gửi, giả mạo được) và
+            // KHÔNG dùng đuôi của tên file gốc (kẻ xấu đặt "x.php" hay
+            // 'a.png" onerror=...' để chèn mã / phá thuộc tính src).
+            // Xác thực LOẠI THẬT từ nội dung rồi TỰ chọn đuôi an toàn.
+            $typeToExt = [
+                IMAGETYPE_JPEG => 'jpg',
+                IMAGETYPE_PNG  => 'png',
+                IMAGETYPE_GIF  => 'gif',
+                IMAGETYPE_WEBP => 'webp',
+            ];
+
+            $ext   = null;
+            $isSvg = false;
+            $info  = @getimagesize($file['tmp_name']);
+            if ($info !== false && isset($typeToExt[$info[2]])) {
+                $ext = $typeToExt[$info[2]];
+            } else {
+                // getimagesize không nhận SVG — dò nội dung thật.
+                $head = (string) file_get_contents($file['tmp_name'], false, null, 0, 4096);
+                if (stripos($head, '<svg') !== false) {
+                    $isSvg = true;
+                    $ext   = 'svg';
+                }
+            }
+
+            if ($ext === null) {
+                json_fail('File không phải ảnh hợp lệ (JPG, PNG, GIF, WebP, SVG).', 400);
             }
 
             $uid = get_user_identifier();
@@ -241,26 +271,40 @@ try {
                 json_fail('Đã đạt giới hạn 10 logo. Xóa logo cũ trước khi upload mới.', 400);
             }
 
-            // Create directory
-            $uploadDir = __DIR__ . '/../../uploads/qrcard-logos/' . $uid;
+            // Thư mục lưu NẰM TRONG public/ để URL /uploads/... truy cập được
+            // (docroot trỏ vào public/). .htaccess ở public/uploads chặn thực thi mã.
+            $uploadDir = __DIR__ . '/../uploads/qrcard-logos/' . $uid;
             if (!is_dir($uploadDir)) {
                 mkdir($uploadDir, 0755, true);
             }
 
-            // Generate unique filename
-            $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+            // Tên file do server sinh, đuôi lấy từ whitelist — không dính tên gốc.
             $newFilename = uniqid('logo_') . '.' . $ext;
-            $uploadPath = $uploadDir . '/' . $newFilename;
+            $uploadPath  = $uploadDir . '/' . $newFilename;
 
-            if (!move_uploaded_file($file['tmp_name'], $uploadPath)) {
+            if ($isSvg) {
+                // SVG có thể chứa <script>/on*=/javascript: → làm sạch trước khi lưu.
+                $clean = sanitize_svg((string) file_get_contents($file['tmp_name']));
+                if (file_put_contents($uploadPath, $clean) === false) {
+                    json_fail('Không thể lưu file.', 500);
+                }
+            } elseif (!move_uploaded_file($file['tmp_name'], $uploadPath)) {
                 json_fail('Không thể lưu file.', 500);
             }
 
-            // Save to database using db_insert (returns the ID)
-            $logoId = db_insert(
-                'INSERT INTO qrcard_logos (user_identifier, filename, original_name, size, created_at) VALUES (?, ?, ?, ?, NOW())',
-                [$uid, $newFilename, $file['name'], $file['size']]
-            );
+            // Save to database using db_insert (returns the ID). Nếu ghi DB lỗi
+            // thì file đã nằm trên đĩa -> xóa đi để không còn file mồ côi.
+            try {
+                $logoId = db_insert(
+                    'INSERT INTO qrcard_logos (user_identifier, filename, original_name, size, created_at) VALUES (?, ?, ?, ?, NOW())',
+                    [$uid, $newFilename, $file['name'], $file['size']]
+                );
+            } catch (Throwable $e) {
+                if (is_file($uploadPath)) {
+                    unlink($uploadPath);
+                }
+                throw $e;
+            }
 
             $logo = [
                 'id' => $logoId,
@@ -293,7 +337,7 @@ try {
             }
 
             // Delete file
-            $filePath = __DIR__ . '/../../uploads/qrcard-logos/' . $uid . '/' . $logo['filename'];
+            $filePath = __DIR__ . '/../uploads/qrcard-logos/' . $uid . '/' . $logo['filename'];
             if (file_exists($filePath)) {
                 unlink($filePath);
             }
@@ -315,9 +359,29 @@ try {
         default:
             json_fail('Action không hợp lệ.', 400);
     }
-} catch (Exception $e) {
+} catch (Throwable $e) {
+    // Log chi tiết ở server, KHÔNG trả nội dung lỗi ra client (tránh lộ
+    // đường dẫn, câu SQL, tên bảng...).
     error_log('Custom QR Card API Error: ' . $e->getMessage());
-    json_fail('Lỗi server: ' . $e->getMessage(), 500);
+    json_fail('Có lỗi xảy ra, vui lòng thử lại sau.', 500);
+}
+
+/**
+ * Làm sạch SVG trước khi lưu: gỡ mọi thứ có thể chạy JavaScript.
+ * Đây là lớp phòng thủ THÊM (public/uploads/.htaccess đã đặt CSP chặn script
+ * khi mở trực tiếp); giữ ở mức đơn giản, an toàn hơn là để nguyên.
+ */
+function sanitize_svg(string $svg): string {
+    // <script>...</script>
+    $svg = preg_replace('#<script\b[^>]*>.*?</script>#is', '', $svg);
+    // Thẻ có thể nhúng nội dung ngoài/HTML
+    $svg = preg_replace('#<(foreignObject|iframe|embed|object|handler|set|animate)\b[^>]*>.*?</\1>#is', '', $svg) ?? $svg;
+    $svg = preg_replace('#<(foreignObject|iframe|embed|object|handler|set|animate)\b[^>]*/?>#is', '', $svg) ?? $svg;
+    // Thuộc tính sự kiện on*="..."
+    $svg = preg_replace('#\son[a-z]+\s*=\s*("[^"]*"|\'[^\']*\'|[^\s>]+)#i', '', $svg) ?? $svg;
+    // javascript: trong href / xlink:href
+    $svg = preg_replace('#(?:xlink:)?href\s*=\s*("|\')?\s*javascript:[^"\'>\s]*\1?#i', '', $svg) ?? $svg;
+    return $svg;
 }
 
 /**

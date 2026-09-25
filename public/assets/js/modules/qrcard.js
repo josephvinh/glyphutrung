@@ -156,7 +156,8 @@ window.TNTT.qrcard = {
         if (this.qrCustom.logoId) {
             const logo = this.qrLogos.find(l => l.id === this.qrCustom.logoId);
             if (logo) {
-                logoHtml = '<img src="' + logo.url + '" class="logo-img">';
+                // Escape URL: phòng khi có ký tự phá thuộc tính src (defense-in-depth).
+                logoHtml = '<img src="' + this._thoat(logo.url) + '" class="logo-img">';
             }
         }
 
@@ -424,7 +425,7 @@ window.TNTT.qrcard = {
         iframeDoc.write(html);
         iframeDoc.close();
 
-        setTimeout(() => {
+        setTimeout(async () => {
             try {
                 if (window.html2canvas && window.jspdf) {
                     const canvas = await html2canvas(iframeDoc.body);
