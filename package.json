@@ -14,7 +14,9 @@
     "optimize:images": "node build/optimize_images.cjs",
     "optimize": "npm run build && npm run optimize:images",
     "typecheck": "tsc --noEmit",
-    "typecheck:all": "tsc --noEmit --project tsconfig.json 2>&1 || true"
+    "typecheck:all": "tsc --noEmit --project tsconfig.json 2>&1 || true",
+    "typecheck:strict": "tsc --noEmit --strict",
+    "validate": "npm run typecheck && npm run build"
   },
   "repository": {
     "type": "git",
@@ -31,6 +33,7 @@
   "devDependencies": {
     "@types/node": "^26.6.2",
     "esbuild": "^0.28.2",
+    "playwright": "^1.63.0",
     "sharp": "^0.33.5",
     "typescript": "^7.0.2"
   },
