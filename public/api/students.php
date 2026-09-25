@@ -367,6 +367,129 @@ switch ($action) {
                   'scope' => allowed_class_names($chophep)]);
 
     // -------------------------------------------------------------
+    // Bulk move students to another class
+    case 'bulk_move':
+        require_write();
+        $ids = $in['student_ids'] ?? [];
+        $targetClass = trim($in['target_class'] ?? '');
+
+        if (!is_array($ids) || count($ids) === 0) {
+            json_fail('Không có em nào được chọn.', 400);
+        }
+        if ($targetClass === '') {
+            json_fail('Vui lòng chọn lớp đích.', 400);
+        }
+
+        // Validate target class exists
+        $targetClassId = class_id_by_name($targetClass);
+
+        // Check write permission on target class
+        $chophep = allowed_class_ids($me);
+        if ($chophep !== null && !in_array($targetClassId, $chophep, true)) {
+            json_fail('Bạn không phụ trách lớp "' . $targetClass . '".', 403);
+        }
+
+        // Validate each student's current class (IDOR prevention)
+        $validIds = [];
+        foreach ($ids as $sid) {
+            $sid = (int) $sid;
+            if ($sid <= 0) continue;
+            $curClass = current_enrollment_class($sid, $yid);
+            // If user has narrow scope, must cover source class; null = not enrolled this year
+            if ($chophep !== null) {
+                if ($curClass === null || !can_access_class($me, 'students', $curClass, 'edit')) {
+                    continue; // skip unauthorized students
+                }
+            }
+            $validIds[] = $sid;
+        }
+
+        if (count($validIds) === 0) {
+            json_fail('Không có em nào bạn được phép chuyển. Có thể các em không thuộc lớp bạn phụ trách.', 403);
+        }
+
+        db()->beginTransaction();
+        try {
+            $ph = implode(',', array_fill(0, count($validIds), '(?, ?, ?, ?)'));
+            $params = [];
+            foreach ($validIds as $sid) {
+                $params[] = $yid;
+                $params[] = $sid;
+                $params[] = $targetClassId;
+                $params[] = 'đang sinh hoạt';
+            }
+            $sql = "INSERT INTO enrollments (year_id, student_id, class_id, status)
+                    VALUES $ph
+                    ON DUPLICATE KEY UPDATE class_id = VALUES(class_id), status = 'đang sinh hoạt'";
+            db_run($sql, $params);
+
+            db()->commit();
+        } catch (Throwable $e) {
+            db()->rollBack();
+            json_fail(safe_error($e, 'Chuyển lớp thất bại: '), 500);
+        }
+
+        log_action('chuyen', 'students', 'Bulk chuyển ' . count($validIds) . ' em sang lớp ' . $targetClass);
+        Cache::flush();
+        json_out(['ok' => true, 'moved' => count($validIds)]);
+        break;
+
+    // -------------------------------------------------------------
+    // Bulk delete students
+    case 'bulk_delete':
+        require_write();
+        $ids = $in['student_ids'] ?? [];
+
+        if (!is_array($ids) || count($ids) === 0) {
+            json_fail('Không có em nào được chọn.', 400);
+        }
+
+        // Permission check for delete (same scope as bulk_move)
+        $chophepDel = allowed_class_ids($me);
+
+        // Validate each student's current class (IDOR prevention)
+        $validIds = [];
+        foreach ($ids as $sid) {
+            $sid = (int) $sid;
+            if ($sid <= 0) continue;
+            $curClass = current_enrollment_class($sid, $yid);
+            if ($chophepDel !== null) {
+                if ($curClass === null || !can_access_class($me, 'students', $curClass, 'edit')) {
+                    continue;
+                }
+            }
+            $validIds[] = $sid;
+        }
+
+        if (count($validIds) === 0) {
+            json_fail('Không có em nào bạn được phép xóa. Có thể các em không thuộc lớp bạn phụ trách.', 403);
+        }
+
+        db()->beginTransaction();
+        try {
+            // Soft delete: mark as 'dừng sinh hoạt' in enrollments (keep student records, just inactive)
+            $ph = implode(',', array_fill(0, count($validIds), '?'));
+            $params = [];
+            foreach ($validIds as $sid) {
+                $params[] = $sid;
+            }
+            db_run(
+                "UPDATE enrollments SET status = 'dừng sinh hoạt' WHERE year_id = ? AND student_id IN ($ph)",
+                array_merge([$yid], $params)
+            );
+
+            db()->commit();
+        } catch (Throwable $e) {
+            db()->rollBack();
+            json_fail(safe_error($e, 'Xóa không thành công: '), 500);
+        }
+
+        log_action('xoa', 'students', 'Bulk xóa ' . count($validIds) . ' em');
+        Cache::flush();
+        json_out(['ok' => true, 'deleted' => count($validIds)]);
+        break;
+
+    // -------------------------------------------------------------
     default:
         json_fail('Hành động không hợp lệ.', 404);
 }

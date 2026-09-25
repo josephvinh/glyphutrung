@@ -36,6 +36,127 @@ window.TNTT.students = {
     busy: false,
     displayLimit: 20,
 
+    // ==========================================
+    // 7. BULK SELECTION & ACTIONS
+    // ==========================================
+    selectedStudents: [],
+    showBulkMoveModal: false,
+    targetClassForMove: '',
+
+    // Toggle selection for a single student
+    toggleStudentSelection(studentId) {
+        const idx = this.selectedStudents.indexOf(studentId);
+        if (idx > -1) {
+            this.selectedStudents.splice(idx, 1);
+        } else {
+            this.selectedStudents.push(studentId);
+        }
+    },
+
+    // Check if a student is selected
+    isStudentSelected(studentId) {
+        return this.selectedStudents.indexOf(studentId) > -1;
+    },
+
+    // Toggle select all / deselect all in current view
+    toggleSelectAll() {
+        if (this.allDisplayedSelected) {
+            // All currently displayed are selected → deselect only those
+            this.selectedStudents = this.selectedStudents.filter(
+                id => !this.filteredStudents.some(s => s.id === id)
+            );
+        } else {
+            // Select all currently displayed (merge with existing selections)
+            const displayedIds = this.filteredStudents.map(s => s.id);
+            for (const id of displayedIds) {
+                if (this.selectedStudents.indexOf(id) === -1) {
+                    this.selectedStudents.push(id);
+                }
+            }
+        }
+    },
+
+    // Check if all currently displayed students are selected
+    get allDisplayedSelected() {
+        if (this.filteredStudents.length === 0) return false;
+        return this.filteredStudents.every(s => this.selectedStudents.indexOf(s.id) > -1);
+    },
+
+    // Open bulk move modal
+    openBulkMoveModal() {
+        this.targetClassForMove = '';
+        this.showBulkMoveModal = true;
+    },
+
+    // Execute bulk move
+    async executeBulkMove() {
+        if (!this.targetClassForMove) {
+            window.TNTT.toast.warning('Vui lòng chọn lớp đích.');
+            return;
+        }
+        if (this.selectedStudents.length === 0) {
+            window.TNTT.toast.warning('Không có em nào được chọn.');
+            return;
+        }
+
+        this.busy = true;
+        try {
+            const r = await this.save('students', 'bulk_move', {
+                student_ids: this.selectedStudents,
+                target_class: this.targetClassForMove
+            });
+            if (r && r.ok) {
+                window.TNTT.toast.info(`Đã chuyển ${r.moved || this.selectedStudents.length} em sang lớp ${this.targetClassForMove}.`);
+                this.selectedStudents = [];
+                this.showBulkMoveModal = false;
+                await this.loadData();
+            }
+        } catch (err) {
+            console.error(err);
+            window.TNTT.toast.error('Chuyển lớp không thành công.');
+        } finally {
+            this.busy = false;
+        }
+    },
+
+    // Confirm and execute bulk delete
+    async confirmBulkDelete() {
+        const count = this.selectedStudents.length;
+        if (count === 0) {
+            window.TNTT.toast.warning('Không có em nào được chọn.');
+            return;
+        }
+
+        const confirmed = await window.TNTT.toast.confirm(
+            `Xóa ${count} em khỏi danh sách?\n\nHành động này không thể hoàn tác.`,
+            { danger: true, confirmText: `Xóa ${count} em`, cancelText: 'Hủy bỏ' }
+        );
+
+        if (!confirmed) return;
+
+        this.busy = true;
+        try {
+            const r = await this.save('students', 'bulk_delete', {
+                student_ids: this.selectedStudents
+            });
+            if (r && r.ok) {
+                window.TNTT.toast.info(`Đã xóa ${r.deleted || count} em.`);
+                this.selectedStudents = [];
+                await this.loadData();
+            }
+        } catch (err) {
+            console.error(err);
+            window.TNTT.toast.error('Xóa không thành công.');
+        } finally {
+            this.busy = false;
+        }
+    },
+
+    // Clear all selections
+    clearSelection() {
+        this.selectedStudents = [];
+    },
+
     // Chỉ số em theo id — cùng khuôn attIndex/scoreIndex/reportIndex.
     // studentById() bị gọi cho TỪNG dòng ở danh sách Xin phép nên find()
     // tuyến tính làm chậm màn đó khi nhiều đơn.

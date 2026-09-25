@@ -126,7 +126,24 @@
 
     <!-- HÀNG NÚT CÔNG CỤ: THỐNG KÊ, VIEW MODE, NHẬP/XUẤT -->
     <div class="flex justify-between items-center mb-6">
-        <div class="text-sm font-bold text-slate-500">Tổng: <span x-text="filteredStudents.length" class="text-blue-600 text-base"></span> em</div>
+        <div class="flex items-center gap-3">
+            <div class="text-sm font-bold text-slate-500">Tổng: <span x-text="filteredStudents.length" class="text-blue-600 text-base"></span> em</div>
+            <!-- Select All checkbox (only show when there are students) -->
+            <div x-show="filteredStudents.length > 0" style="display: none;" class="flex items-center gap-1.5 ml-2">
+                <input type="checkbox"
+                       :checked="allDisplayedSelected"
+                       @click="toggleSelectAll()"
+                       class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                       title="Chọn tất cả">
+                <span class="text-xs font-medium text-slate-500 select-none">Chọn tất cả</span>
+            </div>
+            <!-- Selected count badge -->
+            <div x-show="selectedStudents.length > 0" style="display: none;">
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">
+                    <span x-text="selectedStudents.length"></span> đã chọn
+                </span>
+            </div>
+        </div>
         <div class="flex gap-2">
             <!-- Grid/List Toggle -->
             <div class="flex items-center bg-slate-100 rounded-xl p-1 gap-0.5">
@@ -192,9 +209,18 @@
 
             <!-- content-visibility: bỏ qua việc dựng hình các thẻ ngoài màn hình.
                  contain-intrinsic-size: báo trước chiều cao ước lượng để thanh cuộn khỏi giật. -->
-            <div style="content-visibility: auto; contain-intrinsic-size: auto 420px;" class="bg-white rounded-card p-5 shadow-sm border border-slate-100 relative overflow-hidden group">
+            <div style="content-visibility: auto; contain-intrinsic-size: auto 420px;"
+                 class="bg-white rounded-card p-5 shadow-sm border relative overflow-hidden group transition-all"
+                 :class="isStudentSelected(student.id) ? 'border-blue-400 ring-2 ring-blue-200' : 'border-slate-100'">
+                <!-- Bulk selection checkbox -->
+                <div class="absolute top-3 left-3 z-10">
+                    <input type="checkbox"
+                           :checked="isStudentSelected(student.id)"
+                           @click.stop="toggleStudentSelection(student.id)"
+                           class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
+                </div>
                 <div class="flex items-start justify-between gap-3 mb-4">
-                    <div class="min-w-0">
+                    <div class="min-w-0 pl-6">
                         <h3 class="text-base font-black text-slate-800 leading-tight">
                             <span x-text="student.holyName" class="font-normal text-slate-500 block mb-0.5"></span>
                             <span x-text="student.name"></span>
@@ -278,6 +304,12 @@
                 <table class="w-full text-sm">
                     <thead class="bg-slate-50 border-b border-slate-200">
                         <tr>
+                            <th class="px-4 py-3 text-left font-bold text-slate-600 uppercase tracking-wide text-micro w-8">
+                                <input type="checkbox"
+                                       :checked="allDisplayedSelected"
+                                       @click="toggleSelectAll()"
+                                       class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
+                            </th>
                             <th class="px-4 py-3 text-left font-bold text-slate-600 uppercase tracking-wide text-micro">STT</th>
                             <th class="px-4 py-3 text-left font-bold text-slate-600 uppercase tracking-wide text-micro">Tên Thánh</th>
                             <th class="px-4 py-3 text-left font-bold text-slate-600 uppercase tracking-wide text-micro">Họ Tên</th>
@@ -292,7 +324,14 @@
                     </thead>
                     <tbody class="divide-y divide-slate-100">
                         <template x-for="(student, index) in displayedStudents" :key="student.id">
-                            <tr class="hover:bg-slate-50 transition-colors">
+                            <tr class="hover:bg-slate-50 transition-colors"
+                                :class="isStudentSelected(student.id) ? 'bg-blue-50' : ''">
+                                <td class="px-4 py-3">
+                                    <input type="checkbox"
+                                           :checked="isStudentSelected(student.id)"
+                                           @click="toggleStudentSelection(student.id)"
+                                           class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
+                                </td>
                                 <td class="px-4 py-3 text-slate-500 font-medium" x-text="index + 1"></td>
                                 <td class="px-4 py-3 text-slate-600" x-text="student.holyName"></td>
                                 <td class="px-4 py-3 font-semibold text-slate-800" x-text="student.name"></td>
@@ -360,6 +399,110 @@
             <i data-lucide="search-x" class="w-12 h-12 mx-auto text-slate-300 mb-4"></i>
             <p class="text-slate-600 font-semibold text-base mb-1">Không tìm thấy dữ liệu phù hợp</p>
             <p class="text-slate-400 text-sm">Thử thay đổi từ khóa tìm kiếm hoặc xóa bộ lọc</p>
+        </div>
+    </div>
+
+    <!-- ======================================================
+         BULK ACTION BAR — Fixed bottom bar when items selected
+         ====================================================== -->
+    <div x-show="selectedStudents.length > 0"
+         x-transition:enter="transform transition ease-out duration-300"
+         x-transition:enter-start="translate-y-full opacity-0"
+         x-transition:enter-end="translate-y-0 opacity-100"
+         x-transition:leave="transform transition ease-in duration-200"
+         x-transition:leave-start="translate-y-0 opacity-100"
+         x-transition:leave-end="translate-y-full opacity-0"
+         style="display: none;"
+         class="fixed bottom-20 left-1/2 -translate-x-1/2 bg-blue-600 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 z-[150]">
+        <span class="text-sm font-bold" x-text="selectedStudents.length + ' em đã chọn'"></span>
+        <div class="w-px h-5 bg-blue-400"></div>
+        <button @click="openBulkMoveModal()" type="button"
+                class="flex items-center gap-1.5 bg-white text-blue-600 px-3 py-1.5 rounded-xl font-bold text-xs shadow-sm hover:bg-blue-50 transition-colors">
+            <i data-lucide="arrow-right-left" class="w-3.5 h-3.5"></i>
+            Chuyển lớp
+        </button>
+        <button x-show="canEditModule('students')" @click="confirmBulkDelete()" type="button"
+                class="flex items-center gap-1.5 bg-rose-500 text-white px-3 py-1.5 rounded-xl font-bold text-xs shadow-sm hover:bg-rose-600 transition-colors">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            Xóa
+        </button>
+        <button @click="clearSelection()" type="button" aria-label="Bỏ chọn"
+                class="p-1.5 hover:bg-blue-500 rounded-lg transition-colors">
+            <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+    </div>
+
+    <!-- ======================================================
+         BULK MOVE MODAL
+         ====================================================== -->
+    <div x-show="showBulkMoveModal" style="display: none;"
+         class="fixed inset-0 z-[200] flex items-end justify-center sm:items-center sm:p-6">
+        <div x-show="showBulkMoveModal" x-transition.opacity.duration.300
+             @click="showBulkMoveModal = false"
+             class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+        <div x-show="showBulkMoveModal"
+             x-transition:enter="transform transition ease-out duration-300"
+             x-transition:enter-start="translate-y-full opacity-0"
+             x-transition:enter-end="translate-y-0 opacity-100"
+             x-transition:leave="transform transition ease-in duration-200"
+             x-transition:leave-start="translate-y-0 opacity-100"
+             x-transition:leave-end="translate-y-full opacity-0"
+             class="modal-sheet relative w-full max-w-sm bg-white rounded-t-sheet sm:rounded-sheet shadow-2xl h-[60dvh] sm:h-auto sm:max-h-[80vh] flex flex-col overflow-hidden">
+            <div class="flex justify-center pt-3 pb-2 bg-white"><div class="w-12 h-1.5 bg-slate-200 rounded-full"></div></div>
+            <div class="flex justify-between items-center px-5 pb-4 border-b border-slate-100 bg-white">
+                <h3 class="text-lg font-black text-slate-800">
+                    Chuyển lớp cho <span x-text="selectedStudents.length"></span> em
+                </h3>
+                <button aria-label="Đóng" @click="showBulkMoveModal = false"
+                        class="tap-safe w-8 h-8 flex items-center justify-center bg-slate-100 rounded-full text-slate-500 active:scale-90 transition-transform">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-5 space-y-4">
+                <p class="text-sm text-slate-600">
+                    Các em sau sẽ được chuyển sang lớp mới:
+                </p>
+                <div class="max-h-40 overflow-y-auto bg-slate-50 rounded-xl p-3 space-y-1">
+                    <template x-for="sid in selectedStudents" :key="sid">
+                        <div class="flex items-center gap-2 text-sm text-slate-700">
+                            <i data-lucide="user" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
+                            <span x-text="studentIndex && studentIndex.get(sid) ? studentIndex.get(sid).name : '#' + sid"></span>
+                        </div>
+                    </template>
+                </div>
+                <div>
+                    <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Chọn lớp đích</label>
+                    <select x-model="targetClassForMove"
+                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                        <option value="">— Chọn lớp —</option>
+                        <template x-for="cls in classes" :key="cls.id">
+                            <option :value="cls.name" x-text="cls.block + ' · ' + cls.name"></option>
+                        </template>
+                    </select>
+                </div>
+                <p x-show="targetClassForMove" style="display: none;"
+                   class="text-xs text-slate-500">
+                    Các em sẽ được ghi danh vào lớp <strong x-text="targetClassForMove"></strong> với tình trạng <strong>đang sinh hoạt</strong>.
+                </p>
+            </div>
+            <div class="shrink-0 p-4 border-t border-slate-100 flex gap-3 bg-white"
+                 style="padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px))">
+                <button @click="showBulkMoveModal = false" type="button"
+                        class="flex-1 py-3.5 bg-slate-100 text-slate-700 font-bold rounded-2xl active:scale-[0.98] transition-transform">
+                    Hủy
+                </button>
+                <button @click="executeBulkMove()" type="button" :disabled="!targetClassForMove || busy"
+                        class="flex-1 py-3.5 bg-blue-600 text-white font-bold rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-blue-200 disabled:opacity-50 flex items-center justify-center gap-2">
+                    <span x-show="!busy">Xác nhận chuyển lớp</span>
+                    <span x-show="busy" style="display: none;">
+                        <svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                        </svg>
+                        Đang xử lý...
+                    </span>
+                </button>
+            </div>
         </div>
     </div>
 
