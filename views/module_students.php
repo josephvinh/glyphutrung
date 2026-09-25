@@ -161,6 +161,29 @@
                 </button>
             </div>
 
+            <!-- PDF Export Dropdown (Phase 4) -->
+            <div class="relative" x-data="{ showPdfMenu: false }">
+                <button @click="showPdfMenu = !showPdfMenu" type="button" title="Xuất PDF"
+                        class="flex items-center gap-1 px-3 py-2 bg-rose-50 text-rose-600 rounded-xl font-bold text-xs border border-rose-100 hover:bg-rose-100 active:scale-95 transition-all">
+                    <i data-lucide="file-text" class="w-4 h-4"></i>
+                    <span class="hidden sm:inline">PDF</span>
+                    <i data-lucide="chevron-down" class="w-3 h-3"></i>
+                </button>
+                <div x-show="showPdfMenu" @click.away="showPdfMenu = false" style="display: none;"
+                     x-transition class="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-lg border p-2 z-50 min-w-[160px]">
+                    <button @click="exportPdf('list')" type="button"
+                            class="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 rounded-lg flex items-center gap-2">
+                        <i data-lucide="list" class="w-4 h-4 text-slate-400"></i>
+                        Danh sách lớp
+                    </button>
+                    <button @click="exportPdf('cards')" type="button"
+                            class="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 rounded-lg flex items-center gap-2">
+                        <i data-lucide="id-card" class="w-4 h-4 text-slate-400"></i>
+                        Thẻ từng em
+                    </button>
+                </div>
+            </div>
+
             <!-- In thẻ QR nay là thẻ riêng trong module Thiếu Nhi -->
             <button x-show="canEditModule('students')" style="display: none;"
                     @click="openAddStudent()" type="button"

@@ -902,4 +902,136 @@ window.TNTT.students = {
             document.body.removeChild(textArea);
         }
     },
+
+    // ==========================================
+    // 7. PDF EXPORT (Phase 4)
+    // ==========================================
+    showPdfMenu: false,
+
+    escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    },
+
+    generatePdfListHtml(students) {
+        const today = new Date().toLocaleDateString('vi-VN');
+        const year = window.TNTT?.currentYear?.name || 'Niên khoá hiện tại';
+        const block = this.filterBlock || 'Tất cả các khối';
+        const cls = this.filterClass || 'Tất cả các lớp';
+
+        let rows = students.map((s, i) => `
+            <tr>
+                <td>${i + 1}</td>
+                <td>${this.escapeHtml(s.code)}</td>
+                <td>${this.escapeHtml(s.holyName)} ${this.escapeHtml(s.name)}</td>
+                <td>${s.gender === 1 ? 'Nam' : 'Nữ'}</td>
+                <td>${s.birthDate ? new Date(s.birthDate).toLocaleDateString('vi-VN') : '-'}</td>
+                <td>${this.escapeHtml(s.className || '-')}</td>
+                <td>${this.escapeHtml(s.status)}</td>
+            </tr>
+        `).join('');
+
+        return `
+            <div class="header">
+                <h1>DANH SÁCH THIẾU NHI</h1>
+                <p>Khối: ${this.escapeHtml(block)} | Lớp: ${this.escapeHtml(cls)}</p>
+                <p>${this.escapeHtml(year)} | Ngày in: ${today} | Tổng: ${students.length} em</p>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>STT</th>
+                        <th>Mã</th>
+                        <th>Họ tên</th>
+                        <th>GT</th>
+                        <th>Ngày sinh</th>
+                        <th>Lớp</th>
+                        <th>Tình trạng</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+        `;
+    },
+
+    generatePdfCardsHtml(students) {
+        const today = new Date().toLocaleDateString('vi-VN');
+        const year = window.TNTT?.currentYear?.name || 'Niên khoá hiện tại';
+
+        let cards = students.map(s => `
+            <div class="card">
+                <div class="card-header">
+                    <strong>${this.escapeHtml(s.holyName)} ${this.escapeHtml(s.name)}</strong>
+                    <span>${this.escapeHtml(s.code)}</span>
+                </div>
+                <div class="card-body">
+                    <p><strong>Lớp:</strong> ${this.escapeHtml(s.className || '-')}</p>
+                    <p><strong>Giới tính:</strong> ${s.gender === 1 ? 'Nam' : 'Nữ'}</p>
+                    <p><strong>Ngày sinh:</strong> ${s.birthDate ? new Date(s.birthDate).toLocaleDateString('vi-VN') : '-'}</p>
+                    <p><strong>Địa chỉ:</strong> ${this.escapeHtml(s.address || '-')}</p>
+                    <p><strong>Cha:</strong> ${this.escapeHtml(s.fatherName || '-')} - ${this.escapeHtml(s.fatherPhone || '-')}</p>
+                    <p><strong>Mẹ:</strong> ${this.escapeHtml(s.motherName || '-')} - ${this.escapeHtml(s.motherPhone || '-')}</p>
+                </div>
+            </div>
+        `).join('');
+
+        return `
+            <div class="header">
+                <h1>THẺ THIẾU NHI</h1>
+                <p>${this.escapeHtml(year)} | Ngày in: ${today} | Tổng: ${students.length} em</p>
+            </div>
+            <div class="cards-grid">${cards}</div>
+        `;
+    },
+
+    exportPdf(type) {
+        this.showPdfMenu = false;
+        const students = this.filteredStudents;
+        if (students.length === 0) {
+            window.TNTT.toast.warning('Không có dữ liệu để xuất PDF.');
+            return;
+        }
+
+        const content = type === 'cards'
+            ? this.generatePdfCardsHtml(students)
+            : this.generatePdfListHtml(students);
+
+        const printWindow = window.open('', '_blank');
+        if (!printWindow) {
+            window.TNTT.toast.error('Trình duyệt chặn popup. Vui lòng cho phép popup.');
+            return;
+        }
+
+        printWindow.document.write(`
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Danh sách thiếu nhi - ${new Date().toLocaleDateString('vi-VN')}</title>
+    <style>
+        @page { margin: 15mm; size: A4; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Times New Roman', serif; font-size: 11pt; line-height: 1.4; }
+        .header { text-align: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #000; }
+        .header h1 { font-size: 16pt; margin-bottom: 5px; }
+        .header p { font-size: 10pt; color: #555; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #000; padding: 6px 8px; text-align: left; }
+        th { background: #f0f0f0; font-weight: bold; }
+        tr:nth-child(even) { background: #fafafa; }
+        .cards-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 20px; }
+        .card { border: 1px solid #000; padding: 12px; page-break-inside: avoid; }
+        .card-header { display: flex; justify-content: space-between; border-bottom: 1px solid #ccc; padding-bottom: 8px; margin-bottom: 8px; }
+        .card-header span { color: #666; font-size: 9pt; }
+        .card-body p { margin-bottom: 4px; font-size: 10pt; }
+        @media print { body { print-color-adjust: exact; -webkit-print-color-adjust: exact; } }
+    </style>
+</head>
+<body>${content}</body>
+</html>`);
+        printWindow.document.close();
+        setTimeout(() => printWindow.print(), 250);
+    },
 };
