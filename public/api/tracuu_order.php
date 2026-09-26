@@ -73,7 +73,7 @@ if (in_array($action, ['place', 'cancel'], true) && $method !== 'POST') {
 tracuu_throttle();
 tracuu_attempt_record();
 
-$year = db_one("SELECT id FROM school_years WHERE is_current = 1 LIMIT 1");
+$year = db_one("SELECT id, status FROM school_years WHERE is_current = 1 LIMIT 1");
 if (!$year) json_fail('Chưa mở niên khoá.', 503);
 $yearId = (int) $year['id'];
 
@@ -94,6 +94,12 @@ switch ($action) {
 
         if ($code === '' || $password === '' || !$items) {
             json_fail('Không đặt được đơn, vui lòng kiểm tra lại.');
+        }
+
+        // Niên khoá đã khoá sổ thì không cho đặt đơn mới (đối xứng với confirm ở
+        // rewards.php) — tránh tạo đơn giữ Mộc/tồn mà không bao giờ giao được.
+        if (($year['status'] ?? '') === 'đã khóa') {
+            json_fail('Niên khoá đã khoá sổ, không đặt đơn được.', 409);
         }
 
         $student = db_one('SELECT id FROM students WHERE code = ?', [$code]);
