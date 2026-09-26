@@ -124,6 +124,19 @@ $migrations = [
     "ALTER TABLE members ADD COLUMN register_note VARCHAR(255) NULL",
     "ALTER TABLE members ADD COLUMN registered_at DATETIME NULL",
     "ALTER TABLE members ADD COLUMN birth_date DATE NULL",
+    // Cột lịch/thi đua cho chương trình (buổi lặp nhiều thứ, khoảng ngày, QR,
+    // và cờ count_for_emulation = tích Mộc). CSDL mới đã có sẵn từ schema.sql;
+    // các ALTER này nâng cấp CSDL cũ (trùng cột thì bỏ qua theo catch bên dưới).
+    "ALTER TABLE programs ADD COLUMN count_for_emulation TINYINT(1) NOT NULL DEFAULT 0",
+    "ALTER TABLE programs ADD COLUMN days_of_week VARCHAR(32) NULL",
+    "ALTER TABLE programs ADD COLUMN absent_time TIME NULL",
+    "ALTER TABLE programs ADD COLUMN effective_from DATE NULL",
+    "ALTER TABLE programs ADD COLUMN effective_to DATE NULL",
+    "ALTER TABLE programs ADD COLUMN allow_qr TINYINT(1) NOT NULL DEFAULT 1",
+    "ALTER TABLE programs ADD COLUMN auto_close_after_event TINYINT(1) NOT NULL DEFAULT 0",
+    "ALTER TABLE programs ADD COLUMN color VARCHAR(48) NULL",
+    "ALTER TABLE programs ADD COLUMN icon VARCHAR(48) NULL",
+    "ALTER TABLE programs ADD COLUMN sort_order TINYINT NOT NULL DEFAULT 1",
 ];
 $mig = 0;
 foreach ($migrations as $sqlMig) {
@@ -150,6 +163,7 @@ $roles = [
     ['glv_chu_nhiem', 'GLV Chủ Nhiệm',     2, 'lớp',       'Phụ trách một lớp, được duyệt đơn của lớp'],
     ['glv',           'Giáo Lý Viên',      1, 'lớp',       'Dạy và điểm danh lớp được phân công'],
     ['du_bi',         'Dự Bị',             1, 'lớp',       'Hỗ trợ tại lớp được phân công'],
+    ['thu_thu',       'Thủ Thư',           1, 'toàn đoàn', 'Phục vụ đổi quà toàn đoàn'],
 ];
 foreach ($roles as $r) {
     db_run('INSERT IGNORE INTO roles (code, label, level, scope, descr) VALUES (?,?,?,?,?)', $r);
@@ -191,6 +205,8 @@ $modules = [
     ['announcements', 'Thông báo',    'megaphone',       'text-rose-500',    'bdh', 4],
     ['staff',         'Nhân sự',      'user-cog',        'text-cyan-600',    'bdh', 5],
     ['years',         'Niên khoá',    'calendar-range',  'text-indigo-600',  'bdh', 6],
+    ['gifts',         'Danh mục quà', 'gift',            'text-pink-600',    'bdh', 13],
+    ['rewards',       'Đổi quà',      'shopping-bag',    'text-pink-600',    'bdh', 14],
 ];
 foreach ($modules as $m) {
     db_run('INSERT IGNORE INTO modules (module_key, label, icon, color, area, sort_order)
@@ -222,6 +238,10 @@ $perms = [
     'notes'         => ['edit','edit','edit','edit','edit','edit'],
     // Hướng dẫn sử dụng: mọi vai đều xem
     'guide'         => ['view','view','view','view','view','view'],
+    // Sổ Mộc: Danh mục quà do BĐH/Admin quản; Đổi quà chỉ Admin (và Thủ Thư,
+    // seed riêng bên dưới vì thu_thu nằm ngoài $roleOrder).
+    'gifts'         => ['edit','edit','none','none','none','none'],
+    'rewards'       => ['edit','none','none','none','none','none'],
 ];
 $roleOrder = ['admin','bdh','truong_khoi','glv_chu_nhiem','glv','du_bi'];
 foreach ($perms as $mod => $levels) {
@@ -230,7 +250,10 @@ foreach ($perms as $mod => $levels) {
                [$mod, $role, $levels[$i]]);
     }
 }
-say('✓ Module: ' . count($modules) . ' · Phân quyền: ' . (count($perms) * count($roleOrder)));
+// Thủ Thư (vai kiêm nhiệm, ngoài $roleOrder) — chỉ có quyền trên gifts/rewards.
+db_run('INSERT IGNORE INTO permissions (module_key, role_code, level) VALUES (?,?,?)', ['gifts',   'thu_thu', 'edit']);
+db_run('INSERT IGNORE INTO permissions (module_key, role_code, level) VALUES (?,?,?)', ['rewards', 'thu_thu', 'edit']);
+say('✓ Module: ' . count($modules) . ' · Phân quyền: ' . (count($perms) * count($roleOrder) + 2));
 
 // --- Đầu điểm ---
 $scoreTypes = [
