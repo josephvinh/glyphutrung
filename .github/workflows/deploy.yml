@@ -42,3 +42,11 @@ jobs:
             cd "$HOME/tntt"
             git pull --ff-only origin master
             bash scripts/deploy.sh
+
+            # Dọn dẹp thư mục dư thừa trên APP (~/tntt-app)
+            cd "$HOME/tntt-app"
+            rm -rf .github .claude .superpowers tests docs scratch REVIEW_RESULTS build
+            rm -rf "NGOC VINH" Enter
+            rm -f phpunit10.phar phpunit.xml tsconfig.json package.json package-lock.json
+            rm -f CLAUDE.md CHANGES_SUMMARY.md
+            echo "Dọn dẹp hoàn tất!"

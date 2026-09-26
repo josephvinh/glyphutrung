@@ -112,7 +112,7 @@ window.TNTT.qrcard = {
         return h;
     },
 
-    // CSS dựng theo tuỳ chọn — dùng cho cả xem trước và bản in
+    // CSS dựng theo tuỳ chọn — dùng cho cả xem trước lẫn bản in
     qrStyleCss() {
         const border = this.qrCutLines ? '1px dashed #94a3b8' : '1px solid #e2e8f0';
         const qrSize = this.qrTemplate === 'badge' ? '30mm' : '22mm';
@@ -199,7 +199,7 @@ window.TNTT.qrcard = {
             .replace(/"/g, '&quot;');
     },
 
-    /** Trả về chuỗi SVG QR code cho một mã */
+    /** Trả về chuỗi SVG QR code cho một mã (dùng ở màn hồ sơ học sinh) */
     qrSvg(code) {
         if (!code) return '';
         try {

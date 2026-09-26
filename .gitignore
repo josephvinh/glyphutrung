@@ -15,7 +15,7 @@ public/git_diff_sw.php
 public/test_runner_ai.php
 
 # Claude workspace artifacts
-.superpowers/sdd/
+.superpowers/
 .claude/launch.json
 
 # Bảng đối chiếu migration (chứa tên thật — không đưa lên repo)
@@ -28,3 +28,37 @@ config/config.local.php
 # nối source nếu file này thiếu hoặc cũ)
 public/assets/js/bundle.min.js
 public/assets/js/login.min.js
+
+# ============================================================
+# DEVELOPMENT ONLY — KHÔNG PUSH LÊN HOST
+# ============================================================
+
+# CI/CD workflows (chạy trên GitHub, không cần trên host)
+# .github/ - GIỮ LẠI TRONG GIT để GitHub Actions hoạt động
+
+# Claude Code workspace files
+REVIEW_RESULTS/
+
+# Development artifacts (build tools, tests, docs - không cần trên production)
+build/
+tests/
+docs/
+scratch/
+
+# PHPUnit
+phpunit10.phar
+phpunit.xml
+
+# Dev config files
+tsconfig.json
+package.json
+package-lock.json
+
+# Claude workspace directories
+"NGOC VINH"/
+"[working-dir] NGOC VINH"/
+Enter/
+
+# Documentation
+CLAUDE.md
+CHANGES_SUMMARY.md

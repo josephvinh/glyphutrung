@@ -191,6 +191,11 @@ window.TNTT.core = {
 
             this._lastLoadAt = Date.now();  // mốc để auto-đồng-bộ khi mở lại app khỏi nạp dồn
             this.loadHeavy();               // BƯỚC 2 — tải nền, KHÔNG await
+
+            // Phase 3: Load favorites and init keyboard shortcuts
+            if (this.students?.loadFavorites) this.students.loadFavorites();
+            if (this.students?.initKeyboardShortcuts) this.students.initKeyboardShortcuts();
+
             return true;
         } catch (e) {
             window.TNTT.toast.error('Không nạp được dữ liệu từ máy chủ.');

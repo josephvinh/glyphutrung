@@ -605,3 +605,17 @@ ALTER TABLE enrollments ADD INDEX idx_enr_year_status (year_id, status);
 
 -- Announcements: lookup by year + status + expiry (for live announcements)
 ALTER TABLE announcements ADD INDEX idx_an_live (year_id, status, expires_at);
+
+-- ============================================================
+--  STUDENT FAVORITES (Stars)
+--  Lưu các em được đánh dấu yêu thích bởi từng user
+-- ============================================================
+CREATE TABLE IF NOT EXISTS student_favorites (
+    id          INT AUTO_INCREMENT PRIMARY KEY,
+    student_id  INT NOT NULL,
+    user_id     INT NOT NULL,
+    created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_favorite (student_id, user_id),
+    CONSTRAINT fk_fav_student FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+    CONSTRAINT fk_fav_user FOREIGN KEY (user_id) REFERENCES members(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

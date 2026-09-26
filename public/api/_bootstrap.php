@@ -88,6 +88,12 @@ function json_fail(string $message, int $code = 400): never
     json_out(['ok' => false, 'error' => $message], $code);
 }
 
+/** Trả JSON thành công: {ok:true, ...$data} */
+function json_success(array $data = [], int $code = 200): never
+{
+    json_out(array_merge(['ok' => true], $data), $code);
+}
+
 /** Đọc thân request dạng JSON, quay về $_POST nếu gửi kiểu form */
 function json_input(): array
 {

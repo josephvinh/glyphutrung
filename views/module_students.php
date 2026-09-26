@@ -26,7 +26,7 @@
 
         <!-- BẢNG LỌC -->
         <div x-show="showFilter" style="display: none;" x-collapse class="mt-3 bg-white p-4 rounded-card shadow-sm border border-slate-100 border-t-4 border-t-blue-500">
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
                 <div x-show="availableBlocks.length > 1" style="display: none;">
                     <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Khối</label>
                     <select x-model="filterBlock" @change="filterClass = ''" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700">
@@ -54,44 +54,41 @@
                         <option value="chuyển xứ">Chuyển xứ</option>
                     </select>
                 </div>
-            </div>
-
-            <!-- Enhanced Filters: Gender, Age, Address -->
-            <div class="mt-4 pt-4 border-t">
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <!-- Gender -->
-                    <div>
-                        <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Giới tính</label>
-                        <select x-model="filterGender" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm">
-                            <option value="">Tất cả</option>
-                            <option value="1">Nam</option>
-                            <option value="0">Nữ</option>
-                        </select>
-                    </div>
-                    <!-- Age range -->
-                    <div>
-                        <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Tuổi từ</label>
-                        <select x-model="filterAgeFrom" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm">
-                            <option value="">-</option>
-                            <template x-for="age in Array.from({length: 22}, (_, i) => i + 5)">
-                                <option :value="age" x-text="age"></option>
-                            </template>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Đến tuổi</label>
-                        <select x-model="filterAgeTo" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm">
-                            <option value="">-</option>
-                            <template x-for="age in Array.from({length: 22}, (_, i) => i + 5)">
-                                <option :value="age" x-text="age"></option>
-                            </template>
-                        </select>
-                    </div>
+                <!-- Enhanced: Giới tính -->
+                <div>
+                    <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Giới tính</label>
+                    <select x-model="filterGender" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700">
+                        <option value="">Tất cả</option>
+                        <option value="1">Nam</option>
+                        <option value="0">Nữ</option>
+                    </select>
                 </div>
-                <!-- Address -->
-                <div class="mt-4">
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-end mt-4">
+                <!-- Enhanced: Tuổi từ -->
+                <div>
+                    <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Tuổi từ</label>
+                    <select x-model="filterAgeFrom" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700">
+                        <option value="">Tất cả</option>
+                        <template x-for="age in ageOptions" :key="age">
+                            <option :value="age" x-text="age + ' tuổi'"></option>
+                        </template>
+                    </select>
+                </div>
+                <!-- Enhanced: Tuổi đến -->
+                <div>
+                    <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Tuổi đến</label>
+                    <select x-model="filterAgeTo" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700">
+                        <option value="">Tất cả</option>
+                        <template x-for="age in ageOptions" :key="age">
+                            <option :value="age" x-text="age + ' tuổi'"></option>
+                        </template>
+                    </select>
+                </div>
+                <!-- Enhanced: Địa chỉ -->
+                <div>
                     <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Địa chỉ</label>
-                    <input x-model="filterAddress" type="text" placeholder="Tìm theo địa chỉ..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm">
+                    <input x-model="filterAddress" type="text" placeholder="Tìm theo địa chỉ..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                 </div>
             </div>
 
@@ -127,10 +124,66 @@
         </p>
     </div>
 
-    <!-- HÀNG NÚT CÔNG CỤ: THỐNG KÊ & NHẬP/XUẤT -->
+    <!-- HÀNG NÚT CÔNG CỤ: THỐNG KÊ, VIEW MODE, NHẬP/XUẤT -->
     <div class="flex justify-between items-center mb-6">
-        <div class="text-sm font-bold text-slate-500">Tổng: <span x-text="filteredStudents.length" class="text-blue-600 text-base"></span> em</div>
+        <div class="flex items-center gap-3">
+            <div class="text-sm font-bold text-slate-500">Tổng: <span x-text="filteredStudents.length" class="text-blue-600 text-base"></span> em</div>
+            <!-- Select All checkbox (only show when there are students) -->
+            <div x-show="filteredStudents.length > 0" style="display: none;" class="flex items-center gap-1.5 ml-2">
+                <input type="checkbox"
+                       :checked="allDisplayedSelected"
+                       @click="toggleSelectAll()"
+                       class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                       title="Chọn tất cả">
+                <span class="text-xs font-medium text-slate-500 select-none">Chọn tất cả</span>
+            </div>
+            <!-- Selected count badge -->
+            <div x-show="selectedStudents.length > 0" style="display: none;">
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">
+                    <span x-text="selectedStudents.length"></span> đã chọn
+                </span>
+            </div>
+        </div>
         <div class="flex gap-2">
+            <!-- Grid/List Toggle -->
+            <div class="flex items-center bg-slate-100 rounded-xl p-1 gap-0.5">
+                <button @click="setViewMode('grid')" type="button" :title="'Xem dạng lưới'"
+                        :class="viewMode === 'grid' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+                        class="px-3 py-1.5 rounded-lg font-bold text-xs transition-all flex items-center gap-1.5">
+                    <i data-lucide="layout-grid" class="w-4 h-4"></i>
+                    <span class="hidden sm:inline">Lưới</span>
+                </button>
+                <button @click="setViewMode('list')" type="button" :title="'Xem dạng danh sách'"
+                        :class="viewMode === 'list' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+                        class="px-3 py-1.5 rounded-lg font-bold text-xs transition-all flex items-center gap-1.5">
+                    <i data-lucide="list" class="w-4 h-4"></i>
+                    <span class="hidden sm:inline">DS</span>
+                </button>
+            </div>
+
+            <!-- PDF Export Dropdown (Phase 4) -->
+            <div class="relative" x-data="{ showPdfMenu: false }">
+                <button @click="showPdfMenu = !showPdfMenu" type="button" title="Xuất PDF"
+                        class="flex items-center gap-1 px-3 py-2 bg-rose-50 text-rose-600 rounded-xl font-bold text-xs border border-rose-100 hover:bg-rose-100 active:scale-95 transition-all">
+                    <i data-lucide="file-text" class="w-4 h-4"></i>
+                    <span class="hidden sm:inline">PDF</span>
+                    <i data-lucide="chevron-down" class="w-3 h-3"></i>
+                </button>
+                <div x-show="showPdfMenu" @click.away="showPdfMenu = false" style="display: none;"
+                     x-transition class="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-lg border p-2 z-50 min-w-[160px]">
+                    <button @click="exportPdf('list')" type="button"
+                            class="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 rounded-lg flex items-center gap-2">
+                        <i data-lucide="list" class="w-4 h-4 text-slate-400"></i>
+                        Danh sách lớp
+                    </button>
+                    <button @click="exportPdf('cards')" type="button"
+                            class="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 rounded-lg flex items-center gap-2">
+                        <i data-lucide="id-card" class="w-4 h-4 text-slate-400"></i>
+                        Thẻ từng em
+                    </button>
+                </div>
+            </div>
+
             <!-- In thẻ QR nay là thẻ riêng trong module Thiếu Nhi -->
             <button x-show="canEditModule('students')" style="display: none;"
                     @click="openAddStudent()" type="button"
@@ -163,41 +216,6 @@
                 <span x-show="filteredStudents.length === 0" style="display: none;" class="inline-flex items-center justify-center"><i data-lucide="file-down" class="w-4 h-4"></i></span>
                 <span x-text="filteredStudents.length === 0 ? 'Tải mẫu' : 'Xuất'"></span>
             </button>
-
-            <!-- Grid/List Toggle -->
-            <div class="flex gap-1">
-                <button @click="viewMode = 'grid'; localStorage.setItem('studentsViewMode', 'grid')" :class="viewMode === 'grid' ? 'bg-blue-600 text-white' : 'bg-white text-slate-600'" class="px-3 py-2 rounded-lg border shadow-sm">
-                    <i data-lucide="layout-grid" class="w-4 h-4"></i>
-                </button>
-                <button @click="viewMode = 'list'; localStorage.setItem('studentsViewMode', 'list')" :class="viewMode === 'list' ? 'bg-blue-600 text-white' : 'bg-white text-slate-600'" class="px-3 py-2 rounded-lg border shadow-sm">
-                    <i data-lucide="list" class="w-4 h-4"></i>
-                </button>
-            </div>
-
-            <!-- PDF Export Dropdown -->
-            <div class="relative" x-data="{ showPdfMenu: false }">
-                <button @click="showPdfMenu = !showPdfMenu; $nextTick(() => setupPdfMenuClose())" type="button"
-                        class="flex items-center gap-1.5 px-3 py-2 bg-rose-50 text-rose-600 rounded-xl font-bold text-xs border border-rose-100 active:scale-95 transition-transform shadow-sm">
-                    <i data-lucide="file-text" class="w-4 h-4"></i> PDF
-                    <i data-lucide="chevron-down" class="w-3 h-3"></i>
-                </button>
-                <div x-show="showPdfMenu"
-                     x-transition:enter="transition ease-out duration-100"
-                     x-transition:enter-start="opacity-0 scale-95"
-                     x-transition:enter-end="opacity-100 scale-100"
-                     x-transition:leave="transition ease-in duration-75"
-                     x-transition:leave-start="opacity-100 scale-100"
-                     x-transition:leave-end="opacity-0 scale-95"
-                     @click.outside="showPdfMenu = false"
-                     class="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-lg border p-2 z-50 min-w-[180px]">
-                    <button @click="showPdfMenu = false; exportPdf('list')" class="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 rounded-lg flex items-center gap-2">
-                        <i data-lucide="list" class="w-4 h-4 text-slate-400"></i> Danh sách lớp
-                    </button>
-                    <button @click="showPdfMenu = false; exportPdf('cards')" class="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 rounded-lg flex items-center gap-2">
-                        <i data-lucide="id-card" class="w-4 h-4 text-slate-400"></i> Thẻ từng em
-                    </button>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -205,18 +223,27 @@
     <!-- Skeleton loading state - chỉ hiện khi đang sync và chưa có dữ liệu -->
     <?php include __DIR__ . '/partial_students_skeleton.php'; ?>
 
-    <!-- GRID VIEW: Card layout -->
-    <div x-show="viewMode === 'grid' && (!syncing || students.length > 0)" style="display: none;"
-         x-init="setupIntersectionObserver()"
-         x-effect="filteredStudents.length; resetVirtualScroll()"
-         class="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-2 xl:grid-cols-3 xl:gap-4 xl:items-start">
-        <template x-for="student in visibleStudents" :key="student.id">
+    <!-- Actual student list - hiện khi KHÔNG sync HOẶC đã có dữ liệu -->
+    <div x-show="!syncing || students.length > 0" style="display: none;">
+
+        <!-- ===== GRID VIEW (Card Layout) ===== -->
+        <div x-show="viewMode === 'grid'" style="display: none;" class="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-2 xl:grid-cols-3 xl:gap-4 xl:items-start">
+        <template x-for="student in displayedStudents" :key="student.id">
 
             <!-- content-visibility: bỏ qua việc dựng hình các thẻ ngoài màn hình.
                  contain-intrinsic-size: báo trước chiều cao ước lượng để thanh cuộn khỏi giật. -->
-            <div style="content-visibility: auto; contain-intrinsic-size: auto 420px;" class="bg-white rounded-card p-5 shadow-sm border border-slate-100 relative overflow-hidden group">
+            <div style="content-visibility: auto; contain-intrinsic-size: auto 420px;"
+                 class="bg-white rounded-card p-5 shadow-sm border relative overflow-hidden group transition-all"
+                 :class="isStudentSelected(student.id) ? 'border-blue-400 ring-2 ring-blue-200' : 'border-slate-100'">
+                <!-- Bulk selection checkbox -->
+                <div class="absolute top-3 left-3 z-10">
+                    <input type="checkbox"
+                           :checked="isStudentSelected(student.id)"
+                           @click.stop="toggleStudentSelection(student.id)"
+                           class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
+                </div>
                 <div class="flex items-start justify-between gap-3 mb-4">
-                    <div class="min-w-0">
+                    <div class="min-w-0 pl-6">
                         <h3 class="text-base font-black text-slate-800 leading-tight">
                             <span x-text="student.holyName" class="font-normal text-slate-500 block mb-0.5"></span>
                             <span x-text="student.name"></span>
@@ -225,11 +252,39 @@
                             <span x-text="student.code"></span> <span class="text-slate-400 mx-1">•</span> <span class="text-slate-500" x-text="student.className"></span>
                         </p>
                     </div>
-                    <div class="flex items-center gap-2 shrink-0">
+                    <div class="flex items-center gap-1 shrink-0">
                         <span class="text-micro font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg" :class="{'bg-emerald-50 text-emerald-600': student.status === 'đang sinh hoạt', 'bg-rose-50 text-rose-600': student.status === 'dừng sinh hoạt', 'bg-slate-100 text-slate-500': student.status === 'chuyển xứ'}" x-text="student.status"></span>
-                        <button aria-label="Sửa hồ sơ thiếu nhi" x-show="canEditModule('students')" style="display: none;" @click="openEdit(student)" class="tap-safe w-8 h-8 bg-slate-50 hover:bg-blue-50 rounded-full flex items-center justify-center text-slate-400 hover:text-blue-600 border border-slate-200 transition-colors">
-                            <i data-lucide="pencil" class="w-4 h-4"></i>
+                        <!-- Favorite star button -->
+                        <button @click.stop="toggleFavorite(student.id)"
+                                :title="isFavorite(student.id) ? 'Bỏ yêu thích' : 'Yêu thích'"
+                                class="tap-safe w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+                                :class="isFavorite(student.id) ? 'text-amber-500 hover:text-amber-600' : 'text-slate-300 hover:text-amber-500'">
+                            <i data-lucide="star" class="w-5 h-5" :fill="isFavorite(student.id) ? 'currentColor' : 'none'"></i>
                         </button>
+                        <!-- Quick Actions: Copy Phone & Edit -->
+                        <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <!-- Copy phone dropdown -->
+                            <div class="relative" x-data="{ showCopyMenu: false }" @click.away="showCopyMenu = false">
+                                <button @click="showCopyMenu = !showCopyMenu" type="button" title="Sao chép SĐT" class="tap-safe w-8 h-8 bg-slate-50 hover:bg-amber-50 rounded-full flex items-center justify-center text-slate-400 hover:text-amber-600 border border-slate-200 transition-colors">
+                                    <i data-lucide="clipboard" class="w-4 h-4"></i>
+                                </button>
+                                <div x-show="showCopyMenu" style="display: none;" x-transition class="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-lg border border-slate-200 py-1 z-50 min-w-[140px]">
+                                    <button @click="copyPhone(student.fatherPhone); showCopyMenu = false" type="button" class="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 flex items-center gap-2">
+                                        <i data-lucide="user" class="w-3.5 h-3.5 text-slate-400"></i>
+                                        <span class="font-medium">Cha:</span>
+                                        <span class="text-slate-600" x-text="student.fatherPhone || '—'"></span>
+                                    </button>
+                                    <button @click="copyPhone(student.motherPhone); showCopyMenu = false" type="button" class="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 flex items-center gap-2">
+                                        <i data-lucide="user" class="w-3.5 h-3.5 text-slate-400"></i>
+                                        <span class="font-medium">Mẹ:</span>
+                                        <span class="text-slate-600" x-text="student.motherPhone || '—'"></span>
+                                    </button>
+                                </div>
+                            </div>
+                            <button aria-label="Sửa hồ sơ thiếu nhi" x-show="canEditModule('students')" style="display: none;" @click="openEdit(student)" class="tap-safe w-8 h-8 bg-slate-50 hover:bg-blue-50 rounded-full flex items-center justify-center text-slate-400 hover:text-blue-600 border border-slate-200 transition-colors">
+                                <i data-lucide="pencil" class="w-4 h-4"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <div class="space-y-2 mb-4 bg-slate-50 p-3.5 rounded-2xl">
@@ -252,9 +307,6 @@
                             <p class="text-sm font-semibold text-slate-700" x-text="student.fatherName"></p>
                         </div>
                         <a :href="'tel:' + student.fatherPhone" :aria-label="'Gọi cha của ' + student.name" class="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 active:scale-90 transition-transform shadow-sm border border-blue-100"><i data-lucide="phone" class="w-4 h-4 fill-blue-100"></i></a>
-                        <button @click="copyToClipboard(student.fatherPhone || student.motherPhone)" class="w-10 h-10 bg-slate-50 hover:bg-blue-50 rounded-full flex items-center justify-center text-slate-400 hover:text-blue-600 active:scale-90 transition-transform shadow-sm border border-slate-100" title="Copy số điện thoại">
-                            <i data-lucide="clipboard" class="w-4 h-4"></i>
-                        </button>
                     </div>
                     <div class="flex justify-between items-center">
                         <div>
@@ -274,23 +326,101 @@
                 </div>
             </div>
         </template>
+        </div>
 
-        <!-- Virtual scrolling sentinel - Invisible trigger for IntersectionObserver -->
-        <div id="load-more-sentinel" class="h-1 col-span-full"></div>
+        <!-- ===== LIST VIEW (Table Layout) ===== -->
+        <div x-show="viewMode === 'list'" style="display: none;" class="bg-white rounded-card shadow-sm border border-slate-100 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-slate-50 border-b border-slate-200">
+                        <tr>
+                            <th class="px-4 py-3 text-left font-bold text-slate-600 uppercase tracking-wide text-micro w-8">
+                                <input type="checkbox"
+                                       :checked="allDisplayedSelected"
+                                       @click="toggleSelectAll()"
+                                       class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
+                            </th>
+                            <th class="px-4 py-3 text-left font-bold text-slate-600 uppercase tracking-wide text-micro">STT</th>
+                            <th class="px-4 py-3 text-left font-bold text-slate-600 uppercase tracking-wide text-micro">Tên Thánh</th>
+                            <th class="px-4 py-3 text-left font-bold text-slate-600 uppercase tracking-wide text-micro">Họ Tên</th>
+                            <th class="px-4 py-3 text-left font-bold text-slate-600 uppercase tracking-wide text-micro">Lớp</th>
+                            <th class="px-4 py-3 text-left font-bold text-slate-600 uppercase tracking-wide text-micro">GT</th>
+                            <th class="px-4 py-3 text-left font-bold text-slate-600 uppercase tracking-wide text-micro">Tuổi</th>
+                            <th class="px-4 py-3 text-left font-bold text-slate-600 uppercase tracking-wide text-micro">Tình trạng</th>
+                            <th class="px-4 py-3 text-left font-bold text-slate-600 uppercase tracking-wide text-micro">SĐT Cha</th>
+                            <th class="px-4 py-3 text-left font-bold text-slate-600 uppercase tracking-wide text-micro">SĐT Mẹ</th>
+                            <th class="px-4 py-3 text-center font-bold text-slate-600 uppercase tracking-wide text-micro">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        <template x-for="(student, index) in displayedStudents" :key="student.id">
+                            <tr class="hover:bg-slate-50 transition-colors"
+                                :class="isStudentSelected(student.id) ? 'bg-blue-50' : ''">
+                                <td class="px-4 py-3">
+                                    <input type="checkbox"
+                                           :checked="isStudentSelected(student.id)"
+                                           @click="toggleStudentSelection(student.id)"
+                                           class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
+                                </td>
+                                <td class="px-4 py-3 text-slate-500 font-medium" x-text="index + 1"></td>
+                                <td class="px-4 py-3 text-slate-600" x-text="student.holyName"></td>
+                                <td class="px-4 py-3 font-semibold text-slate-800" x-text="student.name"></td>
+                                <td class="px-4 py-3 text-slate-600" x-text="student.className"></td>
+                                <td class="px-4 py-3">
+                                    <span :class="student.gender === 1 ? 'text-blue-600' : 'text-rose-500'" x-text="student.gender === 1 ? 'Nam' : 'Nữ'"></span>
+                                </td>
+                                <td class="px-4 py-3 text-slate-600" x-text="calculateAge(student.birthDate)"></td>
+                                <td class="px-4 py-3">
+                                    <span class="text-micro font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg" :class="{'bg-emerald-50 text-emerald-600': student.status === 'đang sinh hoạt', 'bg-rose-50 text-rose-600': student.status === 'dừng sinh hoạt', 'bg-slate-100 text-slate-500': student.status === 'chuyển xứ'}" x-text="student.status"></span>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <div class="flex items-center gap-1">
+                                        <span class="text-slate-600" x-text="student.fatherPhone || '—'"></span>
+                                        <button @click="copyPhone(student.fatherPhone)" type="button" title="Sao chép SĐT Cha" class="p-1 text-slate-400 hover:text-amber-600 transition-colors">
+                                            <i data-lucide="clipboard" class="w-3.5 h-3.5"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <div class="flex items-center gap-1">
+                                        <span class="text-slate-600" x-text="student.motherPhone || '—'"></span>
+                                        <button @click="copyPhone(student.motherPhone)" type="button" title="Sao chép SĐT Mẹ" class="p-1 text-slate-400 hover:text-amber-600 transition-colors">
+                                            <i data-lucide="clipboard" class="w-3.5 h-3.5"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3 text-center">
+                                    <div class="flex items-center justify-center gap-1">
+                                        <button @click="toggleFavorite(student.id)" type="button" :title="isFavorite(student.id) ? 'Bỏ yêu thích' : 'Yêu thích'" class="p-1.5 transition-colors rounded-lg" :class="isFavorite(student.id) ? 'text-amber-500 hover:text-amber-600 hover:bg-amber-50' : 'text-slate-300 hover:text-amber-500 hover:bg-amber-50'">
+                                            <i data-lucide="star" class="w-4 h-4" :fill="isFavorite(student.id) ? 'currentColor' : 'none'"></i>
+                                        </button>
+                                        <button @click="copyPhone(student.fatherPhone)" type="button" title="Sao chép SĐT" class="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors">
+                                            <i data-lucide="clipboard" class="w-4 h-4"></i>
+                                        </button>
+                                        <button x-show="canEditModule('students')" style="display: none;" @click="openEdit(student)" type="button" title="Sửa hồ sơ" class="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                                            <i data-lucide="pencil" class="w-4 h-4"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
         <!-- NÚT TẢI THÊM: Chỉ hiện ra khi số lượng đang hiển thị nhỏ hơn tổng số kết quả lọc -->
-        <div x-show="hasMoreStudents" style="display: none;" class="text-center pt-2 pb-6 col-span-full">
-            <span class="inline-flex items-center gap-2 px-4 py-2 text-sm text-slate-500">
-                <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>
-                Đang tải thêm...
-            </span>
+        <div x-show="displayLimit < filteredStudents.length" style="display: none;" class="text-center pt-2 pb-6">
+            <button @click="loadMore()" type="button" class="px-6 py-2.5 bg-slate-200 text-slate-600 rounded-full font-bold text-sm active:scale-95 transition-transform border border-slate-300 shadow-sm">
+                Tải thêm danh sách...
+            </button>
         </div>
 
         <!-- Empty state với icon rõ ràng -->
         <!-- Vai toàn đoàn (Quản Trị/BĐH) chưa chọn lọc: mời chọn khối/lớp,
              KHÔNG đổ cả đoàn ra cho nhẹ -->
         <div x-show="isUnrestrictedScope && searchQuery === '' && filterBlock === '' && filterClass === ''"
-             style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed col-span-full">
+             style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
             <i data-lucide="filter" class="w-12 h-12 mx-auto text-slate-300 mb-4"></i>
             <p class="text-slate-600 font-semibold text-base mb-1">Chọn khối hoặc lớp để xem</p>
             <p class="text-slate-400 text-sm">Đoàn đông nên danh sách chỉ hiện khi bạn lọc theo khối/lớp, hoặc gõ tìm tên/mã.</p>
@@ -298,74 +428,134 @@
 
         <!-- Đã lọc/tìm nhưng không ra kết quả -->
         <div x-show="filteredStudents.length === 0 && !(isUnrestrictedScope && searchQuery === '' && filterBlock === '' && filterClass === '')"
-             style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed col-span-full">
+             style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
             <i data-lucide="search-x" class="w-12 h-12 mx-auto text-slate-300 mb-4"></i>
             <p class="text-slate-600 font-semibold text-base mb-1">Không tìm thấy dữ liệu phù hợp</p>
             <p class="text-slate-400 text-sm">Thử thay đổi từ khóa tìm kiếm hoặc xóa bộ lọc</p>
         </div>
     </div>
 
-    <!-- LIST VIEW: Table layout -->
-    <div x-show="viewMode === 'list' && (filteredStudents.length > 0 || isUnrestrictedScope)" class="overflow-x-auto bg-white rounded-card shadow-sm border border-slate-100">
-        <table class="w-full text-sm">
-            <thead class="bg-slate-100">
-                <tr>
-                    <th class="px-3 py-2 text-left">STT</th>
-                    <th class="px-3 py-2 text-left">Mã</th>
-                    <th class="px-3 py-2 text-left">Tên</th>
-                    <th class="px-3 py-2 text-left">Lớp</th>
-                    <th class="px-3 py-2 text-left">GT</th>
-                    <th class="px-3 py-2 text-left">Tuổi</th>
-                    <th class="px-3 py-2 text-left">Tình trạng</th>
-                    <th class="px-3 py-2 text-center">Hành động</th>
-                </tr>
-            </thead>
-            <tbody>
-                <template x-for="(student, idx) in filteredStudents" :key="'list-' + student.id">
-                    <tr class="border-b hover:bg-slate-50">
-                        <td class="px-3 py-2" x-text="idx + 1"></td>
-                        <td class="px-3 py-2 font-mono text-xs" x-text="student.code"></td>
-                        <td class="px-3 py-2 font-bold" x-text="student.holyName + ' ' + student.name"></td>
-                        <td class="px-3 py-2" x-text="student.className || '-'"></td>
-                        <td class="px-3 py-2" x-text="student.gender === 1 ? 'Nam' : 'Nữ'"></td>
-                        <td class="px-3 py-2" x-text="calculateAge(student.birthDate)"></td>
-                        <td class="px-3 py-2">
-                            <span class="px-2 py-0.5 rounded-full text-xs font-bold"
-                                  :class="student.status === 'đang sinh hoạt' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'"
-                                  x-text="student.status"></span>
-                        </td>
-                        <td class="px-3 py-2 text-center">
-                            <button @click="openEdit(student)" class="p-1 hover:bg-blue-100 rounded">
-                                <i data-lucide="pencil" class="w-4 h-4 text-blue-600"></i>
-                            </button>
-                        </td>
-                    </tr>
-                </template>
-            </tbody>
-        </table>
+    <!-- ======================================================
+         BULK ACTION BAR — Fixed bottom bar when items selected
+         ====================================================== -->
+    <div x-show="selectedStudents.length > 0"
+         x-transition:enter="transform transition ease-out duration-300"
+         x-transition:enter-start="translate-y-full opacity-0"
+         x-transition:enter-end="translate-y-0 opacity-100"
+         x-transition:leave="transform transition ease-in duration-200"
+         x-transition:leave-start="translate-y-0 opacity-100"
+         x-transition:leave-end="translate-y-full opacity-0"
+         style="display: none;"
+         class="fixed bottom-20 left-1/2 -translate-x-1/2 bg-blue-600 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 z-[150]">
+        <span class="text-sm font-bold" x-text="selectedStudents.length + ' em đã chọn'"></span>
+        <div class="w-px h-5 bg-blue-400"></div>
+        <button @click="openBulkMoveModal()" type="button"
+                class="flex items-center gap-1.5 bg-white text-blue-600 px-3 py-1.5 rounded-xl font-bold text-xs shadow-sm hover:bg-blue-50 transition-colors">
+            <i data-lucide="arrow-right-left" class="w-3.5 h-3.5"></i>
+            Chuyển lớp
+        </button>
+        <button x-show="canEditModule('students')" @click="confirmBulkDelete()" type="button"
+                class="flex items-center gap-1.5 bg-rose-500 text-white px-3 py-1.5 rounded-xl font-bold text-xs shadow-sm hover:bg-rose-600 transition-colors">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            Xóa
+        </button>
+        <button @click="clearSelection()" type="button" aria-label="Bỏ chọn"
+                class="p-1.5 hover:bg-blue-500 rounded-lg transition-colors">
+            <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
     </div>
 
-    <!-- LIST VIEW: Empty states -->
-    <div x-show="viewMode === 'list' && filteredStudents.length === 0 && !(isUnrestrictedScope && searchQuery === '' && filterBlock === '' && filterClass === '')" style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
-        <i data-lucide="search-x" class="w-12 h-12 mx-auto text-slate-300 mb-4"></i>
-        <p class="text-slate-600 font-semibold text-base mb-1">Không tìm thấy dữ liệu phù hợp</p>
-        <p class="text-slate-400 text-sm">Thử thay đổi từ khóa tìm kiếm hoặc xóa bộ lọc</p>
-    </div>
-
-    <!-- LIST VIEW: Unrestricted scope prompt -->
-    <div x-show="viewMode === 'list' && isUnrestrictedScope && searchQuery === '' && filterBlock === '' && filterClass === ''" style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
-        <i data-lucide="filter" class="w-12 h-12 mx-auto text-slate-300 mb-4"></i>
-        <p class="text-slate-600 font-semibold text-base mb-1">Chọn khối hoặc lớp để xem</p>
-        <p class="text-slate-400 text-sm">Đoàn đông nên danh sách chỉ hiện khi bạn lọc theo khối/lớp, hoặc gõ tìm tên/mã.</p>
+    <!-- ======================================================
+         BULK MOVE MODAL
+         ====================================================== -->
+    <div x-show="showBulkMoveModal" style="display: none;"
+         class="fixed inset-0 z-[200] flex items-end justify-center sm:items-center sm:p-6">
+        <div x-show="showBulkMoveModal" x-transition.opacity.duration.300
+             @click="showBulkMoveModal = false"
+             class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+        <div x-show="showBulkMoveModal"
+             x-transition:enter="transform transition ease-out duration-300"
+             x-transition:enter-start="translate-y-full opacity-0"
+             x-transition:enter-end="translate-y-0 opacity-100"
+             x-transition:leave="transform transition ease-in duration-200"
+             x-transition:leave-start="translate-y-0 opacity-100"
+             x-transition:leave-end="translate-y-full opacity-0"
+             class="modal-sheet relative w-full max-w-sm bg-white rounded-t-sheet sm:rounded-sheet shadow-2xl h-[60dvh] sm:h-auto sm:max-h-[80vh] flex flex-col overflow-hidden">
+            <div class="flex justify-center pt-3 pb-2 bg-white"><div class="w-12 h-1.5 bg-slate-200 rounded-full"></div></div>
+            <div class="flex justify-between items-center px-5 pb-4 border-b border-slate-100 bg-white">
+                <h3 class="text-lg font-black text-slate-800">
+                    Chuyển lớp cho <span x-text="selectedStudents.length"></span> em
+                </h3>
+                <button aria-label="Đóng" @click="showBulkMoveModal = false"
+                        class="tap-safe w-8 h-8 flex items-center justify-center bg-slate-100 rounded-full text-slate-500 active:scale-90 transition-transform">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-5 space-y-4">
+                <p class="text-sm text-slate-600">
+                    Các em sau sẽ được chuyển sang lớp mới:
+                </p>
+                <div class="max-h-40 overflow-y-auto bg-slate-50 rounded-xl p-3 space-y-1">
+                    <template x-for="sid in selectedStudents" :key="sid">
+                        <div class="flex items-center gap-2 text-sm text-slate-700">
+                            <i data-lucide="user" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
+                            <span x-text="studentIndex && studentIndex.get(sid) ? studentIndex.get(sid).name : '#' + sid"></span>
+                        </div>
+                    </template>
+                </div>
+                <div>
+                    <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Chọn lớp đích</label>
+                    <select x-model="targetClassForMove"
+                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                        <option value="">— Chọn lớp —</option>
+                        <template x-for="cls in classes" :key="cls.id">
+                            <option :value="cls.name" x-text="cls.block + ' · ' + cls.name"></option>
+                        </template>
+                    </select>
+                </div>
+                <p x-show="targetClassForMove" style="display: none;"
+                   class="text-xs text-slate-500">
+                    Các em sẽ được ghi danh vào lớp <strong x-text="targetClassForMove"></strong> với tình trạng <strong>đang sinh hoạt</strong>.
+                </p>
+            </div>
+            <div class="shrink-0 p-4 border-t border-slate-100 flex gap-3 bg-white"
+                 style="padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px))">
+                <button @click="showBulkMoveModal = false" type="button"
+                        class="flex-1 py-3.5 bg-slate-100 text-slate-700 font-bold rounded-2xl active:scale-[0.98] transition-transform">
+                    Hủy
+                </button>
+                <button @click="executeBulkMove()" type="button" :disabled="!targetClassForMove || busy"
+                        class="flex-1 py-3.5 bg-blue-600 text-white font-bold rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-blue-200 disabled:opacity-50 flex items-center justify-center gap-2">
+                    <span x-show="!busy">Xác nhận chuyển lớp</span>
+                    <span x-show="busy" style="display: none;">
+                        <svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                        </svg>
+                        Đang xử lý...
+                    </span>
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- POPUP CHỈNH SỬA -->
-    <div x-show="showEditModal" style="display: none;" class="fixed inset-0 z-[200] flex items-end justify-center sm:items-center sm:p-6">
+    <div x-show="showEditModal" style="display: none;" class="fixed inset-0 z-[200] flex items-end justify-center sm:items-center sm:p-6"
+         @keydown.window.ctrl.s.prevent="if(showEditModal) saveEdit()"
+         @input.window="if(showEditModal) scheduleDraftSave()">
         <div x-show="showEditModal" x-transition.opacity.duration.300ms @click="tryCloseEdit()" class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
         <div x-show="showEditModal" x-transition:enter="transform transition ease-out duration-300" x-transition:enter-start="translate-y-full opacity-0" x-transition:enter-end="translate-y-0 opacity-100" x-transition:leave="transform transition ease-in duration-200" x-transition:leave-start="translate-y-0 opacity-100" x-transition:leave-end="translate-y-full opacity-0" class="modal-sheet relative w-full max-w-md sm:max-w-lg bg-white rounded-t-sheet sm:rounded-sheet shadow-2xl h-[88dvh] sm:h-[80dvh] flex flex-col overflow-hidden">
             <div class="flex justify-center pt-3 pb-2 bg-white"><div class="w-12 h-1.5 bg-slate-200 rounded-full"></div></div>
             <div class="flex justify-between items-center px-5 pb-4 border-b border-slate-100 bg-white">
-                <h3 class="text-lg font-black text-slate-800" x-text="editModalTitle"></h3>
+                <div class="flex items-center gap-2">
+                    <h3 class="text-lg font-black text-slate-800" x-text="editModalTitle"></h3>
+                    <!-- Draft indicator -->
+                    <div x-show="hasDraft" style="display: none;" class="text-xs text-amber-600 flex items-center gap-1">
+                        <i data-lucide="clock" class="w-3 h-3"></i>
+                        <span>Đã lưu nháp</span>
+                        <span x-text="'(' + getDraftAge() + ')'"></span>
+                    </div>
+                </div>
                 <button aria-label="Đóng" @click="tryCloseEdit()" class="tap-safe w-8 h-8 flex items-center justify-center bg-slate-100 rounded-full text-slate-500 active:scale-90 transition-transform"><i data-lucide="x" class="w-4 h-4"></i></button>
             </div>
             <div class="flex-1 overflow-y-auto p-5 space-y-4">

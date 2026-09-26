@@ -103,15 +103,17 @@
     </div>
 
     <!-- 3. POPUP THÊM/SỬA CHƯƠNG TRÌNH -->
-    <div x-show="showProgramModal" style="display: none;" class="fixed inset-0 z-[200] flex items-end justify-center sm:items-center sm:p-6">
+    <div x-show="showProgramModal" style="display: none;" class="fixed inset-0 z-[200] flex items-end justify-center sm:items-center sm:p-4 md:p-6">
         <div x-show="showProgramModal" x-transition.opacity.duration.300ms @click="showProgramModal = false" class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
-        <div x-show="showProgramModal" x-transition:enter="transform transition ease-out duration-300" x-transition:enter-start="translate-y-full opacity-0" x-transition:enter-end="translate-y-0 opacity-100" x-transition:leave="transform transition ease-in duration-200" x-transition:leave-start="translate-y-0 opacity-100" x-transition:leave-end="translate-y-full opacity-0" class="modal-sheet relative w-full max-w-md sm:max-w-lg bg-white rounded-t-sheet sm:rounded-sheet shadow-2xl flex flex-col max-h-[88dvh] overflow-y-auto">
-            <div class="flex justify-center pt-3 pb-2"><div class="w-12 h-1.5 bg-slate-200 rounded-full"></div></div>
-            <div class="flex justify-between items-center px-5 pb-4 border-b border-slate-100">
+        <div x-show="showProgramModal" x-transition:enter="transform transition ease-out duration-300" x-transition:enter-start="translate-y-full opacity-0" x-transition:enter-end="translate-y-0 opacity-100" x-transition:leave="transform transition ease-in duration-200" x-transition:leave-start="translate-y-0 opacity-100" x-transition:leave-end="translate-y-full opacity-0" class="modal-sheet relative w-full max-w-md sm:max-w-lg bg-white rounded-t-sheet sm:rounded-sheet shadow-2xl flex flex-col max-h-[92dvh]">
+            <!-- Header cố định -->
+            <div class="flex justify-center pt-3 pb-2 shrink-0"><div class="w-12 h-1.5 bg-slate-200 rounded-full"></div></div>
+            <div class="flex justify-between items-center px-5 pb-3 border-b border-slate-100 shrink-0">
                 <h3 class="text-lg font-black text-slate-800" x-text="isEditingProgram ? 'Cập nhật chương trình' : 'Tạo chương trình mới'"></h3>
                 <button aria-label="Đóng" @click="showProgramModal = false" class="tap-safe w-8 h-8 bg-slate-100 rounded-full text-slate-500 active:scale-90 flex items-center justify-center"><i data-lucide="x" class="w-4 h-4"></i></button>
             </div>
-            <div class="p-5 space-y-4">
+            <!-- Nội dung cuộn -->
+            <div class="flex-1 overflow-y-auto p-5 space-y-4 oversc-contain">
                 <div>
                     <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Tên Chương trình <span class="text-rose-500">*</span></label>
                     <input x-model="programForm.name" type="text" required placeholder="VD: Lễ Chúa Nhật..."
@@ -188,7 +190,7 @@
                 <!-- Lớp áp dụng (bỏ trống = toàn đoàn) -->
                 <div>
                     <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Lớp áp dụng</label>
-                    <div class="max-h-40 overflow-y-auto border border-slate-200 rounded-xl p-2 space-y-1">
+                    <div class="max-h-32 overflow-y-auto border border-slate-200 rounded-xl p-2 space-y-1">
                         <template x-for="c in classes" :key="c.id">
                             <label class="flex items-center gap-2 text-sm text-slate-700">
                                 <input type="checkbox" :checked="programForm.classIds.includes(c.id)"
@@ -241,8 +243,9 @@
                     </div>
                 </div>
             </div>
-            <div class="p-4 border-t border-slate-100">
-                <button @click="saveProgram()" type="button" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-2xl active:scale-[0.98] shadow-md shadow-blue-200 flex justify-center items-center">
+            <!-- Nút Lưu cố định bên dưới -->
+            <div class="p-4 border-t border-slate-100 shrink-0">
+                <button @click="saveProgram()" type="button" class="w-full bg-blue-600 text-white font-bold py-3 rounded-2xl active:scale-[0.98] shadow-md shadow-blue-200 flex justify-center items-center">
                     <i data-lucide="save" class="w-5 h-5 mr-2"></i> Lưu Chương Trình
                 </button>
             </div>
