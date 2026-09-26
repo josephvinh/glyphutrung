@@ -480,6 +480,10 @@ function scan_class_ids(array $me): ?array
 
     $blockIds = [];
     foreach (member_scopes($me) as $a) {
+        // Bỏ qua phân công của vai KHÔNG có quyền gì trên attendance —
+        // vai này không được phép mở rộng phạm vi quét điểm danh
+        // (chống leo thang qua kiêm nhiệm, vd thu_thu scope toàn đoàn).
+        if (permission_of_role($a['role_code'] ?? '', 'attendance') === 'none') continue;
         if (($a['role_scope'] ?? '') === 'toàn đoàn') return null;
         if (!empty($a['block_id'])) {
             $blockIds[] = (int) $a['block_id'];

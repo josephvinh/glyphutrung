@@ -238,11 +238,23 @@ function accessible_class_ids(array $me, string $moduleKey, string $need = 'view
     return array_values(array_unique(array_map('intval', $ids)));
 }
 
-/** Hợp phạm vi THUẦN (không xét module) — dùng cho ranh giới XEM hồ sơ mình phụ trách */
+/**
+ * Hợp phạm vi cho ranh giới XEM hồ sơ mình phụ trách — chỉ cộng phạm vi của
+ * phân công có quyền ≥view trên MỘT trong các module miền thiếu nhi
+ * (students hoặc attendance). Vai không có quyền nào ở miền này (vd
+ * thu_thu — chỉ có quyền trên rewards) không được cộng phạm vi, để tránh
+ * kiêm nhiệm vai đó (thường scope toàn đoàn) mở rộng ranh giới xem hồ sơ.
+ */
 function responsible_class_ids(array $me): ?array
 {
     $ids = [];
     foreach (member_scopes($me) as $a) {
+        $roleCode = $a['role_code'] ?? '';
+        $hasStudentDomainAccess =
+            level_rank(permission_of_role($roleCode, 'students')) >= level_rank('view')
+            || level_rank(permission_of_role($roleCode, 'attendance')) >= level_rank('view');
+        if (!$hasStudentDomainAccess) continue;
+
         $scopeIds = resolve_class_ids_from_scope($a);
         if ($scopeIds === null) return null;
         $ids = array_merge($ids, $scopeIds);
