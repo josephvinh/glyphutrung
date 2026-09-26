@@ -1,0 +1,291 @@
+<?php
+/**
+ * ENGINE SỔ MỘC — tính Mộc (điểm thưởng) & chuỗi đi lễ liên tiếp.
+ *
+ * NGUỒN CHÂN LÝ là bảng `attendances`. Sau mỗi thay đổi điểm danh của một
+ * em, gọi recalc_stamps(student, year): engine TÍNH LẠI TỪ ĐẦU toàn bộ phần
+ * Mộc kiếm được + chuỗi, rồi đồng bộ ví (student_stamps) và các giao dịch
+ * loại 'attendance'/'streak_bonus' (stamp_transactions). Nhờ tính lại từ đầu:
+ *   - gỡ điểm danh → tự hoàn Mộc, số liệu không bao giờ lệch;
+ *   - gọi nhiều lần cho cùng kết quả (idempotent).
+ *
+ * recalc CHỈ đụng phần Earn/Streak. Phần Spend/Held (đổi quà, điều chỉnh tay)
+ * do luồng khác quản lý bằng transaction có khoá dòng và được engine GIỮ NGUYÊN.
+ *
+ * Quy tắc nghiệp vụ (SPEC-MOC-DIEN-TU §3):
+ *   - Earn theo NGÀY: ngày có ≥1 buổi emulation → +1; nếu là Chúa Nhật → +2.
+ *     Đi trễ vẫn được Mộc "đi lễ".
+ *   - Streak: xét trên các NGÀY CÓ LỊCH của (các) buổi emulation trong khoảng
+ *     [effective_from, min(hôm nay, effective_to)]. Đi lễ (đúng giờ HOẶC trễ)
+ *     nối chuỗi; ngày có lịch mà vắng → chuỗi về 0. KHÔNG đọc leave_requests
+ *     (nghỉ có phép vẫn đứt chuỗi). Hôm nay chưa qua buổi thì chưa tính vắng.
+ *   - Thưởng chuỗi khi chuỗi CHẠM mốc: 3→+1, 7→+3, 30→+15; nhưng nếu ngày chạm
+ *     mốc là "đi trễ" thì MẤT mốc thưởng đó (không trả bù), chuỗi vẫn chạy tiếp.
+ *   - Chỉ tính điểm danh vào/sau effective_from của chương trình.
+ */
+
+require_once __DIR__ . '/../../config/db.php';
+
+if (!defined('STAMP_MILESTONES')) {
+    // mốc chuỗi => số Mộc thưởng
+    define('STAMP_MILESTONES', [3 => 1, 7 => 3, 30 => 15]);
+}
+
+/**
+ * Bản đồ NGÀY-CÓ-ĐIỂM-DANH của một em trong năm, đã gộp theo ngày.
+ *
+ * @return array<string,string>  ['Y-m-d' => 'có mặt'|'đi trễ']
+ *   Mỗi ngày có ≥1 buổi emulation một mục. Nếu trong ngày vừa có "có mặt" vừa
+ *   "đi trễ" thì "có mặt" thắng (ưu tiên trạng thái tốt hơn).
+ *   Chỉ tính buổi vào/sau effective_from của chương trình.
+ */
+function stamp_earn_days(int $studentId, int $yearId): array
+{
+    $rows = db_all(
+        "SELECT a.session_date AS d, a.status AS st
+           FROM attendances a
+           JOIN programs p ON p.id = a.program_id
+          WHERE a.student_id = ?
+            AND a.year_id   = ?
+            AND p.count_for_emulation = 1
+            AND (p.effective_from IS NULL OR a.session_date >= p.effective_from)",
+        [$studentId, $yearId]
+    );
+
+    $days = [];
+    foreach ($rows as $r) {
+        $d  = $r['d'];
+        $st = $r['st'];
+        // "có mặt" thắng "đi trễ" khi cùng một ngày có nhiều buổi.
+        if (!isset($days[$d]) || $st === 'có mặt') {
+            $days[$d] = $st;
+        }
+    }
+    ksort($days);
+    return $days;
+}
+
+/**
+ * Một attendance ĐẠI DIỆN cho mỗi ngày (để gắn ref_attendance_id cho giao dịch
+ * earn/bonus — earn tính theo NGÀY nên mỗi ngày chỉ một giao dịch attendance).
+ * Ưu tiên buổi "có mặt"; trong cùng trạng thái lấy id nhỏ nhất cho ổn định.
+ *
+ * @return array<string,int>  ['Y-m-d' => attendance_id]
+ */
+function stamp_rep_attendance(int $studentId, int $yearId): array
+{
+    $rows = db_all(
+        "SELECT a.id, a.session_date AS d, a.status AS st
+           FROM attendances a
+           JOIN programs p ON p.id = a.program_id
+          WHERE a.student_id = ?
+            AND a.year_id   = ?
+            AND p.count_for_emulation = 1
+            AND (p.effective_from IS NULL OR a.session_date >= p.effective_from)
+          ORDER BY a.session_date, a.id",
+        [$studentId, $yearId]
+    );
+
+    $rep = [];      // date => id
+    $repIsPresent = []; // date => bool (đại diện hiện tại có phải "có mặt")
+    foreach ($rows as $r) {
+        $d = $r['d'];
+        $isPresent = ($r['st'] === 'có mặt');
+        if (!isset($rep[$d])) {
+            $rep[$d] = (int) $r['id'];
+            $repIsPresent[$d] = $isPresent;
+            continue;
+        }
+        // Nâng cấp lên buổi "có mặt" nếu đại diện cũ là "đi trễ".
+        if ($isPresent && !$repIsPresent[$d]) {
+            $rep[$d] = (int) $r['id'];
+            $repIsPresent[$d] = true;
+        }
+    }
+    return $rep;
+}
+
+/**
+ * Tập NGÀY-CÓ-LỊCH của các buổi emulation trong năm (để tính chuỗi).
+ * Cửa sổ mỗi chương trình: [start, min(hôm nay, effective_to)].
+ *   - start = effective_from nếu có; nếu NULL, lùi về ngày điểm danh sớm nhất
+ *     của em (fallback an toàn — thực tế chương trình "đi lễ" luôn đặt
+ *     effective_from). Không có mốc bắt đầu và cũng không có điểm danh → bỏ qua.
+ *   - Buổi lặp: các ngày có thứ ∈ days_of_week (CSV) hoặc day_of_week.
+ *   - Buổi chiến dịch: đúng event_date.
+ *
+ * @param string $today  'Y-m-d' (tham số hoá để test được; mặc định hôm nay)
+ * @return string[]  danh sách ngày 'Y-m-d' đã sắp tăng dần, không trùng
+ */
+function stamp_scheduled_days(int $studentId, int $yearId, string $today, array $earnDays): array
+{
+    $progs = db_all(
+        "SELECT id, type, day_of_week, days_of_week, event_date, effective_from, effective_to
+           FROM programs
+          WHERE year_id = ? AND count_for_emulation = 1",
+        [$yearId]
+    );
+    if (!$progs) return [];
+
+    $earliestAtt = $earnDays ? array_key_first($earnDays) : null; // earnDays đã ksort
+
+    $set = [];
+    foreach ($progs as $p) {
+        if ($p['type'] === 'chiến dịch') {
+            $ed = $p['event_date'] ?? null;
+            if ($ed && $ed <= $today) $set[$ed] = true;
+            continue;
+        }
+
+        // Buổi lặp theo thứ trong tuần.
+        $days = !empty($p['days_of_week'])
+            ? array_values(array_filter(array_map('intval', explode(',', $p['days_of_week'])), fn($x) => $x >= 0 && $x <= 6))
+            : ($p['day_of_week'] === null ? [] : [(int) $p['day_of_week']]);
+        if (!$days) continue;
+
+        $start = $p['effective_from'] ?: $earliestAtt;
+        if (!$start) continue; // không có mốc bắt đầu → không dựng được cửa sổ
+
+        $end = $today;
+        if (!empty($p['effective_to']) && $p['effective_to'] < $end) $end = $p['effective_to'];
+        if ($start > $end) continue;
+
+        $cur = new DateTime($start);
+        $endD = new DateTime($end);
+        while ($cur <= $endD) {
+            if (in_array((int) $cur->format('w'), $days, true)) {
+                $set[$cur->format('Y-m-d')] = true;
+            }
+            $cur->modify('+1 day');
+        }
+    }
+
+    $out = array_keys($set);
+    sort($out);
+    return $out;
+}
+
+/**
+ * TÍNH LẠI toàn bộ Mộc + chuỗi cho một em trong một năm và đồng bộ CSDL.
+ *
+ * @param string|null $today  ghi đè "hôm nay" (chỉ dùng cho test). Mặc định date('Y-m-d').
+ * @return array{current_balance:int,total_earned:int,current_streak:int,longest_streak:int,last_attendance_date:?string,held_balance:int}
+ */
+function recalc_stamps(int $studentId, int $yearId, ?string $today = null): array
+{
+    $today ??= date('Y-m-d');
+
+    $earnDays  = stamp_earn_days($studentId, $yearId);              // date => status
+    $repAtt    = stamp_rep_attendance($studentId, $yearId);        // date => attendance_id
+    $scheduled = stamp_scheduled_days($studentId, $yearId, $today, $earnDays);
+
+    // --- Tính earn theo ngày --------------------------------------------
+    $totalEarned = 0;
+    $earnTx = [];   // mỗi phần tử: [amount, ref_attendance_id, date]
+    foreach ($earnDays as $d => $st) {
+        $amt = (date('w', strtotime($d)) === '0') ? 2 : 1;   // Chúa Nhật +2
+        $totalEarned += $amt;
+        $earnTx[] = ['amount' => $amt, 'ref' => $repAtt[$d] ?? null, 'date' => $d];
+    }
+
+    // --- Duyệt các ngày có lịch để tính chuỗi + thưởng mốc --------------
+    $streak = 0;
+    $longest = 0;
+    $bonusTx = [];  // [amount, ref_attendance_id, streak_len, date]
+    foreach ($scheduled as $d) {
+        $attended = isset($earnDays[$d]);
+
+        if (!$attended) {
+            // Hôm nay chưa qua buổi thì chưa tính vắng (không reset).
+            if ($d === $today) continue;
+            $streak = 0;
+            continue;
+        }
+
+        $streak++;
+        if ($streak > $longest) $longest = $streak;
+
+        // Thưởng khi chuỗi CHẠM mốc, nhưng mất thưởng nếu hôm đó đi trễ.
+        if (isset(STAMP_MILESTONES[$streak]) && $earnDays[$d] === 'có mặt') {
+            $bonus = STAMP_MILESTONES[$streak];
+            $totalEarned += $bonus;
+            $bonusTx[] = ['amount' => $bonus, 'ref' => $repAtt[$d] ?? null, 'len' => $streak, 'date' => $d];
+        }
+    }
+    $currentStreak = $streak;
+
+    // last_attendance_date = ngày điểm danh gần nhất (earnDays đã ksort tăng dần).
+    $lastAtt = $earnDays ? array_key_last($earnDays) : null;
+
+    // Số dư = earn (kể cả thưởng) + tổng spend/manual_adjust (engine không đụng).
+    $adjust = (int) (db_val(
+        "SELECT COALESCE(SUM(amount),0) FROM stamp_transactions
+          WHERE student_id=? AND year_id=? AND type IN ('spend','manual_adjust')",
+        [$studentId, $yearId]
+    ) ?? 0);
+    $currentBalance = $totalEarned + $adjust;
+
+    // --- Ghi CSDL trong một transaction (chống lệch nửa chừng) ----------
+    $ownTx = !db()->inTransaction();
+    if ($ownTx) db()->beginTransaction();
+    try {
+        // Đồng bộ giao dịch earn/bonus: xoá sạch rồi ghi lại cho khớp.
+        db_run(
+            "DELETE FROM stamp_transactions
+              WHERE student_id=? AND year_id=? AND type IN ('attendance','streak_bonus')",
+            [$studentId, $yearId]
+        );
+
+        foreach ($earnTx as $t) {
+            db_run(
+                "INSERT INTO stamp_transactions
+                    (year_id, student_id, amount, type, ref_attendance_id, description, actor_id)
+                 VALUES (?,?,?, 'attendance', ?, ?, NULL)",
+                [$yearId, $studentId, $t['amount'], $t['ref'],
+                 'Đi lễ ngày ' . $t['date'] . ' (+' . $t['amount'] . ')']
+            );
+        }
+        foreach ($bonusTx as $t) {
+            db_run(
+                "INSERT INTO stamp_transactions
+                    (year_id, student_id, amount, type, ref_attendance_id, description, actor_id)
+                 VALUES (?,?,?, 'streak_bonus', ?, ?, NULL)",
+                [$yearId, $studentId, $t['amount'], $t['ref'],
+                 'Thưởng chuỗi ' . $t['len'] . ' ngày (+' . $t['amount'] . ')']
+            );
+        }
+
+        // UPSERT ví: giữ nguyên held_balance (không nêu trong danh sách cập nhật).
+        db_run(
+            "INSERT INTO student_stamps
+                (year_id, student_id, current_balance, total_earned,
+                 current_streak, longest_streak, last_attendance_date)
+             VALUES (?,?,?,?,?,?,?)
+             ON DUPLICATE KEY UPDATE
+                current_balance      = VALUES(current_balance),
+                total_earned         = VALUES(total_earned),
+                current_streak       = VALUES(current_streak),
+                longest_streak       = VALUES(longest_streak),
+                last_attendance_date = VALUES(last_attendance_date)",
+            [$yearId, $studentId, $currentBalance, $totalEarned,
+             $currentStreak, $longest, $lastAtt]
+        );
+
+        if ($ownTx) db()->commit();
+    } catch (Throwable $e) {
+        if ($ownTx && db()->inTransaction()) db()->rollBack();
+        throw $e;
+    }
+
+    return [
+        'current_balance'      => $currentBalance,
+        'total_earned'         => $totalEarned,
+        'current_streak'       => $currentStreak,
+        'longest_streak'       => $longest,
+        'last_attendance_date' => $lastAtt,
+        'held_balance'         => (int) (db_val(
+            "SELECT held_balance FROM student_stamps WHERE student_id=? AND year_id=?",
+            [$studentId, $yearId]
+        ) ?? 0),
+    ];
+}
