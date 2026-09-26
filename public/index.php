@@ -174,6 +174,7 @@ if (!$__dev) ob_start();
             <template x-if="currentModule==='guide'"><div><?php include __DIR__ . '/../views/module_guide.php'; ?></div></template>
             <template x-if="currentModule==='thu_vien'"><div><?php include __DIR__ . '/../views/module_library.php'; ?></div></template>
             <template x-if="currentModule==='gifts'"><div><?php include __DIR__ . '/../views/module_gifts.php'; ?></div></template>
+            <template x-if="currentModule==='rewards'"><div><?php include __DIR__ . '/../views/module_rewards.php'; ?></div></template>
 
         </main>
 

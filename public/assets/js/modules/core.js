@@ -578,7 +578,8 @@ window.TNTT.core = {
         { key: 'announcements', label: 'Thông báo',    icon: 'megaphone',       color: 'text-rose-500',   area: 'bdh', group: 'Điều hành' },
         { key: 'staff',         label: 'Nhân sự',      icon: 'user-cog',        color: 'text-cyan-600',   area: 'bdh', group: 'Điều hành', badge: 'staff' },
         { key: 'years',         label: 'Niên khoá',    icon: 'calendar-range',  color: 'text-indigo-600', area: 'bdh', group: 'Điều hành' },
-        { key: 'gifts',         label: 'Danh mục quà', icon: 'gift',            color: 'text-pink-600',   area: 'bdh', group: 'Chương trình' }
+        { key: 'gifts',         label: 'Danh mục quà', icon: 'gift',            color: 'text-pink-600',   area: 'bdh', group: 'Chương trình' },
+        { key: 'rewards',       label: 'Đổi quà',      icon: 'shopping-bag',    color: 'text-pink-600',   area: 'bdh', group: 'Chương trình' }
     ],
 
     // Công tắc bảo trì. Tắt thì mọi người thấy nút mờ kèm nhãn "Bảo trì",
@@ -586,7 +587,7 @@ window.TNTT.core = {
     moduleEnabled: {
         students: true, attendance: true, leave: true, birthdays: true,
         stats: true, analytics: true, org: true, reports: true, reporthub: true, programs: true, announcements: true,
-        scores: true, promotion: true, calendar: true, notes: true, guide: true, thu_vien: true, gifts: true
+        scores: true, promotion: true, calendar: true, notes: true, guide: true, thu_vien: true, gifts: true, rewards: true
     },
 
     // ==========================================
@@ -618,7 +619,9 @@ window.TNTT.core = {
         // Thư viện: view = xem + đăng (chờ duyệt); edit = duyệt/gỡ/quản chủ đề.
         thu_vien:       { admin: 'edit', bdh: 'edit', truong_khoi: 'view', glv_chu_nhiem: 'view', glv: 'view', du_bi: 'view' },
         // Danh mục quà: Quản trị/BĐH/Thủ Từ toàn quyền, các vai khác không thấy.
-        gifts:          { admin: 'edit', bdh: 'edit', truong_khoi: 'none', glv_chu_nhiem: 'none', glv: 'none', thu_thu: 'edit' }
+        gifts:          { admin: 'edit', bdh: 'edit', truong_khoi: 'none', glv_chu_nhiem: 'none', glv: 'none', thu_thu: 'edit' },
+        // Trạm đổi quà (POS): CHỈ Quản trị + Thủ Thư đứng quầy — BĐH không đứng quầy.
+        rewards:        { admin: 'edit', thu_thu: 'edit', bdh: 'none', truong_khoi: 'none', glv_chu_nhiem: 'none', glv: 'none' }
     },
 
     permOf(key) {

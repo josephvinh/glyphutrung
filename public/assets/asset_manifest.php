@@ -21,7 +21,7 @@ return [
         'custom-qrcard',
         'leave', 'birthdays', 'announcements', 'stats', 'analytics', 'scores',
         'reports', 'promotion', 'org', 'push', 'dashboard', 'shell',
-        'calendar', 'notes', 'passkey', 'library', 'gifts',
+        'calendar', 'notes', 'passkey', 'library', 'gifts', 'rewards',
     ],
     // Thứ tự CSS = thứ tự cascade: tailwind (nền) trước, phần ghi đè sau.
     'css' => ['tailwind', 'font', 'app', 'dark', 'skeleton', 'analytics', 'toast', 'brand'],
