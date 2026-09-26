@@ -32,6 +32,16 @@ if (!defined('STAMP_MILESTONES')) {
 }
 
 /**
+ * Buổi này có tính Mộc hay không — luật duy nhất là cờ count_for_emulation
+ * trên chương trình. Tách riêng thành helper để nơi gọi (attendance.php)
+ * và test đều dùng chung một chỗ quyết định, tránh lệch điều kiện.
+ */
+function program_earns_stamps(array $prog): bool
+{
+    return !empty($prog['count_for_emulation']);
+}
+
+/**
  * Bản đồ NGÀY-CÓ-ĐIỂM-DANH của một em trong năm, đã gộp theo ngày.
  *
  * @return array<string,string>  ['Y-m-d' => 'có mặt'|'đi trễ']

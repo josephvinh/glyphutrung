@@ -13,6 +13,26 @@
  */
 
 require __DIR__ . '/_bootstrap.php';
+require_once __DIR__ . '/StampService.php';
+
+/**
+ * Gọi recalc_stamps() một cách AN TOÀN: mỗi lần điểm danh của một buổi có
+ * tính Mộc thay đổi thì ví/chuỗi của em đó phải được tính lại, nhưng lỗi ở
+ * Engine Sổ Mộc TUYỆT ĐỐI không được làm hỏng việc ghi điểm danh — vì vậy
+ * bọc try/catch, có lỗi chỉ ghi log rồi bỏ qua.
+ */
+function moc_recalc_an_toan(int $studentId, int $yearId): void
+{
+    try {
+        recalc_stamps($studentId, $yearId);
+    } catch (Throwable $e) {
+        TNTT\Logger::getInstance()->warning('Sổ Mộc: recalc_stamps lỗi', [
+            'student_id' => $studentId,
+            'year_id'    => $yearId,
+            'error'      => $e->getMessage(),
+        ]);
+    }
+}
 
 require_write();
 $me   = require_permission('attendance', 'edit');
@@ -184,6 +204,15 @@ if (($_GET['action'] ?? '') === 'scan') {
             json_fail(safe_error($e, 'Ghi điểm danh thất bại, đã hoàn tác: '), 500);
         }
         $daCo = count($hopLe) - $them;
+
+        // Sổ Mộc: buổi có tính Mộc thì mọi em VỪA ĐƯỢC GHI (kể cả trùng, vì
+        // recalc là idempotent) đều cần tính lại ví/chuỗi. Gọi SAU KHI COMMIT
+        // cho sạch — recalc_stamps tự mở transaction riêng của nó.
+        if (program_earns_stamps($prog)) {
+            foreach ($hopLe as $sid) {
+                moc_recalc_an_toan($sid, $year['id']);
+            }
+        }
     }
 
     // Một dòng nhật ký cho cả lô, không phải 500 dòng
@@ -227,6 +256,10 @@ if ($existing) {
         log_action('diemdanh', 'attendance', 'Gỡ điểm danh của ' . $st['full_name'],
                    $prog['name'] . ' · ' . $date . ' · đang là ' . $existing['status']);
     }
+    // Sổ Mộc: gỡ điểm danh của buổi có tính Mộc là thao tác HOÀN Mộc lại.
+    if (program_earns_stamps($prog)) {
+        moc_recalc_an_toan($studentId, $year['id']);
+    }
     Cache::flush();
     json_out(['ok' => true, 'removed' => true]);
 }
@@ -249,6 +282,11 @@ db_run('INSERT INTO attendances (year_id, program_id, session_date, student_id, 
 if ($pastCutoff) {
     log_action('diemdanh', 'attendance', 'Ghi điểm danh cho ' . $st['full_name'],
                $prog['name'] . ' · ' . $date . ' · ' . $status);
+}
+
+// Sổ Mộc: buổi có tính Mộc thì ghi điểm danh xong phải tính lại ví/chuỗi.
+if (program_earns_stamps($prog)) {
+    moc_recalc_an_toan($studentId, $year['id']);
 }
 
 Cache::flush();
