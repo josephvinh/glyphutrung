@@ -43,14 +43,21 @@ Bổ sung 4 bảng mới vào CSDL:
 
 ## 4. LUỒNG GIAO DIỆN VÀ TÍNH NĂNG (UI/UX)
 
-### 4.1. Module Quản Lý Quà Tặng (Dành cho Admin/Thủ thư)
-* Thêm một tab "Quản lý Quà" trong `module_library.php` (hoặc module riêng).
-* **Tính năng:**
-  * Thêm, sửa, xóa danh mục quà (Tên quà, số Mộc cần đổi, số lượng tồn kho).
-  * Ẩn/hiện món quà (khi hết hàng).
+### 4.1. Module Quản Lý Quà Tặng & Đổi Quà (Dành cho Ban Điều Hành / Thủ thư)
+* Tạo một module hoàn toàn mới: `module_gifts.php` (hoặc `module_rewards.php`).
+* Module này sẽ có **các Tab (Thẻ)** để điều hướng:
+  * **Tab 1 - Trạm Phát Quà (Fulfillment):** 
+    1. Giao diện có khu vực quét mã thẻ (hoặc nhập mã Thiếu nhi).
+    2. Sau khi quét, hiển thị danh sách các món quà em đó đã "Đặt đổi trước".
+    3. Có ô để Thủ thư nhập **Mật mã đổi quà** do em đó cung cấp.
+    4. Nếu đúng: Giao quà, hệ thống trừ mộc, trừ tồn kho và vô hiệu hóa mã.
+  * **Tab 2 - Danh Mục Quà Tặng (Catalog):**
+    1. Giao diện quản lý danh sách quà: Thêm, Sửa, Xóa.
+    2. Quản lý Tên quà, Số Mộc cần thiết, Số lượng tồn kho và Hình ảnh.
+  * **Tab 3 - Lịch Sử Đổi Quà (History - Tùy chọn):** Theo dõi xem hôm nay đã phát những quà gì, cho ai.
 
 ### 4.2. Cổng Tra Cứu Công Khai (Sổ Mộc Của Em)
-* **Truy cập:** Mở qua một đường link riêng (vd: `somoc.php`).
+* **Truy cập:** Mở qua một đường link riêng (vd: `somoc.php` hoặc `tracuu.php`).
 * **Đăng nhập:** Các em chỉ cần nhập **Mã Thiếu Nhi**.
 * **Màn hình chính (Sổ Mộc):**
   * Hiển thị to, rõ: Số dư Mộc hiện tại và 🔥 Lửa Chuỗi.
@@ -61,19 +68,8 @@ Bổ sung 4 bảng mới vào CSDL:
   * **Luồng "Đặt đổi trước":**
     1. Em bấm chọn món quà vừa ý.
     2. Nhập lại Mã Thiếu Nhi (để xác nhận) và tự tạo một **"Mật mã đổi quà"** (vd: PIN 4 số hoặc 1 chữ ngắn).
-    3. Hệ thống báo thành công, tạo một đơn hàng trạng thái `pending` (Lưu ý: Mộc sẽ tạm thời bị "giam" lại để tránh em đó đặt lố số mộc đang có).
-    4. Trở về màn hình chính, mã đổi quà sẽ hiện lên.
-
-### 4.3. Trạm Phát Quà Tại Thư Viện (Dành cho GLV/Thủ thư)
-* Tích hợp vào `module_library.php`.
-* **Luồng làm việc:**
-  1. Thiếu nhi lên thư viện, đưa thẻ QR hoặc đọc Mã Thiếu Nhi.
-  2. Thủ thư quét thẻ/nhập mã trên hệ thống.
-  3. Hệ thống hiện ra **Danh sách món quà em đó đã "Đặt đổi trước"**.
-  4. Thủ thư hỏi: "Đọc mật mã đổi quà của em!".
-  5. Thủ thư nhập Mật mã vào hệ thống để xác thực.
-  6. Nếu đúng: Hệ thống đánh dấu đơn hàng là `fulfilled`, **chính thức trừ mộc**, vô hiệu hóa mật mã, và giảm số lượng tồn kho (stock).
-  7. Thủ thư trao quà cho em.
+    3. Hệ thống báo thành công, tạo một đơn hàng trạng thái `pending`.
+    4. Trở về màn hình chính, mã đổi quà sẽ hiện lên chờ ngày lên nhà thờ nhận.
 
 ## 5. KẾ HOẠCH TRIỂN KHAI PHẦN MỀM
 * **Giai đoạn 1:** Cấu trúc Database (4 bảng) và API Backend tính Mộc (như đã làm).
