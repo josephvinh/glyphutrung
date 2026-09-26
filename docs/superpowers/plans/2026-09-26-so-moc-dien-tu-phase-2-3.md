@@ -32,7 +32,7 @@
 
 ---
 
-### Task P2-1: Cổng tra cứu công khai — tab Sổ Mộc (đọc)
+### Task 1: Cổng tra cứu công khai — tab Sổ Mộc (đọc)
 
 **Files:**
 - Create: `public/tracuu.php` (trang public), `public/api/_tracuu.php` (logic thuần, test được)
@@ -53,7 +53,7 @@
 
 ---
 
-### Task P3-1: Vòng đời đơn đặt quà (logic transaction, test-first)
+### Task 2: Vòng đời đơn đặt quà (logic transaction, test-first)
 
 **Files:**
 - Modify: `public/api/_rewards.php` (thêm các hàm dưới; giữ nguyên `rewards_redeem`/`rewards_lookup`)
@@ -85,7 +85,7 @@
 
 ---
 
-### Task P3-2: API đặt/hủy đơn (public) + xác nhận đơn (Thủ thư)
+### Task 3: API đặt/hủy đơn (public) + xác nhận đơn (Thủ thư)
 
 **Files:**
 - Modify: `public/api/rewards.php` (thêm actions), có thể thêm `public/api/tracuu.php` cho luồng public nếu tách sạch hơn (tùy, giữ nhất quán)
@@ -105,7 +105,7 @@
 
 ---
 
-### Task P3-3: `tracuu.php` — tab Đổi quà (đặt online) + hiển thị đơn ở tab Sổ Mộc
+### Task 4: `tracuu.php` — tab Đổi quà (đặt online) + hiển thị đơn ở tab Sổ Mộc
 
 **Files:**
 - Modify: `public/tracuu.php` + JS kèm theo (Alpine)
@@ -119,7 +119,7 @@
 
 ---
 
-### Task P3-4: Màn Thủ thư — xác nhận đơn đặt trước (trong module rewards)
+### Task 5: Màn Thủ thư — xác nhận đơn đặt trước (trong module rewards)
 
 **Files:**
 - Modify: `views/module_rewards.php` + `public/assets/js/modules/rewards.js`
