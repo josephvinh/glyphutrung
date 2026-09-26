@@ -227,8 +227,11 @@ if ($part !== 'core') {                          // bước 'core' bỏ qua đi�
                LEFT JOIN members m ON m.id = a.marked_by
               WHERE a.year_id = ?', [$yid]);
     } else {
-        // Chỉ điểm danh của các em trong phạm vi (dùng lại danh sách $students)
-        $stuIds = array_map(fn($s) => (int) $s['id'], $students);
+        // Chỉ điểm danh của các em trong phạm vi (dùng lại danh sách $students).
+        // $students là cấu trúc phân trang ['data'=>[...], ...] (master #42) —
+        // lấy hàng em ở khoá 'data' (trước đây lặp thẳng $students khiến $stuIds
+        // = [0,0,...] và user không phải admin không nhận được điểm danh nào).
+        $stuIds = array_map(fn($s) => (int) $s['id'], $students['data']);
         if ($stuIds) {
             $ph = implode(',', array_fill(0, count($stuIds), '?'));
             $attRows = db_all(
