@@ -268,19 +268,35 @@ function recalc_stamps(int $studentId, int $yearId, ?string $today = null): arra
     // last_attendance_date = ngày điểm danh gần nhất (earnDays đã ksort tăng dần).
     $lastAtt = $earnDays ? array_key_last($earnDays) : null;
 
-    // Số dư = earn (kể cả thưởng) + tổng spend/manual_adjust (engine không đụng).
-    $adjust = (int) (db_val(
-        "SELECT COALESCE(SUM(amount),0) FROM stamp_transactions
-          WHERE student_id=? AND year_id=? AND type IN ('spend','manual_adjust')",
-        [$studentId, $yearId]
-    ) ?? 0);
-    $currentBalance = $totalEarned + $adjust;
-
     // --- Ghi CSDL trong một transaction (chống lệch nửa chừng) ----------
     $ownTx = !db()->inTransaction();
     if ($ownTx) db()->beginTransaction();
+    $currentBalance = $totalEarned; // gán tạm; tính lại dưới khoá dòng ở bước 1.
     try {
-        // Đồng bộ giao dịch earn/bonus: xoá sạch rồi ghi lại cho khớp.
+        // 1) KHOÁ DÒNG VÍ TRƯỚC (nếu đã có) rồi mới đọc Σspend/manual_adjust và
+        //    ghi UPSERT — phải nằm TRONG cùng transaction, đọc-tính-ghi nguyên tử.
+        //    Luồng đổi quà (_rewards.php::rewards_redeem) cũng SELECT ... FOR UPDATE
+        //    đúng dòng này rồi mới ghi 'spend' + trừ current_balance; khoá chung
+        //    dòng khiến recalc và redeem NỐI TIẾP nhau, nên UPSERT tuyệt-đối của
+        //    recalc không bao giờ đè mất phần trừ của một redeem xen giữa.
+        //    Chưa có ví (recalc lần đầu) → không có gì để khoá: đi thẳng nhánh
+        //    INSERT; redeem không thể xảy ra khi chưa có ví nên không có đua.
+        db_one(
+            "SELECT current_balance FROM student_stamps
+              WHERE student_id=? AND year_id=? FOR UPDATE",
+            [$studentId, $yearId]
+        );
+
+        // 2) Số dư = earn (kể cả thưởng) + tổng spend/manual_adjust (engine không
+        //    đụng). Đọc SAU khi đã cầm khoá để không bắt được số cũ trước redeem.
+        $adjust = (int) (db_val(
+            "SELECT COALESCE(SUM(amount),0) FROM stamp_transactions
+              WHERE student_id=? AND year_id=? AND type IN ('spend','manual_adjust')",
+            [$studentId, $yearId]
+        ) ?? 0);
+        $currentBalance = $totalEarned + $adjust;
+
+        // 3) Đồng bộ giao dịch earn/bonus: xoá sạch rồi ghi lại cho khớp.
         db_run(
             "DELETE FROM stamp_transactions
               WHERE student_id=? AND year_id=? AND type IN ('attendance','streak_bonus')",

@@ -406,6 +406,17 @@ function responsible_blocks(array $me): ?array
 
     $blockIds = [];
     foreach (effective_assignments((int) ($me['id'])) as $a) {
+        // Phòng thủ theo chiều sâu (mirror responsible_class_ids, §6bis): chỉ cho
+        // một phân công GÓP phạm vi quản-lý-tổ-chức nếu vai của nó có quyền quản
+        // lý liên quan (≥view trên 'org' hoặc 'staff'). Nhờ vậy một phân công
+        // thuần thu_thu (scope toàn đoàn, KHÔNG quyền org/staff) không bao giờ nới
+        // rộng thành null (quản mọi khối). admin/bdh đã thoát ở trên nên giữ nguyên.
+        $roleCode = $a['role_code'] ?? '';
+        $hasOrgDomainAccess =
+            level_rank(permission_of_role($roleCode, 'org')) >= level_rank('view')
+            || level_rank(permission_of_role($roleCode, 'staff')) >= level_rank('view');
+        if (!$hasOrgDomainAccess) continue;
+
         $scope = $a['role_scope'] ?? '';
         if ($scope === 'toàn đoàn') return null;
         if (!empty($a['block_id'])) {

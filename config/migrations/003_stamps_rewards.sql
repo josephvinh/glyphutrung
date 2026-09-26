@@ -121,7 +121,7 @@ ON DUPLICATE KEY UPDATE label = VALUES(label), level = VALUES(level), scope = VA
 -- =====================================================================
 INSERT INTO modules (module_key, label, icon, color, area, sort_order, is_enabled) VALUES
     ('gifts',   'Danh mục quà', 'gift',        'text-pink-600',  'bdh', 13, 1),
-    ('rewards', 'Đổi quà',      'shopping-bag','text-amber-600', 'glv', 14, 1)
+    ('rewards', 'Đổi quà',      'shopping-bag','text-pink-600',  'bdh', 14, 1)
 ON DUPLICATE KEY UPDATE label = VALUES(label), icon = VALUES(icon), color = VALUES(color),
     area = VALUES(area), sort_order = VALUES(sort_order), is_enabled = VALUES(is_enabled);
 

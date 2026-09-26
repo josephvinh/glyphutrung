@@ -315,6 +315,47 @@ class StampEngineTest extends TestCase
         $this->assertCount(1, $this->txByType('manual_adjust'), 'manual_adjust được giữ nguyên');
     }
 
+    /**
+     * BẤT BIẾN CHỐNG ĐUA (Finding 1): recalc phải GIỮ NGUYÊN phần trừ của một
+     * lượt đổi quà (spend) đã commit — current_balance = total_earned + Σspend,
+     * không đè ngược về chỉ-earn.
+     *
+     * Mô phỏng thứ tự đua một cách TẤT ĐỊNH, không cần luồng thật: sau khi ví đã
+     * có earn, chèn một dòng 'spend' và TRỪ current_balance đúng như redeem đã
+     * commit (rewards_redeem làm y hệt), rồi recalc. Vì recalc nay KHOÁ DÒNG ví
+     * (SELECT ... FOR UPDATE) rồi mới đọc Σspend và UPSERT, nó nối tiếp sau redeem
+     * và không bao giờ clobber phần trừ. (Đua thật do khoá dòng bảo đảm; ở đây
+     * kiểm bất biến số học mà khoá đó giữ.)
+     */
+    public function test_recalc_preserves_committed_spend(): void
+    {
+        $p = $this->makeProgram('2026-08-17', '2026-08-18'); // T2,T3 → earn 2
+        $this->mark($p, '2026-08-17', 'có mặt');
+        $this->mark($p, '2026-08-18', 'có mặt');
+
+        recalc_stamps($this->sid, $this->yearId);
+        $w0 = $this->walletOf();
+        $this->assertSame(2, $w0['total_earned']);
+        $this->assertSame(2, $w0['current_balance']);
+
+        // Mô phỏng một redeem đã commit: giao dịch 'spend' -1 + trừ ví -1.
+        db_run("INSERT INTO stamp_transactions (year_id, student_id, amount, type, description, actor_id)
+                VALUES (?,?,?, 'spend', 'Đổi quà (test)', ?)",
+               [$this->yearId, $this->sid, -1, $this->adminId]);
+        db_run("UPDATE student_stamps SET current_balance = current_balance - 1
+                 WHERE student_id=? AND year_id=?", [$this->sid, $this->yearId]);
+        $this->assertSame(1, $this->walletOf()['current_balance'], 'sau redeem: 2 - 1 = 1');
+
+        // recalc lại: phải GIỮ phần trừ, không đè về 2.
+        recalc_stamps($this->sid, $this->yearId);
+
+        $w = $this->walletOf();
+        $this->assertSame(1, $w['current_balance'],
+            'recalc phải bảo toàn spend: total_earned(2) + Σspend(-1) = 1, KHÔNG clobber về 2');
+        $this->assertSame(2, $w['total_earned'], 'total_earned chỉ tính earn, không đổi');
+        $this->assertCount(1, $this->txByType('spend'), 'dòng spend được giữ nguyên');
+    }
+
     /** Gỡ điểm danh rồi recalc → hoàn Mộc, về đúng trạng thái trước. */
     public function test_untoggle_refunds(): void
     {
