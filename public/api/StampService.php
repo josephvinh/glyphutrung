@@ -41,6 +41,10 @@ if (!defined('STAMP_MILESTONES')) {
  */
 function stamp_earn_days(int $studentId, int $yearId): array
 {
+    // CỐ Ý bất đối xứng: earn chỉ chặn bằng effective_from, KHÔNG chặn bằng
+    // effective_to. Một buổi được điểm danh (đã qua kiểm tra lịch ở attendance.php)
+    // vẫn sinh Mộc dù ngoài khoảng effective_to; chỉ chuỗi (streak) mới bó theo
+    // effective_to. test_untoggle_refunds dựa vào hành vi này.
     $rows = db_all(
         "SELECT a.session_date AS d, a.status AS st
            FROM attendances a
@@ -74,6 +78,8 @@ function stamp_earn_days(int $studentId, int $yearId): array
  */
 function stamp_rep_attendance(int $studentId, int $yearId): array
 {
+    // Cùng bộ lọc với stamp_earn_days: chỉ chặn effective_from, KHÔNG chặn
+    // effective_to (xem chú thích ở stamp_earn_days).
     $rows = db_all(
         "SELECT a.id, a.session_date AS d, a.status AS st
            FROM attendances a
@@ -137,8 +143,10 @@ function stamp_scheduled_days(int $studentId, int $yearId, string $today, array 
             continue;
         }
 
-        // Buổi lặp theo thứ trong tuần.
-        $days = !empty($p['days_of_week'])
+        // Buổi lặp theo thứ trong tuần. LƯU Ý: không dùng empty() cho days_of_week
+        // vì "0" (chỉ Chúa Nhật) bị empty() coi là rỗng → mất lịch chuỗi. Giá trị
+        // "0" vẫn qua được array_filter($x>=0 && $x<=6) bên dưới.
+        $days = ($p['days_of_week'] !== null && $p['days_of_week'] !== '')
             ? array_values(array_filter(array_map('intval', explode(',', $p['days_of_week'])), fn($x) => $x >= 0 && $x <= 6))
             : ($p['day_of_week'] === null ? [] : [(int) $p['day_of_week']]);
         if (!$days) continue;

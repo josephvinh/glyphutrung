@@ -136,6 +136,25 @@ class StampEngineTest extends TestCase
         $this->assertSame(3, (int) $r['total_earned']);
     }
 
+    /** Chương trình CHỈ Chúa Nhật (days_of_week='0'): chuỗi vẫn phải nối. */
+    public function test_sunday_only_program_streak_increments(): void
+    {
+        // 2026-01-04 và 2026-01-11 đều là Chúa Nhật (hai CN liên tiếp có lịch).
+        $this->assertSame('0', date('w', strtotime('2026-01-04')));
+        $this->assertSame('0', date('w', strtotime('2026-01-11')));
+
+        $p = $this->makeProgram('2026-01-04', '2026-01-11', '0'); // chỉ thứ 0 = CN
+        $this->mark($p, '2026-01-04', 'có mặt');
+        $this->mark($p, '2026-01-11', 'có mặt');
+
+        recalc_stamps($this->sid, $this->yearId);
+
+        $w = $this->walletOf();
+        $this->assertSame(2, $w['current_streak'], 'hai CN có lịch liên tiếp → chuỗi 2');
+        $this->assertSame(2, $w['longest_streak']);
+        $this->assertSame(4, $w['total_earned'], 'mỗi CN +2 → 4');
+    }
+
     /** Nhiều buổi cùng ngày chỉ tính 1 lần; đúng giờ ưu tiên hơn trễ. */
     public function test_multiple_sessions_same_day_counts_once(): void
     {
