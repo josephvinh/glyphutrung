@@ -574,7 +574,8 @@ window.TNTT.core = {
         { key: 'calendar',      label: 'Lịch trình',   icon: 'calendar-days',   color: 'text-teal-600',   area: 'bdh', group: 'Chương trình', hidden: true },
         { key: 'announcements', label: 'Thông báo',    icon: 'megaphone',       color: 'text-rose-500',   area: 'bdh', group: 'Điều hành' },
         { key: 'staff',         label: 'Nhân sự',      icon: 'user-cog',        color: 'text-cyan-600',   area: 'bdh', group: 'Điều hành', badge: 'staff' },
-        { key: 'years',         label: 'Niên khoá',    icon: 'calendar-range',  color: 'text-indigo-600', area: 'bdh', group: 'Điều hành' }
+        { key: 'years',         label: 'Niên khoá',    icon: 'calendar-range',  color: 'text-indigo-600', area: 'bdh', group: 'Điều hành' },
+        { key: 'gifts',         label: 'Danh mục quà', icon: 'gift',            color: 'text-pink-600',   area: 'bdh', group: 'Chương trình' }
     ],
 
     // Công tắc bảo trì. Tắt thì mọi người thấy nút mờ kèm nhãn "Bảo trì",
@@ -582,7 +583,7 @@ window.TNTT.core = {
     moduleEnabled: {
         students: true, attendance: true, leave: true, birthdays: true,
         stats: true, analytics: true, org: true, reports: true, reporthub: true, programs: true, announcements: true,
-        scores: true, promotion: true, calendar: true, notes: true, guide: true, thu_vien: true
+        scores: true, promotion: true, calendar: true, notes: true, guide: true, thu_vien: true, gifts: true
     },
 
     // ==========================================
@@ -612,7 +613,9 @@ window.TNTT.core = {
         notes:          { admin: 'edit', bdh: 'edit', truong_khoi: 'edit', glv_chu_nhiem: 'edit', glv: 'edit' },
         guide:          { admin: 'view', bdh: 'view', truong_khoi: 'view', glv_chu_nhiem: 'view', glv: 'view' },
         // Thư viện: view = xem + đăng (chờ duyệt); edit = duyệt/gỡ/quản chủ đề.
-        thu_vien:       { admin: 'edit', bdh: 'edit', truong_khoi: 'view', glv_chu_nhiem: 'view', glv: 'view', du_bi: 'view' }
+        thu_vien:       { admin: 'edit', bdh: 'edit', truong_khoi: 'view', glv_chu_nhiem: 'view', glv: 'view', du_bi: 'view' },
+        // Danh mục quà: Quản trị/BĐH/Thủ Từ toàn quyền, các vai khác không thấy.
+        gifts:          { admin: 'edit', bdh: 'edit', truong_khoi: 'none', glv_chu_nhiem: 'none', glv: 'none', thu_thu: 'edit' }
     },
 
     permOf(key) {
