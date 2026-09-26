@@ -174,19 +174,61 @@ Làm **cả hai việc**:
 
 ---
 
+## 6bis. THIẾT LẬP VAI TRÒ & CÔ LẬP QUYỀN (chống leo thang)
+
+### Vai trò `thu_thu` (Thủ Thư)
+* Thêm role: `code='thu_thu'`, `label='Thủ Thư'`, `level=1`, `scope='toàn đoàn'`.
+* Gán người qua **kiêm nhiệm** (`member_assignments`, `block_id/class_id = NULL`) —
+  **không** đổi `role_code` gốc. Người đang là GLV vẫn giữ vai GLV, chỉ **thêm** vai
+  Thủ thư khi đứng quầy.
+
+### Hai module mới (tách riêng)
+| module_key | Chức năng | Ai được `edit` |
+|---|---|---|
+| `gifts` | Danh mục quà (tên, số Mộc, tồn kho) | `admin`, `bdh`, `thu_thu` |
+| `rewards` | Trạm Đổi Quà (POS + xác nhận đơn) | `admin`, `thu_thu` **(BĐH không đứng quầy)** |
+
+* **Đổi quà tại quầy & override "quên mật mã": chỉ `thu_thu`** (và `admin`). Override
+  = ai có `edit` trên `rewards` → được giao không cần mật mã, **có ghi log**.
+* Mọi role khác (`glv`, `glv_chu_nhiem`, `truong_khoi`, `du_bi`): `none` trên cả hai.
+
+### Cô lập chống leo thang (BẮT BUỘC)
+`thu_thu` có scope `toàn đoàn` nhưng **chỉ** trên `rewards`/`gifts`. Nguy cơ: 2 hàm
+gộp phạm vi trong core **bỏ qua module**, nên vai `toàn đoàn` sẽ nới rộng cả những
+miền khác. Ba lớp cô lập:
+
+1. **Module `rewards`/`gifts` không chia theo lớp.** API chỉ gác
+   `require_permission('rewards'|'gifts','edit')`; **không** gọi `can_access_class`,
+   `allowed_class_ids`, hay `scan_class_ids`. Định danh em qua **mã thẻ**, không qua lớp.
+2. **Vá 2 hàm gộp phạm vi cho "module-aware":**
+   * `scan_class_ids()` (`_bootstrap.php`): chỉ tính assignment có ≥`view` trên
+     `attendance`. → `thu_thu` (none) không nới phạm vi quét điểm danh.
+   * `responsible_class_ids()` (`_common.php`): chỉ tính assignment của vai có quyền
+     trên **miền thiếu nhi** (students/attendance). → `thu_thu` không nới ranh giới
+     xem/sửa/xóa hồ sơ, in thẻ QR. Giữ nguyên hành vi cho mọi vai hiện có.
+3. **Test hồi quy bắt buộc:** member = GLV(lớp A) **+** `thu_thu`(toàn đoàn):
+   `students`/`data` chỉ thấy lớp A · `scan_class_ids` chỉ khối của A ·
+   `custom-qrcard` chỉ lớp A · sửa điểm danh lớp ngoài A **bị chặn** ·
+   nhưng `rewards` phục vụ **được mọi em**.
+
+---
+
 ## 7. KẾ HOẠCH TRIỂN KHAI (IMPLEMENTATION PLAN)
 
-**Phase 1 — Lõi Mộc + đổi quà tại quầy**
+**Phase 1 — Lõi Mộc + đổi quà tại quầy + cô lập quyền**
 * **Bước 0:** Test `recalc_stamps` (Mộc + chuỗi + mốc thưởng + đi trễ + CN + reset).
 * **Bước 1:** Migration: `student_stamps`, `stamp_transactions`, `gifts`,
-  `gift_orders`, `gift_order_items` (dựng schema đầy đủ ngay để không đập lại sau).
-* **Bước 2:** Backend `recalc_stamps`, móc vào 3 đường ghi của `attendance.php`
+  `gift_orders`, `gift_order_items`; seed role `thu_thu`, 2 module `gifts`/`rewards`
+  + các dòng `permissions` (dựng schema đầy đủ ngay để không đập lại sau).
+* **Bước 2:** **Cô lập quyền** — vá `scan_class_ids` + `responsible_class_ids` cho
+  module-aware, kèm **test hồi quy** GLV+thu_thu (§6bis).
+* **Bước 3:** Backend `recalc_stamps`, móc vào 3 đường ghi của `attendance.php`
   (chỉ chạy cho buổi `count_for_emulation`).
-* **Bước 3:** Module danh mục quà (CRUD `gifts`).
-* **Bước 4:** Hồ sơ thiếu nhi hiển thị Ví Mộc & Lửa Chuỗi.
-* **Bước 5:** Module điều khiển đổi quà — **đổi trực tiếp tại quầy** (6.4b), giỏ
+* **Bước 4:** Module danh mục quà (CRUD `gifts`).
+* **Bước 5:** Hồ sơ thiếu nhi hiển thị Ví Mộc & Lửa Chuỗi.
+* **Bước 6:** Module điều khiển đổi quà — **đổi trực tiếp tại quầy** (6.4b), giỏ
   nhiều quà, transaction khóa dòng.
-* **Bước 6:** Test tổng thể, tinh chỉnh thông báo & âm thanh.
+* **Bước 7:** Test tổng thể, tinh chỉnh thông báo & âm thanh.
 
 **Phase 2 — Cổng public**
 * **Bước 7:** `tracuu.php` — tab Sổ Mộc (chỉ đọc, xác thực nhẹ bằng mã thiếu nhi,
@@ -217,3 +259,7 @@ Làm **cả hai việc**:
 | 12 | Đổi tại quầy | Vẫn giữ, cho em không đặt trước |
 | 13 | Xác thực lấy quà | 3 lớp: thẻ vật lý + Thủ thư + mật mã đơn |
 | 14 | Tra cứu public | Mã thiếu nhi + rate-limit (không dùng SĐT) |
+| 15 | Vai trò Thủ thư | Role `thu_thu` (toàn đoàn), gán bằng kiêm nhiệm |
+| 16 | Module quyền | Tách `gifts` + `rewards`; đổi quà & override **chỉ `thu_thu`+admin** |
+| 17 | Quên mật mã | Thủ thư override (có log); tại nhà chờ hết hạn/ra quầy |
+| 18 | Chống leo thang | rewards không chia lớp + vá 2 hàm scope + test hồi quy |
