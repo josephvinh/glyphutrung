@@ -17,6 +17,7 @@
 
 require_once __DIR__ . '/../../config/db.php';
 require_once __DIR__ . '/StampService.php';
+require_once __DIR__ . '/_http_util.php'; // client_ip() + json_out()/json_fail() — SINGLE SOURCE, xem docblock ở đó
 
 /* =====================================================================
    RATE LIMIT — mượn mẫu login_throttle()/register_throttle() ở _bootstrap.php
@@ -29,27 +30,9 @@ require_once __DIR__ . '/StampService.php';
 if (!defined('TRACUU_CUA_SO_PHUT')) define('TRACUU_CUA_SO_PHUT', 10);
 if (!defined('TRACUU_TOI_DA_IP'))   define('TRACUU_TOI_DA_IP', 30);
 
-if (!function_exists('client_ip')) {
-    // Định nghĩa lại y hệt _bootstrap.php::client_ip() — trang public/tracuu.php
-    // (mẫu bxh.php) không nạp _bootstrap.php nên hàm này có thể chưa có.
-    // function_exists() để không đụng độ khi file này được nạp CÙNG lúc với
-    // _bootstrap.php (ví dụ trong test bootstrap, hoặc API xác nhận sau này).
-    function client_ip(): string
-    {
-        return substr((string) ($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0'), 0, 45);
-    }
-}
-
-if (!function_exists('json_fail')) {
-    // Định nghĩa lại y hệt _bootstrap.php::json_fail() — cùng lý do trên.
-    function json_fail(string $message, int $code = 400): never
-    {
-        http_response_code($code);
-        header('Content-Type: application/json; charset=utf-8');
-        echo json_encode(['ok' => false, 'error' => $message], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-        exit;
-    }
-}
+// client_ip() và json_fail() đến từ _http_util.php (require ở trên) —
+// dùng CHUNG một bản với _bootstrap.php, không định nghĩa lại ở đây nữa
+// (tránh trôi lệch âm thầm + nguy cơ "Cannot redeclare" khi nạp khác thứ tự).
 
 /**
  * Chặn TRƯỚC khi tra cứu (mẫu login_throttle()): quá TRACUU_TOI_DA_IP lượt

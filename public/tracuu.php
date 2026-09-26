@@ -25,7 +25,7 @@ require __DIR__ . '/../config/db.php';
 require __DIR__ . '/api/_tracuu.php';
 
 /* ---------- Niên khoá đang mở ---------- */
-$year = db_one("SELECT * FROM school_years WHERE is_current = 1 LIMIT 1");
+$year = db_one("SELECT id FROM school_years WHERE is_current = 1 LIMIT 1");
 if (!$year) {
     http_response_code(503);
     echo 'Chưa mở niên khoá.';
@@ -36,8 +36,8 @@ $yearId = (int) $year['id'];
 /* ---------- Tab (Sổ Mộc | Đổi quà) ---------- */
 $tab = (($_GET['tab'] ?? 'so-moc') === 'doi-qua') ? 'doi-qua' : 'so-moc';
 
-/* ---------- Xử lý tra cứu (GET hoặc POST, ép kiểu chuỗi an toàn) ---------- */
-$ma = trim((string) ($_POST['ma'] ?? $_GET['ma'] ?? ''));
+/* ---------- Xử lý tra cứu (form dùng GET, ép kiểu chuỗi an toàn) ---------- */
+$ma = trim((string) ($_GET['ma'] ?? ''));
 $ma = mb_substr($ma, 0, 32, 'UTF-8'); // students.code là VARCHAR(32)
 
 $ketQua   = null;
