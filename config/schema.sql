@@ -483,6 +483,18 @@ CREATE TABLE IF NOT EXISTS login_attempts (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
+--  ĐẾM LẦN TRA CỨU Ở CỔNG CÔNG KHAI (chống dò mã thiếu nhi)
+--  Xem migration 004_tracuu_throttle.sql — mẫu y hệt login_attempts,
+--  nhưng đếm theo IP (không theo mã) vì kẻ dò thử LẦN LƯỢT nhiều mã.
+-- ============================================================
+CREATE TABLE IF NOT EXISTS tracuu_attempts (
+    id       INT AUTO_INCREMENT PRIMARY KEY,
+    ip       VARCHAR(45) NOT NULL COMMENT 'đủ chỗ cho IPv6',
+    tried_at DATETIME    NOT NULL,
+    KEY idx_tracuu_ip (ip, tried_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
 --  ĐĂNG KÝ NHẬN THÔNG BÁO ĐẨY
 --  Mỗi máy (điện thoại/máy tính) một dòng. Một người dùng có thể
 --  có nhiều máy; gỡ app hay xoá dữ liệu thì máy chủ nhận 404/410
