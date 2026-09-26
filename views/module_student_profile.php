@@ -15,25 +15,25 @@
         <!-- SCORES -->
         <button @click="profileTab = 'scores'; $el.scrollIntoView({behavior: 'smooth', block: 'nearest', inline: 'center'})" type="button" role="tab" :aria-selected="profileTab === 'scores' ? 'true' : 'false'"
                 class="shrink-0 snap-start whitespace-nowrap px-4 py-2.5 rounded-2xl font-bold text-sm transition-all duration-200 flex items-center justify-center gap-2"
-                :class="profileTab === 'scores' ? 'bg-white text-violet-600 shadow-[0_2px_8px_rgba(0,0,0,0.08)] border border-slate-200/60' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100/50 border border-transparent'">
+                :class="profileTab === 'scores' ? 'bg-white text-blue-600 shadow-[0_2px_8px_rgba(0,0,0,0.08)] border border-slate-200/60' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100/50 border border-transparent'">
             <i data-lucide="graduation-cap" class="w-4 h-4"></i> Điểm số
         </button>
         <!-- ATTENDANCE -->
         <button @click="profileTab = 'attendance'; $el.scrollIntoView({behavior: 'smooth', block: 'nearest', inline: 'center'})" type="button" role="tab" :aria-selected="profileTab === 'attendance' ? 'true' : 'false'"
                 class="shrink-0 snap-start whitespace-nowrap px-4 py-2.5 rounded-2xl font-bold text-sm transition-all duration-200 flex items-center justify-center gap-2"
-                :class="profileTab === 'attendance' ? 'bg-white text-emerald-600 shadow-[0_2px_8px_rgba(0,0,0,0.08)] border border-slate-200/60' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100/50 border border-transparent'">
+                :class="profileTab === 'attendance' ? 'bg-white text-blue-600 shadow-[0_2px_8px_rgba(0,0,0,0.08)] border border-slate-200/60' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100/50 border border-transparent'">
             <i data-lucide="check-circle" class="w-4 h-4"></i> Điểm danh
         </button>
         <!-- REPORT -->
         <button @click="profileTab = 'report'; $el.scrollIntoView({behavior: 'smooth', block: 'nearest', inline: 'center'})" type="button" role="tab" :aria-selected="profileTab === 'report' ? 'true' : 'false'"
                 class="shrink-0 snap-start whitespace-nowrap px-4 py-2.5 rounded-2xl font-bold text-sm transition-all duration-200 flex items-center justify-center gap-2"
-                :class="profileTab === 'report' ? 'bg-white text-amber-600 shadow-[0_2px_8px_rgba(0,0,0,0.08)] border border-slate-200/60' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100/50 border border-transparent'">
-            <i data-lucide="file-text" class="w-4 h-4"></i> Phiếu Đ.Giá
+                :class="profileTab === 'report' ? 'bg-white text-blue-600 shadow-[0_2px_8px_rgba(0,0,0,0.08)] border border-slate-200/60' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100/50 border border-transparent'">
+            <i data-lucide="file-text" class="w-4 h-4"></i> Phiếu liên lạc
         </button>
         <!-- QRCARD -->
         <button @click="profileTab = 'qrcard'; $el.scrollIntoView({behavior: 'smooth', block: 'nearest', inline: 'center'})" type="button" role="tab" :aria-selected="profileTab === 'qrcard' ? 'true' : 'false'"
                 class="shrink-0 snap-start whitespace-nowrap px-4 py-2.5 rounded-2xl font-bold text-sm transition-all duration-200 flex items-center justify-center gap-2"
-                :class="profileTab === 'qrcard' ? 'bg-white text-slate-800 shadow-[0_2px_8px_rgba(0,0,0,0.08)] border border-slate-200/60' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100/50 border border-transparent'">
+                :class="profileTab === 'qrcard' ? 'bg-white text-blue-600 shadow-[0_2px_8px_rgba(0,0,0,0.08)] border border-slate-200/60' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100/50 border border-transparent'">
             <i data-lucide="qr-code" class="w-4 h-4"></i> Thẻ mã QR
         </button>
     </div>
@@ -351,21 +351,21 @@
                     <!-- QR Code lớn — chỉ vẽ khi bộ sinh mã đã nạp xong.
                          Nhắc qrReady trong biểu thức để Alpine vẽ lại khi nạp xong. -->
                     <div class="w-48 h-48 mx-auto bg-white rounded-2xl border-4 border-slate-200 flex items-center justify-center mb-4 overflow-hidden">
-                        <div x-show="qrReady" x-html="qrReady ? qrSvg(profileStudent.code) : ''" class="w-full h-full flex items-center justify-center"></div>
+                        <div x-show="qrReady" x-html="qrReady && profileStudent ? qrSvg(profileStudent.code) : ''" class="w-full h-full flex items-center justify-center"></div>
                         <span x-show="!qrReady" style="display: none;" class="text-xs text-slate-400">Đang tải mã QR…</span>
                     </div>
 
                     <h3 class="text-lg font-black text-slate-800 mb-1">
-                        <span x-text="profileStudent.holyName" class="font-normal text-slate-500"></span>
-                        <span x-text="profileStudent.name"></span>
+                        <span x-text="profileStudent ? profileStudent.holyName : ''" class="font-normal text-slate-500"></span>
+                        <span x-text="profileStudent ? profileStudent.name : ''"></span>
                     </h3>
-                    <p class="text-sm font-bold text-blue-600 mb-1" x-text="profileStudent.code"></p>
-                    <p class="text-sm text-slate-500" x-text="profileStudent.className + ' · ' + profileStudent.block"></p>
+                    <p class="text-sm font-bold text-blue-600 mb-1" x-text="profileStudent ? profileStudent.code : ''"></p>
+                    <p class="text-sm text-slate-500" x-text="profileStudent ? (profileStudent.className + ' · ' + profileStudent.block) : ''"></p>
                 </div>
 
                 <!-- Nút in -->
                 <div class="mt-4 flex gap-2">
-                    <button @click="printSingleQrcard(profileStudent)"
+                    <button @click="profileStudent && printSingleQrcard(profileStudent)"
                             class="flex-1 flex items-center justify-center gap-1.5 px-4 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm active:scale-95 transition-transform shadow-md shadow-blue-200">
                         <i data-lucide="printer" class="w-5 h-5"></i> In thẻ QR
                     </button>

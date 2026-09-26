@@ -21,7 +21,7 @@
             </div>
         </div>
 
-        <!-- Dark mode toggle + Đăng xuất -->
+        <!-- Làm mới + Đăng xuất -->
         <div class="flex items-center gap-2">
             <!-- Làm mới / đồng bộ — thay cho kéo-xuống khi cài app ra màn hình chính -->
             <button @click="refreshApp()" :disabled="syncing" type="button" aria-label="Làm mới dữ liệu"

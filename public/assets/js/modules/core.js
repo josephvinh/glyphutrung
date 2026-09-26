@@ -52,6 +52,9 @@ window.TNTT.core = {
     init() {
         // Apply saved dark mode state
         this.applyDarkMode();
+        if (typeof this.initOfflineAttendance === 'function') {
+            this.initOfflineAttendance();
+        }
     },
 
     applyDarkMode() {
@@ -106,14 +109,17 @@ window.TNTT.core = {
             if (res.status === 403) return { ok: false, error: 'Yêu cầu không hợp lệ (CSRF). Vui lòng tải lại trang.' };
             return await res.json();
         } catch (e) {
-            return { ok: false, error: 'Mất kết nối máy chủ. Kiểm tra lại mạng.' };
+            return { ok: false, networkError: true, error: 'Mất kết nối máy chủ. Kiểm tra lại mạng.' };
         }
     },
 
     async save(file, action, body) {
         const r = await this.api(file, action, body);
         if (!r.ok) {
-            window.TNTT.toast.error(r.error || 'Có lỗi xảy ra khi lưu dữ liệu.');
+            // Điểm danh ngoại tuyến đã có hàng đợi offline tự động, không báo lỗi đỏ làm hoang mang GLV
+            if (!(r.networkError && file === 'attendance')) {
+                window.TNTT.toast.error(r.error || 'Có lỗi xảy ra khi lưu dữ liệu.');
+            }
         }
         return r;
     },
@@ -229,6 +235,9 @@ window.TNTT.core = {
     // cả trang); báo cho người dùng biết đã đồng bộ.
     async refreshApp() {
         if (this.syncing) return;
+        if (typeof this.syncOfflineAttendance === 'function') {
+            await this.syncOfflineAttendance();
+        }
         if (await this.loadData()) window.TNTT.toast.success('Đã đồng bộ dữ liệu mới nhất.');
     },
 

@@ -19,6 +19,43 @@ window.TNTT.shell = {
             .trim();
     },
 
+    /**
+     * So khớp tìm kiếm thiếu nhi toàn diện:
+     * 1. Tên, Tên thánh riêng lẻ
+     * 2. Chuỗi kết hợp: "Tên Thánh + Tên" (VD: "teresa mai")
+     * 3. Mã định danh GDGLPT
+     * 4. Số điện thoại Cha hoặc Mẹ
+     */
+    matchStudentSearch(student, query) {
+        if (!student) return false;
+        if (!query) return true;
+        const q = this.normalizeText(query);
+        if (!q) return true;
+
+        // 1. Tên thánh, họ tên riêng lẻ & kết hợp
+        const holy = this.normalizeText(student.holyName || '');
+        const name = this.normalizeText(student.name || '');
+        const full = (holy + ' ' + name).trim();
+        const code = this.normalizeText(student.code || '');
+
+        if (name.includes(q) || holy.includes(q) || full.includes(q) || code.includes(q)) {
+            return true;
+        }
+
+        // 2. Tìm theo số điện thoại phụ huynh (bỏ ký tự trắng/chấm/gạch nối)
+        const cleanPhone = str => String(str || '').replace(/\D/g, '');
+        const qDigits = q.replace(/\D/g, '');
+        if (qDigits.length >= 3) {
+            const fatherPhone = cleanPhone(student.fatherPhone);
+            const motherPhone = cleanPhone(student.motherPhone);
+            if (fatherPhone.includes(qDigits) || motherPhone.includes(qDigits)) {
+                return true;
+            }
+        }
+
+        return false;
+    },
+
     genderLabel(gender) {
         return Number(gender) === 1 ? 'Nam' : 'Nữ';
     },

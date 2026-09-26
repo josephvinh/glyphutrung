@@ -92,17 +92,16 @@
             </div>
         </template>
         <template x-for="student in reportStudents" :key="student.id">
-            <button @click="canWriteReports ? openReportForm(student) : (reportOf(student.id) && openReportPreview(student.id))"
-                    type="button"
-                    style="content-visibility: auto; contain-intrinsic-size: auto 92px;"
-                    class="w-full text-left bg-white rounded-field p-4 shadow-sm border flex items-center gap-3 active:scale-[0.98] transition-all"
-                    :class="selectedReports.includes(student.id) ? 'border-blue-300 bg-blue-50/30 shadow-md' : 'border-slate-100'">
+            <div style="content-visibility: auto; contain-intrinsic-size: auto 92px;"
+                 class="w-full text-left bg-white rounded-field p-4 shadow-sm border flex items-center gap-3 transition-all"
+                 :class="selectedReports.includes(student.id) ? 'border-blue-300 bg-blue-50/30 shadow-md' : 'border-slate-100'">
 
-                <div @click.stop class="shrink-0 flex items-center h-full pr-1">
+                <div class="shrink-0 flex items-center h-full pr-1">
                     <input type="checkbox" :value="student.id" x-model="selectedReports" class="w-5 h-5 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer">
                 </div>
 
-                <div class="w-12 h-12 shrink-0 rounded-2xl flex flex-col items-center justify-center border"
+                <div class="w-12 h-12 shrink-0 rounded-2xl flex flex-col items-center justify-center border cursor-pointer select-none active:scale-95 transition-transform"
+                     @click="canWriteReports ? openReportForm(student) : (reportOf(student.id) && openReportPreview(student.id))"
                      :class="reportAttendance.byStudent[student.id] && attendRate(reportAttendance.byStudent[student.id]) >= 85
                             ? 'bg-emerald-50 border-emerald-100 text-emerald-600'
                             : (reportAttendance.byStudent[student.id] && attendRate(reportAttendance.byStudent[student.id]) >= 70
@@ -113,7 +112,8 @@
                     <span class="text-micro font-bold uppercase tracking-wide opacity-70">Có mặt</span>
                 </div>
 
-                <div class="flex-1 min-w-0">
+                <div class="flex-1 min-w-0 cursor-pointer"
+                     @click="canWriteReports ? openReportForm(student) : (reportOf(student.id) && openReportPreview(student.id))">
                     <p class="text-micro font-bold text-blue-600 leading-tight" x-text="student.code"></p>
                     <p class="text-sm font-black text-slate-800 leading-snug">
                         <span class="font-normal text-slate-500" x-text="student.holyName"></span>
@@ -125,15 +125,16 @@
                 </div>
 
                 <div class="shrink-0 flex flex-col items-end gap-1.5">
-                    <span class="text-micro font-bold uppercase tracking-wider px-2 py-1 rounded-lg border"
+                    <span class="text-micro font-bold uppercase tracking-wider px-2 py-1 rounded-lg border cursor-pointer"
+                          @click="canWriteReports ? openReportForm(student) : (reportOf(student.id) && openReportPreview(student.id))"
                           :class="reportChipClass(reportStatus(student.id))" x-text="reportStatus(student.id)"></span>
-                    <span x-show="reportOf(student.id)" style="display: none;"
-                          @click.stop="openReportPreview(student.id)"
-                          class="text-micro font-bold text-blue-600 flex items-center gap-1">
+                    <button x-show="reportOf(student.id)" style="display: none;" type="button"
+                            @click="openReportPreview(student.id)"
+                            class="text-micro font-bold text-blue-600 flex items-center gap-1 hover:underline">
                         <i data-lucide="eye" class="w-3 h-3"></i> Xem phiếu
-                    </span>
+                    </button>
                 </div>
-            </button>
+            </div>
         </template>
 
         <div x-show="reportClass !== '' && reportStudents.length === 0 && !syncing" style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">

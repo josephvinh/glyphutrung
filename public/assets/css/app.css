@@ -136,12 +136,6 @@ body {
     border-radius: var(--r-sheet) var(--r-sheet) 0 0;
     box-shadow: 0 -8px 30px -12px rgb(15 23 42 / 0.2);
 }
-/* Từ tablet: ẩn hẳn thanh bottom nav trên màn hình lớn */
-@media (min-width: 640px) {
-    .app-bottomnav {
-        display: none !important;
-    }
-}
 
 /* ==========================================================
    POPUP DẠNG BOTTOM-SHEET
