@@ -62,3 +62,6 @@ Enter/
 # Documentation
 CLAUDE.md
 CHANGES_SUMMARY.md
+
+# Runtime logs (không commit log chạy máy)
+logs/*.log
