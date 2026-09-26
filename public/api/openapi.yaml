@@ -1,0 +1,840 @@
+openapi: 3.0.3
+info:
+  title: TNTT API
+  description: |
+    API cho hệ thống Gia Đình Giáo Lý Phú Trung (TNTT Super App)
+
+    ## Authentication
+    Hầu hết endpoints yêu cầu đăng nhập qua session cookie hoặc Bearer token.
+
+    ## Rate Limiting
+    - Read operations: 60 requests/phút
+    - Write operations: 30 requests/phút
+
+    ## Error Codes
+    - 400: Bad Request
+    - 401: Unauthorized
+    - 403: Forbidden
+    - 404: Not Found
+    - 409: Conflict
+    - 429: Too Many Requests
+    - 500: Internal Server Error
+  version: 1.0.0
+  contact:
+    name: TNTT Development Team
+
+servers:
+  - url: /api
+    description: Local development
+  - url: https://glyphutrung.tk/api
+    description: Production server
+
+tags:
+  - name: Auth
+    description: Authentication & user management
+  - name: Students
+    description: Student management
+  - name: Attendance
+    description: Attendance tracking
+  - name: Programs
+    description: Program & schedule management
+  - name: Classes
+    description: Class organization
+  - name: Reports
+    description: Report generation
+  - name: Data
+    description: Data access
+
+paths:
+  # ============================================
+  # AUTH
+  # ============================================
+  /auth.php:
+    get:
+      tags: [Auth]
+      summary: Get current user
+      description: Get information about the currently logged-in user
+      operationId: getCurrentUser
+      responses:
+        '200':
+          description: User information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  user:
+                    $ref: '#/components/schemas/User'
+        '200_no_auth':
+          description: No user logged in
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: false
+                  user:
+                    type: null
+                    example: null
+
+    post:
+      tags: [Auth]
+      summary: Perform auth action
+      description: |
+        Perform authentication actions based on `action` query parameter:
+        - `login`: Authenticate user
+        - `logout`: End session
+        - `password`: Change password
+        - `register`: Self-registration
+        - `profile`: Update own profile
+      operationId: authAction
+      parameters:
+        - name: action
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [login, logout, password, register, profile]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                phone:
+                  type: string
+                  description: Phone number (for login/register)
+                  example: "0912345678"
+                password:
+                  type: string
+                  description: Password
+                current:
+                  type: string
+                  description: Current password (for password change)
+                new:
+                  type: string
+                  description: New password (for password change)
+                fullName:
+                  type: string
+                  description: Full name (for register/profile)
+                  example: "Nguyễn Văn A"
+                holyName:
+                  type: string
+                  description: Holy name (for register/profile)
+                  example: "Maria"
+                birthDate:
+                  type: string
+                  format: date
+                  description: Birth date (for register/profile)
+                  example: "2000-01-15"
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  # ============================================
+  # STUDENTS
+  # ============================================
+  /students.php:
+    post:
+      tags: [Students]
+      summary: Student actions
+      description: |
+        Perform student operations based on `action` parameter:
+        - `save`: Create or update student
+        - `import`: Bulk import students
+        - `next_code`: Get next student code
+      operationId: studentAction
+      parameters:
+        - name: action
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [save, import, next_code]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                isNew:
+                  type: boolean
+                  description: True for new student
+                id:
+                  type: integer
+                  description: Student ID (for update)
+                code:
+                  type: string
+                  description: Student code
+                  example: "GDGLPT25123"
+                holyName:
+                  type: string
+                  example: "Maria"
+                name:
+                  type: string
+                  example: "Nguyen Van A"
+                gender:
+                  type: integer
+                  enum: [0, 1]
+                  description: 0=Female, 1=Male
+                birthDate:
+                  type: string
+                  format: date
+                  example: "2010-05-20"
+                address:
+                  type: string
+                fatherName:
+                  type: string
+                fatherPhone:
+                  type: string
+                motherName:
+                  type: string
+                motherPhone:
+                  type: string
+                className:
+                  type: string
+                  description: Class name
+                  example: "Khối 1 - A"
+                status:
+                  type: string
+                  enum: [đang sinh hoạt, đã nghỉ, bảo lưu]
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  # ============================================
+  # ATTENDANCE
+  # ============================================
+  /attendance.php:
+    get:
+      tags: [Attendance]
+      summary: Lookup students for scanning
+      description: Get list of students for QR code scanning
+      operationId: lookupStudents
+      parameters:
+        - name: action
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [lookup]
+      responses:
+        '200':
+          description: Student lookup data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  items:
+                    type: array
+                    items:
+                      type: array
+                      description: "[code, id, full_name, class_name]"
+
+    post:
+      tags: [Attendance]
+      summary: Attendance actions
+      description: |
+        Perform attendance operations:
+        - `toggle`: Toggle attendance for single student
+        - `scan`: Bulk scan QR codes
+      operationId: attendanceAction
+      parameters:
+        - name: action
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [toggle, scan]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                programId:
+                  type: integer
+                  description: Program ID
+                date:
+                  type: string
+                  format: date
+                  description: Attendance date
+                  example: "2026-09-26"
+                studentId:
+                  type: integer
+                  description: Student ID (for toggle)
+                codes:
+                  type: array
+                  items:
+                    type: string
+                  description: Array of student codes (for scan)
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  added:
+                    type: integer
+                    description: Number of students added (scan mode)
+                  existed:
+                    type: integer
+                    description: Number already present (scan mode)
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  # ============================================
+  # PROGRAMS
+  # ============================================
+  /programs.php:
+    get:
+      tags: [Programs]
+      summary: List programs
+      description: Get list of programs for current school year
+      operationId: listPrograms
+      responses:
+        '200':
+          description: Program list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Program'
+
+    post:
+      tags: [Programs]
+      summary: Program actions
+      description: Create or update programs
+      operationId: programAction
+      parameters:
+        - name: action
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [save, delete]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Program'
+      responses:
+        '200':
+          $ref: '#/components/schemas/SuccessResponse'
+
+  # ============================================
+  # ANNOUNCEMENTS
+  # ============================================
+  /announcements.php:
+    get:
+      tags: [Programs]
+      summary: List announcements
+      operationId: listAnnouncements
+      responses:
+        '200':
+          description: Announcement list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Announcement'
+
+    post:
+      tags: [Programs]
+      summary: Create announcement
+      operationId: createAnnouncement
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Announcement'
+      responses:
+        '200':
+          $ref: '#/components/schemas/SuccessResponse'
+
+  # ============================================
+  # DATA
+  # ============================================
+  /data.php:
+    get:
+      tags: [Data]
+      summary: Get data
+      description: Get structured data (students, classes, etc.)
+      operationId: getData
+      parameters:
+        - name: type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [students, classes, programs, blocks, years, stats]
+      responses:
+        '200':
+          description: Data response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  items:
+                    type: array
+                    items: {}
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+
+  # ============================================
+  # REPORTS
+  # ============================================
+  /reports.php:
+    get:
+      tags: [Reports]
+      summary: Get reports
+      operationId: getReports
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [summary, detailed, attendance]
+      responses:
+        '200':
+          description: Report data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  report:
+                    type: object
+
+  # ============================================
+  # EXPORT
+  # ============================================
+  /export.php:
+    get:
+      tags: [Reports]
+      summary: Export data
+      description: Export data to various formats
+      operationId: exportData
+      parameters:
+        - name: type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [students, attendance, program]
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [pdf, excel, csv]
+      responses:
+        '200':
+          description: Exported file
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+
+  # ============================================
+  # CLASSES
+  # ============================================
+  /org.php:
+    get:
+      tags: [Classes]
+      summary: Get organization structure
+      operationId: getOrgStructure
+      responses:
+        '200':
+          description: Organization data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  blocks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Block'
+                  classes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Class'
+
+    post:
+      tags: [Classes]
+      summary: Organization actions
+      operationId: orgAction
+      parameters:
+        - name: action
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [saveBlock, deleteBlock, saveClass, deleteClass]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          $ref: '#/components/schemas/SuccessResponse'
+
+  # ============================================
+  # SCORES
+  # ============================================
+  /scores.php:
+    post:
+      tags: [Students]
+      summary: Score actions
+      description: Save or get student scores
+      operationId: scoreAction
+      parameters:
+        - name: action
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [save, list]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                studentId:
+                  type: integer
+                programId:
+                  type: integer
+                score:
+                  type: number
+                type:
+                  type: string
+      responses:
+        '200':
+          $ref: '#/components/schemas/SuccessResponse'
+
+  # ============================================
+  # SETTINGS
+  # ============================================
+  /settings.php:
+    get:
+      tags: [Data]
+      summary: Get settings
+      operationId: getSettings
+      responses:
+        '200':
+          description: Settings data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  config:
+                    type: object
+
+    post:
+      tags: [Data]
+      summary: Update settings
+      operationId: updateSettings
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                key:
+                  type: string
+                value: {}
+      responses:
+        '200':
+          $ref: '#/components/schemas/SuccessResponse'
+
+# ============================================
+# COMPONENTS
+# ============================================
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+        holyName:
+          type: string
+        fullName:
+          type: string
+        phone:
+          type: string
+        role:
+          type: string
+          description: Role code (admin, bdh, glv, du_bi)
+        roleLabel:
+          type: string
+        roleLevel:
+          type: integer
+        roleScope:
+          type: string
+          description: Scope (toàn đoàn, khối, lớp)
+        roleTitle:
+          type: string
+        birthDate:
+          type: string
+          format: date
+        managedBlock:
+          type: string
+        assignedClass:
+          type: string
+        mustChangePw:
+          type: boolean
+
+    Student:
+      type: object
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+        holyName:
+          type: string
+        fullName:
+          type: string
+        gender:
+          type: integer
+          enum: [0, 1]
+        birthDate:
+          type: string
+          format: date
+        address:
+          type: string
+        fatherName:
+          type: string
+        fatherPhone:
+          type: string
+        motherName:
+          type: string
+        motherPhone:
+          type: string
+        className:
+          type: string
+        status:
+          type: string
+
+    Program:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        type:
+          type: string
+          enum: [thường xuyên, sáng Chúa Nhật, chiến dịch]
+        dayOfWeek:
+          type: integer
+          description: 0=Sunday, 1=Monday, etc.
+        startTime:
+          type: string
+          format: time
+        endTime:
+          type: string
+          format: time
+        status:
+          type: string
+          enum: [kích hoạt, đóng]
+
+    Block:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        classes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Class'
+
+    Class:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        blockId:
+          type: integer
+        yearId:
+          type: integer
+        studentCount:
+          type: integer
+
+    Announcement:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        author:
+          type: string
+
+    PaginationMeta:
+      type: object
+      properties:
+        page:
+          type: integer
+        perPage:
+          type: integer
+        total:
+          type: integer
+        totalPages:
+          type: integer
+
+    SuccessResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          example: true
+        message:
+          type: string
+        id:
+          type: integer
+          description: Inserted ID for create operations
+
+    ErrorResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          example: false
+        error:
+          type: string
+          description: Error message
+        debug:
+          type: object
+          description: Debug information (dev mode only)
+
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            ok: false
+            error: "Vui lòng nhập đầy đủ thông tin."
+
+    Unauthorized:
+      description: Not authenticated
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            ok: false
+            error: "Chưa đăng nhập."
+
+    Forbidden:
+      description: Not authorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            ok: false
+            error: "Bạn không có quyền thực hiện thao tác này."
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            ok: false
+            error: "Không tìm thấy tài nguyên yêu cầu."
+
+  securitySchemes:
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: PHPSESSID
+      description: PHP Session cookie
+
+    csrfToken:
+      type: apiKey
+      in: header
+      name: X-CSRF-Token
+      description: CSRF token for write operations
+
+security:
+  - sessionAuth: []
+  - csrfToken: []
