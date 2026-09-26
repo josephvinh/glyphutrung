@@ -333,3 +333,53 @@ function recalc_stamps(int $studentId, int $yearId, ?string $today = null): arra
         ) ?? 0),
     ];
 }
+
+/**
+ * TỔNG HỢP SỔ MỘC cho hồ sơ thiếu nhi (SPEC-MOC-DIEN-TU §6.2): ví, chuỗi
+ * và lịch sử giao dịch gần nhất của một em trong một năm học. CHỈ ĐỌC —
+ * không tính lại (recalc_stamps là nguồn ghi duy nhất).
+ *
+ * Không có dòng student_stamps (em chưa từng có Mộc năm nay) → trả về
+ * toàn số 0 và lịch sử rỗng, KHÔNG lỗi.
+ *
+ * @return array{
+ *   current_balance:int, held_balance:int, total_earned:int,
+ *   current_streak:int, longest_streak:int,
+ *   recent_transactions: array<int,array{amount:int,type:string,description:string,created_at:string}>
+ * }
+ */
+function stamp_summary(int $studentId, int $yearId): array
+{
+    $wallet = db_one(
+        "SELECT current_balance, held_balance, total_earned, current_streak, longest_streak
+           FROM student_stamps
+          WHERE student_id = ? AND year_id = ?",
+        [$studentId, $yearId]
+    );
+
+    // Mới nhất trước; created_at có thể trùng giây khi ghi hàng loạt (recalc)
+    // nên xếp thêm theo id giảm dần cho ổn định.
+    $recentLimit = 15;
+    $rows = db_all(
+        "SELECT amount, type, description, created_at
+           FROM stamp_transactions
+          WHERE student_id = ? AND year_id = ?
+          ORDER BY created_at DESC, id DESC
+          LIMIT $recentLimit",
+        [$studentId, $yearId]
+    );
+
+    return [
+        'current_balance'  => (int) ($wallet['current_balance'] ?? 0),
+        'held_balance'     => (int) ($wallet['held_balance'] ?? 0),
+        'total_earned'     => (int) ($wallet['total_earned'] ?? 0),
+        'current_streak'   => (int) ($wallet['current_streak'] ?? 0),
+        'longest_streak'   => (int) ($wallet['longest_streak'] ?? 0),
+        'recent_transactions' => array_map(fn($t) => [
+            'amount'      => (int) $t['amount'],
+            'type'        => $t['type'],
+            'description' => $t['description'],
+            'created_at'  => $t['created_at'],
+        ], $rows),
+    ];
+}

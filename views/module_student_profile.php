@@ -42,6 +42,51 @@
          TAB: THÔNG TIN
          ============================================================ -->
     <div x-show="profileTab === 'info'" style="display: none;">
+
+        <!-- SỔ MỘC: VÍ + LỬA CHUỖI -->
+        <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100 mb-5">
+            <h3 class="text-base font-black text-slate-800 mb-4 flex items-center gap-2">
+                <i data-lucide="gem" class="w-5 h-5 text-amber-500"></i> Sổ Mộc
+            </h3>
+
+            <div class="grid grid-cols-3 gap-2 mb-4">
+                <div class="bg-amber-50 rounded-xl p-3 text-center">
+                    <p class="text-micro font-bold text-amber-600 uppercase tracking-wide mb-1">Ví Mộc</p>
+                    <p class="text-xl font-black text-amber-700" x-text="profileStampSummary.current_balance"></p>
+                </div>
+                <div class="bg-blue-50 rounded-xl p-3 text-center">
+                    <p class="text-micro font-bold text-blue-600 uppercase tracking-wide mb-1">Tổng Mộc năm</p>
+                    <p class="text-xl font-black text-blue-700" x-text="profileStampSummary.total_earned"></p>
+                </div>
+                <div class="bg-rose-50 rounded-xl p-3 text-center">
+                    <p class="text-micro font-bold text-rose-500 uppercase tracking-wide mb-1 flex items-center justify-center gap-1">
+                        🔥 Chuỗi
+                    </p>
+                    <p class="text-xl font-black text-rose-600">
+                        <span x-text="profileStampSummary.current_streak"></span>
+                        <span class="text-xs font-semibold text-rose-400">/ <span x-text="profileStampSummary.longest_streak"></span> dài nhất</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Lịch sử giao dịch gần nhất -->
+            <div class="border-t border-slate-100 pt-3">
+                <p class="text-micro font-bold text-slate-500 uppercase tracking-wide mb-2">Giao dịch gần đây</p>
+                <template x-if="profileStampSummary.recent_transactions.length === 0">
+                    <p class="text-sm text-slate-400 text-center py-3">Chưa có giao dịch Mộc nào.</p>
+                </template>
+                <div class="space-y-1.5">
+                    <template x-for="tx in profileStampSummary.recent_transactions.slice(0, 5)" :key="tx.created_at + '-' + tx.description">
+                        <div class="flex items-center justify-between gap-2 text-sm">
+                            <span class="text-slate-600 truncate" x-text="tx.description"></span>
+                            <span class="shrink-0 font-bold" :class="tx.amount >= 0 ? 'text-emerald-600' : 'text-rose-500'"
+                                  x-text="(tx.amount >= 0 ? '+' : '') + tx.amount"></span>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
         <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100">
             <h3 class="text-base font-black text-slate-800 mb-4 flex items-center gap-2">
                 <i data-lucide="user-circle" class="w-5 h-5 text-blue-600"></i> Hồ sơ đầy đủ

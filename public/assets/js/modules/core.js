@@ -171,6 +171,9 @@ window.TNTT.core = {
 
             this.students          = d.students;
             this.rebuildStudentIndex();  // chỉ số em O(1) — studentById nhanh ở màn Xin phép
+            // Sổ Mộc: ví + chuỗi + lịch sử gần nhất, theo studentId — đã lọc
+            // theo đúng phạm vi lớp của this.students ở máy chủ (data.php).
+            this.stampSummaries    = d.stampSummaries || {};
             // Sĩ số mọi lớp, đếm ở máy chủ. Cần vì this.students nay chỉ
             // gồm phạm vi mình được xem, không đếm được lớp ngoài phạm vi.
             this.classCounts       = d.classCounts || {};
@@ -949,6 +952,8 @@ window.TNTT.core = {
     classes: [],   // máy chủ nạp qua loadData()
 
     programClasses: {},   // programId -> [classId,...] (rỗng = toàn đoàn)
+
+    stampSummaries: {},   // studentId -> {current_balance, held_balance, total_earned, current_streak, longest_streak, recent_transactions[]}
 
     statusOptions: ['đang sinh hoạt', 'dừng sinh hoạt', 'chuyển xứ', 'đã ra trường'],
 };

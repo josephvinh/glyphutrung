@@ -14,6 +14,7 @@
  */
 
 require __DIR__ . '/_bootstrap.php';
+require __DIR__ . '/StampService.php';
 
 $me   = require_login();
 $year = current_year();
@@ -80,6 +81,23 @@ $students = array_map(fn($s) => [
           WHERE e.year_id = ?{$dk}
           ORDER BY s.code", $tham);
 })());
+
+// ---------------------------------------------------------------
+// Sổ Mộc — ví + chuỗi + lịch sử gần nhất cho card hồ sơ (SPEC-MOC-DIEN-TU §6.2).
+//
+// DÙNG LẠI đúng $students đã lọc theo allowed_class_ids ở trên: không tự
+// mở lại phạm vi ở đây, tránh lệch ranh giới lớp giữa hai chỗ. Bỏ qua ở
+// bước 'heavy' cho nhẹ (giống scores) — tab hồ sơ đọc từ bước 'core'.
+// ---------------------------------------------------------------
+$stampSummaries = [];
+if ($part !== 'heavy') {
+    foreach ($students as $s) {
+        $stampSummaries[$s['id']] = stamp_summary((int) $s['id'], $yid);
+    }
+}
+// Ép thành object {studentId: {...}} khi rỗng để JSON ra {} thay vì [] —
+// giống programClasses ở dưới, tránh client phải phân biệt hai kiểu.
+$stampSummaries = (object) $stampSummaries;
 
 // ---------------------------------------------------------------
 // Sĩ số từng lớp — đếm ở máy chủ.
@@ -401,6 +419,7 @@ $result = [
     'ok' => true,
     'notes'         => $notes,
     'students'      => $students,
+    'stampSummaries' => $stampSummaries,
     'classCounts'   => $classCounts,
     'programs'      => $programs,
     'programClasses' => $programClasses,
