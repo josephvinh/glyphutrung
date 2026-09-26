@@ -72,14 +72,11 @@ window.TNTT.leave = {
     // Luồng 2 (trễ): chỉ còn các em đang bị đánh vắng không phép.
     get leaveEligibleStudents() {
         if (!this.leaveSession || this.isLeaveExpired) return [];
-        const q = this.normalizeText(this.leaveSearch);
+        const q = (this.leaveSearch || '').trim();
         return this.accessibleStudents
             .filter(s => s.status === 'đang sinh hoạt')
             .filter(s => !this.isLeavePastCutoff || this.statusInSession(s.id, this.leaveSession) === 'vắng không phép')
-            .filter(s => q === ''
-                || this.normalizeText(s.name).includes(q)
-                || this.normalizeText(s.holyName).includes(q)
-                || this.normalizeText(s.code).includes(q));
+            .filter(s => this.matchStudentSearch(s, q));
     },
 
     leaveRequestOf(studentId, session) {

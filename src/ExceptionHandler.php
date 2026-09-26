@@ -1,104 +1,222 @@
 <?php
 /**
- * EXCEPTION HANDLER — Global exception handling
+ * EXCEPTION HANDLER
  *
- * Catches all unhandled exceptions and logs them properly.
- * Sends appropriate HTTP response for API endpoints.
+ * Catch all unhandled exceptions, log với stack trace,
+ * va tra ve JSON error response.
  */
 
-require_once __DIR__ . '/Logger.php';
+declare(strict_types=1);
 
-/**
- * Setup global exception handling
- */
-function setup_exception_handler(): void
+namespace TNTT;
+
+use Throwable;
+
+class ExceptionHandler
 {
-    set_exception_handler('tntt_exception_handler');
-    set_error_handler('tntt_error_handler');
-}
+    private Logger $logger;
+    private bool $debug;
 
-/**
- * Handle uncaught exceptions
- */
-function tntt_exception_handler(Throwable $e): void
-{
-    // Log the exception
-    $log = logger();
-    $log->exception($e, [
-        'uri'    => $_SERVER['REQUEST_URI'] ?? 'unknown',
-        'method' => $_SERVER['REQUEST_METHOD'] ?? 'unknown',
-        'ip'     => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
-    ]);
+    public function __construct(?Logger $logger = null, bool $debug = false)
+    {
+        $this->logger = $logger ?? Logger::getInstance();
+        $this->debug = $debug;
+    }
 
-    // Determine if this is an API request
-    $isApi = isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/api/') !== false;
+    /** Dang ky handler */
+    public function register(): void
+    {
+        set_exception_handler([$this, 'handle']);
+    }
 
-    if ($isApi) {
-        // API: Return JSON error
-        http_response_code(500);
+    /**
+     * Xu ly exception
+     */
+    public function handle(Throwable $e): void
+    {
+        // Log exception
+        $this->logException($e);
+
+        // Neu da bat dau output, khong the send JSON nua
+        if (headers_sent()) {
+            echo "\n<!-- Exception: " . $e->getMessage() . " -->";
+            return;
+        }
+
+        // Tra ve JSON response
+        $this->sendJsonResponse($e);
+    }
+
+    /**
+     * Log exception voi stack trace
+     */
+    private function logException(Throwable $e): void
+    {
+        $context = [
+            'type' => get_class($e),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'trace' => $e->getTraceAsString(),
+            'request_uri' => $_SERVER['REQUEST_URI'] ?? 'CLI',
+            'request_method' => $_SERVER['REQUEST_METHOD'] ?? 'CLI',
+            'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+        ];
+
+        // Bo sung request data trong debug mode
+        if ($this->debug) {
+            $context['get'] = $_GET;
+            $context['post'] = $_POST;
+            $context['session'] = $_SESSION ?? [];
+        }
+
+        $this->logger->exception($e, $context);
+    }
+
+    /**
+     * Gui JSON error response
+     */
+    private function sendJsonResponse(Throwable $e): void
+    {
+        $statusCode = $this->getStatusCode($e);
+
+        http_response_code($statusCode);
         header('Content-Type: application/json; charset=utf-8');
 
         $response = [
-            'ok'    => false,
-            'error' => 'Internal server error',
+            'ok' => false,
+            'error' => $this->getErrorMessage($e),
         ];
 
-        // Show detailed error in debug mode
-        if (defined('DEBUG_MODE') && DEBUG_MODE) {
+        // Chi them debug info trong dev mode
+        if ($this->debug) {
             $response['debug'] = [
-                'message' => $e->getMessage(),
-                'file'    => basename($e->getFile()),
-                'line'    => $e->getLine(),
+                'exception' => get_class($e),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => array_slice(explode("\n", $e->getTraceAsString()), 0, 10),
             ];
         }
 
-        echo json_encode($response, JSON_UNESCAPED_UNICODE);
-    } else {
-        // Web page: Show error page
-        http_response_code(500);
-        ?>
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <title>Lỗi - Gia Đình Giáo Lý Phú Trung</title>
-            <style>
-                body { font-family: system-ui, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
-                .error { background: #fee2e2; border: 1px solid #ef4444; border-radius: 8px; padding: 20px; }
-                .error h1 { color: #dc2626; margin-top: 0; }
-                .details { background: #f3f4f6; padding: 10px; border-radius: 4px; font-size: 14px; margin-top: 15px; }
-            </style>
-        </head>
-        <body>
-            <div class="error">
-                <h1>⚠️ Đã xảy ra lỗi</h1>
-                <p>Xin lỗi, hệ thống gặp sự cố. Vui lòng thử lại sau.</p>
-                <?php if (defined('DEBUG_MODE') && DEBUG_MODE): ?>
-                <div class="details">
-                    <strong>Error:</strong> <?= htmlspecialchars($e->getMessage()) ?><br>
-                    <strong>File:</strong> <?= basename($e->getFile()) ?>:<?= $e->getLine() ?>
-                </div>
-                <?php endif; ?>
-            </div>
-        </body>
-        </html>
-        <?php
+        echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 
-    // Exit to prevent further output
-    exit(1);
+    /**
+     * Lay HTTP status code phu hop
+     */
+    private function getStatusCode(Throwable $e): int
+    {
+        // Xac dinh status code dua tren exception type
+        if ($e instanceof \InvalidArgumentException) {
+            return 400;
+        }
+        if ($e instanceof UnauthorizedException) {
+            return 401;
+        }
+        if ($e instanceof ForbiddenException) {
+            return 403;
+        }
+        if ($e instanceof NotFoundException) {
+            return 404;
+        }
+        if ($e instanceof ValidationException) {
+            return 422;
+        }
+        if ($e instanceof \PDOException) {
+            return 500;
+        }
+
+        return 500;
+    }
+
+    /**
+     * Lay thong bao loi hien thi cho client
+     */
+    private function getErrorMessage(Throwable $e): string
+    {
+        // Exception tu dinh nghia co the co message rieng
+        if (method_exists($e, 'getPublicMessage')) {
+            return $e->getPublicMessage();
+        }
+
+        // Debug mode: hien thi message that
+        if ($this->debug) {
+            return $e->getMessage();
+        }
+
+        // Production: tra ve message chung
+        return 'Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.';
+    }
+
+    /**
+     * Xu ly fatal errors
+     */
+    public static function handleFatal(): void
+    {
+        $error = error_get_last();
+
+        if ($error !== null && in_array($error['type'], [E_ERROR, E_CORE_ERROR, E_COMPILE_ERROR, E_PARSE], true)) {
+            $logger = Logger::getInstance();
+
+            $logger->critical('Fatal error: ' . $error['message'], [
+                'file' => $error['file'],
+                'line' => $error['line'],
+                'type' => $error['type'],
+            ]);
+
+            if (!headers_sent()) {
+                http_response_code(500);
+                header('Content-Type: application/json; charset=utf-8');
+                echo json_encode([
+                    'ok' => false,
+                    'error' => 'Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.',
+                ], JSON_UNESCAPED_UNICODE);
+            }
+        }
+    }
 }
 
-/**
- * Handle PHP errors (converted to ErrorException)
- */
-function tntt_error_handler(int $severity, string $message, string $file, int $line): bool
+// Custom Exception Classes
+class UnauthorizedException extends \Exception
 {
-    // Don't handle if error reporting is disabled
-    if (!(error_reporting() & $severity)) {
-        return false;
+    public function getPublicMessage(): string
+    {
+        return 'Chưa đăng nhập.';
+    }
+}
+
+class ForbiddenException extends \Exception
+{
+    public function getPublicMessage(): string
+    {
+        return 'Bạn không có quyền thực hiện thao tác này.';
+    }
+}
+
+class NotFoundException extends \Exception
+{
+    public function getPublicMessage(): string
+    {
+        return 'Không tìm thấy tài nguyên yêu cầu.';
+    }
+}
+
+class ValidationException extends \Exception
+{
+    private array $errors;
+
+    public function __construct(string $message = '', array $errors = [])
+    {
+        parent::__construct($message);
+        $this->errors = $errors;
     }
 
-    // Convert to ErrorException
-    throw new ErrorException($message, 0, $severity, $file, $line);
+    public function getErrors(): array
+    {
+        return $this->errors;
+    }
+
+    public function getPublicMessage(): string
+    {
+        return $this->getMessage() ?: 'Dữ liệu không hợp lệ.';
+    }
 }

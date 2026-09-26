@@ -33,6 +33,8 @@ window.TNTT.qrscan = {
     qrVuaGhi: [],           // vài em gần nhất, hiện lại cho GLV yên tâm
     qrDaQuet: 0,            // tổng số em đã ghi trong phiên quét này
     qrDangGui: 0,           // còn bao nhiêu mã chưa gửi xong
+    qrDenPin: false,        // trạng thái bật/tắt đèn flash pin
+    qrCoDenPin: false,      // camera máy có hỗ trợ đèn flash hay không
 
     _qrStream: null,
     _qrDung: false,
@@ -230,6 +232,12 @@ window.TNTT.qrscan = {
         video.setAttribute('playsinline', '');
         await video.play();
 
+        // Kiểm tra khả năng bật đèn Flash (Torch) của camera thiết bị
+        const track = this._qrStream ? this._qrStream.getVideoTracks()[0] : null;
+        const cap = (track && track.getCapabilities) ? track.getCapabilities() : {};
+        this.qrCoDenPin = !!cap.torch;
+        this.qrDenPin = false;
+
         // Chạm mở camera cũng là một cử chỉ người dùng — mượn luôn để
         // "đánh thức" âm thanh, nếu không iOS chặn tiếng bíp đầu tiên.
         this._qrBip(880, 30);
@@ -338,7 +346,7 @@ window.TNTT.qrscan = {
         this.qrTrangThai = em.name;
         this.qrVuaGhi.unshift({ id: em.id, ten: em.name, lop: em.className, luc: this.currentTime() });
         if (this.qrVuaGhi.length > 4) this.qrVuaGhi.pop();
-        this._qrBipOk(); this._qrRung(30);
+        this._qrBipOk(); this._qrRung(60);
 
         // Đủ lô thì gửi ngay, chưa đủ thì hẹn giờ
         if (this._qrHang.length >= this.LO_TOI_DA) this._qrGuiLo();
@@ -405,13 +413,32 @@ window.TNTT.qrscan = {
         const sot = this._qrHang.length;
         const daGhi = this.qrDaQuet;
 
+        if (sot && this.activeSession) {
+            // Tự động lưu toàn bộ mã chưa gửi vào hàng đợi ngoại tuyến để đồng bộ sau
+            this._qrHang.forEach(ma => {
+                const em = this._qrTraMa ? this._qrTraMa.get(ma) : null;
+                if (em) {
+                    this.pushOfflineAttendance({
+                        programId: this.activeSession.programId,
+                        date: this.activeSession.date,
+                        studentId: em.id,
+                        studentName: em.name,
+                        action: 'toggle',
+                        createdAt: new Date().toISOString()
+                    });
+                }
+            });
+            this._qrHang = [];
+            this.qrDangGui = 0;
+        }
+
         this._qrTatCamera();
         this.qrMo = false;
 
         if (sot) {
-            window.TNTT.toast.warning('Đã ghi ' + (daGhi - sot) + ' em.\n'
-                + 'Còn ' + sot + ' em chưa gửi được lên máy chủ do mất mạng.\n'
-                + 'Hãy kiểm lại danh sách và điểm danh tay cho các em đó.', 8000);
+            window.TNTT.toast.warning('Đã điểm danh ' + daGhi + ' em.\n'
+                + 'Trong đó ' + sot + ' em đã được lưu tạm trên máy do mất mạng.\n'
+                + 'Hệ thống sẽ tự động gửi lên máy chủ ngay khi có mạng trở lại!', 7000);
         } else if (daGhi) {
             await this.loadData();      // lấy lại số liệu chuẩn từ máy chủ
             window.TNTT.toast.success('Xong. Đã điểm danh ' + daGhi + ' em bằng thẻ QR.');
@@ -421,12 +448,46 @@ window.TNTT.qrscan = {
     /** Đóng ngay, không đợi — dùng khi bấm dấu X */
     dongQuetQR() {
         this._qrDung = true;
-        if (this._qrHang.length) this._qrGuiLo();
+        if (this._qrHang.length && this.activeSession) {
+            this._qrHang.forEach(ma => {
+                const em = this._qrTraMa ? this._qrTraMa.get(ma) : null;
+                if (em) {
+                    this.pushOfflineAttendance({
+                        programId: this.activeSession.programId,
+                        date: this.activeSession.date,
+                        studentId: em.id,
+                        studentName: em.name,
+                        action: 'toggle',
+                        createdAt: new Date().toISOString()
+                    });
+                }
+            });
+            this._qrHang = [];
+            this.qrDangGui = 0;
+        }
         this._qrTatCamera();
         this.qrMo = false;
     },
 
+    /** Bật / Tắt Đèn pin (Torch/Flashlight) camera */
+    async toggleTorch() {
+        if (!this._qrStream) return;
+        const track = this._qrStream.getVideoTracks()[0];
+        if (!track) return;
+        try {
+            this.qrDenPin = !this.qrDenPin;
+            await track.applyConstraints({
+                advanced: [{ torch: this.qrDenPin }]
+            });
+        } catch (e) {
+            console.warn('Không thể điều khiển đèn pin:', e);
+            this.qrDenPin = false;
+        }
+    },
+
     _qrTatCamera() {
+        this.qrDenPin = false;
+        this.qrCoDenPin = false;
         if (this._qrStream) {
             this._qrStream.getTracks().forEach(t => t.stop());   // tắt đèn camera
             this._qrStream = null;

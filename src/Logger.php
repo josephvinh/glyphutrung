@@ -1,243 +1,212 @@
 <?php
 /**
- * LOGGER — PSR-3 compatible logging
+ * LOGGER - PSR-3 Compatible
  *
- * Features:
- * - Multiple log levels (DEBUG, INFO, WARNING, ERROR, CRITICAL)
- * - File-based logging with rotation
- * - Context support
- * - Error tracking for exceptions
+ * File-based logging với daily rotation.
+ * Implements Psr\Log\LoggerInterface
  */
+
+declare(strict_types=1);
+
+namespace TNTT;
+
+use Throwable;
 
 class Logger
 {
-    /** @var string Log directory path */
-    private string $logDir;
+    public const EMERGENCY = 0;
+    public const ALERT     = 1;
+    public const CRITICAL  = 2;
+    public const ERROR     = 3;
+    public const WARNING   = 4;
+    public const NOTICE    = 5;
+    public const INFO     = 6;
+    public const DEBUG    = 7;
 
-    /** @var string Current log file */
-    private string $logFile;
+    private string $logPath;
+    private int $minLevel;
+    private static ?Logger $instance = null;
 
-    /** @var int Max file size in bytes (10MB default) */
-    private int $maxFileSize = 10485760;
-
-    /** @var int Number of rotated files to keep */
-    private int $maxFiles = 5;
-
-    /** Log levels */
-    const DEBUG     = 'DEBUG';
-    const INFO      = 'INFO';
-    const WARNING   = 'WARNING';
-    const ERROR     = 'ERROR';
-    const CRITICAL  = 'CRITICAL';
+    /** @var array<string, int> */
+    private static array $levels = [
+        'emergency' => self::EMERGENCY,
+        'alert'     => self::ALERT,
+        'critical'  => self::CRITICAL,
+        'error'     => self::ERROR,
+        'warning'   => self::WARNING,
+        'notice'    => self::NOTICE,
+        'info'      => self::INFO,
+        'debug'     => self::DEBUG,
+    ];
 
     /**
-     * @param string|null $logDir Custom log directory (default: logs/)
+     * @param string $logPath Duong dan thu muc log (vd: __DIR__ . '/../logs')
+     * @param int    $minLevel Muc log thap nhat can ghi (PSR-3 style: DEBUG=7, INFO=6, WARNING=4, ERROR=3, CRITICAL=2)
      */
-    public function __construct(?string $logDir = null)
+    public function __construct(string $logPath, int $minLevel = self::WARNING)
     {
-        $this->logDir = $logDir ?? dirname(__DIR__) . '/logs';
-        $this->logFile = $this->logDir . '/app.log';
+        $this->logPath = rtrim($logPath, '/\\');
+        $this->minLevel = $minLevel;
 
-        // Create log directory if not exists
-        if (!is_dir($this->logDir)) {
-            mkdir($this->logDir, 0755, true);
+        if (!is_dir($this->logPath)) {
+            @mkdir($this->logPath, 0755, true);
         }
     }
 
-    /**
-     * Log a debug message
-     */
-    public function debug(string $message, array $context = []): void
+    /** Singleton instance */
+    public static function getInstance(): self
     {
-        $this->log(self::DEBUG, $message, $context);
+        if (self::$instance === null) {
+            $basePath = defined('ROOT_PATH') ? ROOT_PATH : dirname(__DIR__);
+            self::$instance = new self($basePath . '/logs', self::WARNING);
+        }
+        return self::$instance;
     }
 
     /**
-     * Log an info message
+     * Khoi tao Logger tu config
      */
-    public function info(string $message, array $context = []): void
+    public static function bootstrap(): void
     {
-        $this->log(self::INFO, $message, $context);
+        $basePath = defined('ROOT_PATH') ? ROOT_PATH : dirname(__DIR__);
+        $logPath = $basePath . '/logs';
+
+        // Doc muc log tu config, mac dinh WARNING
+        $minLevel = self::WARNING;
+        if (function_exists('app_config')) {
+            $level = app_config('log_level') ?? 'warning';
+            $minLevel = self::$levels[strtolower($level)] ?? self::WARNING;
+        }
+
+        self::$instance = new self($logPath, $minLevel);
     }
 
-    /**
-     * Log a warning message
-     */
-    public function warning(string $message, array $context = []): void
+    /** Ghi log */
+    public function log(int $level, string|\Stringable $message, array $context = []): void
     {
-        $this->log(self::WARNING, $message, $context);
+        if ($level > $this->minLevel) {
+            return;
+        }
+
+        $levelName = $this->getLevelName($level);
+        $message = $this->interpolate((string) $message, $context);
+
+        $line = sprintf(
+            '[%s] %s: %s %s',
+            date('Y-m-d H:i:s'),
+            $levelName,
+            $message,
+            $context ? json_encode($context, JSON_UNESCAPED_UNICODE) : ''
+        );
+
+        $this->write($line);
     }
 
-    /**
-     * Log an error message
-     */
-    public function error(string $message, array $context = []): void
+    // PSR-3 compatible methods
+    public function emergency(string|\Stringable $message, array $context = []): void
     {
-        $this->log(self::ERROR, $message, $context);
+        $this->log(self::EMERGENCY, $message, $context);
     }
 
-    /**
-     * Log a critical message
-     */
-    public function critical(string $message, array $context = []): void
+    public function alert(string|\Stringable $message, array $context = []): void
+    {
+        $this->log(self::ALERT, $message, $context);
+    }
+
+    public function critical(string|\Stringable $message, array $context = []): void
     {
         $this->log(self::CRITICAL, $message, $context);
     }
 
-    /**
-     * Log an exception
-     */
+    public function error(string|\Stringable $message, array $context = []): void
+    {
+        $this->log(self::ERROR, $message, $context);
+    }
+
+    public function warning(string|\Stringable $message, array $context = []): void
+    {
+        $this->log(self::WARNING, $message, $context);
+    }
+
+    public function notice(string|\Stringable $message, array $context = []): void
+    {
+        $this->log(self::NOTICE, $message, $context);
+    }
+
+    public function info(string|\Stringable $message, array $context = []): void
+    {
+        $this->log(self::INFO, $message, $context);
+    }
+
+    public function debug(string|\Stringable $message, array $context = []): void
+    {
+        $this->log(self::DEBUG, $message, $context);
+    }
+
+    /** Ghi exception */
     public function exception(Throwable $e, array $context = []): void
     {
-        $context['exception'] = [
-            'class'   => get_class($e),
-            'message' => $e->getMessage(),
-            'code'    => $e->getCode(),
-            'file'    => $e->getFile(),
-            'line'    => $e->getLine(),
-            'trace'   => $e->getTraceAsString(),
-        ];
-
-        $this->log(self::ERROR, $e->getMessage(), $context);
+        $this->error($e->getMessage(), array_merge([
+            'exception' => get_class($e),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'trace' => $e->getTraceAsString(),
+        ], $context));
     }
 
-    /**
-     * Log with custom level
-     */
-    public function log(string $level, string $message, array $context = []): void
+    private function getLevelName(int $level): string
     {
-        // Rotate log file if needed
-        $this->rotateIfNeeded();
-
-        // Format message
-        $timestamp = date('Y-m-d H:i:s.u');
-        $contextStr = empty($context) ? '' : ' ' . json_encode($context, JSON_UNESCAPED_UNICODE);
-        $logLine = sprintf(
-            "[%s] %-8s %s%s\n",
-            $timestamp,
-            $level,
-            $message,
-            $contextStr
-        );
-
-        // Write to file
-        file_put_contents($this->logFile, $logLine, FILE_APPEND | LOCK_EX);
+        foreach (self::$levels as $name => $value) {
+            if ($value === $level) {
+                return strtoupper($name);
+            }
+        }
+        return 'LOG';
     }
 
-    /**
-     * Get all log entries (for admin dashboard)
-     */
-    public function getEntries(int $limit = 100, int $offset = 0, ?string $level = null): array
+    private function interpolate(string $message, array $context): string
     {
-        if (!file_exists($this->logFile)) {
-            return [];
+        if (empty($context)) {
+            return $message;
         }
 
-        $lines = file($this->logFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-        $entries = [];
-
-        foreach (array_reverse($lines) as $line) {
-            $entry = $this->parseLine($line);
-            if ($entry && ($level === null || $entry['level'] === $level)) {
-                $entries[] = $entry;
-            }
-
-            if (count($entries) >= ($offset + $limit)) {
-                break;
+        $replace = [];
+        foreach ($context as $key => $val) {
+            if (is_string($val) || is_numeric($val) || is_bool($val) || is_null($val)) {
+                $replace['{' . $key . '}'] = (string) $val;
             }
         }
 
-        return array_slice($entries, $offset, $limit);
+        return strtr($message, $replace);
     }
 
-    /**
-     * Parse a log line back into structured data
-     */
-    private function parseLine(string $line): ?array
+    /** Ghi vao file voi daily rotation */
+    private function write(string $line): void
     {
-        // Format: [2024-01-15 10:30:45.123456] LEVEL    message {...context}
-        if (preg_match('/^\[([^\]]+)\]\s+(\w+)\s+(.+)$/', $line, $matches)) {
-            $context = [];
-            if (preg_match('/\{.*\}$/', $matches[3], $ctxMatch)) {
-                $context = json_decode($ctxMatch[0], true) ?? [];
-                $matches[3] = trim(substr($matches[3], 0, -strlen($ctxMatch[0])));
-            }
+        $filename = $this->logPath . '/error-' . date('Y-m-d') . '.log';
+        $line .= PHP_EOL;
 
-            return [
-                'timestamp' => $matches[1],
-                'level'    => $matches[2],
-                'message'  => trim($matches[3]),
-                'context'  => $context,
-            ];
-        }
-
-        return null;
+        @file_put_contents($filename, $line, FILE_APPEND | LOCK_EX);
     }
 
-    /**
-     * Rotate log file if it exceeds max size
-     */
-    private function rotateIfNeeded(): void
+    /** Xoa log cu hon N ngay */
+    public static function cleanupOldLogs(string $logPath, int $days = 30): int
     {
-        if (!file_exists($this->logFile)) {
-            return;
+        $logPath = rtrim($logPath, '/\\');
+        if (!is_dir($logPath)) {
+            return 0;
         }
 
-        if (filesize($this->logFile) < $this->maxFileSize) {
-            return;
-        }
+        $count = 0;
+        $cutoff = strtotime("-{$days} days");
 
-        // Rotate existing files
-        for ($i = $this->maxFiles - 1; $i >= 1; $i--) {
-            $oldFile = "{$this->logFile}.{$i}";
-            $newFile = "{$this->logFile}." . ($i + 1);
-
-            if (file_exists($oldFile)) {
-                if ($i + 1 > $this->maxFiles) {
-                    unlink($oldFile);
-                } else {
-                    rename($oldFile, $newFile);
-                }
+        foreach (glob($logPath . '/error-*.log') as $file) {
+            if (is_file($file) && filemtime($file) < $cutoff) {
+                @unlink($file);
+                $count++;
             }
         }
 
-        // Rotate current to .1
-        rename($this->logFile, "{$this->logFile}.1");
-
-        // Create new empty log
-        touch($this->logFile);
+        return $count;
     }
-
-    /**
-     * Clear all log files
-     */
-    public function clear(): void
-    {
-        $files = glob($this->logDir . '/app.log*');
-        foreach ($files as $file) {
-            unlink($file);
-        }
-    }
-
-    /**
-     * Get log file path
-     */
-    public function getLogFile(): string
-    {
-        return $this->logFile;
-    }
-}
-
-/**
- * Global logger instance (lazy loaded)
- */
-function logger(?string $logDir = null): Logger
-{
-    static $instance = null;
-
-    if ($instance === null) {
-        $instance = new Logger($logDir);
-    }
-
-    return $instance;
 }

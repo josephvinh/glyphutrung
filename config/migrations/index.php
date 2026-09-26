@@ -12,7 +12,7 @@
  * Theo dõi migration đã chạy trong bảng schema_migrations
  */
 
-require_once __DIR__ . '/../api/_bootstrap.php';
+require_once __DIR__ . '/../../public/api/_bootstrap.php';
 
 // Migration files directory
 define('MIGRATIONS_DIR', __DIR__);
@@ -60,15 +60,48 @@ function run_migration(string $file): bool
     try {
         db()->beginTransaction();
 
-        // Chạy SQL
-        $statements = array_filter(
-            array_map('trim', explode(';', $sql)),
-            fn($s) => !empty($s) && strpos($s, '--') !== 0
-        );
+        // Chạy SQL - tách thành từng câu lệnh, bỏ qua comment và dòng trống
+        // Xử lý comment trên dòng riêng và cuối dòng
+        $lines = explode("\n", $sql);
+        $statements = [];
+        $current = '';
 
-        foreach ($statements as $stmt) {
-            if (!empty(trim($stmt))) {
-                db_run($stmt);
+        foreach ($lines as $line) {
+            $trimmed = trim($line);
+            // Bỏ qua dòng comment hoàn toàn
+            if (empty($trimmed) || str_starts_with($trimmed, '--')) {
+                continue;
+            }
+            $current .= ' ' . $line;
+            // Nếu có dấu ; ở cuối dòng (sau khi trim)
+            if (str_ends_with(trim($current), ';')) {
+                $stmt = trim($current);
+                // Bỏ comment ở cuối dòng
+                $semicolonPos = strrpos($stmt, ';');
+                if ($semicolonPos !== false) {
+                    $stmt = substr($stmt, 0, $semicolonPos);
+                }
+                if (!empty($stmt)) {
+                    $statements[] = $stmt;
+                }
+                $current = '';
+            }
+        }
+        // Xử lý statement cuối cùng nếu không có ;
+        if (!empty(trim($current))) {
+            $stmt = trim($current);
+            $semicolonPos = strrpos($stmt, ';');
+            if ($semicolonPos !== false) {
+                $stmt = substr($stmt, 0, $semicolonPos);
+            }
+            if (!empty($stmt)) {
+                $statements[] = $stmt;
+            }
+        }
+
+        foreach ($statements as $s) {
+            if (!empty(trim($s))) {
+                db_run($s);
             }
         }
 
@@ -112,7 +145,8 @@ if (php_sapi_name() === 'cli') {
         exit(0);
     }
 
-    echo "📋 {$count = count($pending)} migration(s) chờ:\n";
+    $count = count($pending);
+    echo "📋 {$count} migration(s) chờ:\n";
     foreach ($pending as $f) {
         echo "  - {$f}\n";
     }

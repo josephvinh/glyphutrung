@@ -1,0 +1,291 @@
+﻿Số lớp định nghĩa trong CSS: 578
+Số lớp dùng trong mã nguồn: 722
+
+=== LỚP DÙNG NHƯNG KHÔNG CÓ TRONG CSS ĐÃ BIÊN DỊCH: 284 ===
+
+  animate-spin                   views\module_student_profile.php
+  backdrop-blur-none             views\module_students.php
+  bg-amber-200                   views\module_calendar.php
+  bg-blue-200                    views\module_calendar.php
+  bg-blue-50/30                  views\module_reports.php
+  bg-purple-600                  views\partial_reports_tabs.php
+  bg-slate-100/50                views\module_student_profile.php
+  bg-slate-200/60                views\module_stats.php
+  bg-slate-50/80                 views\module_student_profile.php
+  bg-slate-50/95                 views\module_students.php
+  bg-teal-50                     views\module_announcements.php, public\assets\js\modules\notes.js
+  bg-teal-50/30                  views\module_notes.php
+  bg-teal-50/50                  views\module_menu.php
+  bg-teal-50/70                  views\module_announcements.php
+  bg-white/30                    views\layout_header.php
+  border-0                       views\module_scores.php, public\index.php
+  border-blue-500                views\layout_login.php, views\module_announcements.php, views\module_attendance.php, views\module_leave.php
+  border-emerald-600             views\module_announcements.php, views\module_notes.php
+  border-r                       views\module_calendar.php
+  border-sky-100                 views\module_guide.php
+  border-t-2                     views\module_student_profile.php
+  border-teal-100                views\module_announcements.php, views\module_menu.php, public\assets\js\modules\notes.js
+  border-teal-200                views\module_announcements.php, views\module_notes.php
+  border-teal-500                views\module_announcements.php
+  border-transparent             views\module_student_profile.php
+  bottom-0                       public\index.php
+  col-span-full                  views\module_students.php
+  cursor-not-allowed             views\module_promotion.php, views\module_staff.php, views\module_years.php
+  cursor-pointer                 views\module_announcements.php, views\module_library.php, views\module_notes.php, views\module_qrcard.php
+  divide-slate-100               views\module_announcements.php
+  divide-y                       views\module_announcements.php
+  filters                        public\bxh.php
+  gap-x-2                        views\module_notes.php
+  gap-x-3                        views\module_announcements.php, views\module_menu.php
+  gap-y-0.5                      views\module_notes.php
+  gap-y-1                        views\module_announcements.php
+  gap-y-5                        views\module_menu.php
+  grid-cols-1                    views\module_attendance.php, views\module_library.php, views\module_org.php, views\module_qrcard.php
+  grid-cols-6                    views\module_menu.php
+  grid-cols-7                    views\module_calendar.php
+  h-1                            public\index.php
+  h-4.5                          views\partial_my_tasks.php
+  h-48                           views\module_student_profile.php
+  h-64                           public\index.php
+  h-80                           public\index.php
+  hasActiveFilter                views\module_students.php
+  header                         views\partial_report_card.php, public\print.php
+  header-content                 public\print.php
+  heavyLoaded                    views\module_attendance.php
+  hero                           public\bxh.php
+  hh                             public\assets\js\modules\shell.js
+  hover                          views\layout_header.php, views\layout_sidebar.php, views\module_attendance.php, views\module_calendar.php
+  huongdan                       public\assets\js\modules\qrcard.js
+  inset-x-0                      public\index.php
+  left-3.5                       views\module_students.php
+  line-through                   views\module_notes.php
+  list                           public\bxh.php
+  m                              views\module_staff.php
+  ma                             public\assets\js\modules\qrcard.js
+  main                           public\bxh.php
+  main-column                    public\print.php
+  max-h-                         views\module_announcements.php, views\module_attendance.php, views\module_calendar.php, views\module_leave.php
+  max-h-48                       views\module_qrcard.php
+  max-h-96                       views\module_student_profile.php
+  max-w-3xl                      views\module_library.php
+  max-w-6xl                      views\layout_bottomnav.php, public\index.php
+  max-w-7xl                      views\layout_bottomnav.php, public\index.php
+  max-w-lg                       views\layout_login.php, views\module_announcements.php, views\module_calendar.php, views\module_leave.php
+  max-w-xl                       views\layout_bottomnav.php, public\index.php
+  mb-2.5                         views\module_notes.php
+  md                             views\module_analytics.php, views\module_scores.php
+  medal                          public\bxh.php
+  medalrow                       public\bxh.php
+  memberRoleFilter               views\module_staff.php
+  min-h-                         views\module_calendar.php
+  min-w-                         views\layout_hero.php, views\layout_sidebar.php, views\module_leave.php, views\module_menu.php
+  ml-2                           views\module_analytics.php
+  ml-auto                        views\module_calendar.php, views\module_menu.php, views\module_students.php, views\partial_my_tasks.php
+  mm                             public\assets\js\modules\shell.js
+  moduleEnabled                  views\module_settings.php
+  mr-0.5                         views\module_qrcard.php
+  mt-2.5                         views\module_announcements.php, views\module_org.php
+  object-contain                 views\partial_student_profile_header.php
+  opacity-30                     views\module_years.php
+  opacity-60                     views\layout_header.php, views\module_announcements.php, views\module_profile.php, views\module_promotion.php
+  outline-none                   views\layout_login.php, views\module_announcements.php, views\module_attendance.php, views\module_leave.php
+  overflow-visible               views\layout_hero.php
+  p                              views\module_birthdays.php
+  p-0.5                          views\module_profile.php
+  p-1                            views\module_stats.php
+  p-2                            views\module_calendar.php, views\module_leave.php, views\module_qrcard.php, views\module_students.php
+  p-2.5                          views\module_menu.php
+  p-8                            public\index.php
+  pb-0                           views\module_students.php
+  pb-24                          views\module_analytics.php, views\module_announcements.php, views\module_attendance.php, views\module_birthdays.php
+  pb-3                           views\module_announcements.php, views\module_students.php, public\index.php
+  permChipClass                  views\module_settings.php
+  permissions                    views\module_settings.php
+  permRoleTab                    views\module_settings.php
+  phu                            public\assets\js\modules\qrcard.js
+  pl-1                           views\module_reports.php
+  pl-10                          views\module_students.php
+  placeholder                    views\module_students.php
+  pod                            public\bxh.php
+  podium                         public\bxh.php
+  pr-1                           views\module_reports.php
+  profileStudent                 views\module_student_profile.php, views\partial_student_profile_header.php
+  profileTab                     views\module_student_profile.php
+  progressClass                  views\module_analytics.php
+  promoteTab                     views\module_promotion.php
+  promoteVerdict                 views\module_promotion.php
+  pt-0                           views\module_students.php
+  px-0                           views\module_students.php
+  px-3.5                         views\module_guide.php, views\module_notes.php
+  py-16                          views\module_notes.php
+  ring-1                         views\module_announcements.php, views\module_attendance.php, views\module_leave.php, views\module_notes.php
+  ring-blue-500                  views\module_announcements.php, views\module_attendance.php, views\module_leave.php, views\module_library.php
+  ring-blue-500/30               views\layout_login.php, views\module_profile.php
+  ring-rose-500                  views\module_leave.php
+  ring-teal-500                  views\module_announcements.php
+  rounded-b-shell                views\layout_header.php
+  rounded-t-3xl                  public\index.php
+  scale-90                       views\layout_bottomnav.php, views\layout_header.php, views\layout_login.php, views\module_analytics.php
+  scale-95                       views\module_announcements.php, views\module_attendance.php, views\module_calendar.php, views\module_leave.php
+  select-none                    views\layout_bottomnav.php, views\layout_header.php, views\module_announcements.php, views\module_notes.php
+  selectedEvent                  views\module_calendar.php
+  self-stretch                   views\module_menu.php, views\module_notes.php
+  shadow                         views\module_profile.php
+  shadow-inner                   views\module_stats.php
+  shadow-none                    views\module_promotion.php
+  shadow-purple-200              views\partial_reports_tabs.php
+  space-y-0                      views\module_announcements.php, views\module_birthdays.php, views\module_leave.php, views\module_programs.php
+  space-y-1                      views\module_calendar.php, views\module_qrcard.php
+  space-y-6                      views\module_notes.php
+  text-3xl                       views\module_stats.php
+  text-capitalize                public\print.php
+  text-danger                    public\print.php
+  text-primary                   public\print.php
+  text-rose-300                  views\module_student_profile.php
+  text-success                   public\print.php
+  text-teal-700                  views\module_announcements.php
+  text-warning                   public\print.php
+  text-white/80                  views\module_guide.php
+  w-2/3                          views\module_attendance.php
+  w-32                           views\module_attendance.php
+  w-4.5                          views\partial_my_tasks.php
+  w-40                           views\partial_students_skeleton.php
+  w-48                           views\module_student_profile.php
+  w-auto                         views\module_student_profile.php
+  wrap                           public\bxh.php
+  wrapper                        public\assets\js\modules\qrcard.js
+  z-auto                         views\module_students.php
+  announcementLevelClass         views\module_announcements.php
+  attendanceChipClass            views\module_attendance.php
+  attendanceRate                 views\module_analytics.php
+  attendanceRecord               views\module_attendance.php
+  attendRate                     views\module_reports.php
+  ava                            public\bxh.php
+  ava2                           public\bxh.php
+  avatarClass                    views\module_analytics.php
+  back-btn                       public\bxh.php
+  badge                          public\assets\js\modules\qrcard.js
+  badge-head                     public\assets\js\modules\qrcard.js
+  bar                            public\bxh.php
+  birthdayChipClass              views\module_birthdays.php
+  birthdayKind                   views\module_birthdays.php
+  canManageOrg                   views\module_org.php
+  card                           views\partial_report_card.php, public\print.php
+  card-wrapper                   public\print.php
+  champ                          public\bxh.php
+  compact                        public\assets\js\modules\qrcard.js
+  content-wrapper                public\print.php
+  ct                             public\bxh.php
+  cup                            public\bxh.php
+  currentModule                  views\layout_bottomnav.php, views\layout_sidebar.php, views\partial_children_tabs.php
+  detailed-scores-container      public\print.php
+  detailed-scores-grid           public\print.php
+  dg                             public\bxh.php
+  diem                           public\bxh.php
+  disabled                       views\layout_header.php, views\layout_login.php, views\module_announcements.php, views\module_library.php
+  empty                          public\bxh.php
+  focus                          views\layout_login.php, views\module_announcements.php, views\module_attendance.php, views\module_leave.php
+  foot                           public\bxh.php
+  gr                             views\module_guide.php
+  grade-box                      public\print.php
+  grades                         views\partial_report_card.php
+  grades-grid                    public\print.php
+  i                              views\module_settings.php
+  index                          views\module_analytics.php
+  info-grid                      public\print.php
+  info-item                      public\print.php
+  inline                         views\module_attendance.php, views\module_promotion.php, views\module_reports.php, views\module_scores.php
+  inline-block                   views\module_library.php, views\module_student_profile.php
+  isBirthdayToday                views\module_birthdays.php
+  isItemOverdue                  views\module_notes.php
+  isLeaveExpired                 views\module_leave.php
+  isLeavePastCutoff              views\module_leave.php
+  isPastCutoff                   views\module_attendance.php
+  isProtectedMember              views\module_staff.php
+  isUnderMaintenance             views\layout_sidebar.php, views\module_menu.php
+  it                             views\module_notes.php
+  k                              views\module_settings.php
+  ky                             public\bxh.php
+  last                           views\module_scores.php
+  lbl                            views\partial_report_card.php, public\print.php
+  leaveChipClass                 views\module_leave.php
+  leaveFilter                    views\module_leave.php
+  leaveRequestOf                 views\module_leave.php
+  leaveTab                       views\module_leave.php
+  lg                             views\layout_bottomnav.php, views\layout_sidebar.php, views\module_qrcard.php, views\module_students.php
+  logDefs                        views\module_settings.php
+  logFilter                      views\module_settings.php
+  lop                            public\assets\js\modules\qrcard.js, public\bxh.php
+  luoi                           public\assets\js\modules\qrcard.js
+  lv                             views\module_announcements.php, views\module_settings.php
+  n                              views\module_qrcard.php
+  normal-case                    views\module_qrcard.php
+  ns                             public\assets\js\modules\qrcard.js
+  on                             views\module_profile.php
+  org                            views\partial_report_card.php, public\print.php
+  qr                             public\assets\js\modules\qrcard.js
+  qrPerRow                       views\module_qrcard.php
+  qrScopeType                    views\module_qrcard.php
+  qrTemplate                     views\module_qrcard.php
+  rank                           views\partial_report_card.php
+  rank-box                       public\print.php
+  rate-box                       public\print.php
+  rateBarClass                   views\module_stats.php
+  rDanhXung                      views\layout_login.php
+  remark                         views\partial_report_card.php
+  remark-box                     public\print.php
+  reportChipClass                views\module_reports.php
+  reportsTab                     views\partial_reports_tabs.php
+  reportStatus                   views\module_reports.php
+  rk                             views\module_reports.php, public\bxh.php
+  roleChipClass                  views\module_org.php, views\module_profile.php, views\module_staff.php
+  row                            public\bxh.php
+  rsvpRowClass                   views\module_announcements.php
+  s                              public\bxh.php
+  score-box                      public\print.php
+  score-lbl                      public\print.php
+  score-val                      public\print.php
+  scoreOf                        views\module_scores.php
+  scoreRankClass                 views\module_scores.php
+  scoreTab                       views\module_scores.php
+  scoreTermId                    views\module_scores.php, views\module_student_profile.php
+  scoreType                      views\module_scores.php
+  scroll-smooth                  views\module_student_profile.php
+  scroll-x                       views\module_scores.php
+  section                        views\partial_report_card.php, public\print.php
+  section-subtitle               public\print.php
+  section-title                  public\print.php
+  seg                            public\bxh.php
+  settingsTab                    views\module_settings.php
+  showFilter                     views\module_students.php, views\partial_scope_filter.php
+  side-column                    public\print.php
+  sig-block                      public\print.php
+  sig-name                       public\print.php
+  sig-space                      public\print.php
+  sig-title                      public\print.php
+  signatures                     views\partial_report_card.php, public\print.php
+  sm                             views\layout_bottomnav.php, views\layout_header.php, views\layout_hero.php, views\layout_login.php
+  snap-start                     views\module_student_profile.php
+  spark                          public\bxh.php
+  stat-item                      public\print.php
+  static                         views\module_students.php
+  stats                          views\partial_report_card.php
+  stats-list                     public\print.php
+  statTab                        views\module_stats.php
+  status                         views\partial_report_card.php
+  sticky                         views\module_students.php, views\module_student_profile.php
+  studentSessionStatus           views\module_attendance.php
+  syncing                        views\layout_header.php
+  t                              public\bxh.php
+  tbDaBat                        views\module_profile.php
+  ten                            public\assets\js\modules\qrcard.js, public\bxh.php
+  term                           views\partial_report_card.php, public\print.php
+  termAverage                    views\module_scores.php, views\module_student_profile.php
+  the                            public\assets\js\modules\qrcard.js
+  tt                             public\assets\js\modules\qrcard.js
+  val                            views\partial_report_card.php, public\print.php
+  xl                             views\layout_bottomnav.php, views\module_announcements.php, views\module_birthdays.php, views\module_leave.php
+  yearAverage                    views\module_student_profile.php
+  yyyy-mm-dd                     public\assets\js\modules\shell.js
+
+→ Đã ghi scratch/review/out/missing-classes.json

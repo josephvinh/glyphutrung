@@ -102,21 +102,18 @@ window.TNTT.access = {
     },
 
     get filteredStudents() {
-        const q = this.normalizeText(this.searchQuery);
+        const q = (this.searchQuery || '').trim();
         // Toàn đoàn (Quản Trị / Ban Điều Hành): KHÔNG đổ cả trăm/nghìn em ra
         // ngay. Bắt buộc chọn khối/lớp (hoặc gõ tìm) mới hiện — nhẹ + gọn.
         if (this.isUnrestrictedScope && q === '' && this.filterBlock === '' && this.filterClass === '') {
             return [];
         }
         return this.accessibleStudents.filter(s => {
-            const matchSearch = q === ''
-                || this.normalizeText(s.name).includes(q)
-                || this.normalizeText(s.holyName).includes(q)
-                || this.normalizeText(s.code).includes(q);
+            const matchSearch = this.matchStudentSearch(s, q);
             const matchStatus = this.filterStatus === '' || s.status === this.filterStatus;
             const matchBlock  = this.filterBlock === ''  || s.block === this.filterBlock;
             const matchClass  = this.filterClass === ''  || s.className === this.filterClass;
-            // Enhanced filters
+            // Enhanced filters (Phase 1)
             const matchGender = this.filterGender === '' || String(s.gender) === this.filterGender;
             const matchAddress = this.filterAddress === '' ||
                 (s.address && this.normalizeText(s.address).includes(this.normalizeText(this.filterAddress)));
@@ -145,15 +142,9 @@ window.TNTT.access = {
     },
 
     get hasActiveFilter() {
-        return !!(
-            this.filterBlock ||
-            this.filterClass ||
-            this.filterStatus ||
-            this.filterGender ||
-            this.filterAgeFrom ||
-            this.filterAgeTo ||
-            this.filterAddress
-        );
+        return this.filterStatus !== '' || this.filterBlock !== '' || this.filterClass !== ''
+            || this.filterGender !== '' || this.filterAgeFrom !== '' || this.filterAgeTo !== ''
+            || this.filterAddress !== '';
     },
 
     clearFilters() {
