@@ -13,6 +13,10 @@ require_once __DIR__ . '/bootstrap.php';
 require_once __DIR__ . '/../public/api/OrgService.php';
 require_once __DIR__ . '/../public/api/StaffService.php';
 
+// Load new classes for testing
+require_once __DIR__ . '/../src/Logger.php';
+require_once __DIR__ . '/../src/Router.php';
+
 echo "=== TNTT Unit Tests ===\n\n";
 
 $allResults = [];
@@ -197,6 +201,108 @@ $cacheTests = [
 ];
 
 $allResults = array_merge($allResults, run_tests('Cache', $cacheTests));
+
+// ============================================================
+// 7. Logger Tests
+// ============================================================
+echo "\n📝 Logger\n";
+echo str_repeat('-', 60) . "\n";
+
+$logDir = __DIR__ . '/../logs';
+if (!is_dir($logDir)) {
+    mkdir($logDir, 0755, true);
+}
+
+$loggerTests = [
+    'Logger_can_be_instantiated' => function() {
+        $testLogDir = __DIR__ . '/../logs';
+        if (!is_dir($testLogDir)) {
+            mkdir($testLogDir, 0755, true);
+        }
+        $log = new Logger($testLogDir);
+        assertTrue($log instanceof Logger, 'Logger should be instantiable');
+    },
+
+    'Logger_log_method_exists' => function() {
+        assertTrue(
+            method_exists('Logger', 'log'),
+            'Logger should have log method'
+        );
+    },
+
+    'Logger_info_method_exists' => function() {
+        assertTrue(
+            method_exists('Logger', 'info'),
+            'Logger should have info method'
+        );
+    },
+
+    'Logger_error_method_exists' => function() {
+        assertTrue(
+            method_exists('Logger', 'error'),
+            'Logger should have error method'
+        );
+    },
+
+    'logger_helper_function_exists' => function() {
+        assertTrue(
+            function_exists('logger'),
+            'logger() helper function should exist'
+        );
+    },
+];
+
+$allResults = array_merge($allResults, run_tests('Logger', $loggerTests));
+
+// ============================================================
+// 8. Router Tests
+// ============================================================
+echo "\n🔀 Router\n";
+echo str_repeat('-', 60) . "\n";
+
+$routerTests = [
+    'Router_can_be_instantiated' => function() {
+        $router = new Router();
+        assertTrue($router instanceof Router, 'Router should be instantiable');
+    },
+
+    'Router_has_get_method' => function() {
+        assertTrue(
+            method_exists('Router', 'get'),
+            'Router should have get method'
+        );
+    },
+
+    'Router_has_post_method' => function() {
+        assertTrue(
+            method_exists('Router', 'post'),
+            'Router should have post method'
+        );
+    },
+
+    'Router_has_group_method' => function() {
+        assertTrue(
+            method_exists('Router', 'group'),
+            'Router should have group method'
+        );
+    },
+
+    'Router_has_dispatch_method' => function() {
+        assertTrue(
+            method_exists('Router', 'dispatch'),
+            'Router should have dispatch method'
+        );
+    },
+
+    'Controller_class_exists' => function() {
+        assertTrue(
+            class_exists('Controller'),
+            'Controller base class should exist'
+        );
+    },
+];
+
+$allResults = array_merge($allResults, run_tests('Router', $routerTests));
 
 // ============================================================
 // Summary

@@ -7,13 +7,27 @@
  * Trả về toàn bộ dữ liệu của niên khoá đang mở, đúng hình dạng mà
  * giao diện đang dùng — nên app.js không phải đổi cấu trúc.
  *
- * Vì sao nạp một lượt thay vì phân trang: một giáo xứ cỡ vài trăm em
- * thì cả gói này chưa tới vài trăm KB, tải một lần lúc mở app rồi
- * thao tác offline-nhanh vẫn nhẹ hơn gọi mạng liên tục — nhất là khi
- * sóng trong nhà thờ thường yếu.
+ * TUỲ CHỌN PAGINATION:
+ * - ?page=1&limit=50 : phân trang danh sách thiếu nhi
+ * - ?page=all : trả toàn bộ (backward compatible)
  */
 
 require __DIR__ . '/_bootstrap.php';
+
+// Rate limiting cho API đọc
+enforce_api_read_limit();
+
+// Pagination config
+const DEFAULT_PAGE_LIMIT = 100;
+const MAX_PAGE_LIMIT = 500;
+
+$page = isset($_GET['page']) && $_GET['page'] !== 'all'
+    ? max(1, (int) $_GET['page'])
+    : 1;
+$limit = isset($_GET['limit'])
+    ? min(MAX_PAGE_LIMIT, max(1, (int) $_GET['limit']))
+    : DEFAULT_PAGE_LIMIT;
+$isPaginated = isset($_GET['page']) && $_GET['page'] !== 'all';
 
 $me   = require_login();
 $year = current_year();
@@ -36,34 +50,11 @@ if ($cached = Cache::get($cacheKey)) {
 
 // ---------------------------------------------------------------
 // Thiếu nhi — gộp thông tin bền với ghi danh của năm nay
+// TUỲ CHỌN PAGINATION: nếu ?page=N, chỉ trả page đó
 // ---------------------------------------------------------------
-$students = array_map(fn($s) => [
-    'id'          => (int) $s['id'],
-    'code'        => $s['code'],
-    'holyName'    => $s['holy_name'],
-    'name'        => $s['full_name'],
-    'gender'      => (int) $s['gender'],
-    'birthDate'   => $s['birth_date'],
-    'address'     => $s['address'],
-    'fatherName'  => $s['father_name'],
-    'fatherPhone' => $s['father_phone'],
-    'motherName'  => $s['mother_name'],
-    'motherPhone' => $s['mother_phone'],
-    'status'      => $s['status'],
-    'className'   => $s['class_name'],
-    'block'       => $s['block_name'],
-], (function () use ($yid, $me) {
-    // CHỈ gửi hồ sơ trong phạm vi người này được xem.
-    //
-    // Trước đây gửi hồ sơ CẢ ĐOÀN cho mọi người đăng nhập — gồm ngày
-    // sinh, địa chỉ, tên và số điện thoại cha mẹ. Giao diện có lọc lại,
-    // nhưng dữ liệu thô vẫn nằm trong trình duyệt: mở công cụ nhà phát
-    // triển là đọc được cả đoàn. Với dữ liệu trẻ em thì không nên.
-    //
-    // Máy quét QR KHÔNG dùng danh sách này — nó có bảng tra riêng, gọn,
-    // chỉ gồm mã số / tên / lớp (api/attendance.php?action=lookup).
+$students = (function () use ($yid, $me, $isPaginated, $page, $limit) {
     $ids = allowed_class_ids($me);
-    if ($ids !== null && !$ids) return [];
+    if ($ids !== null && !$ids) return ['data' => [], 'total' => 0];
 
     $dk = ''; $tham = [$yid];
     if ($ids !== null) {
@@ -71,15 +62,43 @@ $students = array_map(fn($s) => [
         $tham = array_merge($tham, $ids);
     }
 
-    return db_all(
+    // Đếm tổng (cho pagination metadata)
+    $total = (int) db_one(
+        "SELECT COUNT(*) n FROM enrollments e WHERE e.year_id = ?{$dk}", $tham)['n'];
+
+    // Pagination
+    $offset = ($page - 1) * $limit;
+    $limitClause = $isPaginated ? "LIMIT {$limit} OFFSET {$offset}" : '';
+
+    $rows = db_all(
         "SELECT s.*, e.status, c.name AS class_name, b.name AS block_name
            FROM enrollments e
            JOIN students s ON s.id = e.student_id
            JOIN classes  c ON c.id = e.class_id
            JOIN blocks   b ON b.id = c.block_id
           WHERE e.year_id = ?{$dk}
-          ORDER BY s.code", $tham);
-})());
+          ORDER BY s.code
+          {$limitClause}", $tham);
+
+    $data = array_map(fn($s) => [
+        'id'          => (int) $s['id'],
+        'code'        => $s['code'],
+        'holyName'    => $s['holy_name'],
+        'name'        => $s['full_name'],
+        'gender'      => (int) $s['gender'],
+        'birthDate'   => $s['birth_date'],
+        'address'     => $s['address'],
+        'fatherName'  => $s['father_name'],
+        'fatherPhone' => $s['father_phone'],
+        'motherName'  => $s['mother_name'],
+        'motherPhone' => $s['mother_phone'],
+        'status'      => $s['status'],
+        'className'   => $s['class_name'],
+        'block'       => $s['block_name'],
+    ], $rows);
+
+    return ['data' => $data, 'total' => $total, 'page' => $page, 'limit' => $limit];
+})();
 
 // ---------------------------------------------------------------
 // Sĩ số từng lớp — đếm ở máy chủ.
@@ -397,10 +416,10 @@ $libraryPending = (permission_of('thu_vien') === 'edit')
     ? (int) db_one('SELECT COUNT(*) n FROM library_items WHERE status = "cho_duyet"')['n']
     : 0;
 
+// Build result
 $result = [
     'ok' => true,
     'notes'         => $notes,
-    'students'      => $students,
     'classCounts'   => $classCounts,
     'programs'      => $programs,
     'programClasses' => $programClasses,
@@ -414,6 +433,20 @@ $result = [
     'logs'          => $logs,
     'libraryPending' => $libraryPending,
 ];
+
+// Students: nếu paginated thì trả kèm metadata, không thì trả full array (backward compatible)
+if ($isPaginated) {
+    $result['students'] = $students['data'];
+    $result['pagination'] = [
+        'total'     => $students['total'],
+        'page'      => $students['page'],
+        'limit'     => $students['limit'],
+        'totalPages'=> ceil($students['total'] / $students['limit']),
+        'hasMore'   => $students['page'] * $students['limit'] < $students['total'],
+    ];
+} else {
+    $result['students'] = $students['data'];
+}
 
 // Cache result. Để 60s (trước là 300s) cho "tươi" hơn: thay đổi của người
 // khác hiện ra trong vòng ~1 phút thay vì tới 5 phút. Người GHI vẫn được

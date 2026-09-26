@@ -11,10 +11,6 @@ declare(strict_types=1);
 namespace TNTT;
 
 use Throwable;
-use TNTT\UnauthorizedException;
-use TNTT\ForbiddenException;
-use TNTT\NotFoundException;
-use TNTT\ValidationException;
 
 class ExceptionHandler
 {
@@ -179,10 +175,7 @@ class ExceptionHandler
     }
 }
 
-// ================================================================
-// Custom Exception Classes (trong namespace TNTT)
-// ================================================================
-
+// Custom Exception Classes
 class UnauthorizedException extends \Exception
 {
     public function getPublicMessage(): string
