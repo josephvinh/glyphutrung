@@ -1,5 +1,117 @@
 # Task 4 Report — Móc `recalc_stamps` vào `attendance.php`
 
+## Fix Round 1 (review feedback)
+
+**Issue (Important):** the error-isolation safety wrapper had zero automated
+coverage — `moc_recalc_an_toan()` lived inside `attendance.php` (request-scoped
+endpoint) and could not be unit-tested without running the endpoint, so the
+hard requirement "a recalc failure must NOT break attendance" was only
+verified by inspection.
+
+**Fix:**
+1. Moved the wrapper from `attendance.php` into `public/api/StampService.php`
+   as a first-class, testable function:
+   ```php
+   function recalc_stamps_safe(int $studentId, int $yearId, ?callable $fn = null): bool
+   {
+       $fn ??= 'recalc_stamps';
+       try {
+           $fn($studentId, $yearId);
+           return true;
+       } catch (Throwable $e) {
+           TNTT\Logger::getInstance()->warning('Sổ Mộc: recalc_stamps lỗi', [
+               'student_id' => $studentId,
+               'year_id'    => $yearId,
+               'error'      => $e->getMessage(),
+           ]);
+           return false;
+       }
+   }
+   ```
+   The optional `$fn` lets tests inject a throwing callable without touching
+   the real DB-backed `recalc_stamps()`. Defaults to calling `recalc_stamps`.
+   Same logging call as before (unchanged behavior/log format). Returns
+   `bool`, never rethrows.
+2. `attendance.php`: removed the local `moc_recalc_an_toan()` function
+   entirely; the three existing call sites (scan-loop after commit, manual
+   DELETE/untoggle, manual INSERT) now call `recalc_stamps_safe($id, $year['id'])`
+   directly, still gated by `program_earns_stamps($prog)` and at the exact
+   same placement as before (no change to the per-student scan-loop
+   behavior, no change to when the gate/commit happens).
+3. `tests/unit/StampHookTest.php` — added:
+   - `test_recalc_stamps_safe_catches_error_and_returns_false` — injects a
+     callable that throws `RuntimeException`, asserts `recalc_stamps_safe()`
+     returns `false` and (implicitly, since PHPUnit would report an error
+     otherwise) that the exception never propagates out of the function.
+     This is the direct proof of the "recalc failure must not break
+     attendance" contract.
+   - `test_recalc_stamps_safe_success_path_credits_wallet` — default
+     callable (real `recalc_stamps`) on a real emulation program/attendance
+     row: asserts return value `true` and the wallet is credited (+1).
+   - Updated `test_insert_then_recalc_credits_wallet_delete_then_recalc_refunds`
+     to call `recalc_stamps_safe()` instead of `recalc_stamps()` directly
+     (matches what `attendance.php` now calls) and additionally asserts the
+     `true` return value on both the credit and refund legs.
+   - Minor cleanup per review: removed the vacuous final assertion in
+     `test_non_emulation_program_hook_is_skipped()` (nothing invokes the
+     engine in that test, so asserting the wallet stayed empty proved
+     nothing); kept the real assertion (`program_earns_stamps($prog) ===
+     false`) and added a comment explaining why that's the actual coverage.
+
+### RED (new wrapper tests, before the refactor)
+Verified by temporarily stashing the `StampService.php`/`attendance.php`
+changes (keeping the new test file) and running:
+```
+$ git stash push -- public/api/StampService.php public/api/attendance.php
+$ php phpunit10.phar tests/unit/StampHookTest.php
+..EEE.                                                              6 / 6 (100%)
+There were 3 errors:
+1) StampHookTest::test_insert_then_recalc_credits_wallet_delete_then_recalc_refunds
+Error: Call to undefined function recalc_stamps_safe()
+2) StampHookTest::test_recalc_stamps_safe_catches_error_and_returns_false
+Error: Call to undefined function recalc_stamps_safe()
+3) StampHookTest::test_recalc_stamps_safe_success_path_credits_wallet
+Error: Call to undefined function recalc_stamps_safe()
+Tests: 6, Assertions: 7, Errors: 3.
+$ git stash pop
+```
+(The other 3 pre-existing tests in the file still passed since they don't
+touch `recalc_stamps_safe()`.)
+
+### GREEN (after restoring the refactor)
+```
+$ php -l public/api/attendance.php
+No syntax errors detected in public/api/attendance.php
+$ php -l public/api/StampService.php
+No syntax errors detected in public/api/StampService.php
+$ php phpunit10.phar tests/unit/StampHookTest.php
+......                                                              6 / 6 (100%)
+Time: 00:00.036, Memory: 22.99 MB
+OK (6 tests, 17 assertions)
+```
+
+### Regression — StampEngineTest.php
+```
+$ php phpunit10.phar tests/unit/StampEngineTest.php
+..........                                                        10 / 10 (100%)
+Time: 00:00.143, Memory: 22.99 MB
+OK (10 tests, 48 assertions)
+```
+
+### Files touched in this round
+- `public/api/StampService.php` — added `recalc_stamps_safe()`.
+- `public/api/attendance.php` — removed local wrapper, call sites now call
+  `recalc_stamps_safe()` directly (same 3 locations/gating, unchanged
+  per-student scan-loop behavior).
+- `tests/unit/StampHookTest.php` — 2 new tests + 1 updated test + 1 minor
+  cleanup (now 6 tests / 17 assertions total, up from 4 / 12).
+
+No other files changed; the per-student scan-loop performance trade-off
+was left untouched per instructions (out of scope for this round).
+
+---
+
+
 ## Tóm tắt
 Đã móc Engine Sổ Mộc (`recalc_stamps`) vào cả 3 đường ghi điểm danh trong
 `public/api/attendance.php`, chỉ khi chương trình `count_for_emulation`

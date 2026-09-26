@@ -42,6 +42,32 @@ function program_earns_stamps(array $prog): bool
 }
 
 /**
+ * Gọi recalc_stamps() một cách AN TOÀN: mỗi lần điểm danh của một buổi có
+ * tính Mộc thay đổi thì ví/chuỗi của em đó phải được tính lại, nhưng lỗi ở
+ * Engine Sổ Mộc TUYỆT ĐỐI không được làm hỏng việc ghi điểm danh — vì vậy
+ * bọc try/catch, có lỗi chỉ ghi log rồi bỏ qua (KHÔNG rethrow).
+ *
+ * @param callable|null $fn  Cho phép TIÊM hàm thay recalc_stamps() thật —
+ *   chỉ dùng để test (ép lỗi) mà không cần chạm CSDL thật.
+ * @return bool  true nếu recalc thành công, false nếu bắt được lỗi.
+ */
+function recalc_stamps_safe(int $studentId, int $yearId, ?callable $fn = null): bool
+{
+    $fn ??= 'recalc_stamps';
+    try {
+        $fn($studentId, $yearId);
+        return true;
+    } catch (Throwable $e) {
+        TNTT\Logger::getInstance()->warning('Sổ Mộc: recalc_stamps lỗi', [
+            'student_id' => $studentId,
+            'year_id'    => $yearId,
+            'error'      => $e->getMessage(),
+        ]);
+        return false;
+    }
+}
+
+/**
  * Bản đồ NGÀY-CÓ-ĐIỂM-DANH của một em trong năm, đã gộp theo ngày.
  *
  * @return array<string,string>  ['Y-m-d' => 'có mặt'|'đi trễ']

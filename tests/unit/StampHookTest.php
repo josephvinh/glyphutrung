@@ -104,9 +104,10 @@ class StampHookTest extends TestCase
 
     /**
      * Mô phỏng đúng luồng của attendance.php: chương trình emulation ->
-     * INSERT vào attendances -> gọi recalc_stamps() (như "móc" sẽ làm sau
-     * mỗi thao tác ghi). Sau đó DELETE (untoggle) -> gọi lại recalc_stamps()
-     * -> ví phải hoàn về 0.
+     * INSERT vào attendances -> gọi recalc_stamps_safe() (đúng hàm mà
+     * attendance.php gọi ở cả 3 nhánh ghi). Sau đó DELETE (untoggle) -> gọi
+     * lại recalc_stamps_safe() -> ví phải hoàn về 0. Cũng khẳng định luôn
+     * giá trị trả về true (đường thành công của recalc_stamps_safe).
      */
     public function test_insert_then_recalc_credits_wallet_delete_then_recalc_refunds(): void
     {
@@ -122,7 +123,8 @@ class StampHookTest extends TestCase
             [$this->yearId, $p, $date, $this->sid, $this->adminId]
         );
 
-        recalc_stamps($this->sid, $this->yearId);
+        $ok1 = recalc_stamps_safe($this->sid, $this->yearId);
+        $this->assertTrue($ok1, 'recalc_stamps_safe() thành công -> trả về true');
 
         $w1 = $this->walletOf();
         $this->assertSame(1, $w1['total_earned'], 'ghi điểm danh buổi emulation -> +1 Mộc');
@@ -130,11 +132,53 @@ class StampHookTest extends TestCase
 
         // Gỡ điểm danh giống nhánh DELETE (untoggle) của attendance.php
         db_run("DELETE FROM attendances WHERE id=?", [$attId]);
-        recalc_stamps($this->sid, $this->yearId);
+        $ok2 = recalc_stamps_safe($this->sid, $this->yearId);
+        $this->assertTrue($ok2);
 
         $w2 = $this->walletOf();
         $this->assertSame(0, $w2['total_earned'], 'gỡ điểm danh -> hoàn Mộc về 0');
         $this->assertSame(0, $w2['current_balance']);
+    }
+
+    // =====================================================================
+    //  recalc_stamps_safe(): cô lập lỗi (error isolation) — yêu cầu bắt buộc
+    // =====================================================================
+
+    /**
+     * Tiêm một callable NÉM LỖI thay cho recalc_stamps() thật: chứng minh
+     * recalc_stamps_safe() bắt lỗi, KHÔNG rethrow (nếu rethrow thì PHPUnit
+     * sẽ báo test này lỗi/exception thay vì pass), và trả về false. Đây
+     * chính là hợp đồng "lỗi Mộc không được làm hỏng điểm danh".
+     */
+    public function test_recalc_stamps_safe_catches_error_and_returns_false(): void
+    {
+        $boom = function (int $sid, int $yid): void {
+            throw new RuntimeException('Mộc hỏng có chủ đích (test)');
+        };
+
+        $result = recalc_stamps_safe($this->sid, $this->yearId, $boom);
+
+        $this->assertFalse($result, 'lỗi bị bắt -> trả về false, không rethrow');
+    }
+
+    /** Đường thành công (không tiêm callable) trên chương trình emulation thật. */
+    public function test_recalc_stamps_safe_success_path_credits_wallet(): void
+    {
+        $date = '2026-01-07'; // Thứ Tư, ngày thường -> +1
+        $p = $this->makeEmulationProgram($date, $date);
+
+        db_insert(
+            "INSERT INTO attendances (year_id, program_id, session_date, student_id, status, method, marked_by)
+             VALUES (?,?,?,?, 'có mặt', 'tay', ?)",
+            [$this->yearId, $p, $date, $this->sid, $this->adminId]
+        );
+
+        $result = recalc_stamps_safe($this->sid, $this->yearId);
+
+        $this->assertTrue($result, 'không lỗi -> trả về true');
+        $w = $this->walletOf();
+        $this->assertSame(1, $w['total_earned'], 'recalc_stamps_safe() (mặc định gọi recalc_stamps) vẫn cộng Mộc đúng');
+        $this->assertSame(1, $w['current_balance']);
     }
 
     /** Chương trình KHÔNG emulation -> "móc" phải bỏ qua, ví không đổi. */
@@ -152,6 +196,11 @@ class StampHookTest extends TestCase
         $this->progIds[] = $id;
         $prog = $this->findProgram($id);
 
+        // Phần chứng minh thật sự nằm ở assertFalse phía trên: "móc" trong
+        // attendance.php chỉ gọi recalc_stamps_safe() khi program_earns_stamps()
+        // true, nên với chương trình này nó KHÔNG BAO GIỜ được gọi. Việc ghi
+        // thẳng vào attendances ở đây chỉ để mô phỏng bối cảnh, không tự nó
+        // chứng minh gì (không ai gọi recalc thì ví dĩ nhiên vẫn trống).
         $this->assertFalse(program_earns_stamps($prog), 'chương trình này không tính Mộc');
 
         db_insert(
@@ -159,11 +208,6 @@ class StampHookTest extends TestCase
              VALUES (?,?,?,?, 'có mặt', 'tay', ?)",
             [$this->yearId, $id, $date, $this->sid, $this->adminId]
         );
-
-        // "Móc" thật sự chỉ gọi recalc_stamps khi program_earns_stamps() true;
-        // ở đây ta khẳng định điều kiện đó false nên không gọi -> ví vẫn trống.
-        $w = $this->walletOf();
-        $this->assertSame(0, $w['total_earned'], 'chương trình không emulation -> không có ví/Mộc nào được tạo');
     }
 
     private function findProgram(int $id): array

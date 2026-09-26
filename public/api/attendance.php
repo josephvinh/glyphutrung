@@ -15,25 +15,6 @@
 require __DIR__ . '/_bootstrap.php';
 require_once __DIR__ . '/StampService.php';
 
-/**
- * Gọi recalc_stamps() một cách AN TOÀN: mỗi lần điểm danh của một buổi có
- * tính Mộc thay đổi thì ví/chuỗi của em đó phải được tính lại, nhưng lỗi ở
- * Engine Sổ Mộc TUYỆT ĐỐI không được làm hỏng việc ghi điểm danh — vì vậy
- * bọc try/catch, có lỗi chỉ ghi log rồi bỏ qua.
- */
-function moc_recalc_an_toan(int $studentId, int $yearId): void
-{
-    try {
-        recalc_stamps($studentId, $yearId);
-    } catch (Throwable $e) {
-        TNTT\Logger::getInstance()->warning('Sổ Mộc: recalc_stamps lỗi', [
-            'student_id' => $studentId,
-            'year_id'    => $yearId,
-            'error'      => $e->getMessage(),
-        ]);
-    }
-}
-
 require_write();
 $me   = require_permission('attendance', 'edit');
 $year = current_year();
@@ -210,7 +191,7 @@ if (($_GET['action'] ?? '') === 'scan') {
         // cho sạch — recalc_stamps tự mở transaction riêng của nó.
         if (program_earns_stamps($prog)) {
             foreach ($hopLe as $sid) {
-                moc_recalc_an_toan($sid, $year['id']);
+                recalc_stamps_safe($sid, $year['id']);
             }
         }
     }
@@ -258,7 +239,7 @@ if ($existing) {
     }
     // Sổ Mộc: gỡ điểm danh của buổi có tính Mộc là thao tác HOÀN Mộc lại.
     if (program_earns_stamps($prog)) {
-        moc_recalc_an_toan($studentId, $year['id']);
+        recalc_stamps_safe($studentId, $year['id']);
     }
     Cache::flush();
     json_out(['ok' => true, 'removed' => true]);
@@ -286,7 +267,7 @@ if ($pastCutoff) {
 
 // Sổ Mộc: buổi có tính Mộc thì ghi điểm danh xong phải tính lại ví/chuỗi.
 if (program_earns_stamps($prog)) {
-    moc_recalc_an_toan($studentId, $year['id']);
+    recalc_stamps_safe($studentId, $year['id']);
 }
 
 Cache::flush();
