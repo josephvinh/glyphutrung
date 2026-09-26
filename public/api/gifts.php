@@ -67,13 +67,12 @@ switch ($action) {
         if (!$gift) json_fail('Không tìm thấy quà.', 404);
 
         // Quà đã có đơn đổi (gift_order_items tham chiếu tới) thì KHÔNG xoá
-        // — mất dữ liệu lịch sử đổi quà của các em. Ẩn thay vì xoá, giống
-        // cách programs.php từ chối xoá chương trình đã có điểm danh.
-        if (db_one('SELECT id FROM gift_order_items WHERE gift_id=? LIMIT 1', [$id])) {
-            db_run("UPDATE gifts SET status='ẩn' WHERE id=?", [$id]);
-            log_action('sua', 'gifts', 'Ẩn quà (đã có đơn đổi, không xoá được) ' . $gift['name'], '');
-            Cache::flush();
-            json_out(['ok' => true, 'hidden' => true]);
+        // — mất dữ liệu lịch sử đổi quà của các em. Từ chối hẳn, giống hệt
+        // cách programs.php từ chối xoá chương trình đã có điểm danh (chỉ
+        // báo lỗi, KHÔNG tự đổi dữ liệu); muốn ẩn thì Quản trị/BĐH tự vào
+        // sửa quà và chọn trạng thái "ẩn".
+        if (gift_is_referenced($id)) {
+            json_fail('Quà đã có trong đơn đổi — không thể xoá. Hãy ẨN quà thay vì xoá.');
         }
 
         db_run('DELETE FROM gifts WHERE id=?', [$id]);

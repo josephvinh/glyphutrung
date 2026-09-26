@@ -113,11 +113,42 @@ class GiftsApiTest extends TestCase
         $this->createdIds = array_values(array_diff($this->createdIds, [$id]));
     }
 
-    public function test_delete_guard_when_referenced_by_gift_order_items(): void
+    public function test_gift_is_referenced_false_when_no_order_items(): void
     {
-        // Quà đã được đổi (có dòng trong gift_order_items) thì gifts.php
-        // KHÔNG xoá hẳn — chỉ chuyển status sang 'ẩn' (mirror của programs.php:
-        // đã có điểm danh thì không xoá được, phải đóng chương trình thay vào).
+        $giftId = db_insert(
+            'INSERT INTO gifts (name, stamp_cost, stock, status, sort_order) VALUES (?,?,?,?,?)',
+            ['Quà GIFT_TEST chưa đổi', 5, 3, 'còn bán', 1]
+        );
+        $this->createdIds[] = $giftId;
+
+        $this->assertFalse(gift_is_referenced($giftId));
+    }
+
+    public function test_gift_is_referenced_true_when_has_order_items(): void
+    {
+        // Quà đã được đổi (có dòng trong gift_order_items) -> gift_is_referenced()
+        // phải trả true. gifts.php case 'delete' dùng đúng giá trị này để
+        // QUYẾT ĐỊNH từ chối xoá (json_fail), mirror hệt cách programs.php
+        // từ chối xoá chương trình đã có điểm danh (programs.php:138-140) —
+        // KHÔNG tự đổi dữ liệu, không tự chuyển status='ẩn' như bản đầu từng làm.
+        [$giftId, $orderId] = $this->makeReferencedGift();
+
+        $this->assertTrue(gift_is_referenced($giftId));
+
+        // Chỉ tạo tham chiếu, chưa gọi bất kỳ UPDATE/DELETE nào trên gifts ->
+        // dòng phải còn nguyên vẹn, đúng với hành vi "refuse, leave untouched".
+        $row = db_one('SELECT * FROM gifts WHERE id=?', [$giftId]);
+        $this->assertNotNull($row, 'Quà bị từ chối xoá không được biến mất khỏi bảng');
+        $this->assertSame('còn bán', $row['status'], 'Quà bị từ chối xoá phải GIỮ NGUYÊN trạng thái, không tự ẩn');
+
+        // Dọn dẹp thứ tự khoá ngoại: item -> order -> gift.
+        db_run('DELETE FROM gift_order_items WHERE order_id=?', [$orderId]);
+        db_run('DELETE FROM gift_orders WHERE id=?', [$orderId]);
+    }
+
+    /** Tạo một quà + một đơn đổi tham chiếu tới nó. Trả về [giftId, orderId]. */
+    private function makeReferencedGift(): array
+    {
         $giftId = db_insert(
             'INSERT INTO gifts (name, stamp_cost, stock, status, sort_order) VALUES (?,?,?,?,?)',
             ['Quà GIFT_TEST đã đổi', 5, 3, 'còn bán', 1]
@@ -137,16 +168,6 @@ class GiftsApiTest extends TestCase
             [$orderId, $giftId, 1, 5, 5]
         );
 
-        $referenced = db_one('SELECT id FROM gift_order_items WHERE gift_id=? LIMIT 1', [$giftId]);
-        $this->assertNotNull($referenced, 'Cần có tham chiếu để test nhánh ẩn thay vì xoá');
-
-        // Mirror đúng nhánh của gifts.php case 'delete': có tham chiếu -> ẩn, không DELETE.
-        db_run("UPDATE gifts SET status='ẩn' WHERE id=?", [$giftId]);
-        $row = db_one('SELECT status FROM gifts WHERE id=?', [$giftId]);
-        $this->assertSame('ẩn', $row['status'], 'Quà đã có đơn đổi phải bị ẨN thay vì xoá');
-
-        // Dọn dẹp thứ tự khoá ngoại: item -> order -> gift.
-        db_run('DELETE FROM gift_order_items WHERE order_id=?', [$orderId]);
-        db_run('DELETE FROM gift_orders WHERE id=?', [$orderId]);
+        return [$giftId, $orderId];
     }
 }

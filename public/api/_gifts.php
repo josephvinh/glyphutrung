@@ -23,6 +23,17 @@ function gift_validate(array $in): ?string
     return null;
 }
 
+/**
+ * Quà này đã có đơn đổi nào tham chiếu tới chưa (gift_order_items.gift_id)?
+ * Có -> KHÔNG được xoá (mất dữ liệu lịch sử đổi quà + gãy ràng buộc khoá
+ * ngoại fk_gitem_gift). Tách riêng để test được nhánh quyết định của
+ * case 'delete' mà không cần chạy qua toàn bộ endpoint.
+ */
+function gift_is_referenced(int $giftId): bool
+{
+    return db_one('SELECT id FROM gift_order_items WHERE gift_id=? LIMIT 1', [$giftId]) !== null;
+}
+
 /** Định dạng một dòng bảng `gifts` để trả JSON cho giao diện (camelCase). */
 function gift_row_out(array $g): array
 {
