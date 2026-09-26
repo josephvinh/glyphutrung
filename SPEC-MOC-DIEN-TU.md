@@ -2,72 +2,82 @@
 *(Digital Stamp & Reward System)*
 
 ## 1. MỤC TIÊU
-Số hóa hoàn toàn quá trình tích lũy Mộc (điểm thưởng) khi Thiếu nhi đi lễ hằng ngày. Tự động hóa việc cộng điểm, tính chuỗi liên tiếp (Streak) để kích thích phong trào thi đua. Xây dựng Trạm đổi quà điện tử cho Thư viện để quản lý minh bạch kho quà và số dư Mộc của các em.
+Số hóa hoàn toàn quá trình tích lũy Mộc (điểm thưởng) khi Thiếu nhi đi lễ hằng ngày. Tự động hóa việc cộng điểm, tính chuỗi liên tiếp (Streak). 
+Đặc biệt, cung cấp một **Cổng tra cứu công khai (Public Portal)** để các em tự theo dõi số mộc của mình và **"Đặt đổi quà trước"**, giúp quá trình phát quà tại Thư viện diễn ra nhanh chóng, minh bạch và thú vị.
 
 ## 2. QUY TẮC NGHIỆP VỤ (GAMIFICATION)
 * **Earn (Tích lũy):** Tự động kích hoạt khi có dữ liệu điểm danh / quét mã đi lễ.
   * Lễ thường: `+1 Mộc`
   * Lễ Chúa Nhật: `+2 Mộc`
-* **Streak Bonus (Thưởng chuỗi):** Tính số ngày đi lễ liên tiếp (không ngắt quãng).
+* **Streak Bonus (Thưởng chuỗi):** Tính số ngày đi lễ liên tiếp.
   * Đạt 3 ngày liên tiếp: `+1 Mộc`
   * Đạt 7 ngày liên tiếp: `+3 Mộc`
   * Đạt 30 ngày liên tiếp: `+15 Mộc`
   * *Lưu ý:* Bỏ lỡ 1 ngày đi lễ thì Chuỗi sẽ bị reset về `0`.
-* **Spend (Tiêu dùng):** Trừ Mộc khi đổi quà tại Thư viện. Số dư không được nhỏ hơn 0.
 
 ## 3. THIẾT KẾ CƠ SỞ DỮ LIỆU (DATABASE SCHEMA)
-Đề xuất bổ sung/cập nhật 3 bảng trong CSDL:
+Bổ sung 4 bảng mới vào CSDL:
 
-**Bảng `student_stamps` (Ví Mộc của Thiếu nhi)**
-Lưu trữ tổng quan trạng thái tài khoản mộc của mỗi học sinh.
+**3.1. Bảng `student_stamps` (Ví Mộc)**
 * `student_id` (Khóa ngoại)
-* `current_balance` (Số mộc đang có thể dùng)
-* `total_earned` (Tổng số mộc đã kiếm được từ trước đến nay - dùng cho Bảng xếp hạng)
-* `current_streak` (Số ngày đi lễ liên tục hiện tại)
-* `longest_streak` (Chuỗi dài nhất từng đạt được)
-* `last_attendance_date` (Ngày đi lễ gần nhất để check đứt chuỗi)
+* `current_balance` (Số mộc khả dụng)
+* `total_earned` (Tổng số mộc đã kiếm)
+* `current_streak` (Chuỗi ngày đi lễ liên tục)
+* `longest_streak` (Chuỗi dài nhất)
+* `last_attendance_date` (Ngày đi lễ gần nhất)
 
-**Bảng `stamp_transactions` (Lịch sử giao dịch - Audit log)**
-Sao kê chi tiết mọi biến động để đảm bảo minh bạch.
+**3.2. Bảng `stamp_transactions` (Lịch sử giao dịch)**
+* `id`, `student_id`, `amount`, `type` (`attendance`, `streak_bonus`, `spend`, `refund`), `description`, `created_at`.
+
+**3.3. Bảng `gifts` (Danh mục Quà tặng)**
+* `id`, `name`, `stamp_cost`, `stock`, `image_url`, `is_active`.
+
+**3.4. Bảng `gift_orders` (Đơn đặt quà trước)**
 * `id`
 * `student_id`
-* `amount` (Ví dụ: `+1`, `+3`, `-10`)
-* `type` (`attendance`, `streak_bonus`, `spend`, `manual_adjust`)
-* `description` (Vd: "Đi lễ chiều 15/10", "Đổi truyện tranh", "Thưởng chuỗi 7 ngày")
+* `gift_id`
+* `exchange_code` (Mật mã đổi quà - do Thiếu nhi tự đặt khi order)
+* `status` (`pending` - đang chờ đổi, `fulfilled` - đã nhận quà, `cancelled` - đã hủy)
 * `created_at`
-
-**Bảng `gifts` (Danh mục Quà tặng Thư viện)**
-* `id`
-* `name` (Tên quà: Vd: Bút bi, Cuốn truyện, Tràng hạt...)
-* `stamp_cost` (Giá trị quy đổi bằng Mộc)
-* `stock` (Số lượng tồn kho)
-* `image_url` (Hình ảnh - Tùy chọn)
+* `fulfilled_at`
 
 ## 4. LUỒNG GIAO DIỆN VÀ TÍNH NĂNG (UI/UX)
 
-### 4.1. Cập nhật `module_student_profile.php` (Hồ sơ Thiếu nhi)
-* Thêm một thẻ (Tab) hoặc Card hiển thị:
-  * **Biểu tượng Ví:** `Số mộc hiện có` / `Tổng mộc`.
-  * **Biểu tượng Lửa (Fire):** `Chuỗi hiện tại (🔥 5 ngày)`.
-  * Dưới cùng là danh sách `Lịch sử giao dịch` ngắn gọn.
+### 4.1. Module Quản Lý Quà Tặng (Dành cho Admin/Thủ thư)
+* Thêm một tab "Quản lý Quà" trong `module_library.php` (hoặc module riêng).
+* **Tính năng:**
+  * Thêm, sửa, xóa danh mục quà (Tên quà, số Mộc cần đổi, số lượng tồn kho).
+  * Ẩn/hiện món quà (khi hết hàng).
 
-### 4.2. Xây dựng "Trạm Đổi Quà" trong `module_library.php`
-* **Màn hình 1: Quét thẻ**
-  * Tích hợp lại module Camera (`qrscan.js`) hoặc ô nhập mã thẻ. Thủ thư quét thẻ của em thiếu nhi đang đứng trước mặt.
-* **Màn hình 2: Cửa hàng (POS - Point of Sale)**
-  * Sau khi quét, hiển thị to tên em đó và **Số mộc đang có**.
-  * Bên dưới hiển thị Grid (dạng lưới) các món quà.
-  * Nếu món quà có giá `> số mộc đang có`: Nút mờ đi (Disabled).
-  * Nếu món quà có giá `<= số mộc đang có`: Nút màu nổi bật. Thủ thư bấm vào -> Hỏi xác nhận "Chắc chắn đổi [Tên quà] trừ [X] Mộc?" -> Bấm OK.
-  * Phát âm thanh báo thành công, trừ mộc, ghi log, màn hình quay lại trạng thái quét thẻ tiếp theo.
+### 4.2. Cổng Tra Cứu Công Khai (Sổ Mộc Của Em)
+* **Truy cập:** Mở qua một đường link riêng (vd: `somoc.php`).
+* **Đăng nhập:** Các em chỉ cần nhập **Mã Thiếu Nhi**.
+* **Màn hình chính (Sổ Mộc):**
+  * Hiển thị to, rõ: Số dư Mộc hiện tại và 🔥 Lửa Chuỗi.
+  * Hiển thị khu vực **"Mã Đổi Quà Của Bạn"** (những món quà đã đặt trước nhưng chưa nhận).
+* **Màn hình Đổi Quà (Cửa hàng):**
+  * Hiển thị danh sách quà tặng (có hình ảnh, số Mộc yêu cầu).
+  * Nút "Đổi món này": Trình duyệt sẽ kiểm tra xem số dư mộc có đủ không.
+  * **Luồng "Đặt đổi trước":**
+    1. Em bấm chọn món quà vừa ý.
+    2. Nhập lại Mã Thiếu Nhi (để xác nhận) và tự tạo một **"Mật mã đổi quà"** (vd: PIN 4 số hoặc 1 chữ ngắn).
+    3. Hệ thống báo thành công, tạo một đơn hàng trạng thái `pending` (Lưu ý: Mộc sẽ tạm thời bị "giam" lại để tránh em đó đặt lố số mộc đang có).
+    4. Trở về màn hình chính, mã đổi quà sẽ hiện lên.
 
-### 4.3. Cổng tra cứu Public (Tính năng mở rộng - Phase 2)
-* Xây dựng trang `tracuu.php` độc lập.
-* Học sinh/Phụ huynh nhập số điện thoại hoặc mã thẻ để tự xem sổ Mộc ở nhà, xem mình đang có bao nhiêu Mộc, chuỗi bao nhiêu ngày để có động lực ngày mai tiếp tục đi lễ.
+### 4.3. Trạm Phát Quà Tại Thư Viện (Dành cho GLV/Thủ thư)
+* Tích hợp vào `module_library.php`.
+* **Luồng làm việc:**
+  1. Thiếu nhi lên thư viện, đưa thẻ QR hoặc đọc Mã Thiếu Nhi.
+  2. Thủ thư quét thẻ/nhập mã trên hệ thống.
+  3. Hệ thống hiện ra **Danh sách món quà em đó đã "Đặt đổi trước"**.
+  4. Thủ thư hỏi: "Đọc mật mã đổi quà của em!".
+  5. Thủ thư nhập Mật mã vào hệ thống để xác thực.
+  6. Nếu đúng: Hệ thống đánh dấu đơn hàng là `fulfilled`, **chính thức trừ mộc**, vô hiệu hóa mật mã, và giảm số lượng tồn kho (stock).
+  7. Thủ thư trao quà cho em.
 
-## 5. KẾ HOẠCH TRIỂN KHAI PHẦN MỀM (IMPLEMENTATION PLAN)
-* **Bước 1:** Cấu trúc Database (Tạo 3 bảng mới trên CSDL).
-* **Bước 2:** Viết API Backend logic (PHP) xử lý tự động cộng Mộc và tính Chuỗi khi lưu điểm danh hằng ngày.
-* **Bước 3:** Cập nhật UI Hồ sơ thiếu nhi (`module_student_profile.php`) để GLV có thể xem nhanh số dư Mộc và Lửa Chuỗi.
-* **Bước 4:** Xây dựng màn hình UI "Trạm Đổi Quà" bằng Alpine.js cho Thủ thư thư viện.
-* **Bước 5:** Test và tinh chỉnh thông báo.
+## 5. KẾ HOẠCH TRIỂN KHAI PHẦN MỀM
+* **Giai đoạn 1:** Cấu trúc Database (4 bảng) và API Backend tính Mộc (như đã làm).
+* **Giai đoạn 2:** Viết Module Quản lý Quà Tặng (CRUD cơ bản cho Admin).
+* **Giai đoạn 3:** Xây dựng Cổng Public `somoc.php` cho Thiếu nhi tra cứu và Đặt quà.
+* **Giai đoạn 4:** Cập nhật UI Trạm quét mã Đổi Quà trong Thư viện dành cho Thủ thư.
+* **Giai đoạn 5:** Test toàn diện luồng (Tích mộc -> Đặt quà -> Xác thực mật mã -> Trừ mộc).
