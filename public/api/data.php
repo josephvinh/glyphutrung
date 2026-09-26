@@ -88,12 +88,17 @@ $students = array_map(fn($s) => [
 // DÙNG LẠI đúng $students đã lọc theo allowed_class_ids ở trên: không tự
 // mở lại phạm vi ở đây, tránh lệch ranh giới lớp giữa hai chỗ. Bỏ qua ở
 // bước 'heavy' cho nhẹ (giống scores) — tab hồ sơ đọc từ bước 'core'.
+//
+// stamp_summaries_bulk() — KHÔNG gọi stamp_summary() trong vòng lặp: với
+// admin (phạm vi toàn đoàn, hàng trăm em) một cặp truy vấn riêng cho mỗi
+// em sẽ thành ~2×N truy vấn trên đúng đường tải chính của app. Gộp thành
+// hai truy vấn IN (...) cho toàn bộ $students, giống cách attendances/
+// leaves/scores đã làm ở dưới.
 // ---------------------------------------------------------------
 $stampSummaries = [];
 if ($part !== 'heavy') {
-    foreach ($students as $s) {
-        $stampSummaries[$s['id']] = stamp_summary((int) $s['id'], $yid);
-    }
+    $stuIds = array_map(fn($s) => (int) $s['id'], $students);
+    $stampSummaries = stamp_summaries_bulk($stuIds, $yid);
 }
 // Ép thành object {studentId: {...}} khi rỗng để JSON ra {} thay vì [] —
 // giống programClasses ở dưới, tránh client phải phân biệt hai kiểu.

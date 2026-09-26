@@ -76,7 +76,7 @@
                     <p class="text-sm text-slate-400 text-center py-3">Chưa có giao dịch Mộc nào.</p>
                 </template>
                 <div class="space-y-1.5">
-                    <template x-for="tx in profileStampSummary.recent_transactions.slice(0, 5)" :key="tx.created_at + '-' + tx.description">
+                    <template x-for="(tx, txIdx) in profileStampSummary.recent_transactions.slice(0, 5)" :key="txIdx + '-' + tx.created_at + '-' + tx.amount + '-' + tx.description">
                         <div class="flex items-center justify-between gap-2 text-sm">
                             <span class="text-slate-600 truncate" x-text="tx.description"></span>
                             <span class="shrink-0 font-bold" :class="tx.amount >= 0 ? 'text-emerald-600' : 'text-rose-500'"

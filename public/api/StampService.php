@@ -31,6 +31,13 @@ if (!defined('STAMP_MILESTONES')) {
     define('STAMP_MILESTONES', [3 => 1, 7 => 3, 30 => 15]);
 }
 
+if (!defined('STAMP_RECENT_LIMIT')) {
+    // số giao dịch gần nhất hiển thị ở card Sổ Mộc hồ sơ — dùng chung bởi
+    // stamp_summary() (một em) và stamp_summaries_bulk() (nhiều em, data.php)
+    // để hai đường không lệch giới hạn nhau.
+    define('STAMP_RECENT_LIMIT', 15);
+}
+
 /**
  * Buổi này có tính Mộc hay không — luật duy nhất là cờ count_for_emulation
  * trên chương trình. Tách riêng thành helper để nơi gọi (attendance.php)
@@ -359,13 +366,12 @@ function stamp_summary(int $studentId, int $yearId): array
 
     // Mới nhất trước; created_at có thể trùng giây khi ghi hàng loạt (recalc)
     // nên xếp thêm theo id giảm dần cho ổn định.
-    $recentLimit = 15;
     $rows = db_all(
         "SELECT amount, type, description, created_at
            FROM stamp_transactions
           WHERE student_id = ? AND year_id = ?
           ORDER BY created_at DESC, id DESC
-          LIMIT $recentLimit",
+          LIMIT " . STAMP_RECENT_LIMIT,
         [$studentId, $yearId]
     );
 
@@ -382,4 +388,75 @@ function stamp_summary(int $studentId, int $yearId): array
             'created_at'  => $t['created_at'],
         ], $rows),
     ];
+}
+
+/**
+ * BẢN HÀNG LOẠT của stamp_summary() cho nhiều em cùng lúc — dùng ở
+ * api/data.php để tránh N+1 (một cặp truy vấn riêng cho mỗi em) trên
+ * đường tải dữ liệu chính của app. Gộp đúng HAI truy vấn cho toàn bộ
+ * $studentIds (giống cách attendances/leaves/scores đã làm trong
+ * data.php: một câu SELECT ... WHERE student_id IN (...) rồi ghép/cắt
+ * ở PHP), thay vì gọi stamp_summary() trong vòng lặp.
+ *
+ * Hình dạng mỗi phần tử trả về Y HỆT stamp_summary() cho từng em, kể cả
+ * trường hợp em không có dòng student_stamps (toàn số 0, danh sách rỗng).
+ *
+ * @param int[] $studentIds
+ * @return array<int,array> studentId => (hình dạng của stamp_summary())
+ */
+function stamp_summaries_bulk(array $studentIds, int $yearId): array
+{
+    $out = [];
+    foreach ($studentIds as $sid) {
+        $out[(int) $sid] = [
+            'current_balance'     => 0,
+            'held_balance'        => 0,
+            'total_earned'        => 0,
+            'current_streak'      => 0,
+            'longest_streak'      => 0,
+            'recent_transactions' => [],
+        ];
+    }
+    if (!$out) return $out;
+
+    $ids = array_keys($out);
+    $ph  = implode(',', array_fill(0, count($ids), '?'));
+
+    foreach (db_all(
+        "SELECT student_id, current_balance, held_balance, total_earned, current_streak, longest_streak
+           FROM student_stamps
+          WHERE year_id = ? AND student_id IN ($ph)",
+        array_merge([$yearId], $ids)
+    ) as $w) {
+        $sid = (int) $w['student_id'];
+        $out[$sid]['current_balance'] = (int) $w['current_balance'];
+        $out[$sid]['held_balance']    = (int) $w['held_balance'];
+        $out[$sid]['total_earned']    = (int) $w['total_earned'];
+        $out[$sid]['current_streak']  = (int) $w['current_streak'];
+        $out[$sid]['longest_streak']  = (int) $w['longest_streak'];
+    }
+
+    // MỘT truy vấn cho lịch sử giao dịch của mọi em trong $ids, mới nhất
+    // trước (id giảm dần làm chốt phụ cho các dòng trùng created_at khi
+    // recalc ghi hàng loạt). SQL LIMIT là limit của CẢ câu, không phải theo
+    // từng em, nên cắt còn STAMP_RECENT_LIMIT dòng/em ở PHP trong lúc duyệt
+    // (đã ở đúng thứ tự mới→cũ nên chỉ cần đếm và bỏ qua khi đủ).
+    foreach (db_all(
+        "SELECT student_id, amount, type, description, created_at
+           FROM stamp_transactions
+          WHERE year_id = ? AND student_id IN ($ph)
+          ORDER BY created_at DESC, id DESC",
+        array_merge([$yearId], $ids)
+    ) as $t) {
+        $sid = (int) $t['student_id'];
+        if (count($out[$sid]['recent_transactions']) >= STAMP_RECENT_LIMIT) continue;
+        $out[$sid]['recent_transactions'][] = [
+            'amount'      => (int) $t['amount'],
+            'type'        => $t['type'],
+            'description' => $t['description'],
+            'created_at'  => $t['created_at'],
+        ];
+    }
+
+    return $out;
 }
