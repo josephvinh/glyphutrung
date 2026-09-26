@@ -108,12 +108,23 @@ function run_migration(string $file): bool
         // Ghi nhận migration
         db_run('INSERT INTO schema_migrations (name) VALUES (?)', [$name]);
 
-        db()->commit();
+        // Lệnh DDL (CREATE/ALTER TABLE) làm MySQL TỰ commit ngầm, kết thúc
+        // transaction giữa chừng — nên tới đây có thể không còn transaction nào
+        // đang mở. Chỉ commit khi thật sự còn transaction, tránh ném lỗi
+        // "There is no active transaction".
+        if (db()->inTransaction()) {
+            db()->commit();
+        }
 
         echo "✅ {$name}\n";
         return true;
     } catch (Throwable $e) {
-        db()->rollBack();
+        // Tương tự: chỉ rollback khi còn transaction (DDL có thể đã commit ngầm
+        // các câu trước đó — MySQL không rollback được DDL, đây là giới hạn của
+        // MySQL, không phải lỗi của trình chạy).
+        if (db()->inTransaction()) {
+            db()->rollBack();
+        }
         echo "❌ {$name}: " . $e->getMessage() . "\n";
         return false;
     }

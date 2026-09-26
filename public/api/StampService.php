@@ -392,7 +392,10 @@ function stamp_summary(int $studentId, int $yearId): array
     );
 
     return [
-        'current_balance'  => (int) ($wallet['current_balance'] ?? 0),
+        // Không hiển thị số âm: current_balance có thể âm khi buổi điểm danh đã
+        // nuôi mộc bị xoá sau khi em đã đổi quà. Giá trị thật vẫn giữ trong CSDL
+        // (chặn tiêu tiếp), nhưng ngoài màn hình kẹp về tối thiểu 0.
+        'current_balance'  => max(0, (int) ($wallet['current_balance'] ?? 0)),
         'held_balance'     => (int) ($wallet['held_balance'] ?? 0),
         'total_earned'     => (int) ($wallet['total_earned'] ?? 0),
         'current_streak'   => (int) ($wallet['current_streak'] ?? 0),
@@ -445,7 +448,8 @@ function stamp_summaries_bulk(array $studentIds, int $yearId): array
         array_merge([$yearId], $ids)
     ) as $w) {
         $sid = (int) $w['student_id'];
-        $out[$sid]['current_balance'] = (int) $w['current_balance'];
+        // Kẹp hiển thị về tối thiểu 0 (xem chú thích ở stamp_summary()).
+        $out[$sid]['current_balance'] = max(0, (int) $w['current_balance']);
         $out[$sid]['held_balance']    = (int) $w['held_balance'];
         $out[$sid]['total_earned']    = (int) $w['total_earned'];
         $out[$sid]['current_streak']  = (int) $w['current_streak'];

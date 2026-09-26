@@ -231,12 +231,31 @@ CREATE TABLE IF NOT EXISTS programs (
     type                 ENUM('bắt buộc','chiến dịch') NOT NULL DEFAULT 'bắt buộc',
     status               ENUM('kích hoạt','đã đóng')   NOT NULL DEFAULT 'kích hoạt',
     count_for_attendance TINYINT(1)   NOT NULL DEFAULT 1,
+    count_for_emulation  TINYINT(1)   NOT NULL DEFAULT 0 COMMENT 'Tính vào thi đua đi lễ; cũng là cờ tích Mộc (Sổ Mộc)',
     start_time           TIME         NOT NULL,
     cutoff_time          TIME         NULL COMMENT 'Giờ chốt sổ; NULL = start_time + 30 phút',
-    day_of_week          TINYINT      NULL COMMENT '0 Chúa Nhật ... 6 Thứ Bảy',
+    absent_time          TIME         NULL COMMENT 'Sau giờ này không ghi có mặt nữa (tính vắng)',
+    day_of_week          TINYINT      NULL COMMENT '0 Chúa Nhật ... 6 Thứ Bảy (thứ chính, tương thích cũ)',
+    days_of_week         VARCHAR(32)  NULL COMMENT 'CSV nhiều thứ, VD "0,1,2,3,4,5,6"',
     event_date           DATE         NULL,
+    effective_from       DATE         NULL COMMENT 'Khoảng ngày áp dụng cho buổi lặp',
+    effective_to         DATE         NULL,
+    allow_qr             TINYINT(1)   NOT NULL DEFAULT 1,
+    auto_close_after_event TINYINT(1) NOT NULL DEFAULT 0,
+    color                VARCHAR(48)  NULL,
+    icon                 VARCHAR(48)  NULL,
+    sort_order           TINYINT      NOT NULL DEFAULT 1,
     CONSTRAINT fk_prog_year FOREIGN KEY (year_id) REFERENCES school_years(id) ON DELETE CASCADE,
     INDEX idx_prog_year (year_id, status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Lớp tham gia chương trình (rỗng = áp dụng toàn đoàn)
+CREATE TABLE IF NOT EXISTS program_classes (
+    program_id INT NOT NULL,
+    class_id   INT NOT NULL,
+    PRIMARY KEY (program_id, class_id),
+    CONSTRAINT fk_pc_program FOREIGN KEY (program_id) REFERENCES programs(id) ON DELETE CASCADE,
+    CONSTRAINT fk_pc_class   FOREIGN KEY (class_id)   REFERENCES classes(id)  ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================================================
@@ -597,14 +616,14 @@ ALTER TABLE reports ADD INDEX idx_rp_student (student_id);
 -- Members: lookup by phone (for login - critical)
 ALTER TABLE members ADD INDEX idx_member_phone (phone);
 
--- Members: lookup by role (for permission checks)
-ALTER TABLE members ADD INDEX idx_member_role (role_code);
+-- Members: idx_member_role đã khai trong CREATE TABLE members ở trên — không
+-- ALTER thêm ở đây (trùng tên index sẽ lỗi khi nạp schema).
 
 -- Enrollments: lookup by year + status (for roster)
 ALTER TABLE enrollments ADD INDEX idx_enr_year_status (year_id, status);
 
--- Announcements: lookup by year + status + expiry (for live announcements)
-ALTER TABLE announcements ADD INDEX idx_an_live (year_id, status, expires_at);
+-- Announcements: idx_an_live đã khai trong CREATE TABLE announcements ở trên —
+-- không ALTER thêm (trùng tên index sẽ lỗi khi nạp schema).
 
 -- ============================================================
 --  STUDENT FAVORITES (Stars)
@@ -618,4 +637,86 @@ CREATE TABLE IF NOT EXISTS student_favorites (
     UNIQUE KEY unique_favorite (student_id, user_id),
     CONSTRAINT fk_fav_student FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
     CONSTRAINT fk_fav_user FOREIGN KEY (user_id) REFERENCES members(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+--  SỔ MỘC ĐIỆN TỬ & ĐỔI QUÀ (Sổ Mộc — Phase 1)
+--  Cấu trúc trùng với config/migrations/003_stamps_rewards.sql (IF NOT EXISTS
+--  nên nạp lại an toàn). Migration 003 còn seed vai trò thu_thu + module
+--  gifts/rewards + phân quyền; phần seed đó KHÔNG lặp ở đây.
+-- ============================================================
+CREATE TABLE IF NOT EXISTS student_stamps (
+    id                   INT AUTO_INCREMENT PRIMARY KEY,
+    year_id              INT NOT NULL,
+    student_id           INT NOT NULL,
+    current_balance      INT NOT NULL DEFAULT 0 COMMENT 'mộc còn tiêu được',
+    held_balance         INT NOT NULL DEFAULT 0 COMMENT 'mộc đang giữ cho đơn hàng chờ lấy',
+    total_earned         INT NOT NULL DEFAULT 0 COMMENT 'tổng mộc đã kiếm được, không giảm khi tiêu',
+    current_streak       INT NOT NULL DEFAULT 0 COMMENT 'số buổi điểm danh liên tiếp hiện tại',
+    longest_streak       INT NOT NULL DEFAULT 0,
+    last_attendance_date DATE NULL COMMENT 'ngày điểm danh gần nhất, dùng để tính chuỗi',
+    CONSTRAINT fk_stamps_year    FOREIGN KEY (year_id)    REFERENCES school_years(id) ON DELETE CASCADE,
+    CONSTRAINT fk_stamps_student FOREIGN KEY (student_id) REFERENCES students(id)     ON DELETE CASCADE,
+    UNIQUE KEY uq_stamps (year_id, student_id) COMMENT 'một năm một em chỉ một sổ mộc'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS stamp_transactions (
+    id                INT AUTO_INCREMENT PRIMARY KEY,
+    year_id           INT NOT NULL,
+    student_id        INT NOT NULL,
+    amount            INT NOT NULL COMMENT 'dương = cộng mộc, âm = trừ mộc',
+    type              ENUM('attendance','streak_bonus','spend','manual_adjust') NOT NULL,
+    ref_attendance_id INT NULL COMMENT 'buổi điểm danh sinh ra giao dịch (earn), NULL nếu không áp dụng',
+    ref_order_id      INT NULL COMMENT 'đơn đổi quà sinh ra giao dịch (spend), NULL nếu không áp dụng',
+    description       VARCHAR(255) NOT NULL,
+    actor_id          INT NULL COMMENT 'người thực hiện (NULL = hệ thống tự động)',
+    created_at        DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_sttx_year    FOREIGN KEY (year_id)    REFERENCES school_years(id) ON DELETE CASCADE,
+    CONSTRAINT fk_sttx_student FOREIGN KEY (student_id) REFERENCES students(id)     ON DELETE CASCADE,
+    CONSTRAINT fk_sttx_att     FOREIGN KEY (ref_attendance_id) REFERENCES attendances(id) ON DELETE SET NULL,
+    CONSTRAINT fk_sttx_actor   FOREIGN KEY (actor_id)   REFERENCES members(id) ON DELETE SET NULL,
+    UNIQUE KEY uq_sttx_earn (ref_attendance_id, type) COMMENT 'chống cộng mộc trùng cho cùng một buổi điểm danh',
+    INDEX idx_sttx_student (student_id, year_id),
+    INDEX idx_sttx_order (ref_order_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS gifts (
+    id          INT AUTO_INCREMENT PRIMARY KEY,
+    name        VARCHAR(128) NOT NULL,
+    stamp_cost  INT NOT NULL COMMENT 'giá quy đổi ra mộc',
+    stock       INT NOT NULL DEFAULT 0,
+    image_url   VARCHAR(255) NULL,
+    status      ENUM('còn bán','ẩn') NOT NULL DEFAULT 'còn bán',
+    sort_order  TINYINT NOT NULL DEFAULT 1
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS gift_orders (
+    id               INT AUTO_INCREMENT PRIMARY KEY,
+    year_id          INT NOT NULL,
+    student_id       INT NOT NULL,
+    total_cost       INT NOT NULL,
+    redeem_code_hash VARCHAR(255) NOT NULL,
+    status           ENUM('chờ lấy','đã giao','đã hủy','quá hạn') NOT NULL DEFAULT 'chờ lấy',
+    created_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expires_at       DATETIME NOT NULL,
+    delivered_by     INT NULL COMMENT 'Thủ Thư đã giao quà',
+    delivered_at     DATETIME NULL,
+    CONSTRAINT fk_gorder_year    FOREIGN KEY (year_id)    REFERENCES school_years(id) ON DELETE CASCADE,
+    CONSTRAINT fk_gorder_student FOREIGN KEY (student_id) REFERENCES students(id)     ON DELETE CASCADE,
+    CONSTRAINT fk_gorder_by      FOREIGN KEY (delivered_by) REFERENCES members(id)    ON DELETE SET NULL,
+    INDEX idx_gorder_student (student_id, year_id),
+    INDEX idx_gorder_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS gift_order_items (
+    id         INT AUTO_INCREMENT PRIMARY KEY,
+    order_id   INT NOT NULL,
+    gift_id    INT NOT NULL,
+    qty        INT NOT NULL DEFAULT 1,
+    unit_cost  INT NOT NULL COMMENT 'giá mộc tại thời điểm đổi',
+    line_cost  INT NOT NULL COMMENT 'unit_cost * qty',
+    CONSTRAINT fk_gitem_order FOREIGN KEY (order_id) REFERENCES gift_orders(id) ON DELETE CASCADE,
+    CONSTRAINT fk_gitem_gift  FOREIGN KEY (gift_id)  REFERENCES gifts(id),
+    INDEX idx_gitem_order (order_id),
+    INDEX idx_gitem_gift (gift_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

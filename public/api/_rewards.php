@@ -168,12 +168,16 @@ function rewards_lookup(string $code, int $yearId): ?array
     $current = (int) ($w['current_balance'] ?? 0);
     $held    = (int) ($w['held_balance'] ?? 0);
 
+    // Hiển thị không bao giờ âm: số dư có thể âm trong tình huống hiếm (admin
+    // xoá buổi điểm danh đã "nuôi" mộc mà em đã đổi quà) — giá trị thật vẫn được
+    // giữ trong CSDL để chặn tiêu tiếp (rewards_redeem đọc thẳng bản ghi, không
+    // qua hàm này), nhưng ngoài màn hình chỉ cho thấy 0 trở lên.
     return [
         'id'             => (int) $s['id'],
         'code'           => $s['code'],
         'fullName'       => $s['full_name'],
-        'available'      => $current - $held,
-        'currentBalance' => $current,
+        'available'      => max(0, $current - $held),
+        'currentBalance' => max(0, $current),
         'heldBalance'    => $held,
     ];
 }

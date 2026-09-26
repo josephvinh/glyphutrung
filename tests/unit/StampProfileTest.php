@@ -47,6 +47,38 @@ class StampProfileTest extends TestCase
         );
     }
 
+    private function insertWallet(int $current, int $held, int $totalEarned, ?int $studentId = null): void
+    {
+        db_run(
+            "INSERT INTO student_stamps (year_id, student_id, current_balance, held_balance, total_earned, current_streak, longest_streak)
+             VALUES (?,?,?,?,?,0,0)",
+            [$this->yearId, $studentId ?? $this->sid, $current, $held, $totalEarned]
+        );
+    }
+
+    /**
+     * Số dư có thể âm trong tình huống hiếm (admin xoá buổi điểm danh đã nuôi
+     * mộc mà em đã đổi quà). Hiển thị KHÔNG được cho ra số âm — kẹp về 0.
+     * Giá trị thật vẫn ở CSDL để chặn tiêu tiếp (kiểm ở rewards_redeem, không
+     * qua các hàm hiển thị này).
+     */
+    public function test_negative_balance_clamped_to_zero_in_display(): void
+    {
+        // total_earned = 2 nhưng đã tiêu 10 (spend -10) → current_balance = -8
+        $this->insertWallet(-8, 0, 2);
+
+        $single = stamp_summary($this->sid, $this->yearId);
+        $this->assertSame(0, $single['current_balance'], 'stamp_summary phải kẹp số âm về 0');
+        $this->assertSame(2, $single['total_earned']);
+
+        $bulk = stamp_summaries_bulk([$this->sid], $this->yearId);
+        $this->assertSame(0, $bulk[$this->sid]['current_balance'], 'stamp_summaries_bulk phải kẹp số âm về 0');
+
+        // CSDL vẫn giữ giá trị âm thật (không bị ghi đè bởi hiển thị)
+        $raw = db_one("SELECT current_balance FROM student_stamps WHERE student_id=? AND year_id=?", [$this->sid, $this->yearId]);
+        $this->assertSame(-8, (int) $raw['current_balance'], 'CSDL vẫn lưu số dư thật (âm) để chặn tiêu tiếp');
+    }
+
     public function test_no_wallet_row_returns_zeros_without_error(): void
     {
         $out = stamp_summary($this->sid, $this->yearId);

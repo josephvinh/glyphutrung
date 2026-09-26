@@ -58,7 +58,7 @@ class RewardsSchemaTest extends TestCase
 
         $rewards = db_one("SELECT * FROM modules WHERE module_key='rewards'");
         $this->assertNotNull($rewards, "thiếu module rewards");
-        $this->assertSame('glv', $rewards['area']);
+        $this->assertSame('bdh', $rewards['area'], 'rewards area đã hợp nhất về bdh khớp core.js');
     }
 
     public function test_stamp_transactions_unique_ref_attendance_and_type(): void
