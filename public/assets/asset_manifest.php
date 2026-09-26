@@ -17,6 +17,7 @@
 return [
     // Thứ tự KHÔNG đổi tuỳ tiện: nền tảng trước, shell/dashboard sau.
     'js_modules' => [
+        // Core modules (loaded on startup)
         'core', 'programs', 'access', 'students', 'student_profile', 'attendance', 'qrscan', 'qrcard',
         'custom-qrcard',
         'leave', 'birthdays', 'announcements', 'stats', 'analytics', 'scores',
@@ -25,4 +26,12 @@ return [
     ],
     // Thứ tự CSS = thứ tự cascade: tailwind (nền) trước, phần ghi đè sau.
     'css' => ['tailwind', 'font', 'app', 'dark', 'skeleton', 'analytics', 'toast', 'brand'],
+
+    // LAZY MODULES: Heavy modules loaded on demand
+    // Usage: TNTT_LAZY.load('qrscan').then(m => m.init())
+    'lazy_modules' => [
+        'qrscan',    // QR scanning (18KB) - only for attendance module
+        'stats',    // Statistics (24KB) - only for stats page
+        'analytics', // Analytics (8KB) - only for analytics page
+    ],
 ];
