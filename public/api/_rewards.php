@@ -114,16 +114,8 @@ function rewards_redeem(int $studentId, int $yearId, array $items, int $actorId)
             $descParts[] = $l['name'] . ' x' . $l['qty'];
         }
 
-        // 6) Trừ Mộc thật khỏi ví (tạo ví nếu chưa có — thực tế nhánh này không
-        //    xảy ra khi đổi thành công vì ví trống thì available=0 < total).
-        if (!$wallet) {
-            db_run(
-                "INSERT INTO student_stamps (year_id, student_id, current_balance, held_balance)
-                 VALUES (?,?,0,0)
-                 ON DUPLICATE KEY UPDATE student_id = student_id",
-                [$yearId, $studentId]
-            );
-        }
+        // 6) Trừ Mộc thật khỏi ví. Ví CHẮC CHẮN tồn tại ở đây: nếu thiếu ví thì
+        //    available = 0 − 0 = 0 < total (total>0), đã bị chặn ở bước (3).
         db_run(
             "UPDATE student_stamps SET current_balance = current_balance - ?
               WHERE student_id=? AND year_id=?",

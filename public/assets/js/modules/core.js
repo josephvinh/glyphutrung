@@ -624,9 +624,24 @@ window.TNTT.core = {
         rewards:        { admin: 'edit', thu_thu: 'edit', bdh: 'none', truong_khoi: 'none', glv_chu_nhiem: 'none', glv: 'none' }
     },
 
+    // Mức quyền MODULE của người dùng = HỢP mức cao nhất của vai GỐC
+    // (this.user.role) + MỌI vai kiêm nhiệm đang hiệu lực (this.assignments[].role).
+    // Phản chiếu đúng backend permission_of() (_bootstrap.php) vốn cũng lấy hợp
+    // base+assignments — nhờ vậy Thủ Thư (chỉ có qua kiêm nhiệm) mới THẤY được
+    // tile 'rewards'/'gifts'. KHÔNG bao giờ nới rộng hơn backend (mỗi lệnh API
+    // vẫn bị gác lại ở máy chủ). CHỈ xét MỨC quyền theo module — KHÔNG đụng phạm
+    // vi lớp/khối (scan_class_ids/allowed_class_ids… giữ nguyên §6bis Task 2).
     permOf(key) {
         const row = this.permissions[key];
-        return row ? (row[this.user.role] || 'none') : 'none';
+        if (!row) return 'none';
+        const rank = { none: 0, view: 1, edit: 2 };
+        const roles = [this.user.role, ...((this.assignments || []).map(a => a.role))];
+        let best = 'none';
+        for (const rc of roles) {
+            const lv = row[rc] || 'none';
+            if ((rank[lv] || 0) > (rank[best] || 0)) best = lv;
+        }
+        return best;
     },
 
     canAccess(key) {
