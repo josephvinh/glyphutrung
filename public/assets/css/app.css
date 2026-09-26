@@ -643,3 +643,134 @@ a,
 @media (min-width: 640px) {
     .sm\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* ================================================================
+   CUSTOM QR CARD STYLES
+   Print-ready card layouts
+   ================================================================ */
+
+/* Preview container */
+.custom-qr-preview {
+    background: white;
+    border-radius: var(--r-card);
+    padding: 3mm;
+}
+
+/* Card grid for print */
+.qr-card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(50mm, 1fr));
+    gap: 4mm;
+    padding: 3mm;
+}
+
+/* Individual card */
+.qr-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 4mm;
+    padding: 3mm;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.qr-card.classic {
+    border: 3px double #1e3a8a;
+    border-radius: 6mm;
+    padding: 4mm;
+}
+
+.qr-card.badge {
+    border-radius: 50%;
+    width: 60mm;
+    height: 60mm;
+    max-width: 60mm;
+    max-height: 60mm;
+}
+
+.qr-card.compact {
+    border: 1px dashed #94a3b8;
+    border-radius: 2mm;
+    padding: 2mm;
+}
+
+.qr-card.minimal {
+    border: none;
+    padding: 2mm;
+}
+
+/* Hole punch for badge */
+.qr-card-hole {
+    width: 6mm;
+    height: 6mm;
+    border-radius: 50%;
+    border: 2px solid #e2e8f0;
+    margin-bottom: 2mm;
+}
+
+/* QR code wrapper */
+.qr-card-qr {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 2mm;
+}
+
+/* Text styles */
+.qr-card-header {
+    font-size: 8px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-bottom: 2mm;
+    width: 100%;
+}
+
+.qr-card-code {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    margin-bottom: 1px;
+}
+
+.qr-card-name {
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.25;
+    margin-bottom: 1px;
+    word-break: break-word;
+}
+
+.qr-card-detail {
+    font-size: 9px;
+    color: #64748b;
+}
+
+/* Logo in card */
+.qr-card-logo {
+    max-width: 20mm;
+    max-height: 15mm;
+    object-fit: contain;
+    margin-bottom: 2mm;
+}
+
+/* Print styles */
+@media print {
+    .qrcard {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    body {
+        background: white !important;
+    }
+
+    @page {
+        size: A4;
+        margin: 10mm;
+    }
+}

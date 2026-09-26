@@ -116,7 +116,7 @@ window.TNTT.access = {
             const matchStatus = this.filterStatus === '' || s.status === this.filterStatus;
             const matchBlock  = this.filterBlock === ''  || s.block === this.filterBlock;
             const matchClass  = this.filterClass === ''  || s.className === this.filterClass;
-            // Enhanced filters
+            // Enhanced filters (Phase 1)
             const matchGender = this.filterGender === '' || String(s.gender) === this.filterGender;
             const matchAddress = this.filterAddress === '' ||
                 (s.address && this.normalizeText(s.address).includes(this.normalizeText(this.filterAddress)));
@@ -145,15 +145,9 @@ window.TNTT.access = {
     },
 
     get hasActiveFilter() {
-        return !!(
-            this.filterBlock ||
-            this.filterClass ||
-            this.filterStatus ||
-            this.filterGender ||
-            this.filterAgeFrom ||
-            this.filterAgeTo ||
-            this.filterAddress
-        );
+        return this.filterStatus !== '' || this.filterBlock !== '' || this.filterClass !== ''
+            || this.filterGender !== '' || this.filterAgeFrom !== '' || this.filterAgeTo !== ''
+            || this.filterAddress !== '';
     },
 
     clearFilters() {

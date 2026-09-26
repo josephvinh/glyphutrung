@@ -1,0 +1,20 @@
+[
+  {
+    "role": "glv_chu_nhiem",
+    "name": "Phạm Thị Chủ Nhiệm",
+    "modules": 11,
+    "pageErrors": []
+  },
+  {
+    "role": "glv",
+    "name": "Ngô Văn Phụ Tá",
+    "modules": 11,
+    "pageErrors": []
+  },
+  {
+    "role": "du_bi",
+    "name": "Vũ Thị Dự Bị",
+    "modules": 11,
+    "pageErrors": []
+  }
+]
