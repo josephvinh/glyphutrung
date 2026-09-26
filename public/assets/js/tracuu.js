@@ -4,24 +4,29 @@
      - doiQuaApp    : lưới quà + giỏ nhiều món + đặt đơn ở tab Đổi quà.
 
    Trang tracuu.php KHÔNG đăng nhập/không session, nên các hàm dưới đây chỉ
-   gọi ĐÚNG 3 action công khai của api/tracuu_order.php (place/cancel/pending)
-   — không có API nào khác được dùng ở đây. Lỗi nghiệp vụ (mã sai, thiếu Mộc,
-   hết tồn...) đều được server GỘP thành một thông điệp chung (r.error) —
-   phía JS chỉ hiển thị nguyên văn, không tự suy đoán/diễn giải thêm.
+   gọi ĐÚNG 2 action GHI của api/tracuu_order.php (place/cancel) — không có
+   API nào khác được dùng ở đây. Lỗi nghiệp vụ (mã sai, thiếu Mộc, hết
+   tồn...) đều được server GỘP thành một thông điệp chung (r.error) — phía
+   JS chỉ hiển thị nguyên văn, không tự suy đoán/diễn giải thêm.
+
+   ĐƠN 'CHỜ LẤY' HIỆN CÓ (nếu có) do PHP (tracuu.php) đọc sẵn và truyền vào
+   qua tham số khởi tạo — component KHÔNG tự gọi action=pending lúc mount
+   nữa (fix round 1: mỗi action, kể cả 'pending' chỉ đọc, đều tính vào
+   rate-limit theo IP ở tracuu_order.php; 2 component cùng tự fetch khi
+   trang vừa tải khiến 1 lượt xem trang tốn 2-3 lượt throttle, dễ khoá oan
+   cả nhóm dùng chung IP/wifi giáo xứ). Sau khi NGƯỜI DÙNG chủ động đặt
+   thành công thì vẫn dùng lại kết quả trả về từ chính lượt gọi đó (không
+   fetch thêm); sau khi hủy thành công thì tải lại cả trang — PHP sẽ tự
+   tính lại đúng 1 lần trong lượt tải đó.
    ========================================================== */
 
-/** Gọi api/tracuu_order.php?action=... — POST gửi JSON, GET gắn code lên query. */
-async function tracuuGoiApi(action, body, method) {
-    method = method || 'POST';
-    let url = 'api/tracuu_order.php?action=' + encodeURIComponent(action);
-    const opt = { method };
-    if (method === 'GET') {
-        url += '&code=' + encodeURIComponent(body.code || '');
-    } else {
-        opt.headers = { 'Content-Type': 'application/json' };
-        opt.body = JSON.stringify(body);
-    }
-    const res = await fetch(url, opt);
+/** Gọi api/tracuu_order.php?action=... bằng POST JSON (place/cancel). */
+async function tracuuGoiApi(action, body) {
+    const res = await fetch('api/tracuu_order.php?action=' + encodeURIComponent(action), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+    });
     return res.json();
 }
 
@@ -34,27 +39,22 @@ function tracuuDinhDangNgay(s) {
     return p(d.getHours()) + ':' + p(d.getMinutes()) + ' · ' + p(d.getDate()) + '/' + p(d.getMonth() + 1) + '/' + d.getFullYear();
 }
 
+/** Phòng thủ chiều sâu: chỉ nhận ảnh http(s) hợp lệ để bind vào :src — quà
+ *  không có ảnh (hoặc URL không đúng dạng) thì hiện icon 🎁 thay vào đó. */
+function tracuuUrlAnhOk(u) {
+    return typeof u === 'string' && /^https?:\/\//i.test(u);
+}
+
 document.addEventListener('alpine:init', () => {
 
     /* ---------- TAB SỔ MỘC: đơn đang chờ lấy + hủy đơn ---------- */
-    Alpine.data('soMocPending', (ma) => ({
+    Alpine.data('soMocPending', (ma, pendingInit) => ({
         ma: ma,
-        pending: null,
+        pending: pendingInit || null,
         showCancel: false,
         password: '',
         error: '',
         busy: false,
-
-        async init() {
-            if (!this.ma) return;
-            try {
-                const r = await tracuuGoiApi('pending', { code: this.ma }, 'GET');
-                if (r.ok) this.pending = r.pending;
-            } catch (e) {
-                // Khu vực này chỉ là tiện ích thêm — lỗi mạng thì im lặng bỏ qua,
-                // trang Sổ Mộc vẫn dùng được bình thường.
-            }
-        },
 
         dinhDangNgay: tracuuDinhDangNgay,
 
@@ -68,7 +68,8 @@ document.addEventListener('alpine:init', () => {
             try {
                 const r = await tracuuGoiApi('cancel', { code: this.ma, password: this.password });
                 if (!r.ok) { this.error = r.error; return; }
-                // Hủy xong: làm mới cả trang để đồng bộ lại Ví Mộc + khu vực này.
+                // Hủy xong: làm mới cả trang — PHP tự tính lại pending đúng 1 lần
+                // trong lượt tải mới, khỏi phải tự fetch thêm ở đây.
                 location.reload();
             } catch (e) {
                 this.error = 'Không kết nối được máy chủ. Kiểm tra lại mạng rồi thử lại.';
@@ -79,13 +80,13 @@ document.addEventListener('alpine:init', () => {
     }));
 
     /* ---------- TAB ĐỔI QUÀ: lưới quà + giỏ + đặt đơn ---------- */
-    Alpine.data('doiQuaApp', (ma, currentBalance, gifts) => ({
+    Alpine.data('doiQuaApp', (ma, currentBalance, gifts, pendingInit) => ({
         ma: ma,
         currentBalance: currentBalance,
         gifts: gifts,
         cart: {},          // giftId -> số lượng đã chọn
-        pending: null,      // đơn 'chờ lấy' hiện có (nếu có thì khoá không cho đặt thêm)
-        available: currentBalance,
+        pending: pendingInit || null,   // đơn 'chờ lấy' hiện có (nếu có thì khoá không cho đặt thêm)
+        available: Math.max(0, currentBalance - (pendingInit ? pendingInit.total : 0)),
         showPlace: false,
         pw1: '',
         pw2: '',
@@ -93,22 +94,8 @@ document.addEventListener('alpine:init', () => {
         busy: false,
         success: null,      // { orderId, total, expiresAt } sau khi đặt thành công
 
-        async init() {
-            if (!this.ma) return;
-            try {
-                const r = await tracuuGoiApi('pending', { code: this.ma }, 'GET');
-                if (r.ok) {
-                    this.pending = r.pending;
-                    const daGiu = this.pending ? this.pending.total : 0;
-                    this.available = Math.max(0, this.currentBalance - daGiu);
-                }
-            } catch (e) {
-                // Không lấy được số đã giữ thì tạm coi cả Ví là khả dụng — server
-                // vẫn là nơi quyết định thật (rewards_place_order tự kiểm lại).
-            }
-        },
-
         dinhDangNgay: tracuuDinhDangNgay,
+        urlAnhOk: tracuuUrlAnhOk,
 
         qty(id) { return this.cart[id] || 0; },
 

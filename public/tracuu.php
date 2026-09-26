@@ -6,12 +6,21 @@
  * được + tổng đã kiếm), Lửa chuỗi đi lễ, lịch sử giao dịch gần đây, và (tab
  * Đổi quà) tự đặt trước quà muốn đổi bằng chính số Mộc của mình.
  *
- * TRANG NÀY (PHP) VẪN CHỈ ĐỌC — không có câu SQL ghi nào ở đây. Hai thao
- * tác THẬT SỰ ghi dữ liệu (đặt đơn / hủy đơn) không nằm ở trang này mà nằm
- * ở JS gọi sang `api/tracuu_order.php` (endpoint public riêng, có mật mã +
- * throttle bảo vệ) — xem `assets/js/tracuu.js`. Danh mục quà 'còn bán' đọc
- * thẳng từ bảng `gifts` ngay dưới đây (prepared/không tham số, chỉ lộ đúng
- * tên/giá/tồn/ảnh) để khỏi phải mở thêm một action đọc riêng.
+ * Hai thao tác THẬT SỰ ghi Mộc/tồn (đặt đơn / hủy đơn) không nằm ở trang
+ * này mà nằm ở JS gọi sang `api/tracuu_order.php` (endpoint public riêng,
+ * có mật mã + throttle bảo vệ) — xem `assets/js/tracuu.js`. Danh mục quà
+ * 'còn bán' đọc thẳng từ bảng `gifts` ngay dưới đây (prepared/không tham
+ * số, chỉ lộ đúng tên/giá/tồn/ảnh) để khỏi phải mở thêm một action đọc
+ * riêng. Đơn 'chờ lấy' hiện có (nếu có) cũng được ĐỌC THẲNG ở đây (gọi
+ * `rewards_pending_order()`, y hệt hàm mà action=pending của
+ * `tracuu_order.php` dùng) rồi truyền sang cả 2 tab qua JSON — KHÔNG để
+ * mỗi component Alpine tự gọi thêm `action=pending` lúc mount nữa (review
+ * round 1: double-throttle — trước đây `doiQuaApp` + `soMocPending` đều
+ * tự fetch pending khi init, khiến 1 lượt xem trang tốn 2-3 lượt throttle
+ * IP, dễ khoá oan cả lớp dùng chung wifi giáo xứ). `rewards_expire_due()`
+ * được gọi lazy trước khi đọc (§6.5) — đây là câu UPDATE duy nhất trang
+ * này chạy, có chủ đích: dọn đúng những đơn đã quá hạn, hoàn toàn
+ * idempotent, không phụ thuộc input người dùng.
  *
  * Bảo vệ (SPEC-MOC-DIEN-TU §6.3, mẫu public/bxh.php):
  *   - chỉ nạp config/db.php + logic thuần _tracuu.php (KHÔNG _bootstrap.php,
@@ -29,6 +38,7 @@ header('Referrer-Policy: no-referrer');
 
 require __DIR__ . '/../config/db.php';
 require __DIR__ . '/api/_tracuu.php';
+require __DIR__ . '/api/_rewards.php'; // rewards_pending_order() + rewards_expire_due() — CHỈ ĐỌC dùng ở đây
 
 /* ---------- Niên khoá đang mở ---------- */
 $year = db_one("SELECT id FROM school_years WHERE is_current = 1 LIMIT 1");
@@ -53,6 +63,19 @@ if ($ma !== '') {
     tracuu_attempt_record();    // ghi nhận lượt tra cứu (dù tìm thấy hay không)
     $ketQua = tracuu_public_summary($ma, $yearId);
     $khongCo = ($ketQua === null);
+}
+
+/* ---------- Đơn 'chờ lấy' hiện có (nếu có) — dùng CHUNG cho cả 2 tab ----------
+ * Tính MỘT LẦN ở đây (trong đúng lượt request đã throttle ở trên) rồi
+ * truyền xuống cả doiQuaApp lẫn soMocPending qua JSON — 2 component Alpine
+ * KHÔNG tự gọi action=pending lúc init nữa (fix round 1: double-throttle). */
+$pendingOut = null;
+if ($ketQua) {
+    $emRow = db_one('SELECT id FROM students WHERE code = ?', [$ma]);
+    if ($emRow) {
+        rewards_expire_due($yearId); // dọn lazy đơn đã quá hạn trước khi đọc (§6.5)
+        $pendingOut = rewards_pending_order((int) $emRow['id'], $yearId);
+    }
 }
 
 /* ---------- Danh mục quà 'còn bán' cho tab Đổi quà ----------
@@ -259,7 +282,7 @@ form.tra button:active{transform:scale(.97)}
         </div>
       </div>
 
-      <div x-data="doiQuaApp(<?= j_($ma) ?>, <?= (int) $ketQua['current_balance'] ?>, <?= j_($giftsOut) ?>)" x-cloak>
+      <div x-data="doiQuaApp(<?= j_($ma) ?>, <?= (int) $ketQua['current_balance'] ?>, <?= j_($giftsOut) ?>, <?= j_($pendingOut) ?>)" x-cloak>
 
         <!-- Vừa đặt xong -->
         <template x-if="success">
@@ -296,8 +319,8 @@ form.tra button:active{transform:scale(.97)}
                 <div class="qua-luoi">
                   <template x-for="g in gifts" :key="g.id">
                     <div class="qua-the" :class="{ het: g.stock <= 0 }">
-                      <template x-if="g.imageUrl"><img class="qua-anh" :src="g.imageUrl" :alt="g.name" loading="lazy"></template>
-                      <template x-if="!g.imageUrl"><div class="qua-anh-trong">🎁</div></template>
+                      <template x-if="urlAnhOk(g.imageUrl)"><img class="qua-anh" :src="g.imageUrl" :alt="g.name" loading="lazy"></template>
+                      <template x-if="!urlAnhOk(g.imageUrl)"><div class="qua-anh-trong">🎁</div></template>
                       <div class="qua-ten" x-text="g.name"></div>
                       <div class="qua-gia" x-text="g.stampCost + ' Mộc'"></div>
                       <div class="qua-ton" x-text="g.stock > 0 ? ('Còn ' + g.stock) : 'Hết hàng'"></div>
@@ -408,7 +431,7 @@ form.tra button:active{transform:scale(.97)}
         </div>
       </div>
 
-      <div x-data="soMocPending(<?= j_($ma) ?>)" x-cloak>
+      <div x-data="soMocPending(<?= j_($ma) ?>, <?= j_($pendingOut) ?>)" x-cloak>
         <template x-if="pending">
           <div class="don-cho">
             <h3>🎁 ĐƠN ĐANG CHỜ LẤY <span x-text="'#' + pending.orderId"></span></h3>
