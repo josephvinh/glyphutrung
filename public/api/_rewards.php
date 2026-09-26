@@ -182,6 +182,46 @@ function rewards_lookup(string $code, int $yearId): ?array
     ];
 }
 
+/**
+ * CHUẨN HOÁ GIỎ QUÀ THÔ (JSON của người dùng gửi lên, Task P3-2) thành
+ * `[['giftId'=>int,'qty'=>int], ...]` — hàm THUẦN, không đụng CSDL.
+ *
+ * Dùng ở cả hai lớp API (public `tracuu_order.php` lẫn Thủ thư
+ * `rewards.php`) TRƯỚC khi gọi rewards_place_order(), để:
+ *   - ép kiểu int cho giftId/qty (client có thể gửi chuỗi số);
+ *   - loại bỏ phần tử không phải mảng, thiếu khoá, hoặc giftId<=0/qty<=0
+ *     NGAY tại lớp API — rewards_place_order() vẫn tự kiểm lại (phòng khi
+ *     gọi trực tiếp từ nơi khác) nhưng lọc sớm giúp thông báo lỗi gọn hơn.
+ *
+ * KHÔNG gộp trùng giftId (rewards_place_order() đã tự gộp bằng ksort) —
+ * hàm này chỉ làm sạch kiểu + giá trị.
+ *
+ * @param mixed $raw  giá trị `items` đã json_decode từ request (có thể là
+ *                    bất kỳ kiểu gì nếu client gửi bậy — không ép kiểu tham số
+ *                    để test được cả trường hợp không phải mảng).
+ * @return array<int,array{giftId:int,qty:int}>
+ */
+function rewards_normalize_items($raw): array
+{
+    if (!is_array($raw)) {
+        return [];
+    }
+
+    $out = [];
+    foreach ($raw as $it) {
+        if (!is_array($it)) {
+            continue;
+        }
+        $gid = (int) ($it['giftId'] ?? 0);
+        $qty = (int) ($it['qty'] ?? 0);
+        if ($gid <= 0 || $qty <= 0) {
+            continue;
+        }
+        $out[] = ['giftId' => $gid, 'qty' => $qty];
+    }
+    return $out;
+}
+
 /*
  * =====================================================================
  *  VÒNG ĐỜI ĐƠN ĐẶT QUÀ ONLINE (SPEC §3.4, §6.4a, §6.5)
