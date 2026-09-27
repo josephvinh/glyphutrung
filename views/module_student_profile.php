@@ -311,7 +311,7 @@
         <template x-if="profileStudent">
             <div>
                 <!-- Thống kê tổng quan -->
-                <div class="grid grid-cols-4 gap-2 mb-4">
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
                     <div class="bg-emerald-50 rounded-xl p-3 text-center">
                         <p class="text-xs font-bold text-emerald-600 uppercase mb-1">Có mặt</p>
                         <p class="text-xl font-black text-emerald-700"

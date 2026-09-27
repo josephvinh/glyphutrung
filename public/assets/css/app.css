@@ -159,6 +159,14 @@ body {
 /* Vuốt cuộn mượt kiểu native */
 .snap-x { -webkit-overflow-scrolling: touch; }
 
+/* Lưới số liệu 4 ô: trên điện thoại hẹp để 4 cột thì nhãn dài như
+   "Không phép" bị gãy chữ, trông chật. Cho về 2 cột (2x2) ở điện thoại,
+   đủ 4 cột từ 640px. Bản tailwind.css tĩnh chưa sinh sẵn .sm:grid-cols-4
+   nên khai bổ sung tại đây (app.css nạp sau nên thắng cascade). */
+@media (min-width: 640px) {
+    .sm\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
 /* Chống iOS tự phóng to khi chạm vào ô nhập.
    Safari auto-zoom nếu font-size < 16px -> nâng lên 16px cho đỡ nhảy màn. */
 @media (max-width: 639px) {

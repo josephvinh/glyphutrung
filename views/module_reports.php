@@ -181,7 +181,7 @@
                             <i data-lucide="rotate-ccw" class="w-3 h-3"></i> Tính lại
                         </button>
                     </div>
-                    <div class="p-4 grid grid-cols-4 gap-2 text-center">
+                    <div class="p-4 grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
                         <div><p class="text-lg font-black text-emerald-600" x-text="reportForm.attendance ? reportForm.attendance.present : 0"></p><p class="text-micro font-bold text-slate-500 uppercase">Có mặt</p></div>
                         <div><p class="text-lg font-black text-amber-700" x-text="reportForm.attendance ? reportForm.attendance.late : 0"></p><p class="text-micro font-bold text-slate-500 uppercase">Đi trễ</p></div>
                         <div><p class="text-lg font-black text-blue-500" x-text="reportForm.attendance ? reportForm.attendance.excused : 0"></p><p class="text-micro font-bold text-slate-500 uppercase">Có phép</p></div>
