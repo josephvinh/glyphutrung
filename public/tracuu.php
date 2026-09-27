@@ -197,7 +197,7 @@ function loiLaThu(array $k): array {
 <title>Tra Cứu Sổ Mộc · Thiếu Nhi Thánh Thể</title>
 <link rel="stylesheet" href="assets/css/font.css">
 <style>
-:root{--vang:#f6b100;--vang2:#ffd54a;--lua:#f97316;--nen:#0b1e4d;--nen2:#15347e;}
+:root{--vang:#f6b100;--vang2:#ffd54a;--lua:#f97316;--nen:#e11d36;--nen2:#b81528;}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
  color:#0f172a;background:linear-gradient(160deg,#eef3ff,#f8fafc 40%);min-height:100vh;padding:0 0 48px}
@@ -211,7 +211,7 @@ body{font-family:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",Roboto,sans
 .back-btn:active{background:rgba(255,255,255,.3);transform:scale(0.95)}
 
 .tabs{display:flex;background:#fff;border-radius:999px;padding:4px;box-shadow:0 8px 20px -12px rgba(15,23,42,.4);margin:-30px auto 16px;position:relative;z-index:2}
-.tabs a{flex:1;text-align:center;padding:9px 10px;border-radius:999px;font-size:13.5px;font-weight:800;color:#64748b;text-decoration:none}
+.tabs a{flex:1;text-align:center;white-space:nowrap;padding:9px 8px;border-radius:999px;font-size:13.5px;font-weight:800;color:#64748b;text-decoration:none}
 .tabs a.on{background:var(--nen2);color:#fff}
 
 form.tra{display:flex;gap:8px;margin-bottom:16px}
@@ -260,7 +260,13 @@ form.tra button:active{transform:scale(.97)}
    (con dấu) đóng theo chuỗi đi lễ để thấy rõ "Mộc" của mình.
    Máy bật "giảm chuyển động" thì mở thẳng, không hoạt hình.
    ============================================================ */
-.so-canh{position:relative;perspective:1800px;max-width:390px;margin:8px auto 0}
+.so-canh{position:relative;perspective:1800px;max-width:390px;margin:8px auto 0;
+ --bia1:#7d5729;--bia2:#452e15;--spine:#e11d36}   /* mặc định: bìa gỗ, gáy đỏ */
+/* Màu BÌA theo NGÀNH */
+.so-canh.bia-hong{--bia1:#f06fa8;--bia2:#b0246a;--spine:#db2777}   /* Khai Tâm — hồng */
+.so-canh.bia-la  {--bia1:#34c98a;--bia2:#127a52;--spine:#059669}   /* Rước Lễ — xanh lá */
+.so-canh.bia-xanh{--bia1:#3b62c9;--bia2:#1b2a6b;--spine:#1e40af}   /* Thêm Sức — xanh đậm */
+.so-canh.bia-vang{--bia1:#f6c85f;--bia2:#d98f22;--spine:#c98a1a}   /* Bao Đồng — vàng */
 
 /* ===== KHUNG MỘT MÀN HÌNH — sổ lấp đầy bề ngang & vừa chiều cao 1 khung ===== */
 .doi-ma{text-align:center;margin-bottom:6px}
@@ -300,7 +306,7 @@ body.khung-don .lich-kien{margin-top:8px;padding:7px 9px;font-size:11px}
 
 /* Con dấu tròn = logo Đoàn */
 .con-dau{border-radius:50%;background:radial-gradient(circle at 50% 40%,#fff,#ffe9ec 72%,#ffd6dc);
- border:2px solid #c0182f;box-shadow:0 6px 14px -6px rgba(192,24,47,.6), inset 0 0 0 3px rgba(192,24,47,.12);
+ border:2px solid #e11d36;box-shadow:0 6px 14px -6px rgba(192,24,47,.6), inset 0 0 0 3px rgba(192,24,47,.12);
  display:flex;align-items:center;justify-content:center;overflow:hidden}
 .con-dau img{width:80%;height:80%;object-fit:contain}
 
@@ -313,7 +319,7 @@ body.khung-don .lich-kien{margin-top:8px;padding:7px 9px;font-size:11px}
 /* Trang giấy bên trong (kẻ ô + lề đỏ + logo mờ) */
 .trang-so{position:relative;min-height:320px;
  background:repeating-linear-gradient(0deg,transparent 0 29px,rgba(21,52,126,.06) 29px 30px),linear-gradient(180deg,#fffdf7,#fff7ea);
- border:1px solid #e6dcc0;border-left:7px solid #c0392b;border-radius:6px 14px 14px 6px;
+ border:1px solid #e6dcc0;border-left:7px solid var(--spine);border-radius:6px 14px 14px 6px;
  padding:26px 18px 20px 20px;box-shadow:0 26px 50px -24px rgba(60,40,10,.5);
  transform-origin:top center;animation:trangMo .85s cubic-bezier(.2,.85,.25,1.05) both}
 @keyframes trangMo{0%{opacity:0;transform:rotateX(-82deg)}60%{opacity:1}100%{opacity:1;transform:rotateX(0)}}
@@ -331,23 +337,22 @@ body.khung-don .lich-kien{margin-top:8px;padding:7px 9px;font-size:11px}
 /* --- BÌA SỔ (đóng) = nút bấm, phủ lên trang --- */
 .bia{position:absolute;inset:0;z-index:6;border:0;cursor:pointer;padding:22px 18px;font-family:inherit;
  transform-origin:top center;backface-visibility:hidden;border-radius:6px 14px 14px 6px;
- background:linear-gradient(90deg,rgba(0,0,0,.28) 0 8px,rgba(0,0,0,0) 14px),
-  repeating-linear-gradient(90deg,#6f4c25 0 7px,#654524 7px 14px),linear-gradient(135deg,#7d5729,#452e15);
- box-shadow:0 22px 44px -18px rgba(60,40,10,.75), inset 0 0 0 2px rgba(255,235,200,.14), inset 0 0 40px rgba(0,0,0,.25);
- color:#f7e8ca;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;transition:transform .15s}
+ background:radial-gradient(120% 80% at 50% 0%,rgba(255,255,255,.22),rgba(255,255,255,0) 55%),linear-gradient(135deg,var(--bia1),var(--bia2));
+ box-shadow:0 22px 44px -18px rgba(15,23,42,.55), inset 0 0 0 2px rgba(255,255,255,.18), inset 0 0 40px rgba(0,0,0,.2);
+ color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;transition:transform .15s}
 .bia:active{transform:scale(.985)}
 .bia:focus-visible{outline:3px solid var(--vang);outline-offset:4px}
-.bia .khung{border:2px solid rgba(246,200,95,.5);border-radius:10px;padding:20px 18px;display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;max-width:250px}
+.bia .khung{border:2px solid rgba(255,255,255,.45);border-radius:10px;padding:20px 18px;display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;max-width:250px}
 .bia .con-dau{width:78px;height:78px;border-color:rgba(246,200,95,.7);background:radial-gradient(circle at 50% 40%,#fff,#f7ead0)}
-.bia .tieu{font-size:20px;font-weight:900;letter-spacing:1px;color:var(--vang);text-shadow:0 1px 0 rgba(0,0,0,.3)}
+.bia .tieu{font-size:20px;font-weight:900;letter-spacing:1px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.35)}
 .bia .phu{font-size:11.5px;opacity:.85}
-.bia .cham{margin-top:6px;font-size:12.5px;font-weight:800;background:rgba(246,200,95,.18);border:1px solid rgba(246,200,95,.45);color:#ffedc2;padding:7px 14px;border-radius:999px}
+.bia .cham{margin-top:6px;font-size:12.5px;font-weight:800;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.45);color:#fff;padding:7px 14px;border-radius:999px}
 .so-canh.mo .bia{animation:biaLat .85s ease-in forwards;pointer-events:none}
 @keyframes biaLat{35%{opacity:1}100%{opacity:0;transform:rotateX(156deg)}}
 
 /* --- "CON MỘC" hữu hình --- */
 /* token nhỏ đứng trước số Ví */
-.moc-mini{display:inline-flex;width:20px;height:20px;border-radius:50%;overflow:hidden;vertical-align:-4px;margin-right:4px;border:1.5px solid #c0392b;background:#fff}
+.moc-mini{display:inline-flex;width:20px;height:20px;border-radius:50%;overflow:hidden;vertical-align:-4px;margin-right:4px;border:1.5px solid #e11d36;background:#fff}
 .moc-mini img{width:82%;height:82%;object-fit:contain;margin:auto}
 /* Tiêu đề mục (ngăn Trang Mộc / Trang tổng kết) */
 .muc{display:flex;align-items:center;gap:8px;margin:20px 0 10px;color:#8a5e08;font-weight:900;font-size:13px;letter-spacing:.3px}
@@ -357,7 +362,7 @@ body.khung-don .lich-kien{margin-top:8px;padding:7px 9px;font-size:11px}
 .homnay.chua{background:#f5f0e2;border-color:#ddcea6;color:#8a7a4a}
 /* Tổng số Mộc — dòng khoe gọn */
 .tong-lon{text-align:center;margin-bottom:12px}
-.tong-lon .num{font-size:34px;font-weight:900;color:#c0392b;line-height:1;display:inline-flex;align-items:center;gap:6px}
+.tong-lon .num{font-size:34px;font-weight:900;color:#e11d36;line-height:1;display:inline-flex;align-items:center;gap:6px}
 .tong-lon .num .moc-mini{width:24px;height:24px}
 .tong-lon .cap{font-size:12px;color:#94a3b8;font-weight:700;margin-top:4px}
 
@@ -396,8 +401,8 @@ body.khung-don .lich-kien{margin-top:8px;padding:7px 9px;font-size:11px}
 
 /* ===== TAB CHUYỂN TRANG trong sổ (Trang Mộc ↔ Trang tổng kết) ===== */
 .trang-tab{display:flex;gap:6px;background:#f4ecd8;border:1px solid #e6dcc0;border-radius:999px;padding:4px;margin:14px 0 12px}
-.trang-tab button{flex:1;border:0;background:transparent;font-family:inherit;font-weight:800;font-size:12.5px;color:#8a7a4a;padding:8px 6px;border-radius:999px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px}
-.trang-tab button.on{background:#fff;color:#c0392b;box-shadow:0 2px 6px -3px rgba(0,0,0,.25)}
+.trang-tab button{flex:1;min-width:0;white-space:nowrap;border:0;background:transparent;font-family:inherit;font-weight:800;font-size:12.5px;color:#8a7a4a;padding:8px 4px;border-radius:999px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px}
+.trang-tab button.on{background:#fff;color:#e11d36;box-shadow:0 2px 6px -3px rgba(0,0,0,.25)}
 .trang-tab button:active{transform:scale(.97)}
 .trang-khung{position:relative;overflow:hidden}
 .trang-noi{display:none}
@@ -633,9 +638,18 @@ body.khung-don .lich-kien{margin-top:8px;padding:7px 9px;font-size:11px}
         $tongMoc   = (int) $ketQua['total_earned'];  // tổng con Mộc đã đóng (để khoe)
         $today     = date('Y-m-d');
         $mocHomNay = $mocNgay[$today] ?? 0;          // Mộc đóng HÔM NAY (theo lịch)
+
+        // Màu BÌA SỔ theo NGÀNH (tên lớp bắt đầu bằng tên khối):
+        //   Khai Tâm→hồng · Rước Lễ→xanh lá · Thêm Sức→xanh đậm · Bao Đồng→vàng
+        $lop = (string) ($ketQua['class_name'] ?? '');
+        $biaKey = '';
+        if      (mb_stripos($lop, 'Khai Tâm', 0, 'UTF-8') !== false) $biaKey = 'hong';
+        elseif  (mb_stripos($lop, 'Rước',     0, 'UTF-8') !== false) $biaKey = 'la';
+        elseif  (mb_stripos($lop, 'Thêm Sức', 0, 'UTF-8') !== false) $biaKey = 'xanh';
+        elseif  (mb_stripos($lop, 'Bao Đồng', 0, 'UTF-8') !== false) $biaKey = 'vang';
       ?>
       <div class="man-hinh" id="manHinh"><div class="fit" id="soWrap">
-      <div class="so-canh" id="soCanh">
+      <div class="so-canh<?= $biaKey ? ' bia-' . $biaKey : '' ?>" id="soCanh">
         <div class="xoan" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
         <div class="ruy-bang" aria-hidden="true"></div>
 
