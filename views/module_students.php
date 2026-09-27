@@ -330,7 +330,75 @@
 
         <!-- ===== LIST VIEW (Table Layout) ===== -->
         <div x-show="viewMode === 'list'" style="display: none;" class="bg-white rounded-card shadow-sm border border-slate-100 overflow-hidden">
-            <div class="overflow-x-auto">
+
+            <!-- ĐIỆN THOẠI: bảng nhiều cột cuộn ngang rất khó đọc, nên dưới 640px
+                 hiển thị dạng THẺ gọn; từ 640px trở lên mới dùng bảng đầy đủ.
+                 (Danh sách nguồn giống hệt bảng: displayedStudents.) -->
+            <div class="sm:hidden">
+                <template x-for="(student, index) in displayedStudents" :key="'m-' + student.id">
+                    <div class="flex items-center gap-3 px-4 py-3 border-b border-slate-100"
+                         :class="isStudentSelected(student.id) ? 'bg-blue-50' : ''">
+                        <input type="checkbox"
+                               :checked="isStudentSelected(student.id)"
+                               @click="toggleStudentSelection(student.id)"
+                               class="w-4 h-4 shrink-0 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
+
+                        <!-- Khối thông tin: bấm để mở hồ sơ em -->
+                        <button type="button" @click="openStudentProfile(student)" class="flex-1 min-w-0 text-left">
+                            <p class="text-micro font-bold text-blue-600 leading-tight truncate">
+                                <span x-text="student.code"></span>
+                                <span class="text-slate-300 mx-1">•</span>
+                                <span class="text-slate-500 font-medium" x-text="student.className"></span>
+                            </p>
+                            <p class="text-sm font-bold text-slate-800 leading-snug truncate">
+                                <span class="font-normal text-slate-500" x-text="student.holyName"></span>
+                                <span x-text="student.name"></span>
+                            </p>
+                            <p class="text-micro text-slate-400 mt-1 truncate">
+                                <span class="font-medium" :class="student.gender === 1 ? 'text-blue-600' : 'text-rose-500'" x-text="genderLabel(student.gender)"></span>
+                                <span class="text-slate-300 mx-1">•</span>
+                                <span x-text="calculateAge(student.birthDate) + ' tuổi'"></span>
+                                <span class="text-slate-300 mx-1">•</span>
+                                <span class="font-bold uppercase tracking-wider" :class="{'text-emerald-600': student.status === 'đang sinh hoạt', 'text-rose-600': student.status === 'dừng sinh hoạt', 'text-slate-500': student.status === 'chuyển xứ'}" x-text="student.status"></span>
+                            </p>
+                        </button>
+
+                        <!-- Hành động -->
+                        <div class="flex items-center gap-1 shrink-0">
+                            <button @click="toggleFavorite(student.id)" type="button"
+                                    :title="isFavorite(student.id) ? 'Bỏ yêu thích' : 'Yêu thích'"
+                                    class="tap-safe w-9 h-9 rounded-full flex items-center justify-center transition-colors"
+                                    :class="isFavorite(student.id) ? 'text-amber-500' : 'text-slate-300'">
+                                <i data-lucide="star" class="w-5 h-5" :fill="isFavorite(student.id) ? 'currentColor' : 'none'"></i>
+                            </button>
+                            <!-- Sao chép SĐT (giống thẻ ở chế độ lưới) -->
+                            <div class="relative" x-data="{ showCopyMenu: false }" @click.away="showCopyMenu = false" @keydown.escape.window="showCopyMenu = false">
+                                <button @click="showCopyMenu = !showCopyMenu" type="button" title="Sao chép SĐT" class="tap-safe w-9 h-9 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 border border-slate-200 transition-colors">
+                                    <i data-lucide="clipboard" class="w-4 h-4"></i>
+                                </button>
+                                <div x-show="showCopyMenu" style="display: none;" x-transition class="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-lg border border-slate-200 py-1 z-50 min-w-[140px]">
+                                    <button @click="copyPhone(student.fatherPhone); showCopyMenu = false" type="button" class="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 flex items-center gap-2">
+                                        <i data-lucide="user" class="w-3.5 h-3.5 text-slate-400"></i>
+                                        <span class="font-medium">Cha:</span>
+                                        <span class="text-slate-600" x-text="student.fatherPhone || '—'"></span>
+                                    </button>
+                                    <button @click="copyPhone(student.motherPhone); showCopyMenu = false" type="button" class="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 flex items-center gap-2">
+                                        <i data-lucide="user" class="w-3.5 h-3.5 text-slate-400"></i>
+                                        <span class="font-medium">Mẹ:</span>
+                                        <span class="text-slate-600" x-text="student.motherPhone || '—'"></span>
+                                    </button>
+                                </div>
+                            </div>
+                            <button x-show="canEditModule('students')" style="display: none;" @click="openEdit(student)" type="button" aria-label="Sửa hồ sơ" class="tap-safe w-9 h-9 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 border border-slate-200 transition-colors">
+                                <i data-lucide="pencil" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <!-- MÁY TÍNH BẢNG / DESKTOP: bảng đầy đủ (ẩn trên điện thoại) -->
+            <div class="overflow-x-auto hidden sm:block">
                 <table class="w-full text-sm">
                     <thead class="bg-slate-50 border-b border-slate-200">
                         <tr>

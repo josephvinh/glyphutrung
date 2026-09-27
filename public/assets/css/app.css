@@ -167,6 +167,14 @@ body {
     .sm\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 
+/* Ẩn/hiện theo breakpoint sm — bản tailwind.css tĩnh chưa sinh sẵn.
+   Dùng cho danh sách Thiếu Nhi: điện thoại xem dạng THẺ (sm:hidden),
+   máy tính bảng trở lên xem dạng BẢNG (hidden + sm:block). */
+@media (min-width: 640px) {
+    .sm\:hidden { display: none; }
+    .sm\:block  { display: block; }
+}
+
 /* Chống iOS tự phóng to khi chạm vào ô nhập.
    Safari auto-zoom nếu font-size < 16px -> nâng lên 16px cho đỡ nhảy màn. */
 @media (max-width: 639px) {
