@@ -40,6 +40,11 @@ require __DIR__ . '/../config/db.php';
 require __DIR__ . '/api/_tracuu.php';
 require __DIR__ . '/api/_rewards.php'; // rewards_pending_order() + rewards_expire_due() — CHỈ ĐỌC dùng ở đây
 
+/* Trang này KHÔNG nạp _bootstrap.php (theo mẫu bxh.php) nên phải TỰ đặt múi
+   giờ VN — nếu không, date('Y-m-d') chạy theo giờ server (UTC), khiến "hôm
+   nay" của lịch/băng Mộc lệch một ngày vào sáng sớm giờ Việt Nam. */
+date_default_timezone_set('Asia/Ho_Chi_Minh');
+
 /* ---------- Niên khoá đang mở ---------- */
 $year = db_one("SELECT id FROM school_years WHERE is_current = 1 LIMIT 1");
 if (!$year) {
