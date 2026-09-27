@@ -183,6 +183,50 @@ form.tra button:active{transform:scale(.97)}
 
 [x-cloak]{display:none !important}
 
+/* ============================================================
+   LÁ THƯ BAY RA — reveal vui cho các em khi tra cứu Sổ Mộc.
+   Phong bì mở nắp -> lá thư (thẻ kết quả) bay lên -> đóng dấu sáp.
+   Toàn bộ bằng CSS, tự chạy khi trang có kết quả. Máy nào bật
+   "giảm chuyển động" thì bỏ hiệu ứng, chỉ hiện thẳng (accessibility).
+   ============================================================ */
+.thu-canh{position:relative;perspective:1200px;padding-top:18px}
+/* Tia lấp lánh bay lên */
+.tia{position:absolute;inset:0;pointer-events:none;z-index:0;overflow:visible}
+.tia span{position:absolute;font-size:17px;opacity:0;animation:tiaBay 2.4s ease-out forwards}
+@keyframes tiaBay{0%{opacity:0;transform:translateY(24px) scale(.4) rotate(0)}
+ 25%{opacity:1}100%{opacity:0;transform:translateY(-90px) scale(1.1) rotate(28deg)}}
+/* Phong bì phía sau, hiện ra rồi mờ đi sau khi thư đã bay lên */
+.phong-bi{position:absolute;left:50%;top:6px;width:172px;height:112px;transform:translateX(-50%);z-index:0;
+ animation:pbHien .5s ease-out both, pbTat .55s 1.45s ease-in forwards}
+@keyframes pbHien{from{opacity:0;transform:translateX(-50%) translateY(16px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+@keyframes pbTat{to{opacity:0;transform:translateX(-50%) translateY(26px) scale(.82)}}
+.phong-bi .than{position:absolute;inset:0;border-radius:10px;background:linear-gradient(135deg,#fde9b6,#f4c25a);box-shadow:0 12px 26px -14px rgba(180,120,10,.7)}
+.phong-bi .tui{position:absolute;inset:0;border-radius:10px;background:linear-gradient(135deg,#f7d488,#eab63f);
+ clip-path:polygon(0 32%,50% 100%,100% 32%,100% 100%,0 100%)}
+.phong-bi .nap{position:absolute;left:0;top:0;width:100%;height:60px;background:linear-gradient(135deg,#f3c150,#d99a2b);
+ clip-path:polygon(0 0,100% 0,50% 96%);transform-origin:top center;backface-visibility:hidden;animation:napMo .7s .3s ease-out both}
+@keyframes napMo{from{transform:rotateX(0)}to{transform:rotateX(176deg)}}
+/* Lá thư = thẻ kết quả bay lên khỏi phong bì */
+.la-thu{position:relative;z-index:1;transform-origin:center bottom;
+ animation:thuBay 1s .5s cubic-bezier(.2,.85,.25,1.12) both}
+@keyframes thuBay{0%{opacity:0;transform:translateY(64px) scale(.8) rotate(-3deg)}
+ 55%{opacity:1}100%{opacity:1;transform:translateY(0) scale(1) rotate(0)}}
+/* Dòng chào kiểu phong thư */
+.thu-tieude{text-align:center;font-size:12.5px;color:#64748b;font-weight:700;margin:0 0 12px;opacity:0;animation:thuChu .5s 1.4s ease both}
+.thu-tieude b{color:var(--nen2)}
+@keyframes thuChu{to{opacity:1}}
+/* Dấu sáp niêm phong đóng "cộp" xuống góc thư */
+.dau-sap{position:absolute;top:-14px;right:16px;width:46px;height:46px;border-radius:50%;
+ background:radial-gradient(circle at 35% 30%,#f0616f,#bf172e);color:#fff;font-size:20px;
+ display:flex;align-items:center;justify-content:center;z-index:3;
+ box-shadow:0 7px 16px -6px rgba(191,23,46,.75), inset 0 2px 3px rgba(255,255,255,.35);
+ animation:sapDong .45s 1.25s cubic-bezier(.3,1.4,.5,1) both}
+@keyframes sapDong{0%{opacity:0;transform:scale(2.2) rotate(-24deg)}70%{opacity:1;transform:scale(.86) rotate(-6deg)}100%{opacity:1;transform:scale(1) rotate(-8deg)}}
+@media (prefers-reduced-motion: reduce){
+ .tia,.phong-bi{display:none}
+ .la-thu,.dau-sap,.thu-tieude{animation:none;opacity:1;transform:none}
+}
+
 /* ---------- Tab Đổi quà: lưới quà + giỏ ---------- */
 .qua-luoi{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:24px}
 .qua-the{background:#fff;border-radius:16px;padding:12px;box-shadow:0 8px 20px -14px rgba(15,23,42,.3);display:flex;flex-direction:column}
@@ -383,7 +427,25 @@ form.tra button:active{transform:scale(.97)}
 
     <?php if ($ketQua): ?>
 
-      <div class="card">
+      <div class="thu-canh">
+        <!-- Tia lấp lánh (trang trí) -->
+        <div class="tia" aria-hidden="true">
+          <span style="left:14%;top:44px;animation-delay:.9s">✨</span>
+          <span style="left:32%;top:20px;animation-delay:1.3s">🍃</span>
+          <span style="left:62%;top:30px;animation-delay:1.1s">✨</span>
+          <span style="left:82%;top:52px;animation-delay:1.5s">⭐</span>
+          <span style="left:48%;top:14px;animation-delay:1.7s">✨</span>
+        </div>
+        <!-- Phong bì mở nắp (trang trí) -->
+        <div class="phong-bi" aria-hidden="true">
+          <div class="than"></div>
+          <div class="tui"></div>
+          <div class="nap"></div>
+        </div>
+
+        <div class="card la-thu">
+        <div class="dau-sap" aria-hidden="true">🔥</div>
+        <div class="thu-tieude">💌 Một lá thư từ Sổ Mộc gửi <b><?= e_($ketQua['full_name']) ?></b></div>
         <div class="hoso">
           <div class="ava"><?= e_(mb_strtoupper(mb_substr(trim($ketQua['full_name']), 0, 1, 'UTF-8'), 'UTF-8')) ?></div>
           <div>
@@ -430,6 +492,7 @@ form.tra button:active{transform:scale(.97)}
           <?php endif; ?>
         </div>
       </div>
+      </div><!-- /.thu-canh -->
 
       <div x-data="soMocPending(<?= j_($ma) ?>, <?= j_($pendingOut) ?>)" x-cloak>
         <template x-if="pending">
