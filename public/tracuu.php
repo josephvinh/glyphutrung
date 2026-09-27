@@ -121,40 +121,40 @@ function dinhDangGD(array $t): string {
 
 /**
  * Lời trong "lá thư": một câu KHEN/động viên (đổi theo chuỗi đi lễ của em)
- * và một câu NHẮC NHỞ chung. Xưng "con" cho ấm, gọi bằng tên (từ cuối họ tên).
+ * và một câu NHẮC NHỞ chung. Xưng "em" cho gần gũi, gọi bằng tên (từ cuối họ tên).
  */
 function loiLaThu(array $k): array {
     $streak  = (int) ($k['current_streak'] ?? 0);
     $longest = (int) ($k['longest_streak'] ?? 0);
     $bal     = (int) ($k['current_balance'] ?? 0);
     $parts   = preg_split('/\s+/', trim((string) ($k['full_name'] ?? '')));
-    $goi     = (is_array($parts) && $parts && end($parts) !== '') ? end($parts) : 'con';
+    $goi     = (is_array($parts) && $parts && end($parts) !== '') ? end($parts) : 'em';
 
     // (1) KHEN theo chuỗi đi lễ — có nhánh AN ỦI khi chuỗi vừa đứt.
     if ($streak >= 8) {
-        $khen = "🔥 Quá tuyệt, $goi ơi! Con đã đi lễ $streak tuần liền không nghỉ — Chúa và các Huynh Trưởng tự hào về con lắm!";
+        $khen = "🔥 Quá tuyệt, $goi ơi! Em đã đi lễ $streak tuần liền không nghỉ — Chúa và các Huynh Trưởng tự hào về em lắm!";
     } elseif ($streak >= 4) {
-        $khen = "🔥 Giỏi lắm $goi! Chuỗi đi lễ $streak tuần liền của con đang cháy rất đẹp — ráng giữ lửa nhé!";
+        $khen = "🔥 Giỏi lắm $goi! Chuỗi đi lễ $streak tuần liền của em đang cháy rất đẹp — ráng giữ lửa nhé!";
     } elseif ($streak >= 1) {
         $khen = "🌱 $goi đang có chuỗi $streak tuần đi lễ rồi đó — cố thêm chút nữa cho ngọn lửa lớn hơn nhé!";
     } elseif ($longest >= 3) {
         // Chuỗi đang là 0 nhưng từng giữ được khá lâu -> an ủi, mời quay lại.
-        $khen = "🫂 Đừng buồn nếu chuỗi bị gián đoạn nhé $goi — con từng giữ được $longest tuần liền cơ mà! Chúa Nhật này quay lại đi lễ là ngọn lửa cháy lại ngay.";
+        $khen = "🫂 Đừng buồn nếu chuỗi bị gián đoạn nhé $goi — em từng giữ được $longest tuần liền cơ mà! Chúa Nhật này quay lại đi lễ là ngọn lửa cháy lại ngay.";
     } else {
         $khen = "🕊️ Chúa Nhật này $goi nhớ tới nhà thờ dự lễ, để nhóm lại ngọn lửa yêu Chúa nhé!";
     }
 
     // (2) Nhánh riêng khi Ví nhiều Mộc -> gợi ý đổi quà.
     $themVi = ($bal >= 100)
-        ? "🎁 Con đã dành dụm được $bal Mộc rồi — ghé mục Đổi quà chọn một phần thưởng xứng đáng cho mình nhé!"
+        ? "🎁 Em đã dành dụm được $bal Mộc rồi — ghé mục Đổi quà chọn một phần thưởng xứng đáng cho mình nhé!"
         : "";
 
     // (3) NHẮC NHỞ xoay vòng mỗi lần xem cho đỡ nhàm.
     $dsNhac = [
-        "Nhớ đi lễ Chúa Nhật đều đặn, chuyên cần học Giáo Lý và luôn sống ngoan, vâng lời ông bà cha mẹ con nhé! 💛",
-        "Mỗi ngày cố gắng làm một việc hy sinh nhỏ và một việc tốt cho bạn bè con nhé! 💛",
+        "Nhớ đi lễ Chúa Nhật đều đặn, chuyên cần học Giáo Lý và luôn sống ngoan, vâng lời ông bà cha mẹ em nhé! 💛",
+        "Mỗi ngày cố gắng làm một việc hy sinh nhỏ và một việc tốt cho bạn bè em nhé! 💛",
         "Nhớ đọc kinh sáng tối và siêng năng rước lễ để ở gần Chúa Giêsu hơn nhé! 💛",
-        "Đi học Giáo Lý đúng giờ, mặc đồng phục gọn gàng và lễ phép với mọi người con nhé! 💛",
+        "Đi học Giáo Lý đúng giờ, mặc đồng phục gọn gàng và lễ phép với mọi người em nhé! 💛",
     ];
     $nhac = $dsNhac[array_rand($dsNhac)];
 
@@ -163,7 +163,7 @@ function loiLaThu(array $k): array {
         "Cầu nguyện · Rước lễ · Hy sinh · Làm tông đồ",
         "“Hãy để trẻ nhỏ đến với Thầy” (Mc 10,14)",
         "“Các con là muối cho đời, là ánh sáng cho trần gian” (x. Mt 5,13-14)",
-        "Sống ngày Thánh Thể: Chúa ở cùng con mọi ngày!",
+        "Sống ngày Thánh Thể: Chúa ở cùng em mọi ngày!",
     ];
     $cham = $dsCham[array_rand($dsCham)];
 
