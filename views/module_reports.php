@@ -242,7 +242,7 @@
 
             <div x-show="canWriteReports" class="p-4 border-t border-slate-100 bg-white flex gap-3">
                 <button aria-label="Xóa phiếu liên lạc" x-show="reportForm.id" style="display: none;" @click="deleteReport(reportForm.studentId)"
-                        class="w-14 shrink-0 bg-red-50 text-red-500 rounded-2xl border border-red-100 active:scale-95 transition-transform flex justify-center items-center">
+                        class="w-14 shrink-0 bg-rose-50 text-rose-500 rounded-2xl border border-rose-100 active:scale-95 transition-transform flex justify-center items-center">
                     <i data-lucide="trash-2" class="w-5 h-5"></i>
                 </button>
                 <button @click="saveReport(false)" type="button" class="flex-1 bg-slate-100 text-slate-600 font-bold py-3.5 rounded-2xl border border-slate-200 active:scale-[0.98] transition-transform">

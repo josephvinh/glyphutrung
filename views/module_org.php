@@ -84,7 +84,7 @@
                                 <button aria-label="Sửa tên khối" @click="openEditBlock(b)" :disabled="busyBlock" class="tap-safe w-8 h-8 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 active:scale-90 border border-slate-200 disabled:opacity-50">
                                     <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
                                 </button>
-                                <button aria-label="Xóa khối" @click="deleteBlock(b)" :disabled="busyBlock" class="tap-safe w-8 h-8 bg-red-50 rounded-full flex items-center justify-center text-red-400 active:scale-90 border border-red-100 disabled:opacity-50">
+                                <button aria-label="Xóa khối" @click="deleteBlock(b)" :disabled="busyBlock" class="tap-safe w-8 h-8 bg-rose-50 rounded-full flex items-center justify-center text-rose-400 active:scale-90 border border-rose-100 disabled:opacity-50">
                                     <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                                 </button>
                             </div>
@@ -128,7 +128,7 @@
                                             <button aria-label="Sửa lớp" @click="openEditClass(cls)" :disabled="busyClass" class="tap-safe w-7 h-7 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 active:scale-90 border border-slate-200 disabled:opacity-50">
                                                 <i data-lucide="pencil" class="w-3 h-3"></i>
                                             </button>
-                                            <button aria-label="Xóa lớp" @click="deleteClass(cls)" :disabled="busyClass" class="tap-safe w-7 h-7 bg-red-50 rounded-full flex items-center justify-center text-red-400 active:scale-90 border border-red-100 disabled:opacity-50">
+                                            <button aria-label="Xóa lớp" @click="deleteClass(cls)" :disabled="busyClass" class="tap-safe w-7 h-7 bg-rose-50 rounded-full flex items-center justify-center text-rose-400 active:scale-90 border border-rose-100 disabled:opacity-50">
                                                 <i data-lucide="trash-2" class="w-3 h-3"></i>
                                             </button>
                                         </div>

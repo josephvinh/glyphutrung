@@ -104,9 +104,9 @@
          Chỉ hiện với người bị giới hạn lớp; Quản Trị / Ban Điều Hành
          ghi được mọi lớp nên không cần nhắc. -->
     <div x-show="canEditModule('students') && writableClasses !== null" style="display: none;"
-         class="mb-4 bg-sky-50 border border-sky-200 rounded-2xl p-3 flex items-start gap-2.5">
-        <i data-lucide="info" class="w-4 h-4 text-sky-600 shrink-0 mt-0.5"></i>
-        <p class="text-micro text-sky-900 leading-snug">
+         class="mb-4 bg-blue-50 border border-blue-200 rounded-2xl p-3 flex items-start gap-2.5">
+        <i data-lucide="info" class="w-4 h-4 text-blue-600 shrink-0 mt-0.5"></i>
+        <p class="text-micro text-blue-700 leading-snug">
             <template x-if="writableClasses && writableClasses.length === 1">
                 <span>Bạn nhập danh sách cho lớp
                     <span class="font-black" x-text="writableClasses[0]"></span>.
@@ -439,7 +439,7 @@
                                 </td>
                                 <td class="px-4 py-3 text-slate-600" x-text="calculateAge(student.birthDate)"></td>
                                 <td class="px-4 py-3">
-                                    <span class="text-micro font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg" :class="{'bg-emerald-50 text-emerald-600': student.status === 'đang sinh hoạt', 'bg-rose-50 text-rose-600': student.status === 'dừng sinh hoạt', 'bg-slate-100 text-slate-500': student.status === 'chuyển xứ'}" x-text="student.status"></span>
+                                    <span class="text-micro font-bold uppercase tracking-wider px-2 py-0.5 rounded-md" :class="{'bg-emerald-50 text-emerald-600': student.status === 'đang sinh hoạt', 'bg-rose-50 text-rose-600': student.status === 'dừng sinh hoạt', 'bg-slate-100 text-slate-500': student.status === 'chuyển xứ'}" x-text="student.status"></span>
                                 </td>
                                 <td class="px-4 py-3">
                                     <div class="flex items-center gap-1">

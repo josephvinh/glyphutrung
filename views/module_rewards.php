@@ -23,12 +23,12 @@
     <div class="grid grid-cols-2 gap-1.5 bg-slate-100 p-1 rounded-2xl mb-5">
         <button @click="rwSwitchMode('pos')" type="button"
                 class="py-2.5 rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-1.5"
-                :class="rwMode==='pos' ? 'bg-white text-pink-600 shadow-sm' : 'text-slate-500'">
+                :class="rwMode==='pos' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500'">
             <i data-lucide="store" class="w-4 h-4"></i> Đổi tại quầy
         </button>
         <button @click="rwSwitchMode('confirm')" type="button"
                 class="py-2.5 rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-1.5"
-                :class="rwMode==='confirm' ? 'bg-white text-pink-600 shadow-sm' : 'text-slate-500'">
+                :class="rwMode==='confirm' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500'">
             <i data-lucide="package-check" class="w-4 h-4"></i> Xác nhận đơn
         </button>
     </div>
@@ -41,17 +41,17 @@
     <!-- ============ MÀN 1: QUÉT / NHẬP MÃ THẺ ============ -->
     <div x-show="rwStep==='scan'" style="display:none">
         <div class="bg-white rounded-card p-6 shadow-sm border border-slate-100">
-            <div class="w-16 h-16 mx-auto rounded-2xl bg-pink-50 border border-pink-100 flex items-center justify-center mb-4">
-                <i data-lucide="scan-line" class="w-8 h-8 text-pink-500"></i>
+            <div class="w-16 h-16 mx-auto rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center mb-4">
+                <i data-lucide="scan-line" class="w-8 h-8 text-blue-500"></i>
             </div>
             <p class="text-center text-sm font-bold text-slate-700 mb-1">Quét thẻ hoặc nhập mã thiếu nhi</p>
             <p class="text-center text-micro text-slate-400 mb-5">Hệ thống sẽ hiện tên em và số Mộc khả dụng.</p>
 
             <form @submit.prevent="rwSubmitCode()" class="flex gap-2 mb-3">
                 <input x-model="rwCode" type="text" inputmode="text" autocomplete="off" placeholder="VD: HS001"
-                       class="flex-1 min-w-0 bg-slate-50 border border-slate-200 rounded-field py-3 px-4 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-pink-500 uppercase">
+                       class="flex-1 min-w-0 bg-slate-50 border border-slate-200 rounded-field py-3 px-4 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase">
                 <button type="submit" :disabled="rwLooking"
-                        class="shrink-0 bg-pink-600 text-white font-bold text-sm px-5 rounded-2xl active:scale-95 transition-transform shadow-md shadow-pink-200 disabled:opacity-50 flex items-center gap-1">
+                        class="shrink-0 bg-blue-600 text-white font-bold text-sm px-5 rounded-2xl active:scale-95 transition-transform shadow-md shadow-blue-200 disabled:opacity-50 flex items-center gap-1">
                     <span x-text="rwLooking ? 'Đang tra…' : 'Tra cứu'"></span>
                 </button>
             </form>
@@ -108,13 +108,13 @@
                     <p class="text-micro text-slate-400">Còn <span class="font-bold text-slate-600" x-text="rwStockLeft(g)"></span></p>
 
                     <!-- Bộ đếm số lượng -->
-                    <div x-show="rwCart[g.id]" style="display:none" class="flex items-center justify-between bg-pink-50 rounded-xl px-1 py-1">
-                        <button @click="rwRemoveOne(g)" aria-label="Bớt" type="button" class="w-8 h-8 rounded-lg bg-white text-pink-600 font-black active:scale-90 flex items-center justify-center border border-pink-100">−</button>
-                        <span class="text-sm font-black text-pink-700" x-text="rwCart[g.id] || 0"></span>
-                        <button @click="rwAddToCart(g)" :disabled="rwCannotAddMore(g)" aria-label="Thêm" type="button" class="w-8 h-8 rounded-lg bg-white text-pink-600 font-black active:scale-90 flex items-center justify-center border border-pink-100 disabled:opacity-40">+</button>
+                    <div x-show="rwCart[g.id]" style="display:none" class="flex items-center justify-between bg-blue-50 rounded-xl px-1 py-1">
+                        <button @click="rwRemoveOne(g)" aria-label="Bớt" type="button" class="w-8 h-8 rounded-lg bg-white text-blue-600 font-black active:scale-90 flex items-center justify-center border border-blue-100">−</button>
+                        <span class="text-sm font-black text-blue-700" x-text="rwCart[g.id] || 0"></span>
+                        <button @click="rwAddToCart(g)" :disabled="rwCannotAddMore(g)" aria-label="Thêm" type="button" class="w-8 h-8 rounded-lg bg-white text-blue-600 font-black active:scale-90 flex items-center justify-center border border-blue-100 disabled:opacity-40">+</button>
                     </div>
                     <button x-show="!rwCart[g.id]" @click="rwAddToCart(g)" :disabled="rwCannotAddMore(g)" type="button"
-                            class="w-full bg-pink-600 text-white font-bold text-xs py-2 rounded-xl active:scale-95 transition-transform disabled:opacity-40 disabled:cursor-not-allowed"
+                            class="w-full bg-blue-600 text-white font-bold text-xs py-2 rounded-xl active:scale-95 transition-transform disabled:opacity-40 disabled:cursor-not-allowed"
                             x-text="rwCannotAddMore(g) ? (rwStockLeft(g) <= 0 ? 'Hết hàng' : 'Không đủ Mộc') : 'Thêm'"></button>
                 </div>
             </template>
@@ -150,17 +150,17 @@
     <!-- ============ MÀN 1: QUÉT / NHẬP MÃ THẺ ============ -->
     <div x-show="cfStep==='scan'" style="display:none">
         <div class="bg-white rounded-card p-6 shadow-sm border border-slate-100">
-            <div class="w-16 h-16 mx-auto rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center mb-4">
-                <i data-lucide="package-check" class="w-8 h-8 text-indigo-500"></i>
+            <div class="w-16 h-16 mx-auto rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center mb-4">
+                <i data-lucide="package-check" class="w-8 h-8 text-blue-500"></i>
             </div>
             <p class="text-center text-sm font-bold text-slate-700 mb-1">Quét thẻ hoặc nhập mã thiếu nhi</p>
             <p class="text-center text-micro text-slate-400 mb-5">Hệ thống sẽ hiện đơn đặt trước (nếu có) của em.</p>
 
             <form @submit.prevent="cfSubmitCode()" class="flex gap-2 mb-3">
                 <input x-model="cfCode" type="text" inputmode="text" autocomplete="off" placeholder="VD: HS001"
-                       class="flex-1 min-w-0 bg-slate-50 border border-slate-200 rounded-field py-3 px-4 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 uppercase">
+                       class="flex-1 min-w-0 bg-slate-50 border border-slate-200 rounded-field py-3 px-4 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase">
                 <button type="submit" :disabled="cfLooking"
-                        class="shrink-0 bg-indigo-600 text-white font-bold text-sm px-5 rounded-2xl active:scale-95 transition-transform shadow-md shadow-indigo-200 disabled:opacity-50 flex items-center gap-1">
+                        class="shrink-0 bg-blue-600 text-white font-bold text-sm px-5 rounded-2xl active:scale-95 transition-transform shadow-md shadow-blue-200 disabled:opacity-50 flex items-center gap-1">
                     <span x-text="cfLooking ? 'Đang tra…' : 'Tra đơn'"></span>
                 </button>
             </form>
@@ -177,7 +177,7 @@
 
         <!-- Thẻ thông tin em -->
         <div class="bg-white rounded-card p-4 shadow-sm border border-slate-100 mb-4 flex items-center gap-3">
-            <div class="w-12 h-12 shrink-0 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
+            <div class="w-12 h-12 shrink-0 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
                 <i data-lucide="user" class="w-6 h-6"></i>
             </div>
             <div class="flex-1 min-w-0">
@@ -216,7 +216,7 @@
             <label class="text-xs font-bold text-slate-400 uppercase tracking-wide mb-2 block">Mật mã đổi quà của em</label>
             <form @submit.prevent="cfConfirm()" class="flex gap-2">
                 <input x-model="cfPassword" type="password" autocomplete="off" placeholder="Nhập mật mã em đã đặt"
-                       class="flex-1 min-w-0 bg-slate-50 border border-slate-200 rounded-field py-3 px-4 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                       class="flex-1 min-w-0 bg-slate-50 border border-slate-200 rounded-field py-3 px-4 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <button type="submit" :disabled="cfBusy"
                         class="shrink-0 bg-emerald-500 text-white font-bold text-sm px-5 rounded-2xl active:scale-95 transition-transform shadow-md shadow-emerald-200 disabled:opacity-50 flex items-center gap-1.5">
                     <i data-lucide="check" class="w-4 h-4"></i>

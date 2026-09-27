@@ -13,7 +13,7 @@
     </button>
     <button @click="reportsTab='analytics'; if(openAnalytics) openAnalytics(true)" x-show="permOfKey('analytics')" type="button" :aria-current="reportsTab === 'analytics' ? 'page' : 'false'"
             class="flex-1 py-2.5 rounded-2xl font-bold text-micro transition-colors flex items-center justify-center gap-1.5"
-            :class="reportsTab === 'analytics' ? 'bg-purple-600 text-white shadow-md shadow-purple-200' : 'text-slate-500'">
+            :class="reportsTab === 'analytics' ? 'bg-blue-600 text-white shadow-md shadow-blue-200' : 'text-slate-500'">
         <i data-lucide="bar-chart-2" class="w-4 h-4"></i> Phân tích
     </button>
 </div>

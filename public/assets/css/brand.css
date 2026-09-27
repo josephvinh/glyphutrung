@@ -13,6 +13,7 @@
 /* --- NỀN --- */
 .bg-blue-50   { background-color: #fdedef; }
 .bg-blue-100  { background-color: #fcdadf; }
+.bg-blue-200  { background-color: #f8b3bc; }
 .bg-blue-400  { background-color: #ec6076; }
 .bg-blue-500  { background-color: #e73a58; }
 .bg-blue-600  { background-color: #e11d36; }
@@ -20,6 +21,7 @@
 .hover\:bg-blue-50:hover  { background-color: #fdedef; }
 .hover\:bg-blue-100:hover { background-color: #fcdadf; }
 .hover\:bg-blue-200:hover { background-color: #f8b3bc; }
+.hover\:bg-blue-500:hover { background-color: #e73a58; }
 
 /* --- CHỮ --- */
 .text-blue-50  { color: #fdedef; }
@@ -31,17 +33,22 @@
 .text-blue-600 { color: #e11d36; }
 .text-blue-700 { color: #b81528; }
 .hover\:text-blue-600:hover { color: #e11d36; }
+.hover\:text-blue-700:hover { color: #b81528; }
 
 /* --- VIỀN --- */
 .border-blue-100 { border-color: #fcdadf; }
 .border-blue-200 { border-color: #f8b3bc; }
 .border-blue-300 { border-color: #f28b98; }
+.border-blue-400 { border-color: #ec6076; }
+.border-blue-500 { border-color: #e73a58; }
 .border-blue-600 { border-color: #e11d36; }
 .hover\:border-blue-200:hover { border-color: #f8b3bc; }
 .focus\:border-blue-500:focus { border-color: #e73a58; }
 
 /* --- RING (viền focus) --- */
 .ring-blue-100 { --tw-ring-color: #fcdadf; }
+.ring-blue-200 { --tw-ring-color: #f8b3bc; }
+.ring-blue-500 { --tw-ring-color: #e73a58; }
 .focus\:ring-blue-500:focus { --tw-ring-color: #e73a58; }
 /* Biến thể có độ mờ /30 — dùng ở các ô nhập màn đăng nhập/đăng ký */
 .focus\:ring-blue-500\/30:focus { --tw-ring-color: rgba(231, 58, 88, .3); }

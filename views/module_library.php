@@ -69,7 +69,7 @@
             <template x-for="it in lib.items" :key="it.id">
                 <button @click="openLibItem(it)" type="button" class="min-w-0 text-left bg-white rounded-card p-4 shadow-sm border border-slate-100 active:scale-[0.98] transition-transform flex gap-3 overflow-hidden">
                     <div class="w-11 h-11 shrink-0 rounded-2xl flex items-center justify-center border"
-                         :class="it.type==='article' ? 'bg-sky-50 border-sky-200 text-sky-600' : 'bg-amber-50 border-amber-100 text-amber-600'">
+                         :class="it.type==='article' ? 'bg-blue-50 border-blue-200 text-blue-600' : 'bg-amber-50 border-amber-100 text-amber-600'">
                         <i :data-lucide="libItemIcon(it)" class="w-5 h-5"></i>
                     </div>
                     <div class="flex-1 min-w-0" style="max-width:100%;overflow:hidden">
@@ -169,7 +169,7 @@
             <!-- Chọn chế độ (ẩn khi đang sửa) -->
             <div x-show="!libCompose.id" class="flex gap-2 mb-4">
                 <button @click="libCompose.mode='article'" type="button" class="flex-1 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-transform"
-                        :class="libCompose.mode==='article' ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-500'">
+                        :class="libCompose.mode==='article' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-500'">
                     <i data-lucide="scroll-text" class="w-4 h-4"></i> Viết bài
                 </button>
                 <button @click="libCompose.mode='file'" type="button" class="flex-1 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-transform"

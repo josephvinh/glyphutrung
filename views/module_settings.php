@@ -48,7 +48,7 @@
             <div class="bg-white rounded-card p-4 shadow-sm border border-slate-100 mb-4 flex items-center justify-between">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 shrink-0 rounded-2xl flex items-center justify-center border transition-colors"
-                         :class="dark ? 'bg-slate-700 border-slate-600 text-yellow-400' : 'bg-slate-50 border-slate-200 text-slate-500'">
+                         :class="dark ? 'bg-slate-700 border-slate-600 text-amber-400' : 'bg-slate-50 border-slate-200 text-slate-500'">
                         <i :data-lucide="dark ? 'sun' : 'moon'" class="w-5 h-5"></i>
                     </div>
                     <div>

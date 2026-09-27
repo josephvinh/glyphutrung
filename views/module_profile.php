@@ -84,7 +84,7 @@
     <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100 mb-5">
         <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Hoạt động của tôi</h3>
         <div class="flex items-center gap-4">
-            <div class="w-11 h-11 shrink-0 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
+            <div class="w-11 h-11 shrink-0 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
                 <i data-lucide="activity" class="w-5 h-5"></i>
             </div>
             <div class="flex-1 min-w-0">
@@ -230,7 +230,7 @@
                         this.busy = false;
                     }
                  }">
-                <div class="w-10 h-10 shrink-0 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
+                <div class="w-10 h-10 shrink-0 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
                     <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></svg>
                 </div>
                 <div class="flex-1 min-w-0">
