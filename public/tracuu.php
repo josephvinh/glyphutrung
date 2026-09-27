@@ -124,23 +124,50 @@ function dinhDangGD(array $t): string {
  * và một câu NHẮC NHỞ chung. Xưng "con" cho ấm, gọi bằng tên (từ cuối họ tên).
  */
 function loiLaThu(array $k): array {
-    $streak = (int) ($k['current_streak'] ?? 0);
-    $parts  = preg_split('/\s+/', trim((string) ($k['full_name'] ?? '')));
-    $goi    = (is_array($parts) && $parts && end($parts) !== '') ? end($parts) : 'con';
+    $streak  = (int) ($k['current_streak'] ?? 0);
+    $longest = (int) ($k['longest_streak'] ?? 0);
+    $bal     = (int) ($k['current_balance'] ?? 0);
+    $parts   = preg_split('/\s+/', trim((string) ($k['full_name'] ?? '')));
+    $goi     = (is_array($parts) && $parts && end($parts) !== '') ? end($parts) : 'con';
 
+    // (1) KHEN theo chuỗi đi lễ — có nhánh AN ỦI khi chuỗi vừa đứt.
     if ($streak >= 8) {
         $khen = "🔥 Quá tuyệt, $goi ơi! Con đã đi lễ $streak tuần liền không nghỉ — Chúa và các Huynh Trưởng tự hào về con lắm!";
     } elseif ($streak >= 4) {
         $khen = "🔥 Giỏi lắm $goi! Chuỗi đi lễ $streak tuần liền của con đang cháy rất đẹp — ráng giữ lửa nhé!";
     } elseif ($streak >= 1) {
         $khen = "🌱 $goi đang có chuỗi $streak tuần đi lễ rồi đó — cố thêm chút nữa cho ngọn lửa lớn hơn nhé!";
+    } elseif ($longest >= 3) {
+        // Chuỗi đang là 0 nhưng từng giữ được khá lâu -> an ủi, mời quay lại.
+        $khen = "🫂 Đừng buồn nếu chuỗi bị gián đoạn nhé $goi — con từng giữ được $longest tuần liền cơ mà! Chúa Nhật này quay lại đi lễ là ngọn lửa cháy lại ngay.";
     } else {
         $khen = "🕊️ Chúa Nhật này $goi nhớ tới nhà thờ dự lễ, để nhóm lại ngọn lửa yêu Chúa nhé!";
     }
 
-    $nhac = "Nhớ đi lễ Chúa Nhật đều đặn, chuyên cần học Giáo Lý và luôn sống ngoan, vâng lời ông bà cha mẹ con nhé! 💛";
+    // (2) Nhánh riêng khi Ví nhiều Mộc -> gợi ý đổi quà.
+    $themVi = ($bal >= 100)
+        ? "🎁 Con đã dành dụm được $bal Mộc rồi — ghé mục Đổi quà chọn một phần thưởng xứng đáng cho mình nhé!"
+        : "";
 
-    return ['khen' => $khen, 'nhac' => $nhac];
+    // (3) NHẮC NHỞ xoay vòng mỗi lần xem cho đỡ nhàm.
+    $dsNhac = [
+        "Nhớ đi lễ Chúa Nhật đều đặn, chuyên cần học Giáo Lý và luôn sống ngoan, vâng lời ông bà cha mẹ con nhé! 💛",
+        "Mỗi ngày cố gắng làm một việc hy sinh nhỏ và một việc tốt cho bạn bè con nhé! 💛",
+        "Nhớ đọc kinh sáng tối và siêng năng rước lễ để ở gần Chúa Giêsu hơn nhé! 💛",
+        "Đi học Giáo Lý đúng giờ, mặc đồng phục gọn gàng và lễ phép với mọi người con nhé! 💛",
+    ];
+    $nhac = $dsNhac[array_rand($dsNhac)];
+
+    // Khẩu hiệu / Lời Chúa theo văn phong TNTT — cũng xoay vòng.
+    $dsCham = [
+        "Cầu nguyện · Rước lễ · Hy sinh · Làm tông đồ",
+        "“Hãy để trẻ nhỏ đến với Thầy” (Mc 10,14)",
+        "“Các con là muối cho đời, là ánh sáng cho trần gian” (x. Mt 5,13-14)",
+        "Sống ngày Thánh Thể: Chúa ở cùng con mọi ngày!",
+    ];
+    $cham = $dsCham[array_rand($dsCham)];
+
+    return ['khen' => $khen, 'themVi' => $themVi, 'nhac' => $nhac, 'cham' => $cham];
 }
 ?><!doctype html>
 <html lang="vi">
@@ -208,57 +235,87 @@ form.tra button:active{transform:scale(.97)}
 [x-cloak]{display:none !important}
 
 /* ============================================================
-   LÁ THƯ BAY RA — reveal vui cho các em khi tra cứu Sổ Mộc.
-   Phong bì mở nắp -> lá thư (thẻ kết quả) bay lên -> đóng dấu sáp.
-   Toàn bộ bằng CSS, tự chạy khi trang có kết quả. Máy nào bật
-   "giảm chuyển động" thì bỏ hiệu ứng, chỉ hiện thẳng (accessibility).
+   LÁ THƯ SỔ MỘC — BẤM ĐỂ MỞ (không tự chạy).
+   Đầu tiên hiện phong bì đóng có con dấu logo Đoàn trên nắp; các em
+   CHẠM vào để mở: nắp lật lên, lá thư bay ra, con dấu logo đóng ở
+   MÉP thư. Máy bật "giảm chuyển động" thì mở thẳng, không hoạt hình.
    ============================================================ */
-.thu-canh{position:relative;perspective:1200px;padding-top:18px}
-/* Tia lấp lánh bay lên */
+.thu-canh{position:relative;perspective:1400px;padding-top:6px}
+
+/* Con dấu tròn = logo Đoàn (dùng cho cả nắp phong bì lẫn mép thư) */
+.con-dau{border-radius:50%;background:radial-gradient(circle at 50% 40%,#fff,#ffe9ec 72%,#ffd6dc);
+ border:2px solid #c0182f;box-shadow:0 6px 14px -6px rgba(192,24,47,.6), inset 0 0 0 3px rgba(192,24,47,.12);
+ display:flex;align-items:center;justify-content:center;overflow:hidden}
+.con-dau img{width:80%;height:80%;object-fit:contain}
+
+/* --- Phong bì ĐÓNG = nút bấm để mở --- */
+.bao-thu{display:block;width:100%;max-width:340px;margin:6px auto 0;position:relative;aspect-ratio:7/5;
+ border:0;background:transparent;cursor:pointer;padding:0;font-family:inherit;
+ filter:drop-shadow(0 16px 30px rgba(180,120,10,.35));transition:transform .15s}
+.bao-thu:active{transform:scale(.98)}
+.bao-thu:focus-visible{outline:3px solid var(--nen2);outline-offset:4px;border-radius:16px}
+.bao-thu .bt-than{position:absolute;inset:0;border-radius:14px;background:linear-gradient(135deg,#fde9b6,#f2bd50)}
+.bao-thu .bt-tui{position:absolute;inset:0;border-radius:14px;background:linear-gradient(135deg,#f7d488,#e9b23c);
+ clip-path:polygon(0 0,50% 46%,100% 0,100% 100%,0 100%)}
+.bao-thu .bt-nap{position:absolute;left:0;top:0;width:100%;height:56%;background:linear-gradient(135deg,#f3c150,#d99a2b);
+ clip-path:polygon(0 0,100% 0,50% 92%);transform-origin:top center;backface-visibility:hidden;z-index:3}
+.bao-thu .bt-dau{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);z-index:4;width:72px;height:72px}
+.bt-hint{position:absolute;left:0;right:0;bottom:9px;text-align:center;color:#7a4d06;font-weight:800;font-size:13px;z-index:2}
+.bt-hint span{display:block;font-weight:600;font-size:11.5px;opacity:.85;margin-top:1px}
+.bt-caption{text-align:center;font-size:11.5px;color:#94a3b8;margin:8px 0 2px}
+
+/* --- Sau khi MỞ (ẩn cho tới khi bấm) --- */
+.sau-mo{display:none}
+.thu-canh.mo .sau-mo{display:block}
+.thu-canh.mo .bao-thu{animation:baoBay .65s ease-in forwards;pointer-events:none}
+@keyframes baoBay{35%{opacity:1}100%{opacity:0;transform:translateY(28px) scale(.9)}}
+.thu-canh.mo .bt-nap{animation:napMo .5s ease-out forwards}
+@keyframes napMo{to{transform:rotateX(172deg)}}
+
+/* Tia lấp lánh */
 .tia{position:absolute;inset:0;pointer-events:none;z-index:0;overflow:visible}
-.tia span{position:absolute;font-size:17px;opacity:0;animation:tiaBay 2.4s ease-out forwards}
-@keyframes tiaBay{0%{opacity:0;transform:translateY(24px) scale(.4) rotate(0)}
- 25%{opacity:1}100%{opacity:0;transform:translateY(-90px) scale(1.1) rotate(28deg)}}
-/* Phong bì phía sau, hiện ra rồi mờ đi sau khi thư đã bay lên */
-.phong-bi{position:absolute;left:50%;top:6px;width:172px;height:112px;transform:translateX(-50%);z-index:0;
- animation:pbHien .5s ease-out both, pbTat .55s 1.45s ease-in forwards}
-@keyframes pbHien{from{opacity:0;transform:translateX(-50%) translateY(16px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
-@keyframes pbTat{to{opacity:0;transform:translateX(-50%) translateY(26px) scale(.82)}}
-.phong-bi .than{position:absolute;inset:0;border-radius:10px;background:linear-gradient(135deg,#fde9b6,#f4c25a);box-shadow:0 12px 26px -14px rgba(180,120,10,.7)}
-.phong-bi .tui{position:absolute;inset:0;border-radius:10px;background:linear-gradient(135deg,#f7d488,#eab63f);
- clip-path:polygon(0 32%,50% 100%,100% 32%,100% 100%,0 100%)}
-.phong-bi .nap{position:absolute;left:0;top:0;width:100%;height:60px;background:linear-gradient(135deg,#f3c150,#d99a2b);
- clip-path:polygon(0 0,100% 0,50% 96%);transform-origin:top center;backface-visibility:hidden;animation:napMo .7s .3s ease-out both}
-@keyframes napMo{from{transform:rotateX(0)}to{transform:rotateX(176deg)}}
-/* Lá thư = thẻ kết quả bay lên khỏi phong bì */
-.la-thu{position:relative;z-index:1;transform-origin:center bottom;
- animation:thuBay 1s .5s cubic-bezier(.2,.85,.25,1.12) both}
-@keyframes thuBay{0%{opacity:0;transform:translateY(64px) scale(.8) rotate(-3deg)}
- 55%{opacity:1}100%{opacity:1;transform:translateY(0) scale(1) rotate(0)}}
-/* Dòng chào kiểu phong thư */
-.thu-tieude{text-align:center;font-size:12.5px;color:#64748b;font-weight:700;margin:0 0 12px;opacity:0;animation:thuChu .5s 1.4s ease both}
+.thu-canh.mo .tia span{position:absolute;font-size:18px;opacity:0;animation:tiaBay 2.2s ease-out forwards}
+@keyframes tiaBay{0%{opacity:0;transform:translateY(24px) scale(.4)}25%{opacity:1}100%{opacity:0;transform:translateY(-92px) scale(1.1) rotate(28deg)}}
+
+/* --- Lá thư (to & đẹp hơn: giấy có vân, viền, dấu mờ logo) --- */
+.la-thu{position:relative;z-index:1;transform-origin:center top;
+ background:repeating-linear-gradient(0deg,transparent 0 30px,rgba(21,52,126,.045) 30px 31px),linear-gradient(180deg,#fffdf7,#fff7ea);
+ border:1px solid #efe3c4;border-radius:20px;padding:24px 22px 22px;
+ box-shadow:0 26px 52px -24px rgba(15,23,42,.42);
+ animation:thuBay .9s cubic-bezier(.2,.85,.25,1.1) both}
+.la-thu::before{content:"";position:absolute;left:22px;right:22px;top:13px;height:1px;background:linear-gradient(90deg,transparent,#e6d6a8,transparent)}
+@keyframes thuBay{0%{opacity:0;transform:translateY(70px) scale(.82) rotate(-2deg)}55%{opacity:1}100%{opacity:1;transform:translateY(0) scale(1) rotate(0)}}
+.la-thu .nen-logo{position:absolute;inset:0;background-position:center 62%;background-repeat:no-repeat;background-size:220px;opacity:.045;pointer-events:none;border-radius:20px}
+.la-thu > *{position:relative}
+
+.thu-tieude{text-align:center;font-size:14px;color:#64748b;font-weight:700;margin:4px 0 14px;padding:0 4px;line-height:1.5}
 .thu-tieude b{color:var(--nen2)}
-@keyframes thuChu{to{opacity:1}}
-/* Dấu sáp niêm phong đóng "cộp" xuống góc thư */
-.dau-sap{position:absolute;top:-14px;right:16px;width:46px;height:46px;border-radius:50%;
- background:radial-gradient(circle at 35% 30%,#f0616f,#bf172e);color:#fff;font-size:20px;
- display:flex;align-items:center;justify-content:center;z-index:3;
- box-shadow:0 7px 16px -6px rgba(191,23,46,.75), inset 0 2px 3px rgba(255,255,255,.35);
- animation:sapDong .45s 1.25s cubic-bezier(.3,1.4,.5,1) both}
-@keyframes sapDong{0%{opacity:0;transform:scale(2.2) rotate(-24deg)}70%{opacity:1;transform:scale(.86) rotate(-6deg)}100%{opacity:1;transform:scale(1) rotate(-8deg)}}
-/* Lời động viên + nhắc nhở trong thư (nền giấy vàng ấm) */
-.thu-loi{margin-top:14px;background:linear-gradient(135deg,#fff8e7,#fff2d2);border:1px solid #f4e0a3;border-radius:14px;padding:13px 15px;
- opacity:0;animation:thuChu .6s 1.55s ease both}
-.thu-loi .khen{font-size:13.5px;font-weight:800;color:#8a5e08;line-height:1.5}
-.thu-loi .nhac{font-size:12.5px;color:#7c5a12;margin-top:6px;line-height:1.55;font-style:italic}
-/* Chữ ký cuối thư */
-.thu-ky{margin-top:14px;text-align:right;font-size:12.5px;color:#64748b;font-style:italic;line-height:1.5;
- opacity:0;animation:thuChu .6s 1.75s ease both}
+.la-thu .hoso .ten{font-size:17px}
+.la-thu .o .so{font-size:26px}
+
+/* Con dấu logo đóng ở MÉP THƯ (góc dưới phải) — không đè lên tên */
+.dau-sap{position:absolute;right:14px;bottom:12px;width:62px;height:62px;z-index:3;transform:rotate(-8deg);
+ animation:sapDong .5s .95s cubic-bezier(.3,1.4,.5,1) both}
+@keyframes sapDong{0%{opacity:0;transform:scale(2) rotate(-26deg)}70%{opacity:1;transform:scale(.9) rotate(-4deg)}100%{opacity:1;transform:scale(1) rotate(-8deg)}}
+
+/* Lời khen + động viên + nhắc nhở */
+.thu-loi{margin-top:16px;background:linear-gradient(135deg,#fff8e7,#fff2d2);border:1px solid #f4e0a3;border-radius:14px;padding:14px 16px}
+.thu-loi .khen{font-size:14px;font-weight:800;color:#8a5e08;line-height:1.55}
+.thu-loi .khen + .khen{margin-top:8px}
+.thu-loi .nhac{font-size:13px;color:#7c5a12;margin-top:8px;line-height:1.6;font-style:italic}
+/* Khẩu hiệu / Lời Chúa */
+.thu-cham{text-align:center;font-size:12.5px;color:var(--nen2);font-weight:700;font-style:italic;margin-top:16px;line-height:1.5;padding:0 8px}
+/* Chữ ký (chừa chỗ cho con dấu ở mép) */
+.thu-ky{margin-top:8px;text-align:right;font-size:13px;color:#475569;font-style:italic;line-height:1.5;padding-right:64px}
 .thu-ky b{color:var(--nen2);font-style:normal}
 
+@media (min-width:560px){ .la-thu{padding:30px 30px 26px} .bao-thu{max-width:380px} }
+
 @media (prefers-reduced-motion: reduce){
- .tia,.phong-bi{display:none}
- .la-thu,.dau-sap,.thu-tieude,.thu-loi,.thu-ky{animation:none;opacity:1;transform:none}
+ .tia{display:none}
+ .thu-canh.mo .bao-thu{animation:none;display:none}
+ .la-thu{animation:none;opacity:1;transform:none}
+ .dau-sap{animation:none;opacity:1;transform:rotate(-8deg)}
 }
 
 /* ---------- Tab Đổi quà: lưới quà + giỏ ---------- */
@@ -461,24 +518,38 @@ form.tra button:active{transform:scale(.97)}
 
     <?php if ($ketQua): ?>
 
-      <div class="thu-canh">
+      <?php
+        $loi = loiLaThu($ketQua);
+        $p = preg_split('/\s+/', trim((string) $ketQua['full_name']));
+        $goiTen = (is_array($p) && $p && end($p) !== '') ? end($p) : 'bạn';
+      ?>
+      <div class="thu-canh" id="thuCanh">
+
+        <!-- PHONG BÌ ĐÓNG — bấm để mở (nút thật cho cả bàn phím) -->
+        <button type="button" class="bao-thu" id="moThuBtn"
+                aria-label="Chạm để mở lá thư Sổ Mộc gửi <?= e_($ketQua['full_name']) ?>">
+          <span class="bt-than" aria-hidden="true"></span>
+          <span class="bt-tui" aria-hidden="true"></span>
+          <span class="bt-nap" aria-hidden="true"></span>
+          <span class="bt-dau con-dau" aria-hidden="true"><img src="assets/img/logo.png" alt="" width="72" height="72"></span>
+          <span class="bt-hint">💌 <?= e_($goiTen) ?> ơi, em có một lá thư!<span>Chạm để mở</span></span>
+        </button>
+        <div class="bt-caption">Con dấu của Đoàn Thiếu Nhi Thánh Thể · Phú Trung</div>
+
+        <!-- SAU KHI MỞ -->
+        <div class="sau-mo">
         <!-- Tia lấp lánh (trang trí) -->
         <div class="tia" aria-hidden="true">
-          <span style="left:14%;top:44px;animation-delay:.9s">✨</span>
-          <span style="left:32%;top:20px;animation-delay:1.3s">🍃</span>
-          <span style="left:62%;top:30px;animation-delay:1.1s">✨</span>
-          <span style="left:82%;top:52px;animation-delay:1.5s">⭐</span>
-          <span style="left:48%;top:14px;animation-delay:1.7s">✨</span>
-        </div>
-        <!-- Phong bì mở nắp (trang trí) -->
-        <div class="phong-bi" aria-hidden="true">
-          <div class="than"></div>
-          <div class="tui"></div>
-          <div class="nap"></div>
+          <span style="left:14%;top:44px;animation-delay:.5s">✨</span>
+          <span style="left:32%;top:20px;animation-delay:.9s">🍃</span>
+          <span style="left:62%;top:30px;animation-delay:.7s">✨</span>
+          <span style="left:82%;top:52px;animation-delay:1.1s">⭐</span>
+          <span style="left:48%;top:14px;animation-delay:1.3s">✨</span>
         </div>
 
         <div class="card la-thu">
-        <div class="dau-sap" aria-hidden="true">🔥</div>
+        <div class="nen-logo" style="background-image:url('assets/img/logo.png')" aria-hidden="true"></div>
+        <div class="dau-sap con-dau" aria-hidden="true"><img src="assets/img/logo.png" alt=""></div>
         <div class="thu-tieude">💌 Một lá thư từ Sổ Mộc gửi <b><?= e_($ketQua['full_name']) ?></b></div>
         <div class="hoso">
           <div class="ava"><?= e_(mb_strtoupper(mb_substr(trim($ketQua['full_name']), 0, 1, 'UTF-8'), 'UTF-8')) ?></div>
@@ -509,9 +580,11 @@ form.tra button:active{transform:scale(.97)}
           </div>
         </div>
 
-        <?php $loi = loiLaThu($ketQua); ?>
         <div class="thu-loi">
           <div class="khen"><?= e_($loi['khen']) ?></div>
+          <?php if ($loi['themVi'] !== ''): ?>
+          <div class="khen"><?= e_($loi['themVi']) ?></div>
+          <?php endif; ?>
           <div class="nhac"><?= e_($loi['nhac']) ?></div>
         </div>
 
@@ -531,8 +604,10 @@ form.tra button:active{transform:scale(.97)}
             <?php endforeach; ?>
           <?php endif; ?>
         </div>
+        <div class="thu-cham"><?= e_($loi['cham']) ?></div>
         <div class="thu-ky">Thân mến,<br><b>Ban Huynh Trưởng · Đoàn TNTT Phú Trung</b> ✝️</div>
-      </div>
+        </div><!-- /.card.la-thu -->
+        </div><!-- /.sau-mo -->
       </div><!-- /.thu-canh -->
 
       <div x-data="soMocPending(<?= j_($ma) ?>, <?= j_($pendingOut) ?>)" x-cloak>
@@ -582,6 +657,14 @@ form.tra button:active{transform:scale(.97)}
          soMocPending/doiQuaApp trước khi Alpine quét DOM (mẫu views/layout_login.php). */ ?>
 <script src="assets/js/tracuu.js?v=<?php echo @filemtime(__DIR__ . '/assets/js/tracuu.js') ?: 0; ?>"></script>
 <script defer src="assets/js/vendor/alpine.js?v=<?php echo @filemtime(__DIR__ . '/assets/js/vendor/alpine.js') ?: 0; ?>"></script>
+
+<?php /* Bấm phong bì -> mở lá thư (thêm class .mo để chạy hoạt hình). */ ?>
+<script>
+(function(){
+  var b = document.getElementById('moThuBtn'), c = document.getElementById('thuCanh');
+  if (b && c) b.addEventListener('click', function(){ c.classList.add('mo'); });
+})();
+</script>
 
 </body>
 </html>
