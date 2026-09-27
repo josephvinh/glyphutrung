@@ -262,21 +262,41 @@ form.tra button:active{transform:scale(.97)}
    ============================================================ */
 .so-canh{position:relative;perspective:1800px;max-width:390px;margin:8px auto 0}
 
-/* ===== KHUNG MỘT MÀN HÌNH — cuốn sổ tự co (scale) để vừa 1 khung, khỏi cuộn ===== */
+/* ===== KHUNG MỘT MÀN HÌNH — sổ lấp đầy bề ngang & vừa chiều cao 1 khung ===== */
 .doi-ma{text-align:center;margin-bottom:6px}
-.doi-ma a{display:inline-block;font-size:12.5px;font-weight:700;color:#fff;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);padding:6px 14px;border-radius:999px;text-decoration:none}
-body.khung-don{height:100dvh;overflow:hidden;padding:0;display:flex;flex-direction:column}
-body.khung-don .hero{flex:0 0 auto;padding:14px 16px 20px}
-body.khung-don .hero .ico{font-size:26px}
-body.khung-don .hero h1{font-size:19px}
-body.khung-don .hero p{font-size:12px}
-body.khung-don .wrap{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;overflow:hidden}
-body.khung-don .tabs{flex:0 0 auto}
-body.khung-don .foot{display:none}
-.man-hinh{flex:1 1 auto;min-height:0;overflow:hidden;display:flex;align-items:flex-start;justify-content:center}
-.fit{transform-origin:top center;will-change:transform}
-/* Ngoài chế độ khung-don (vd trình duyệt cũ không có dvh): vẫn hiển thị bình thường */
+.doi-ma a{display:inline-block;font-size:12.5px;font-weight:700;color:#fff;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);padding:5px 14px;border-radius:999px;text-decoration:none}
+.man-hinh{display:flex;align-items:flex-start;justify-content:center}
+.fit{transform-origin:top center;will-change:transform;width:100%}
 body:not(.khung-don) .man-hinh{display:block}
+
+body.khung-don{height:100dvh;overflow:hidden;padding:0;display:flex;flex-direction:column}
+/* Hero MẢNH để nhường chỗ cho sổ (chống ăn hết chiều cao -> khỏi phải thu nhỏ) */
+body.khung-don .hero{flex:0 0 auto;padding:8px 16px 12px;border-radius:0 0 18px 18px}
+body.khung-don .hero .ico{display:none}
+body.khung-don .hero h1{font-size:16px;margin:0;letter-spacing:.3px}
+body.khung-don .hero p{display:none}
+body.khung-don .hero .back-btn{width:32px;height:32px;top:8px;left:12px}
+/* wrap: KHÔNG clip (kẻo cắt hàng tab thụt âm); man-hình mới là chỗ ẩn tràn */
+body.khung-don .wrap{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;overflow:visible}
+body.khung-don .tabs{flex:0 0 auto;margin:10px auto 8px}   /* bỏ tuck âm -> không bị hero che/cắt */
+body.khung-don .doi-ma{flex:0 0 auto}
+body.khung-don .foot{display:none}
+body.khung-don .man-hinh{flex:1 1 auto;min-height:0;overflow:hidden}
+/* Sổ lấp đầy bề ngang khung (không còn thẻ nhỏ lọt giữa) */
+body.khung-don .so-canh{max-width:520px;width:100%;margin:0 auto}
+/* Nén chiều cao để vừa khung, đỡ phải scale */
+body.khung-don .trang-so{padding:16px 14px 12px}
+body.khung-don .trang-tieu{margin:0 0 8px}
+body.khung-don .hoso{margin-bottom:10px}
+body.khung-don .trang-tab{margin:10px 0 10px}
+body.khung-don .homnay{padding:7px 10px;margin-bottom:8px}
+body.khung-don .tong-lon{margin-bottom:8px}
+body.khung-don .tong-lon .num{font-size:26px}
+body.khung-don .lich{padding:10px}
+body.khung-don .lich-dau{margin-bottom:8px}
+body.khung-don .lich-tuan{margin-bottom:4px}
+body.khung-don .lich-tong{margin-top:8px}
+body.khung-don .lich-kien{margin-top:8px;padding:7px 9px;font-size:11px}
 
 /* Con dấu tròn = logo Đoàn */
 .con-dau{border-radius:50%;background:radial-gradient(circle at 50% 40%,#fff,#ffe9ec 72%,#ffd6dc);
