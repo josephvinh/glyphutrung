@@ -57,9 +57,15 @@ function run_migration(string $file): bool
     $sql = file_get_contents($file);
     $name = basename($file);
 
+    // KHÔNG bọc trong transaction: một file migration thường chứa DDL
+    // (CREATE/ALTER TABLE) mà MySQL/MariaDB TỰ commit ngầm — không thể rollback.
+    // Bọc transaction ở đây chỉ tạo cảm giác an toàn giả và còn gây lỗi
+    // "no active transaction" ở commit/rollBack. Thay vào đó: chạy tuần tự ở chế
+    // độ autocommit, và CHỈ ghi nhận migration khi MỌI câu lệnh chạy xong. Nếu
+    // hỏng giữa chừng, migration không được ghi nhận → lần chạy sau chạy lại cả
+    // file; các migration của dự án đều idempotent (IF NOT EXISTS / ON DUPLICATE
+    // KEY / ADD COLUMN bắt lỗi trùng) nên chạy lại an toàn.
     try {
-        db()->beginTransaction();
-
         // Chạy SQL - tách thành từng câu lệnh, bỏ qua comment và dòng trống
         // Xử lý comment trên dòng riêng và cuối dòng
         $lines = explode("\n", $sql);
@@ -105,15 +111,14 @@ function run_migration(string $file): bool
             }
         }
 
-        // Ghi nhận migration
+        // Ghi nhận migration CHỈ khi mọi câu lệnh ở trên đã chạy xong.
         db_run('INSERT INTO schema_migrations (name) VALUES (?)', [$name]);
-
-        db()->commit();
 
         echo "✅ {$name}\n";
         return true;
     } catch (Throwable $e) {
-        db()->rollBack();
+        // Không rollback: DDL đã chạy không thể hoàn tác (giới hạn MySQL). Migration
+        // không được ghi nhận nên lần sau chạy lại cả file (idempotent → an toàn).
         echo "❌ {$name}: " . $e->getMessage() . "\n";
         return false;
     }

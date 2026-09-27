@@ -171,6 +171,9 @@ window.TNTT.core = {
 
             this.students          = d.students;
             this.rebuildStudentIndex();  // chỉ số em O(1) — studentById nhanh ở màn Xin phép
+            // Sổ Mộc: ví + chuỗi + lịch sử gần nhất, theo studentId — đã lọc
+            // theo đúng phạm vi lớp của this.students ở máy chủ (data.php).
+            this.stampSummaries    = d.stampSummaries || {};
             // Sĩ số mọi lớp, đếm ở máy chủ. Cần vì this.students nay chỉ
             // gồm phạm vi mình được xem, không đếm được lớp ngoài phạm vi.
             this.classCounts       = d.classCounts || {};
@@ -574,7 +577,9 @@ window.TNTT.core = {
         { key: 'calendar',      label: 'Lịch trình',   icon: 'calendar-days',   color: 'text-teal-600',   area: 'bdh', group: 'Chương trình', hidden: true },
         { key: 'announcements', label: 'Thông báo',    icon: 'megaphone',       color: 'text-rose-500',   area: 'bdh', group: 'Điều hành' },
         { key: 'staff',         label: 'Nhân sự',      icon: 'user-cog',        color: 'text-cyan-600',   area: 'bdh', group: 'Điều hành', badge: 'staff' },
-        { key: 'years',         label: 'Niên khoá',    icon: 'calendar-range',  color: 'text-indigo-600', area: 'bdh', group: 'Điều hành' }
+        { key: 'years',         label: 'Niên khoá',    icon: 'calendar-range',  color: 'text-indigo-600', area: 'bdh', group: 'Điều hành' },
+        { key: 'gifts',         label: 'Danh mục quà', icon: 'gift',            color: 'text-pink-600',   area: 'bdh', group: 'Chương trình' },
+        { key: 'rewards',       label: 'Đổi quà',      icon: 'shopping-bag',    color: 'text-pink-600',   area: 'bdh', group: 'Chương trình' }
     ],
 
     // Công tắc bảo trì. Tắt thì mọi người thấy nút mờ kèm nhãn "Bảo trì",
@@ -582,7 +587,7 @@ window.TNTT.core = {
     moduleEnabled: {
         students: true, attendance: true, leave: true, birthdays: true,
         stats: true, analytics: true, org: true, reports: true, reporthub: true, programs: true, announcements: true,
-        scores: true, promotion: true, calendar: true, notes: true, guide: true, thu_vien: true
+        scores: true, promotion: true, calendar: true, notes: true, guide: true, thu_vien: true, gifts: true, rewards: true
     },
 
     // ==========================================
@@ -612,12 +617,31 @@ window.TNTT.core = {
         notes:          { admin: 'edit', bdh: 'edit', truong_khoi: 'edit', glv_chu_nhiem: 'edit', glv: 'edit' },
         guide:          { admin: 'view', bdh: 'view', truong_khoi: 'view', glv_chu_nhiem: 'view', glv: 'view' },
         // Thư viện: view = xem + đăng (chờ duyệt); edit = duyệt/gỡ/quản chủ đề.
-        thu_vien:       { admin: 'edit', bdh: 'edit', truong_khoi: 'view', glv_chu_nhiem: 'view', glv: 'view', du_bi: 'view' }
+        thu_vien:       { admin: 'edit', bdh: 'edit', truong_khoi: 'view', glv_chu_nhiem: 'view', glv: 'view', du_bi: 'view' },
+        // Danh mục quà: Quản trị/BĐH/Thủ Từ toàn quyền, các vai khác không thấy.
+        gifts:          { admin: 'edit', bdh: 'edit', truong_khoi: 'none', glv_chu_nhiem: 'none', glv: 'none', thu_thu: 'edit' },
+        // Trạm đổi quà (POS): CHỈ Quản trị + Thủ Thư đứng quầy — BĐH không đứng quầy.
+        rewards:        { admin: 'edit', thu_thu: 'edit', bdh: 'none', truong_khoi: 'none', glv_chu_nhiem: 'none', glv: 'none' }
     },
 
+    // Mức quyền MODULE của người dùng = HỢP mức cao nhất của vai GỐC
+    // (this.user.role) + MỌI vai kiêm nhiệm đang hiệu lực (this.assignments[].role).
+    // Phản chiếu đúng backend permission_of() (_bootstrap.php) vốn cũng lấy hợp
+    // base+assignments — nhờ vậy Thủ Thư (chỉ có qua kiêm nhiệm) mới THẤY được
+    // tile 'rewards'/'gifts'. KHÔNG bao giờ nới rộng hơn backend (mỗi lệnh API
+    // vẫn bị gác lại ở máy chủ). CHỈ xét MỨC quyền theo module — KHÔNG đụng phạm
+    // vi lớp/khối (scan_class_ids/allowed_class_ids… giữ nguyên §6bis Task 2).
     permOf(key) {
         const row = this.permissions[key];
-        return row ? (row[this.user.role] || 'none') : 'none';
+        if (!row) return 'none';
+        const rank = { none: 0, view: 1, edit: 2 };
+        const roles = [this.user.role, ...((this.assignments || []).map(a => a.role))];
+        let best = 'none';
+        for (const rc of roles) {
+            const lv = row[rc] || 'none';
+            if ((rank[lv] || 0) > (rank[best] || 0)) best = lv;
+        }
+        return best;
     },
 
     canAccess(key) {
@@ -946,6 +970,8 @@ window.TNTT.core = {
     classes: [],   // máy chủ nạp qua loadData()
 
     programClasses: {},   // programId -> [classId,...] (rỗng = toàn đoàn)
+
+    stampSummaries: {},   // studentId -> {current_balance, held_balance, total_earned, current_streak, longest_streak, recent_transactions[]}
 
     statusOptions: ['đang sinh hoạt', 'dừng sinh hoạt', 'chuyển xứ', 'đã ra trường'],
 };

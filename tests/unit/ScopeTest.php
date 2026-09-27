@@ -143,4 +143,28 @@ class ScopeTest extends TestCase
         $this->assertContains((int) $this->classA['id'], $ids);
         $this->assertContains((int) $this->classB['id'], $ids, 'Lớp kiêm nhiệm phải nằm trong phạm vi xem');
     }
+
+    /**
+     * Finding 2 (phòng thủ theo chiều sâu): responsible_blocks() phải module-aware.
+     * Một phân công thuần thu_thu (scope toàn đoàn, KHÔNG quyền org/staff) không
+     * được nới responsible_blocks thành null (quản mọi khối); chỉ phân công có
+     * quyền quản-lý-tổ-chức (glv: view org/staff, scope lớp) mới góp phạm vi khối.
+     */
+    public function test_responsible_blocks_ignores_pure_thu_thu(): void
+    {
+        require_once __DIR__ . '/../../public/api/_bootstrap.php';
+
+        // glv (lớp, khối A) + thu_thu (toàn đoàn). thu_thu KHÔNG có quyền org/staff.
+        $this->addAssignment('glv', null, (int) $this->classA['id']);
+        $this->addAssignment('thu_thu', null, null);
+
+        $me = ['id' => $this->memberId, 'role_code' => 'glv', 'role_scope' => 'lớp',
+               'block_id' => null, 'class_id' => $this->classA['id']];
+
+        $blocks = responsible_blocks($me);
+        $this->assertNotNull($blocks,
+            'thu_thu toàn đoàn KHÔNG được nới thành null (quản mọi khối)');
+        $this->assertContains((int) $this->classA['block_id'], $blocks,
+            'phân công glv (có quyền org/staff) vẫn góp khối của lớp mình');
+    }
 }

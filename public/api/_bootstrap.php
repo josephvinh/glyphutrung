@@ -11,6 +11,11 @@ if (!defined('ROOT_PATH')) {
     define('ROOT_PATH', dirname(__DIR__, 2));
 }
 
+// client_ip() + json_out()/json_fail() — SINGLE SOURCE dùng chung với các
+// trang public không nạp toàn bộ file này (VD _tracuu.php, mẫu bxh.php).
+// Xem docblock trong _http_util.php để biết lý do tách riêng.
+require_once __DIR__ . '/_http_util.php';
+
 // Lúc nào cũng dùng giờ Việt Nam, không phụ thuộc cấu hình máy chủ.
 // Nếu server ở Châu Âu, strtotime() vẫn phải hiểu start_time = 07:30 là 7h30 sáng VN.
 date_default_timezone_set('Asia/Ho_Chi_Minh');
@@ -74,19 +79,6 @@ header('X-XSS-Protection: 1; mode=block');
 header('Referrer-Policy: strict-origin-when-cross-origin');
 header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self'; connect-src 'self'; frame-ancestors 'none';");
 header('Permissions-Policy: camera=(), microphone=(), geolocation=()');
-
-/** Trả JSON rồi dừng */
-function json_out($data, int $code = 200): never
-{
-    http_response_code($code);
-    echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-    exit;
-}
-
-function json_fail(string $message, int $code = 400): never
-{
-    json_out(['ok' => false, 'error' => $message], $code);
-}
 
 /** Trả JSON thành công: {ok:true, ...$data} */
 function json_success(array $data = [], int $code = 200): never
@@ -209,10 +201,8 @@ const DN_CUA_SO_PHUT = 15;   // khoảng thời gian xét
 const DN_TOI_DA_SO   = 5;    // số lần sai tối đa cho một số điện thoại
 const DN_TOI_DA_IP   = 20;   // số lần sai tối đa cho một IP
 
-function client_ip(): string
-{
-    return substr((string) ($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0'), 0, 45);
-}
+// client_ip() giờ ở _http_util.php (nạp ở đầu file) — SINGLE SOURCE dùng
+// chung với các trang public không nạp toàn bộ _bootstrap.php.
 
 /** Chặn trước khi kiểm mật khẩu. Hết lượt thì dừng luôn tại đây. */
 function login_throttle(string $phone): void
@@ -406,6 +396,17 @@ function responsible_blocks(array $me): ?array
 
     $blockIds = [];
     foreach (effective_assignments((int) ($me['id'])) as $a) {
+        // Phòng thủ theo chiều sâu (mirror responsible_class_ids, §6bis): chỉ cho
+        // một phân công GÓP phạm vi quản-lý-tổ-chức nếu vai của nó có quyền quản
+        // lý liên quan (≥view trên 'org' hoặc 'staff'). Nhờ vậy một phân công
+        // thuần thu_thu (scope toàn đoàn, KHÔNG quyền org/staff) không bao giờ nới
+        // rộng thành null (quản mọi khối). admin/bdh đã thoát ở trên nên giữ nguyên.
+        $roleCode = $a['role_code'] ?? '';
+        $hasOrgDomainAccess =
+            level_rank(permission_of_role($roleCode, 'org')) >= level_rank('view')
+            || level_rank(permission_of_role($roleCode, 'staff')) >= level_rank('view');
+        if (!$hasOrgDomainAccess) continue;
+
         $scope = $a['role_scope'] ?? '';
         if ($scope === 'toàn đoàn') return null;
         if (!empty($a['block_id'])) {
@@ -480,6 +481,10 @@ function scan_class_ids(array $me): ?array
 
     $blockIds = [];
     foreach (member_scopes($me) as $a) {
+        // Bỏ qua phân công của vai KHÔNG có quyền gì trên attendance —
+        // vai này không được phép mở rộng phạm vi quét điểm danh
+        // (chống leo thang qua kiêm nhiệm, vd thu_thu scope toàn đoàn).
+        if (permission_of_role($a['role_code'] ?? '', 'attendance') === 'none') continue;
         if (($a['role_scope'] ?? '') === 'toàn đoàn') return null;
         if (!empty($a['block_id'])) {
             $blockIds[] = (int) $a['block_id'];

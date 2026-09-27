@@ -112,6 +112,17 @@ window.TNTT.student_profile = {
     },
 
     /**
+     * Tổng hợp Sổ Mộc (ví + chuỗi + lịch sử gần nhất) của em đang xem hồ sơ.
+     * Trả về hình dạng rỗng an toàn khi chưa nạp xong dữ liệu, để giao diện
+     * không phải tự kiểm tra null ở nhiều chỗ.
+     */
+    get profileStampSummary() {
+        const empty = { current_balance: 0, held_balance: 0, total_earned: 0, current_streak: 0, longest_streak: 0, recent_transactions: [] };
+        if (!this.profileStudent || !this.stampSummaries) return empty;
+        return this.stampSummaries[this.profileStudent.id] || empty;
+    },
+
+    /**
      * In phiếu liên lạc
      */
     printReport(report) {

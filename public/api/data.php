@@ -13,6 +13,7 @@
  */
 
 require __DIR__ . '/_bootstrap.php';
+require __DIR__ . '/StampService.php';
 
 // Rate limiting cho API đọc
 enforce_api_read_limit();
@@ -99,6 +100,30 @@ $students = (function () use ($yid, $me, $isPaginated, $page, $limit) {
 
     return ['data' => $data, 'total' => $total, 'page' => $page, 'limit' => $limit];
 })();
+
+// ---------------------------------------------------------------
+// Sổ Mộc — ví + chuỗi + lịch sử gần nhất cho card hồ sơ (SPEC-MOC-DIEN-TU §6.2).
+//
+// DÙNG LẠI đúng $students đã lọc theo allowed_class_ids ở trên: không tự
+// mở lại phạm vi ở đây, tránh lệch ranh giới lớp giữa hai chỗ. Bỏ qua ở
+// bước 'heavy' cho nhẹ (giống scores) — tab hồ sơ đọc từ bước 'core'.
+//
+// stamp_summaries_bulk() — KHÔNG gọi stamp_summary() trong vòng lặp: với
+// admin (phạm vi toàn đoàn, hàng trăm em) một cặp truy vấn riêng cho mỗi
+// em sẽ thành ~2×N truy vấn trên đúng đường tải chính của app. Gộp thành
+// hai truy vấn IN (...) cho toàn bộ $students, giống cách attendances/
+// leaves/scores đã làm ở dưới.
+// ---------------------------------------------------------------
+$stampSummaries = [];
+if ($part !== 'heavy') {
+    // $students là cấu trúc phân trang ['data'=>[...], ...] (master #42) — lấy
+    // đúng danh sách hàng em ở khoá 'data'.
+    $stuIds = array_map(fn($s) => (int) $s['id'], $students['data']);
+    $stampSummaries = stamp_summaries_bulk($stuIds, $yid);
+}
+// Ép thành object {studentId: {...}} khi rỗng để JSON ra {} thay vì [] —
+// giống programClasses ở dưới, tránh client phải phân biệt hai kiểu.
+$stampSummaries = (object) $stampSummaries;
 
 // ---------------------------------------------------------------
 // Sĩ số từng lớp — đếm ở máy chủ.
@@ -202,8 +227,11 @@ if ($part !== 'core') {                          // bước 'core' bỏ qua đi�
                LEFT JOIN members m ON m.id = a.marked_by
               WHERE a.year_id = ?', [$yid]);
     } else {
-        // Chỉ điểm danh của các em trong phạm vi (dùng lại danh sách $students)
-        $stuIds = array_map(fn($s) => (int) $s['id'], $students);
+        // Chỉ điểm danh của các em trong phạm vi (dùng lại danh sách $students).
+        // $students là cấu trúc phân trang ['data'=>[...], ...] (master #42) —
+        // lấy hàng em ở khoá 'data' (trước đây lặp thẳng $students khiến $stuIds
+        // = [0,0,...] và user không phải admin không nhận được điểm danh nào).
+        $stuIds = array_map(fn($s) => (int) $s['id'], $students['data']);
         if ($stuIds) {
             $ph = implode(',', array_fill(0, count($stuIds), '?'));
             $attRows = db_all(
@@ -420,6 +448,9 @@ $libraryPending = (permission_of('thu_vien') === 'edit')
 $result = [
     'ok' => true,
     'notes'         => $notes,
+    // 'students' được gán bên dưới (khối phân trang của master); ở đây chỉ thêm
+    // Sổ Mộc cho các em trong phạm vi.
+    'stampSummaries' => $stampSummaries,
     'classCounts'   => $classCounts,
     'programs'      => $programs,
     'programClasses' => $programClasses,
