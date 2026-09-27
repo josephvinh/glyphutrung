@@ -159,20 +159,63 @@ body {
 /* Vuốt cuộn mượt kiểu native */
 .snap-x { -webkit-overflow-scrolling: touch; }
 
-/* Lưới số liệu 4 ô: trên điện thoại hẹp để 4 cột thì nhãn dài như
-   "Không phép" bị gãy chữ, trông chật. Cho về 2 cột (2x2) ở điện thoại,
-   đủ 4 cột từ 640px. Bản tailwind.css tĩnh chưa sinh sẵn .sm:grid-cols-4
-   nên khai bổ sung tại đây (app.css nạp sau nên thắng cascade). */
-@media (min-width: 640px) {
-    .sm\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-}
+/* ==========================================================
+   TIỆN ÍCH RESPONSIVE BỔ SUNG
+   Bản tailwind.css của dự án là tệp TĨNH (không build lại tự động),
+   nên chỉ chứa đúng những lớp đã "quét" được lúc sinh. Nhiều lớp
+   grid/ẩn-hiện theo breakpoint tuy ĐANG được dùng trong các view lại
+   KHÔNG có mặt -> lưới đáng lẽ nở thêm cột ở tablet/desktop bị kẹt ở
+   số cột của điện thoại, trông lệch giữa các module. Khai bù ở đây
+   (app.css nạp sau tailwind nên thắng cascade), theo đúng breakpoint
+   mặc định của Tailwind: sm 640 · md 768 · lg 1024 · xl 1280.
+   ========================================================== */
 
-/* Ẩn/hiện theo breakpoint sm — bản tailwind.css tĩnh chưa sinh sẵn.
-   Dùng cho danh sách Thiếu Nhi: điện thoại xem dạng THẺ (sm:hidden),
-   máy tính bảng trở lên xem dạng BẢNG (hidden + sm:block). */
+/* ---- sm: ≥640px ---- */
 @media (min-width: 640px) {
+    .sm\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .sm\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    /* Ẩn/hiện: điện thoại xem dạng THẺ (sm:hidden), từ 640px xem BẢNG
+       (hidden + sm:block). */
     .sm\:hidden { display: none; }
     .sm\:block  { display: block; }
+    .sm\:inline { display: inline; }
+    .sm\:static { position: static; }
+    .sm\:w-auto { width: auto; }
+    .sm\:h-auto { height: auto; }
+    .sm\:z-auto { z-index: auto; }
+    .sm\:col-span-2 { grid-column: span 2 / span 2; }
+    .sm\:bg-transparent { background-color: transparent; }
+    .sm\:backdrop-blur-none { -webkit-backdrop-filter: none; backdrop-filter: none; }
+    .sm\:-mx-0 { margin-left: 0; margin-right: 0; }
+    .sm\:p-2 { padding: 0.5rem; }
+    .sm\:p-4 { padding: 1rem; }
+    .sm\:px-0 { padding-left: 0; padding-right: 0; }
+    .sm\:pt-0 { padding-top: 0; }
+    .sm\:pb-0 { padding-bottom: 0; }
+    .sm\:max-h-\[80vh\] { max-height: 80vh; }
+    .sm\:min-h-\[100px\] { min-height: 100px; }
+    /* Nút thao tác nhanh: ẩn khi rảnh (sm:opacity-0 đã có), hiện khi rê chuột */
+    .group:hover .sm\:group-hover\:opacity-100 { opacity: 1; }
+}
+/* ---- md: ≥768px ---- */
+@media (min-width: 768px) {
+    .md\:flex { display: flex; }
+    .md\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .md\:p-6 { padding: 1.5rem; }
+}
+/* ---- lg: ≥1024px ---- */
+@media (min-width: 1024px) {
+    .lg\:grid { display: grid; }
+    .lg\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .lg\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .lg\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .lg\:space-y-0 > :not([hidden]) ~ :not([hidden]) { margin-top: 0; }
+}
+/* ---- xl: ≥1280px ---- */
+@media (min-width: 1280px) {
+    .xl\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .xl\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .xl\:space-y-0 > :not([hidden]) ~ :not([hidden]) { margin-top: 0; }
 }
 
 /* Chống iOS tự phóng to khi chạm vào ô nhập.
