@@ -262,6 +262,22 @@ form.tra button:active{transform:scale(.97)}
    ============================================================ */
 .so-canh{position:relative;perspective:1800px;max-width:390px;margin:8px auto 0}
 
+/* ===== KHUNG MỘT MÀN HÌNH — cuốn sổ tự co (scale) để vừa 1 khung, khỏi cuộn ===== */
+.doi-ma{text-align:center;margin-bottom:6px}
+.doi-ma a{display:inline-block;font-size:12.5px;font-weight:700;color:#fff;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);padding:6px 14px;border-radius:999px;text-decoration:none}
+body.khung-don{height:100dvh;overflow:hidden;padding:0;display:flex;flex-direction:column}
+body.khung-don .hero{flex:0 0 auto;padding:14px 16px 20px}
+body.khung-don .hero .ico{font-size:26px}
+body.khung-don .hero h1{font-size:19px}
+body.khung-don .hero p{font-size:12px}
+body.khung-don .wrap{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+body.khung-don .tabs{flex:0 0 auto}
+body.khung-don .foot{display:none}
+.man-hinh{flex:1 1 auto;min-height:0;overflow:hidden;display:flex;align-items:flex-start;justify-content:center}
+.fit{transform-origin:top center;will-change:transform}
+/* Ngoài chế độ khung-don (vd trình duyệt cũ không có dvh): vẫn hiển thị bình thường */
+body:not(.khung-don) .man-hinh{display:block}
+
 /* Con dấu tròn = logo Đoàn */
 .con-dau{border-radius:50%;background:radial-gradient(circle at 50% 40%,#fff,#ffe9ec 72%,#ffd6dc);
  border:2px solid #c0182f;box-shadow:0 6px 14px -6px rgba(192,24,47,.6), inset 0 0 0 3px rgba(192,24,47,.12);
@@ -325,33 +341,37 @@ form.tra button:active{transform:scale(.97)}
 .tong-lon .num .moc-mini{width:24px;height:24px}
 .tong-lon .cap{font-size:12px;color:#94a3b8;font-weight:700;margin-top:4px}
 
-/* ===== LỊCH ĐÓNG MỘC ===== */
-.lich{background:rgba(255,255,255,.6);border:1px solid #e6dcc0;border-radius:14px;padding:12px}
-.lich-dau{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
-.lich-dau b{font-size:14px;font-weight:900;color:#8a5e08}
-.lich-dau button{width:34px;height:34px;border-radius:10px;border:1px solid #e6dcc0;background:#fff;color:#8a5e08;font-size:17px;font-weight:900;cursor:pointer;line-height:1}
-.lich-dau button:disabled{opacity:.3;cursor:default}
-.lich-dau button:active:not(:disabled){transform:scale(.92)}
-.lich-tuan,.lich-luoi{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
-.lich-tuan{margin-bottom:4px}
-.lich-tuan span{text-align:center;font-size:10.5px;font-weight:800;color:#94a3b8;padding:2px 0}
-.lich-tuan span.cn{color:#c0392b}
-.o-ngay{aspect-ratio:1/1;border-radius:9px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
- background:#fff;border:1px solid #eee5cf;position:relative;min-height:34px}
-.o-ngay.trong{background:transparent;border:0}
-.o-ngay .d{font-size:11.5px;font-weight:700;color:#475569}
-.o-ngay.cn .d{color:#c0392b}
-.o-ngay.co{background:linear-gradient(135deg,#fff2c6,#ffdf83);border-color:#f0c04a;box-shadow:0 2px 5px -3px rgba(200,140,20,.6)}
-/* Con Mộc trong ô lịch = LOGO Đoàn + số */
+/* ===== LỊCH ĐÓNG MỘC — phong cách hiện đại (nền trắng, tối giản) ===== */
+.lich{background:#fff;border:1px solid #eef1f5;border-radius:16px;padding:12px;box-shadow:0 10px 30px -20px rgba(15,23,42,.35)}
+.lich-dau{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
+.lich-dau b{font-size:clamp(14px,3.8vw,16px);font-weight:800;color:#0f172a;letter-spacing:.2px}
+.lich-dau button{width:34px;height:34px;border-radius:50%;border:0;background:#f1f5f9;color:#334155;font-size:18px;font-weight:800;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center;transition:background .15s,transform .1s}
+.lich-dau button:hover:not(:disabled){background:#e2e8f0}
+.lich-dau button:disabled{opacity:.35;cursor:default}
+.lich-dau button:active:not(:disabled){transform:scale(.9)}
+.lich-tuan,.lich-luoi{display:grid;grid-template-columns:repeat(7,1fr);gap:clamp(3px,1.2vw,6px)}
+.lich-tuan{margin-bottom:6px}
+.lich-tuan span{text-align:center;font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.4px}
+.lich-tuan span.cn{color:#e11d36}
+.o-ngay{aspect-ratio:1/1;border-radius:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+ background:#f8fafc;position:relative}
+.o-ngay.trong{background:transparent}
+.o-ngay .d{font-size:clamp(11px,3vw,13px);font-weight:600;color:#334155}
+.o-ngay.cn .d{color:#e11d36}
+/* Ngày ĐÃ đóng Mộc: nền đỏ nhạt, số đỏ đậm */
+.o-ngay.co{background:linear-gradient(160deg,rgba(225,29,54,.13),rgba(225,29,54,.07))}
+.o-ngay.co .d{color:#e11d36;font-weight:800}
+/* Con Mộc trong ô = LOGO Đoàn + số */
 .moc-day{display:inline-flex;align-items:center;gap:1px;line-height:1}
-.moc-day img{width:15px;height:15px;object-fit:contain;display:block}
-.moc-day b{font-size:10px;font-weight:900;color:#c0392b}
-.o-ngay.today{outline:2px solid #15347e;outline-offset:1px;z-index:1}
-.o-ngay.tuonglai{opacity:.4}
-.o-ngay.tuonglai .d{color:#b8a} /* mờ ngày chưa tới */
-.lich-tong{text-align:center;font-size:12px;color:#8a5e08;font-weight:800;margin-top:10px}
-.lich-tong b{color:#c0392b}
-.lich-kien{margin-top:10px;font-size:11.5px;color:#7c5a12;background:#fff8e7;border:1px dashed #f0c04a;border-radius:10px;padding:9px 11px;line-height:1.55}
+.moc-day img{width:clamp(13px,3.6vw,16px);height:clamp(13px,3.6vw,16px);object-fit:contain;display:block}
+.moc-day b{font-size:clamp(9px,2.6vw,11px);font-weight:900;color:#e11d36}
+/* Hôm nay: viền tròn đỏ nổi bật */
+.o-ngay.today{box-shadow:inset 0 0 0 2px #e11d36}
+.o-ngay.today .d{color:#e11d36}
+.o-ngay.tuonglai{opacity:.35}
+.lich-tong{text-align:center;font-size:12px;color:#64748b;font-weight:600;margin-top:12px}
+.lich-tong b{color:#e11d36;font-weight:800}
+.lich-kien{margin-top:10px;font-size:11.5px;color:#64748b;background:#f8fafc;border:1px solid #e6ebf1;border-radius:12px;padding:9px 11px;line-height:1.55}
 .lich-trong{grid-column:1 / -1;text-align:center;color:#94a3b8;font-size:12px;padding:14px 0}
 
 /* ===== TAB CHUYỂN TRANG trong sổ (Trang Mộc ↔ Trang tổng kết) ===== */
@@ -433,7 +453,7 @@ form.tra button:active{transform:scale(.97)}
 .canh-bao-nho a{color:#b91c1c;font-weight:800;text-decoration:underline}
 </style>
 </head>
-<body>
+<body class="<?= ($tab === 'so-moc' && $ketQua && !$pendingOut) ? 'khung-don' : '' ?>">
 
 <div class="hero">
   <a href="index.php" class="back-btn" aria-label="Quay lại">
@@ -571,11 +591,15 @@ form.tra button:active{transform:scale(.97)}
 
   <?php else: ?>
 
+    <?php if (!$ketQua): ?>
     <form class="tra" method="get">
       <input type="hidden" name="tab" value="so-moc">
       <input type="text" name="ma" value="<?= e_($ma) ?>" placeholder="Nhập mã thiếu nhi (VD: HS001)" maxlength="32" autofocus required>
       <button type="submit">Tra cứu</button>
     </form>
+    <?php else: ?>
+    <div class="doi-ma"><a href="tracuu.php">↩︎ Tra mã khác</a></div>
+    <?php endif; ?>
 
     <?php if ($khongCo): ?>
       <div class="thongbao">Không tìm thấy thiếu nhi với mã "<?= e_($ma) ?>".<br>Vui lòng kiểm tra lại mã số.</div>
@@ -590,6 +614,7 @@ form.tra button:active{transform:scale(.97)}
         $today     = date('Y-m-d');
         $mocHomNay = $mocNgay[$today] ?? 0;          // Mộc đóng HÔM NAY (theo lịch)
       ?>
+      <div class="man-hinh" id="manHinh"><div class="fit" id="soWrap">
       <div class="so-canh" id="soCanh">
         <div class="xoan" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
         <div class="ruy-bang" aria-hidden="true"></div>
@@ -704,6 +729,7 @@ form.tra button:active{transform:scale(.97)}
           </span>
         </button>
       </div><!-- /.so-canh -->
+      </div></div><!-- /.fit /.man-hinh -->
 
       <div x-data="soMocPending(<?= j_($ma) ?>, <?= j_($pendingOut) ?>)" x-cloak>
         <template x-if="pending">
@@ -757,7 +783,28 @@ form.tra button:active{transform:scale(.97)}
 <script>
 (function(){
   var b = document.getElementById('moSoBtn'), c = document.getElementById('soCanh');
-  if (b && c) b.addEventListener('click', function(){ c.classList.add('mo'); });
+  if (b && c) b.addEventListener('click', function(){ c.classList.add('mo'); fit(); });
+
+  // ----- CO DÃN: thu nhỏ cuốn sổ cho vừa đúng 1 khung màn hình (khỏi cuộn) -----
+  var manHinh = document.getElementById('manHinh'), soWrap = document.getElementById('soWrap');
+  function fit(){
+    if (!manHinh || !soWrap || !document.body.classList.contains('khung-don')) return;
+    soWrap.style.transform = 'none';
+    var availH = manHinh.clientHeight, availW = manHinh.clientWidth;
+    var ch = soWrap.offsetHeight, cw = soWrap.offsetWidth;
+    if (!ch || !cw || !availH) return;
+    var k = Math.min(1, availH / ch, availW / cw);
+    soWrap.style.transform = 'scale(' + k + ')';
+  }
+  var hen;
+  function fitSoon(){ clearTimeout(hen); hen = setTimeout(fit, 60); }
+  window.addEventListener('resize', fitSoon);
+  window.addEventListener('orientationchange', fitSoon);
+  window.addEventListener('load', fit);
+  // logo tải xong có thể đổi chiều cao -> căn lại
+  Array.prototype.forEach.call(document.querySelectorAll('#soCanh img'), function(im){
+    if (!im.complete) im.addEventListener('load', fitSoon);
+  });
 
   // ----- LẬT TRANG: Trang Mộc <-> Trang tổng kết -----
   var tab = document.getElementById('trangTab');
@@ -774,6 +821,7 @@ form.tra button:active{transform:scale(.97)}
           if (k === p) el.classList.add('hien', sang ? 'vao-phai' : 'vao-trai');
         });
         cur = p;
+        fit();
       });
     });
   }
@@ -824,6 +872,7 @@ form.tra button:active{transform:scale(.97)}
     var truocDuoc = (viewY>minY) || (viewY===minY && viewM>minM);
     var sauDuoc   = (viewY<curY) || (viewY===curY && viewM<curM);
     btPrev.disabled = !truocDuoc; btNext.disabled = !sauDuoc;
+    fit();
   }
   btPrev.addEventListener('click', function(){ if(viewM===0){viewM=11;viewY--;}else viewM--; ve(); });
   btNext.addEventListener('click', function(){ if(viewM===11){viewM=0;viewY++;}else viewM++; ve(); });
