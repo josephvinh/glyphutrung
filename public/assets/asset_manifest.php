@@ -19,7 +19,6 @@ return [
     'js_modules' => [
         // Core modules (loaded on startup)
         'core', 'programs', 'access', 'students', 'student_profile', 'attendance', 'qrscan', 'qrcard',
-        'custom-qrcard',
         'leave', 'birthdays', 'announcements', 'stats', 'analytics', 'scores',
         'reports', 'promotion', 'org', 'push', 'dashboard', 'shell',
         'calendar', 'notes', 'passkey', 'library', 'gifts', 'rewards',

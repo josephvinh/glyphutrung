@@ -36,6 +36,10 @@ require_once __DIR__ . '/cache.php';
 $debugMode = !app_config('production');
 require_once ROOT_PATH . '/src/Logger.php';
 require_once ROOT_PATH . '/src/ExceptionHandler.php';
+// Rate limiter (định nghĩa enforce_api_read_limit() dùng ở data.php và các
+// hàm enforce_*_limit khác). Nạp ở đây để mọi endpoint api/ đều có sẵn —
+// trước đây thiếu require này nên data.php gọi hàm chưa định nghĩa → 500.
+require_once ROOT_PATH . '/src/RateLimiter.php';
 
 TNTT\Logger::bootstrap();
 $exceptionHandler = new TNTT\ExceptionHandler(TNTT\Logger::getInstance(), $debugMode);
