@@ -118,6 +118,30 @@ function dinhDangGD(array $t): string {
     $dau = $t['amount'] > 0 ? '+' : '';
     return $dau . (int) $t['amount'];
 }
+
+/**
+ * Lời trong "lá thư": một câu KHEN/động viên (đổi theo chuỗi đi lễ của em)
+ * và một câu NHẮC NHỞ chung. Xưng "con" cho ấm, gọi bằng tên (từ cuối họ tên).
+ */
+function loiLaThu(array $k): array {
+    $streak = (int) ($k['current_streak'] ?? 0);
+    $parts  = preg_split('/\s+/', trim((string) ($k['full_name'] ?? '')));
+    $goi    = (is_array($parts) && $parts && end($parts) !== '') ? end($parts) : 'con';
+
+    if ($streak >= 8) {
+        $khen = "🔥 Quá tuyệt, $goi ơi! Con đã đi lễ $streak tuần liền không nghỉ — Chúa và các Huynh Trưởng tự hào về con lắm!";
+    } elseif ($streak >= 4) {
+        $khen = "🔥 Giỏi lắm $goi! Chuỗi đi lễ $streak tuần liền của con đang cháy rất đẹp — ráng giữ lửa nhé!";
+    } elseif ($streak >= 1) {
+        $khen = "🌱 $goi đang có chuỗi $streak tuần đi lễ rồi đó — cố thêm chút nữa cho ngọn lửa lớn hơn nhé!";
+    } else {
+        $khen = "🕊️ Chúa Nhật này $goi nhớ tới nhà thờ dự lễ, để nhóm lại ngọn lửa yêu Chúa nhé!";
+    }
+
+    $nhac = "Nhớ đi lễ Chúa Nhật đều đặn, chuyên cần học Giáo Lý và luôn sống ngoan, vâng lời ông bà cha mẹ con nhé! 💛";
+
+    return ['khen' => $khen, 'nhac' => $nhac];
+}
 ?><!doctype html>
 <html lang="vi">
 <head>
@@ -222,9 +246,19 @@ form.tra button:active{transform:scale(.97)}
  box-shadow:0 7px 16px -6px rgba(191,23,46,.75), inset 0 2px 3px rgba(255,255,255,.35);
  animation:sapDong .45s 1.25s cubic-bezier(.3,1.4,.5,1) both}
 @keyframes sapDong{0%{opacity:0;transform:scale(2.2) rotate(-24deg)}70%{opacity:1;transform:scale(.86) rotate(-6deg)}100%{opacity:1;transform:scale(1) rotate(-8deg)}}
+/* Lời động viên + nhắc nhở trong thư (nền giấy vàng ấm) */
+.thu-loi{margin-top:14px;background:linear-gradient(135deg,#fff8e7,#fff2d2);border:1px solid #f4e0a3;border-radius:14px;padding:13px 15px;
+ opacity:0;animation:thuChu .6s 1.55s ease both}
+.thu-loi .khen{font-size:13.5px;font-weight:800;color:#8a5e08;line-height:1.5}
+.thu-loi .nhac{font-size:12.5px;color:#7c5a12;margin-top:6px;line-height:1.55;font-style:italic}
+/* Chữ ký cuối thư */
+.thu-ky{margin-top:14px;text-align:right;font-size:12.5px;color:#64748b;font-style:italic;line-height:1.5;
+ opacity:0;animation:thuChu .6s 1.75s ease both}
+.thu-ky b{color:var(--nen2);font-style:normal}
+
 @media (prefers-reduced-motion: reduce){
  .tia,.phong-bi{display:none}
- .la-thu,.dau-sap,.thu-tieude{animation:none;opacity:1;transform:none}
+ .la-thu,.dau-sap,.thu-tieude,.thu-loi,.thu-ky{animation:none;opacity:1;transform:none}
 }
 
 /* ---------- Tab Đổi quà: lưới quà + giỏ ---------- */
@@ -475,6 +509,12 @@ form.tra button:active{transform:scale(.97)}
           </div>
         </div>
 
+        <?php $loi = loiLaThu($ketQua); ?>
+        <div class="thu-loi">
+          <div class="khen"><?= e_($loi['khen']) ?></div>
+          <div class="nhac"><?= e_($loi['nhac']) ?></div>
+        </div>
+
         <div class="lichsu">
           <h3>LỊCH SỬ GẦN ĐÂY</h3>
           <?php if (empty($ketQua['recent_transactions'])): ?>
@@ -491,6 +531,7 @@ form.tra button:active{transform:scale(.97)}
             <?php endforeach; ?>
           <?php endif; ?>
         </div>
+        <div class="thu-ky">Thân mến,<br><b>Ban Huynh Trưởng · Đoàn TNTT Phú Trung</b> ✝️</div>
       </div>
       </div><!-- /.thu-canh -->
 
