@@ -294,15 +294,27 @@ form.tra button:active{transform:scale(.97)}
 /* token nhỏ đứng trước số Ví */
 .moc-mini{display:inline-flex;width:20px;height:20px;border-radius:50%;overflow:hidden;vertical-align:-4px;margin-right:4px;border:1.5px solid #c0392b;background:#fff}
 .moc-mini img{width:82%;height:82%;object-fit:contain;margin:auto}
-/* hàng con Mộc đã đóng theo chuỗi đi lễ */
-.bo-moc{margin-top:14px;background:rgba(255,255,255,.55);border:1px dashed #d9c79b;border-radius:14px;padding:12px}
-.bo-moc .tit{font-size:11px;font-weight:800;color:#8a5e08;text-transform:uppercase;letter-spacing:.4px;margin-bottom:9px;text-align:center}
-.bo-moc .hang{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
-.moc{width:34px;height:34px;border-radius:50%;flex:0 0 auto;display:flex;align-items:center;justify-content:center;overflow:hidden;
- background:radial-gradient(circle at 50% 40%,#fff,#ffe3e6);border:2px solid #c0392b;box-shadow:0 3px 7px -3px rgba(192,57,43,.5)}
-.moc img{width:78%;height:78%;object-fit:contain}
-.moc.trong{background:#f4ecd8;border:2px dashed #cdba8f;box-shadow:none}
-.bo-moc .chu{font-size:11.5px;color:#94a3b8;text-align:center;margin-top:9px;font-style:italic}
+/* Tiêu đề mục (ngăn Trang Mộc / Trang tổng kết) */
+.muc{display:flex;align-items:center;gap:8px;margin:20px 0 10px;color:#8a5e08;font-weight:900;font-size:13px;letter-spacing:.3px}
+.muc::before,.muc::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,transparent,#e6d6a8,transparent)}
+/* Băng "hôm nay đã đóng chưa" */
+.homnay{display:flex;align-items:center;gap:8px;justify-content:center;text-align:center;background:linear-gradient(135deg,#fff6d6,#ffe9a8);border:1px solid #f2cf6a;border-radius:12px;padding:9px 12px;font-size:12.5px;font-weight:800;color:#8a5e08;margin-bottom:12px}
+.homnay.chua{background:#f5f0e2;border-color:#ddcea6;color:#8a7a4a}
+/* Tổng số Mộc — số lớn để khoe */
+.tong-lon{text-align:center;margin-bottom:12px}
+.tong-lon .num{font-size:40px;font-weight:900;color:#c0392b;line-height:1;display:inline-flex;align-items:center;gap:6px}
+.tong-lon .num .moc-mini{width:26px;height:26px}
+.tong-lon .cap{font-size:12px;color:#94a3b8;font-weight:700;margin-top:4px}
+/* Bộ sưu tập con Mộc — gom theo cụm 10 (2 hàng 5) cho dễ đếm */
+.moc-luoi{display:flex;flex-wrap:wrap;gap:7px;justify-content:center}
+.chuc{display:flex;flex-wrap:wrap;gap:4px;padding:5px;border-radius:9px;background:rgba(192,57,43,.05);width:126px;justify-content:center}
+.moc2{width:22px;height:22px;border-radius:50%;position:relative;flex:0 0 auto;
+ background:radial-gradient(circle at 40% 34%,#ef6b5a,#b3271a);box-shadow:0 2px 4px -2px rgba(150,20,10,.6), inset 0 1px 2px rgba(255,255,255,.4)}
+.moc2::after{content:"✦";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:rgba(255,240,205,.85);font-size:10px}
+.moc2.moi{background:radial-gradient(circle at 40% 34%,#ffd35a,#f59e0b);box-shadow:0 0 0 2px #fff,0 0 10px 2px rgba(245,158,11,.75);animation:mocMoi 1s ease-in-out infinite alternate}
+.moc2.moi::after{color:#7a4a05}
+@keyframes mocMoi{to{transform:scale(1.14)}}
+.moc-du{align-self:center;font-size:12px;font-weight:800;color:#c0392b;padding:0 6px}
 
 /* Lời khen + động viên + nhắc nhở */
 .thu-loi{margin-top:16px;background:linear-gradient(135deg,#fff8e7,#fff2d2);border:1px solid #f4e0a3;border-radius:14px;padding:14px 16px}
@@ -317,6 +329,7 @@ form.tra button:active{transform:scale(.97)}
  .so-canh.mo .bia{animation:none;display:none}
  .trang-so{animation:none;opacity:1;transform:none}
  .dau-so{animation:none;opacity:1;transform:rotate(-8deg)}
+ .moc2.moi{animation:none}
 }
 
 /* ---------- Tab Đổi quà: lưới quà + giỏ ---------- */
@@ -522,11 +535,23 @@ form.tra button:active{transform:scale(.97)}
       <?php
         $loi = loiLaThu($ketQua);
         $logo = 'assets/img/optimized/logo.webp';   // con dấu logo (nhẹ ~82KB, cache 1 lần)
-        // "Con Mộc" đã đóng = mỗi tuần đi lễ liên tiếp 1 con; kèm vài ô trống khích lệ.
-        $streakInt = (int) $ketQua['current_streak'];
-        $mocDay    = min($streakInt, 12);                 // tối đa hiển thị 12 con cho gọn
-        $mocThem   = max(0, $streakInt - 12);             // dư thì ghi "+N"
-        $mocTrong  = ($streakInt <= 7) ? (8 - $mocDay) : 0; // ít thì thêm ô trống mời đóng tiếp
+
+        // ===== BỘ SƯU TẬP MỘC: mỗi điểm "Tổng đã kiếm" = 1 con Mộc =====
+        // Dùng total_earned (chỉ tăng, đổi quà KHÔNG mất) để sổ luôn đầy dần.
+        $tongMoc = (int) $ketQua['total_earned'];
+        $CAP_MOC = 600;                              // trần vẽ để không quá nặng máy yếu
+        $veMoc   = min($tongMoc, $CAP_MOC);
+        $duMoc   = max(0, $tongMoc - $CAP_MOC);
+
+        // Mộc "hôm nay" = tổng điểm cộng trong ngày (để tô sáng + báo đã đóng chưa).
+        $mocHomNay = 0; $today = date('Y-m-d');
+        foreach (($ketQua['recent_transactions'] ?? []) as $t) {
+            if ((int) $t['amount'] > 0 && date('Y-m-d', strtotime($t['created_at'])) === $today) {
+                $mocHomNay += (int) $t['amount'];
+            }
+        }
+        $mocHomNay = min($mocHomNay, $veMoc);       // số con sẽ tô sáng ở cuối
+        $tuSang    = $veMoc - $mocHomNay;           // từ chỉ số này trở đi là Mộc hôm nay
       ?>
       <div class="so-canh" id="soCanh">
         <div class="xoan" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
@@ -545,6 +570,28 @@ form.tra button:active{transform:scale(.97)}
           </div>
         </div>
 
+        <!-- ===== TRANG MỘC — để các em khoe & đếm ===== -->
+        <div class="muc">🌰 TRANG MỘC</div>
+        <?php if ($mocHomNay > 0): ?>
+          <div class="homnay">✅ Hôm nay em đã được đóng <b>+<?= $mocHomNay ?></b> Mộc — giỏi quá!</div>
+        <?php else: ?>
+          <div class="homnay chua">🕒 Hôm nay chưa có Mộc mới — đi lễ / đi học Giáo Lý để được đóng nhé!</div>
+        <?php endif; ?>
+        <div class="tong-lon">
+          <div class="num"><span class="moc-mini"><img src="<?= $logo ?>" alt=""></span><?= $tongMoc ?></div>
+          <div class="cap">con Mộc em đã đóng được</div>
+        </div>
+        <div class="moc-luoi">
+          <?php for ($i = 0; $i < $veMoc; $i++): ?>
+            <?php if ($i % 10 === 0): ?><div class="chuc"><?php endif; ?>
+            <span class="moc2<?= $i >= $tuSang ? ' moi' : '' ?>" aria-hidden="true"></span>
+            <?php if ($i % 10 === 9 || $i === $veMoc - 1): ?></div><?php endif; ?>
+          <?php endfor; ?>
+          <?php if ($duMoc > 0): ?><span class="moc-du">+<?= $duMoc ?></span><?php endif; ?>
+        </div>
+
+        <!-- ===== TRANG TỔNG KẾT ===== -->
+        <div class="muc">📋 TRANG TỔNG KẾT</div>
         <div class="vi">
           <div class="o">
             <div class="nhan">VÍ MỘC</div>
@@ -563,26 +610,6 @@ form.tra button:active{transform:scale(.97)}
           <div class="o lua">
             <div class="nhan">🏆 KỶ LỤC CHUỖI</div>
             <div class="so"><?= (int) $ketQua['longest_streak'] ?></div>
-          </div>
-        </div>
-
-        <!-- HÀNG CON MỘC ĐÃ ĐÓNG — cho thấy "Mộc" thật sự -->
-        <div class="bo-moc">
-          <div class="tit">🌰 Con Mộc đi lễ đã đóng</div>
-          <div class="hang">
-            <?php for ($i = 0; $i < $mocDay; $i++): ?>
-              <span class="moc"><img src="<?= $logo ?>" alt="một con Mộc"></span>
-            <?php endfor; ?>
-            <?php for ($i = 0; $i < $mocTrong; $i++): ?>
-              <span class="moc trong" aria-hidden="true"></span>
-            <?php endfor; ?>
-          </div>
-          <div class="chu">
-            <?php if ($streakInt > 0): ?>
-              Mỗi tuần đi lễ, em được đóng thêm một con Mộc<?= $mocThem > 0 ? ' · và còn +' . $mocThem . ' con nữa!' : '' ?>
-            <?php else: ?>
-              Chúa Nhật này đi lễ để đóng con Mộc đầu tiên nhé!
-            <?php endif; ?>
           </div>
         </div>
 
