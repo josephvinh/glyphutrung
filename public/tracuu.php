@@ -70,11 +70,30 @@ if ($ma !== '') {
  * truyền xuống cả doiQuaApp lẫn soMocPending qua JSON — 2 component Alpine
  * KHÔNG tự gọi action=pending lúc init nữa (fix round 1: double-throttle). */
 $pendingOut = null;
+$mocNgay = [];   // ['Y-m-d' => số Mộc đóng ngày đó] — cho LỊCH ĐÓNG MỘC
 if ($ketQua) {
     $emRow = db_one('SELECT id FROM students WHERE code = ?', [$ma]);
     if ($emRow) {
         rewards_expire_due($yearId); // dọn lazy đơn đã quá hạn trước khi đọc (§6.5)
         $pendingOut = rewards_pending_order((int) $emRow['id'], $yearId);
+
+        /* Mộc đóng theo NGÀY (cả niên khoá) — ghép giao dịch earn/bonus với
+           ngày điểm danh THẬT (attendances.session_date), không dùng created_at
+           (là lúc recalc). Đọc một lần, JS dựng lịch từng tháng phía trình duyệt
+           nên lật tháng KHÔNG tốn thêm lượt tra cứu. */
+        $rowsLich = db_all(
+            "SELECT a.session_date AS ngay, SUM(st.amount) AS moc
+               FROM stamp_transactions st
+               JOIN attendances a ON a.id = st.ref_attendance_id
+              WHERE st.student_id = ? AND st.year_id = ?
+                AND st.type IN ('attendance','streak_bonus')
+              GROUP BY a.session_date",
+            [(int) $emRow['id'], $yearId]
+        );
+        foreach ($rowsLich as $r) {
+            $m = (int) $r['moc'];
+            if ($m > 0) $mocNgay[(string) $r['ngay']] = $m;
+        }
     }
 }
 
@@ -300,21 +319,37 @@ form.tra button:active{transform:scale(.97)}
 /* Băng "hôm nay đã đóng chưa" */
 .homnay{display:flex;align-items:center;gap:8px;justify-content:center;text-align:center;background:linear-gradient(135deg,#fff6d6,#ffe9a8);border:1px solid #f2cf6a;border-radius:12px;padding:9px 12px;font-size:12.5px;font-weight:800;color:#8a5e08;margin-bottom:12px}
 .homnay.chua{background:#f5f0e2;border-color:#ddcea6;color:#8a7a4a}
-/* Tổng số Mộc — số lớn để khoe */
+/* Tổng số Mộc — dòng khoe gọn */
 .tong-lon{text-align:center;margin-bottom:12px}
-.tong-lon .num{font-size:40px;font-weight:900;color:#c0392b;line-height:1;display:inline-flex;align-items:center;gap:6px}
-.tong-lon .num .moc-mini{width:26px;height:26px}
+.tong-lon .num{font-size:34px;font-weight:900;color:#c0392b;line-height:1;display:inline-flex;align-items:center;gap:6px}
+.tong-lon .num .moc-mini{width:24px;height:24px}
 .tong-lon .cap{font-size:12px;color:#94a3b8;font-weight:700;margin-top:4px}
-/* Bộ sưu tập con Mộc — gom theo cụm 10 (2 hàng 5) cho dễ đếm */
-.moc-luoi{display:flex;flex-wrap:wrap;gap:7px;justify-content:center}
-.chuc{display:flex;flex-wrap:wrap;gap:4px;padding:5px;border-radius:9px;background:rgba(192,57,43,.05);width:126px;justify-content:center}
-.moc2{width:22px;height:22px;border-radius:50%;position:relative;flex:0 0 auto;
- background:radial-gradient(circle at 40% 34%,#ef6b5a,#b3271a);box-shadow:0 2px 4px -2px rgba(150,20,10,.6), inset 0 1px 2px rgba(255,255,255,.4)}
-.moc2::after{content:"✦";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:rgba(255,240,205,.85);font-size:10px}
-.moc2.moi{background:radial-gradient(circle at 40% 34%,#ffd35a,#f59e0b);box-shadow:0 0 0 2px #fff,0 0 10px 2px rgba(245,158,11,.75);animation:mocMoi 1s ease-in-out infinite alternate}
-.moc2.moi::after{color:#7a4a05}
-@keyframes mocMoi{to{transform:scale(1.14)}}
-.moc-du{align-self:center;font-size:12px;font-weight:800;color:#c0392b;padding:0 6px}
+
+/* ===== LỊCH ĐÓNG MỘC ===== */
+.lich{background:rgba(255,255,255,.6);border:1px solid #e6dcc0;border-radius:14px;padding:12px}
+.lich-dau{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.lich-dau b{font-size:14px;font-weight:900;color:#8a5e08}
+.lich-dau button{width:34px;height:34px;border-radius:10px;border:1px solid #e6dcc0;background:#fff;color:#8a5e08;font-size:17px;font-weight:900;cursor:pointer;line-height:1}
+.lich-dau button:disabled{opacity:.3;cursor:default}
+.lich-dau button:active:not(:disabled){transform:scale(.92)}
+.lich-tuan,.lich-luoi{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.lich-tuan{margin-bottom:4px}
+.lich-tuan span{text-align:center;font-size:10.5px;font-weight:800;color:#94a3b8;padding:2px 0}
+.lich-tuan span.cn{color:#c0392b}
+.o-ngay{aspect-ratio:1/1;border-radius:9px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+ background:#fff;border:1px solid #eee5cf;position:relative;min-height:34px}
+.o-ngay.trong{background:transparent;border:0}
+.o-ngay .d{font-size:11.5px;font-weight:700;color:#475569}
+.o-ngay.cn .d{color:#c0392b}
+.o-ngay.co{background:linear-gradient(135deg,#fff2c6,#ffdf83);border-color:#f0c04a;box-shadow:0 2px 5px -3px rgba(200,140,20,.6)}
+.o-ngay .badge{font-size:9px;font-weight:900;color:#fff;background:#c0392b;border-radius:999px;padding:0 5px;line-height:14px;min-width:14px;text-align:center}
+.o-ngay.today{outline:2px solid #15347e;outline-offset:1px;z-index:1}
+.o-ngay.tuonglai{opacity:.4}
+.o-ngay.tuonglai .d{color:#b8a} /* mờ ngày chưa tới */
+.lich-tong{text-align:center;font-size:12px;color:#8a5e08;font-weight:800;margin-top:10px}
+.lich-tong b{color:#c0392b}
+.lich-kien{margin-top:10px;font-size:11.5px;color:#7c5a12;background:#fff8e7;border:1px dashed #f0c04a;border-radius:10px;padding:9px 11px;line-height:1.55}
+.lich-trong{grid-column:1 / -1;text-align:center;color:#94a3b8;font-size:12px;padding:14px 0}
 
 /* Lời khen + động viên + nhắc nhở */
 .thu-loi{margin-top:16px;background:linear-gradient(135deg,#fff8e7,#fff2d2);border:1px solid #f4e0a3;border-radius:14px;padding:14px 16px}
@@ -329,7 +364,6 @@ form.tra button:active{transform:scale(.97)}
  .so-canh.mo .bia{animation:none;display:none}
  .trang-so{animation:none;opacity:1;transform:none}
  .dau-so{animation:none;opacity:1;transform:rotate(-8deg)}
- .moc2.moi{animation:none}
 }
 
 /* ---------- Tab Đổi quà: lưới quà + giỏ ---------- */
@@ -535,23 +569,9 @@ form.tra button:active{transform:scale(.97)}
       <?php
         $loi = loiLaThu($ketQua);
         $logo = 'assets/img/optimized/logo.webp';   // con dấu logo (nhẹ ~82KB, cache 1 lần)
-
-        // ===== BỘ SƯU TẬP MỘC: mỗi điểm "Tổng đã kiếm" = 1 con Mộc =====
-        // Dùng total_earned (chỉ tăng, đổi quà KHÔNG mất) để sổ luôn đầy dần.
-        $tongMoc = (int) $ketQua['total_earned'];
-        $CAP_MOC = 600;                              // trần vẽ để không quá nặng máy yếu
-        $veMoc   = min($tongMoc, $CAP_MOC);
-        $duMoc   = max(0, $tongMoc - $CAP_MOC);
-
-        // Mộc "hôm nay" = tổng điểm cộng trong ngày (để tô sáng + báo đã đóng chưa).
-        $mocHomNay = 0; $today = date('Y-m-d');
-        foreach (($ketQua['recent_transactions'] ?? []) as $t) {
-            if ((int) $t['amount'] > 0 && date('Y-m-d', strtotime($t['created_at'])) === $today) {
-                $mocHomNay += (int) $t['amount'];
-            }
-        }
-        $mocHomNay = min($mocHomNay, $veMoc);       // số con sẽ tô sáng ở cuối
-        $tuSang    = $veMoc - $mocHomNay;           // từ chỉ số này trở đi là Mộc hôm nay
+        $tongMoc   = (int) $ketQua['total_earned'];  // tổng con Mộc đã đóng (để khoe)
+        $today     = date('Y-m-d');
+        $mocHomNay = $mocNgay[$today] ?? 0;          // Mộc đóng HÔM NAY (theo lịch)
       ?>
       <div class="so-canh" id="soCanh">
         <div class="xoan" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
@@ -579,15 +599,20 @@ form.tra button:active{transform:scale(.97)}
         <?php endif; ?>
         <div class="tong-lon">
           <div class="num"><span class="moc-mini"><img src="<?= $logo ?>" alt=""></span><?= $tongMoc ?></div>
-          <div class="cap">con Mộc em đã đóng được</div>
+          <div class="cap">con Mộc em đã đóng được từ đầu năm</div>
         </div>
-        <div class="moc-luoi">
-          <?php for ($i = 0; $i < $veMoc; $i++): ?>
-            <?php if ($i % 10 === 0): ?><div class="chuc"><?php endif; ?>
-            <span class="moc2<?= $i >= $tuSang ? ' moi' : '' ?>" aria-hidden="true"></span>
-            <?php if ($i % 10 === 9 || $i === $veMoc - 1): ?></div><?php endif; ?>
-          <?php endfor; ?>
-          <?php if ($duMoc > 0): ?><span class="moc-du">+<?= $duMoc ?></span><?php endif; ?>
+
+        <!-- LỊCH ĐÓNG MỘC — JS dựng từng tháng từ dữ liệu mocNgay (lật tháng khỏi tải lại) -->
+        <div class="lich" id="lichMoc">
+          <div class="lich-dau">
+            <button type="button" id="lichTruoc" aria-label="Tháng trước">‹</button>
+            <b id="lichTen">—</b>
+            <button type="button" id="lichSau" aria-label="Tháng sau">›</button>
+          </div>
+          <div class="lich-tuan"><span class="cn">CN</span><span>T2</span><span>T3</span><span>T4</span><span>T5</span><span>T6</span><span>T7</span></div>
+          <div class="lich-luoi" id="lichLuoi"></div>
+          <div class="lich-tong" id="lichTong"></div>
+          <div class="lich-kien">🔎 Ô vàng là ngày em được đóng Mộc. Nếu em đi lễ/đi học mà ngày đó chưa có Mộc, hãy báo Huynh Trưởng để kiểm tra và chỉnh lại nhé!</div>
         </div>
 
         <!-- ===== TRANG TỔNG KẾT ===== -->
@@ -701,11 +726,61 @@ form.tra button:active{transform:scale(.97)}
 <script src="assets/js/tracuu.js?v=<?php echo @filemtime(__DIR__ . '/assets/js/tracuu.js') ?: 0; ?>"></script>
 <script defer src="assets/js/vendor/alpine.js?v=<?php echo @filemtime(__DIR__ . '/assets/js/vendor/alpine.js') ?: 0; ?>"></script>
 
-<?php /* Bấm bìa sổ -> mở sổ (thêm class .mo để chạy hoạt hình lật bìa). */ ?>
+<?php /* Bấm bìa sổ -> mở sổ; và dựng LỊCH ĐÓNG MỘC từ dữ liệu theo ngày. */ ?>
 <script>
 (function(){
   var b = document.getElementById('moSoBtn'), c = document.getElementById('soCanh');
   if (b && c) b.addEventListener('click', function(){ c.classList.add('mo'); });
+
+  // ----- LỊCH ĐÓNG MỘC -----
+  var MOC = <?php echo json_encode($mocNgay, JSON_UNESCAPED_UNICODE); ?> || {};
+  var luoi = document.getElementById('lichLuoi');
+  if (!luoi) return;
+  var elTen = document.getElementById('lichTen'),
+      elTong = document.getElementById('lichTong'),
+      btPrev = document.getElementById('lichTruoc'),
+      btNext = document.getElementById('lichSau');
+  var TEN_THANG = ['Một','Hai','Ba','Tư','Năm','Sáu','Bảy','Tám','Chín','Mười','Mười một','Mười hai'];
+
+  function p2(n){ return (n<10?'0':'')+n; }
+  var now = new Date(); var curY = now.getFullYear(), curM = now.getMonth();
+  var todayKey = curY+'-'+p2(curM+1)+'-'+p2(now.getDate());
+
+  // Giới hạn lật: từ tháng có Mộc sớm nhất -> tháng hiện tại (không sang tương lai)
+  var minY = curY, minM = curM;
+  Object.keys(MOC).forEach(function(k){
+    var pr = k.split('-'); var y=+pr[0], m=+pr[1]-1;
+    if (y<minY || (y===minY && m<minM)){ minY=y; minM=m; }
+  });
+  var viewY = curY, viewM = curM;
+
+  function ve(){
+    var first = new Date(viewY, viewM, 1);
+    var batDau = first.getDay();               // 0=CN ... khớp cột CN đầu
+    var soNgay = new Date(viewY, viewM+1, 0).getDate();
+    elTen.textContent = 'Tháng ' + TEN_THANG[viewM] + ' / ' + viewY;
+    var html = '', tongThang = 0, ngayCo = 0;
+    for (var i=0;i<batDau;i++) html += '<div class="o-ngay trong"></div>';
+    for (var d=1; d<=soNgay; d++){
+      var key = viewY+'-'+p2(viewM+1)+'-'+p2(d);
+      var moc = MOC[key] || 0;
+      var col = new Date(viewY, viewM, d).getDay(); // 0=CN
+      var cls = 'o-ngay' + (col===0?' cn':'') + (moc>0?' co':'') + (key===todayKey?' today':'') + (key>todayKey?' tuonglai':'');
+      html += '<div class="'+cls+'"><span class="d">'+d+'</span>'
+            + (moc>0 ? '<span class="badge">+'+moc+'</span>' : '') + '</div>';
+      if (moc>0){ tongThang += moc; ngayCo++; }
+    }
+    luoi.innerHTML = html;
+    elTong.innerHTML = ngayCo>0
+      ? ('Tháng này: <b>'+tongThang+'</b> con Mộc · '+ngayCo+' ngày được đóng')
+      : 'Tháng này chưa có con Mộc nào — cố lên nhé!';
+    var truocDuoc = (viewY>minY) || (viewY===minY && viewM>minM);
+    var sauDuoc   = (viewY<curY) || (viewY===curY && viewM<curM);
+    btPrev.disabled = !truocDuoc; btNext.disabled = !sauDuoc;
+  }
+  btPrev.addEventListener('click', function(){ if(viewM===0){viewM=11;viewY--;}else viewM--; ve(); });
+  btNext.addEventListener('click', function(){ if(viewM===11){viewM=0;viewY++;}else viewM++; ve(); });
+  ve();
 })();
 </script>
 
