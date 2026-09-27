@@ -235,87 +235,88 @@ form.tra button:active{transform:scale(.97)}
 [x-cloak]{display:none !important}
 
 /* ============================================================
-   LÁ THƯ SỔ MỘC — BẤM ĐỂ MỞ (không tự chạy).
-   Đầu tiên hiện phong bì đóng có con dấu logo Đoàn trên nắp; các em
-   CHẠM vào để mở: nắp lật lên, lá thư bay ra, con dấu logo đóng ở
-   MÉP thư. Máy bật "giảm chuyển động" thì mở thẳng, không hoạt hình.
+   CUỐN SỔ MỘC — BẤM ĐỂ MỞ (không tự chạy).
+   Đầu tiên hiện BÌA SỔ gỗ (gáy lò xo + logo Đoàn); các em CHẠM để mở:
+   bìa lật lên, lộ TRANG GIẤY kẻ ô bên trong. Trên trang có "con Mộc"
+   (con dấu) đóng theo chuỗi đi lễ để thấy rõ "Mộc" của mình.
+   Máy bật "giảm chuyển động" thì mở thẳng, không hoạt hình.
    ============================================================ */
-.thu-canh{position:relative;perspective:1400px;padding-top:6px}
+.so-canh{position:relative;perspective:1800px;max-width:390px;margin:8px auto 0}
 
-/* Con dấu tròn = logo Đoàn (dùng cho cả nắp phong bì lẫn mép thư) */
+/* Con dấu tròn = logo Đoàn */
 .con-dau{border-radius:50%;background:radial-gradient(circle at 50% 40%,#fff,#ffe9ec 72%,#ffd6dc);
  border:2px solid #c0182f;box-shadow:0 6px 14px -6px rgba(192,24,47,.6), inset 0 0 0 3px rgba(192,24,47,.12);
  display:flex;align-items:center;justify-content:center;overflow:hidden}
 .con-dau img{width:80%;height:80%;object-fit:contain}
 
-/* --- Phong bì ĐÓNG = nút bấm để mở --- */
-.bao-thu{display:block;width:100%;max-width:340px;margin:6px auto 0;position:relative;aspect-ratio:7/5;
- border:0;background:transparent;cursor:pointer;padding:0;font-family:inherit;
- filter:drop-shadow(0 16px 30px rgba(180,120,10,.35));transition:transform .15s}
-.bao-thu:active{transform:scale(.98)}
-.bao-thu:focus-visible{outline:3px solid var(--nen2);outline-offset:4px;border-radius:16px}
-.bao-thu .bt-than{position:absolute;inset:0;border-radius:14px;background:linear-gradient(135deg,#fde9b6,#f2bd50)}
-.bao-thu .bt-tui{position:absolute;inset:0;border-radius:14px;background:linear-gradient(135deg,#f7d488,#e9b23c);
- clip-path:polygon(0 0,50% 46%,100% 0,100% 100%,0 100%)}
-.bao-thu .bt-nap{position:absolute;left:0;top:0;width:100%;height:56%;background:linear-gradient(135deg,#f3c150,#d99a2b);
- clip-path:polygon(0 0,100% 0,50% 92%);transform-origin:top center;backface-visibility:hidden;z-index:3}
-.bao-thu .bt-dau{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);z-index:4;width:72px;height:72px}
-.bt-hint{position:absolute;left:0;right:0;bottom:9px;text-align:center;color:#7a4d06;font-weight:800;font-size:13px;z-index:2}
-.bt-hint span{display:block;font-weight:600;font-size:11.5px;opacity:.85;margin-top:1px}
-.bt-caption{text-align:center;font-size:11.5px;color:#94a3b8;margin:8px 0 2px}
+/* Gáy lò xo trên cùng + ruy-băng đánh dấu — luôn hiện */
+.xoan{position:absolute;top:-8px;left:0;right:0;display:flex;justify-content:space-around;padding:0 22px;z-index:9;pointer-events:none}
+.xoan i{width:11px;height:16px;border-radius:6px;border:3px solid #9aa3af;border-top-color:#cbd5e1;background:#fff}
+.ruy-bang{position:absolute;top:-2px;right:30px;width:26px;height:66px;z-index:8;background:linear-gradient(#e11d36,#8a1120);
+ clip-path:polygon(0 0,100% 0,100% 100%,50% 80%,0 100%);box-shadow:0 6px 10px -6px rgba(138,17,32,.7)}
 
-/* --- Sau khi MỞ (ẩn cho tới khi bấm) --- */
-.sau-mo{display:none}
-.thu-canh.mo .sau-mo{display:block}
-.thu-canh.mo .bao-thu{animation:baoBay .65s ease-in forwards;pointer-events:none}
-@keyframes baoBay{35%{opacity:1}100%{opacity:0;transform:translateY(28px) scale(.9)}}
-.thu-canh.mo .bt-nap{animation:napMo .5s ease-out forwards}
-@keyframes napMo{to{transform:rotateX(172deg)}}
-
-/* Tia lấp lánh */
-.tia{position:absolute;inset:0;pointer-events:none;z-index:0;overflow:visible}
-.thu-canh.mo .tia span{position:absolute;font-size:18px;opacity:0;animation:tiaBay 2.2s ease-out forwards}
-@keyframes tiaBay{0%{opacity:0;transform:translateY(24px) scale(.4)}25%{opacity:1}100%{opacity:0;transform:translateY(-92px) scale(1.1) rotate(28deg)}}
-
-/* --- Lá thư (to & đẹp hơn: giấy có vân, viền, dấu mờ logo) --- */
-.la-thu{position:relative;z-index:1;transform-origin:center top;
- background:repeating-linear-gradient(0deg,transparent 0 30px,rgba(21,52,126,.045) 30px 31px),linear-gradient(180deg,#fffdf7,#fff7ea);
- border:1px solid #efe3c4;border-radius:20px;padding:24px 22px 22px;
- box-shadow:0 26px 52px -24px rgba(15,23,42,.42);
- animation:thuBay .9s cubic-bezier(.2,.85,.25,1.1) both}
-.la-thu::before{content:"";position:absolute;left:22px;right:22px;top:13px;height:1px;background:linear-gradient(90deg,transparent,#e6d6a8,transparent)}
-@keyframes thuBay{0%{opacity:0;transform:translateY(70px) scale(.82) rotate(-2deg)}55%{opacity:1}100%{opacity:1;transform:translateY(0) scale(1) rotate(0)}}
-.la-thu .nen-logo{position:absolute;inset:0;background-position:center 62%;background-repeat:no-repeat;background-size:220px;opacity:.045;pointer-events:none;border-radius:20px}
-.la-thu > *{position:relative}
-
-.thu-tieude{text-align:center;font-size:14px;color:#64748b;font-weight:700;margin:4px 0 14px;padding:0 4px;line-height:1.5}
-.thu-tieude b{color:var(--nen2)}
-.la-thu .hoso .ten{font-size:17px}
-.la-thu .o .so{font-size:26px}
-
-/* Con dấu logo đóng ở MÉP THƯ (góc dưới phải) — không đè lên tên */
-.dau-sap{position:absolute;right:14px;bottom:12px;width:62px;height:62px;z-index:3;transform:rotate(-8deg);
+/* Trang giấy bên trong (kẻ ô + lề đỏ + logo mờ) */
+.trang-so{position:relative;min-height:320px;
+ background:repeating-linear-gradient(0deg,transparent 0 29px,rgba(21,52,126,.06) 29px 30px),linear-gradient(180deg,#fffdf7,#fff7ea);
+ border:1px solid #e6dcc0;border-left:7px solid #c0392b;border-radius:6px 14px 14px 6px;
+ padding:26px 18px 20px 20px;box-shadow:0 26px 50px -24px rgba(60,40,10,.5);
+ transform-origin:top center;animation:trangMo .85s cubic-bezier(.2,.85,.25,1.05) both}
+@keyframes trangMo{0%{opacity:0;transform:rotateX(-82deg)}60%{opacity:1}100%{opacity:1;transform:rotateX(0)}}
+.trang-so .nen-logo{position:absolute;inset:0;background-position:center 64%;background-repeat:no-repeat;background-size:210px;opacity:.05;pointer-events:none}
+.trang-so > *{position:relative}
+.trang-tieu{text-align:center;font-size:13px;color:#8a5e08;font-weight:800;letter-spacing:.5px;margin:2px 0 14px}
+.trang-so .hoso .ten{font-size:17px}
+.trang-so .o{background:rgba(255,255,255,.6);border:1px solid #ece2c6}
+.trang-so .o .so{font-size:26px}
+/* Con dấu logo đóng ở góc trang */
+.dau-so{position:absolute;right:14px;bottom:12px;width:60px;height:60px;z-index:3;transform:rotate(-8deg);
  animation:sapDong .5s .95s cubic-bezier(.3,1.4,.5,1) both}
 @keyframes sapDong{0%{opacity:0;transform:scale(2) rotate(-26deg)}70%{opacity:1;transform:scale(.9) rotate(-4deg)}100%{opacity:1;transform:scale(1) rotate(-8deg)}}
+
+/* --- BÌA SỔ (đóng) = nút bấm, phủ lên trang --- */
+.bia{position:absolute;inset:0;z-index:6;border:0;cursor:pointer;padding:22px 18px;font-family:inherit;
+ transform-origin:top center;backface-visibility:hidden;border-radius:6px 14px 14px 6px;
+ background:linear-gradient(90deg,rgba(0,0,0,.28) 0 8px,rgba(0,0,0,0) 14px),
+  repeating-linear-gradient(90deg,#6f4c25 0 7px,#654524 7px 14px),linear-gradient(135deg,#7d5729,#452e15);
+ box-shadow:0 22px 44px -18px rgba(60,40,10,.75), inset 0 0 0 2px rgba(255,235,200,.14), inset 0 0 40px rgba(0,0,0,.25);
+ color:#f7e8ca;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;transition:transform .15s}
+.bia:active{transform:scale(.985)}
+.bia:focus-visible{outline:3px solid var(--vang);outline-offset:4px}
+.bia .khung{border:2px solid rgba(246,200,95,.5);border-radius:10px;padding:20px 18px;display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;max-width:250px}
+.bia .con-dau{width:78px;height:78px;border-color:rgba(246,200,95,.7);background:radial-gradient(circle at 50% 40%,#fff,#f7ead0)}
+.bia .tieu{font-size:20px;font-weight:900;letter-spacing:1px;color:var(--vang);text-shadow:0 1px 0 rgba(0,0,0,.3)}
+.bia .phu{font-size:11.5px;opacity:.85}
+.bia .cham{margin-top:6px;font-size:12.5px;font-weight:800;background:rgba(246,200,95,.18);border:1px solid rgba(246,200,95,.45);color:#ffedc2;padding:7px 14px;border-radius:999px}
+.so-canh.mo .bia{animation:biaLat .85s ease-in forwards;pointer-events:none}
+@keyframes biaLat{35%{opacity:1}100%{opacity:0;transform:rotateX(156deg)}}
+
+/* --- "CON MỘC" hữu hình --- */
+/* token nhỏ đứng trước số Ví */
+.moc-mini{display:inline-flex;width:20px;height:20px;border-radius:50%;overflow:hidden;vertical-align:-4px;margin-right:4px;border:1.5px solid #c0392b;background:#fff}
+.moc-mini img{width:82%;height:82%;object-fit:contain;margin:auto}
+/* hàng con Mộc đã đóng theo chuỗi đi lễ */
+.bo-moc{margin-top:14px;background:rgba(255,255,255,.55);border:1px dashed #d9c79b;border-radius:14px;padding:12px}
+.bo-moc .tit{font-size:11px;font-weight:800;color:#8a5e08;text-transform:uppercase;letter-spacing:.4px;margin-bottom:9px;text-align:center}
+.bo-moc .hang{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.moc{width:34px;height:34px;border-radius:50%;flex:0 0 auto;display:flex;align-items:center;justify-content:center;overflow:hidden;
+ background:radial-gradient(circle at 50% 40%,#fff,#ffe3e6);border:2px solid #c0392b;box-shadow:0 3px 7px -3px rgba(192,57,43,.5)}
+.moc img{width:78%;height:78%;object-fit:contain}
+.moc.trong{background:#f4ecd8;border:2px dashed #cdba8f;box-shadow:none}
+.bo-moc .chu{font-size:11.5px;color:#94a3b8;text-align:center;margin-top:9px;font-style:italic}
 
 /* Lời khen + động viên + nhắc nhở */
 .thu-loi{margin-top:16px;background:linear-gradient(135deg,#fff8e7,#fff2d2);border:1px solid #f4e0a3;border-radius:14px;padding:14px 16px}
 .thu-loi .khen{font-size:14px;font-weight:800;color:#8a5e08;line-height:1.55}
 .thu-loi .khen + .khen{margin-top:8px}
 .thu-loi .nhac{font-size:13px;color:#7c5a12;margin-top:8px;line-height:1.6;font-style:italic}
-/* Khẩu hiệu / Lời Chúa */
 .thu-cham{text-align:center;font-size:12.5px;color:var(--nen2);font-weight:700;font-style:italic;margin-top:16px;line-height:1.5;padding:0 8px}
-/* Chữ ký (chừa chỗ cho con dấu ở mép) */
 .thu-ky{margin-top:8px;text-align:right;font-size:13px;color:#475569;font-style:italic;line-height:1.5;padding-right:64px}
 .thu-ky b{color:var(--nen2);font-style:normal}
 
-@media (min-width:560px){ .la-thu{padding:30px 30px 26px} .bao-thu{max-width:380px} }
-
 @media (prefers-reduced-motion: reduce){
- .tia{display:none}
- .thu-canh.mo .bao-thu{animation:none;display:none}
- .la-thu{animation:none;opacity:1;transform:none}
- .dau-sap{animation:none;opacity:1;transform:rotate(-8deg)}
+ .so-canh.mo .bia{animation:none;display:none}
+ .trang-so{animation:none;opacity:1;transform:none}
+ .dau-so{animation:none;opacity:1;transform:rotate(-8deg)}
 }
 
 /* ---------- Tab Đổi quà: lưới quà + giỏ ---------- */
@@ -520,37 +521,22 @@ form.tra button:active{transform:scale(.97)}
 
       <?php
         $loi = loiLaThu($ketQua);
-        $p = preg_split('/\s+/', trim((string) $ketQua['full_name']));
-        $goiTen = (is_array($p) && $p && end($p) !== '') ? end($p) : 'bạn';
+        $logo = 'assets/img/optimized/logo.webp';   // con dấu logo (nhẹ ~82KB, cache 1 lần)
+        // "Con Mộc" đã đóng = mỗi tuần đi lễ liên tiếp 1 con; kèm vài ô trống khích lệ.
+        $streakInt = (int) $ketQua['current_streak'];
+        $mocDay    = min($streakInt, 12);                 // tối đa hiển thị 12 con cho gọn
+        $mocThem   = max(0, $streakInt - 12);             // dư thì ghi "+N"
+        $mocTrong  = ($streakInt <= 7) ? (8 - $mocDay) : 0; // ít thì thêm ô trống mời đóng tiếp
       ?>
-      <div class="thu-canh" id="thuCanh">
+      <div class="so-canh" id="soCanh">
+        <div class="xoan" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="ruy-bang" aria-hidden="true"></div>
 
-        <!-- PHONG BÌ ĐÓNG — bấm để mở (nút thật cho cả bàn phím) -->
-        <button type="button" class="bao-thu" id="moThuBtn"
-                aria-label="Chạm để mở lá thư Sổ Mộc gửi <?= e_($ketQua['full_name']) ?>">
-          <span class="bt-than" aria-hidden="true"></span>
-          <span class="bt-tui" aria-hidden="true"></span>
-          <span class="bt-nap" aria-hidden="true"></span>
-          <span class="bt-dau con-dau" aria-hidden="true"><img src="assets/img/logo.png" alt="" width="72" height="72"></span>
-          <span class="bt-hint">💌 <?= e_($goiTen) ?> ơi, em có một lá thư!<span>Chạm để mở</span></span>
-        </button>
-        <div class="bt-caption">Con dấu của Đoàn Thiếu Nhi Thánh Thể · Phú Trung</div>
-
-        <!-- SAU KHI MỞ -->
-        <div class="sau-mo">
-        <!-- Tia lấp lánh (trang trí) -->
-        <div class="tia" aria-hidden="true">
-          <span style="left:14%;top:44px;animation-delay:.5s">✨</span>
-          <span style="left:32%;top:20px;animation-delay:.9s">🍃</span>
-          <span style="left:62%;top:30px;animation-delay:.7s">✨</span>
-          <span style="left:82%;top:52px;animation-delay:1.1s">⭐</span>
-          <span style="left:48%;top:14px;animation-delay:1.3s">✨</span>
-        </div>
-
-        <div class="card la-thu">
-        <div class="nen-logo" style="background-image:url('assets/img/logo.png')" aria-hidden="true"></div>
-        <div class="dau-sap con-dau" aria-hidden="true"><img src="assets/img/logo.png" alt=""></div>
-        <div class="thu-tieude">💌 Một lá thư từ Sổ Mộc gửi <b><?= e_($ketQua['full_name']) ?></b></div>
+        <!-- TRANG TRONG (lộ ra khi mở bìa) -->
+        <div class="trang-so">
+        <div class="nen-logo" style="background-image:url('<?= $logo ?>')" aria-hidden="true"></div>
+        <div class="dau-so con-dau" aria-hidden="true"><img src="<?= $logo ?>" alt=""></div>
+        <div class="trang-tieu">✦ SỔ MỘC CỦA EM ✦</div>
         <div class="hoso">
           <div class="ava"><?= e_(mb_strtoupper(mb_substr(trim($ketQua['full_name']), 0, 1, 'UTF-8'), 'UTF-8')) ?></div>
           <div>
@@ -562,7 +548,7 @@ form.tra button:active{transform:scale(.97)}
         <div class="vi">
           <div class="o">
             <div class="nhan">VÍ MỘC</div>
-            <div class="so"><?= (int) $ketQua['current_balance'] ?></div>
+            <div class="so"><span class="moc-mini"><img src="<?= $logo ?>" alt=""></span><?= (int) $ketQua['current_balance'] ?></div>
           </div>
           <div class="o lua">
             <div class="nhan">🔥 CHUỖI ĐI LỄ</div>
@@ -572,11 +558,31 @@ form.tra button:active{transform:scale(.97)}
         <div class="vi">
           <div class="o">
             <div class="nhan">TỔNG ĐÃ KIẾM</div>
-            <div class="so"><?= (int) $ketQua['total_earned'] ?></div>
+            <div class="so"><span class="moc-mini"><img src="<?= $logo ?>" alt=""></span><?= (int) $ketQua['total_earned'] ?></div>
           </div>
           <div class="o lua">
             <div class="nhan">🏆 KỶ LỤC CHUỖI</div>
             <div class="so"><?= (int) $ketQua['longest_streak'] ?></div>
+          </div>
+        </div>
+
+        <!-- HÀNG CON MỘC ĐÃ ĐÓNG — cho thấy "Mộc" thật sự -->
+        <div class="bo-moc">
+          <div class="tit">🌰 Con Mộc đi lễ đã đóng</div>
+          <div class="hang">
+            <?php for ($i = 0; $i < $mocDay; $i++): ?>
+              <span class="moc"><img src="<?= $logo ?>" alt="một con Mộc"></span>
+            <?php endfor; ?>
+            <?php for ($i = 0; $i < $mocTrong; $i++): ?>
+              <span class="moc trong" aria-hidden="true"></span>
+            <?php endfor; ?>
+          </div>
+          <div class="chu">
+            <?php if ($streakInt > 0): ?>
+              Mỗi tuần đi lễ, em được đóng thêm một con Mộc<?= $mocThem > 0 ? ' · và còn +' . $mocThem . ' con nữa!' : '' ?>
+            <?php else: ?>
+              Chúa Nhật này đi lễ để đóng con Mộc đầu tiên nhé!
+            <?php endif; ?>
           </div>
         </div>
 
@@ -606,9 +612,19 @@ form.tra button:active{transform:scale(.97)}
         </div>
         <div class="thu-cham"><?= e_($loi['cham']) ?></div>
         <div class="thu-ky">Thân mến,<br><b>Ban Huynh Trưởng · Đoàn TNTT Phú Trung</b> ✝️</div>
-        </div><!-- /.card.la-thu -->
-        </div><!-- /.sau-mo -->
-      </div><!-- /.thu-canh -->
+        </div><!-- /.trang-so -->
+
+        <!-- BÌA SỔ (đóng) — bấm để mở -->
+        <button type="button" class="bia" id="moSoBtn"
+                aria-label="Chạm để mở Sổ Mộc của <?= e_($ketQua['full_name']) ?>">
+          <span class="khung">
+            <span class="con-dau"><img src="<?= $logo ?>" alt="" width="78" height="78"></span>
+            <span class="tieu">SỔ MỘC</span>
+            <span class="phu">Đoàn TNTT · Phú Trung</span>
+            <span class="cham">📖 Chạm để mở sổ</span>
+          </span>
+        </button>
+      </div><!-- /.so-canh -->
 
       <div x-data="soMocPending(<?= j_($ma) ?>, <?= j_($pendingOut) ?>)" x-cloak>
         <template x-if="pending">
@@ -658,10 +674,10 @@ form.tra button:active{transform:scale(.97)}
 <script src="assets/js/tracuu.js?v=<?php echo @filemtime(__DIR__ . '/assets/js/tracuu.js') ?: 0; ?>"></script>
 <script defer src="assets/js/vendor/alpine.js?v=<?php echo @filemtime(__DIR__ . '/assets/js/vendor/alpine.js') ?: 0; ?>"></script>
 
-<?php /* Bấm phong bì -> mở lá thư (thêm class .mo để chạy hoạt hình). */ ?>
+<?php /* Bấm bìa sổ -> mở sổ (thêm class .mo để chạy hoạt hình lật bìa). */ ?>
 <script>
 (function(){
-  var b = document.getElementById('moThuBtn'), c = document.getElementById('thuCanh');
+  var b = document.getElementById('moSoBtn'), c = document.getElementById('soCanh');
   if (b && c) b.addEventListener('click', function(){ c.classList.add('mo'); });
 })();
 </script>
