@@ -342,7 +342,10 @@ form.tra button:active{transform:scale(.97)}
 .o-ngay .d{font-size:11.5px;font-weight:700;color:#475569}
 .o-ngay.cn .d{color:#c0392b}
 .o-ngay.co{background:linear-gradient(135deg,#fff2c6,#ffdf83);border-color:#f0c04a;box-shadow:0 2px 5px -3px rgba(200,140,20,.6)}
-.o-ngay .badge{font-size:9px;font-weight:900;color:#fff;background:#c0392b;border-radius:999px;padding:0 5px;line-height:14px;min-width:14px;text-align:center}
+/* Con Mộc trong ô lịch = LOGO Đoàn + số */
+.moc-day{display:inline-flex;align-items:center;gap:1px;line-height:1}
+.moc-day img{width:15px;height:15px;object-fit:contain;display:block}
+.moc-day b{font-size:10px;font-weight:900;color:#c0392b}
 .o-ngay.today{outline:2px solid #15347e;outline-offset:1px;z-index:1}
 .o-ngay.tuonglai{opacity:.4}
 .o-ngay.tuonglai .d{color:#b8a} /* mờ ngày chưa tới */
@@ -350,6 +353,19 @@ form.tra button:active{transform:scale(.97)}
 .lich-tong b{color:#c0392b}
 .lich-kien{margin-top:10px;font-size:11.5px;color:#7c5a12;background:#fff8e7;border:1px dashed #f0c04a;border-radius:10px;padding:9px 11px;line-height:1.55}
 .lich-trong{grid-column:1 / -1;text-align:center;color:#94a3b8;font-size:12px;padding:14px 0}
+
+/* ===== TAB CHUYỂN TRANG trong sổ (Trang Mộc ↔ Trang tổng kết) ===== */
+.trang-tab{display:flex;gap:6px;background:#f4ecd8;border:1px solid #e6dcc0;border-radius:999px;padding:4px;margin:14px 0 12px}
+.trang-tab button{flex:1;border:0;background:transparent;font-family:inherit;font-weight:800;font-size:12.5px;color:#8a7a4a;padding:8px 6px;border-radius:999px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px}
+.trang-tab button.on{background:#fff;color:#c0392b;box-shadow:0 2px 6px -3px rgba(0,0,0,.25)}
+.trang-tab button:active{transform:scale(.97)}
+.trang-khung{position:relative;overflow:hidden}
+.trang-noi{display:none}
+.trang-noi.hien{display:block}
+.trang-noi.vao-phai{animation:trangPhai .5s ease both}
+.trang-noi.vao-trai{animation:trangTrai .5s ease both}
+@keyframes trangPhai{from{opacity:0;transform:translateX(40px) rotateY(-16deg)}to{opacity:1;transform:none}}
+@keyframes trangTrai{from{opacity:0;transform:translateX(-40px) rotateY(16deg)}to{opacity:1;transform:none}}
 
 /* Lời khen + động viên + nhắc nhở */
 .thu-loi{margin-top:16px;background:linear-gradient(135deg,#fff8e7,#fff2d2);border:1px solid #f4e0a3;border-radius:14px;padding:14px 16px}
@@ -364,6 +380,7 @@ form.tra button:active{transform:scale(.97)}
  .so-canh.mo .bia{animation:none;display:none}
  .trang-so{animation:none;opacity:1;transform:none}
  .dau-so{animation:none;opacity:1;transform:rotate(-8deg)}
+ .trang-noi.vao-phai,.trang-noi.vao-trai{animation:none}
 }
 
 /* ---------- Tab Đổi quà: lưới quà + giỏ ---------- */
@@ -590,33 +607,41 @@ form.tra button:active{transform:scale(.97)}
           </div>
         </div>
 
-        <!-- ===== TRANG MỘC — để các em khoe & đếm ===== -->
-        <div class="muc">🌰 TRANG MỘC</div>
-        <?php if ($mocHomNay > 0): ?>
-          <div class="homnay">✅ Hôm nay em đã được đóng <b>+<?= $mocHomNay ?></b> Mộc — giỏi quá!</div>
-        <?php else: ?>
-          <div class="homnay chua">🕒 Hôm nay chưa có Mộc mới — đi lễ / đi học Giáo Lý để được đóng nhé!</div>
-        <?php endif; ?>
-        <div class="tong-lon">
-          <div class="num"><span class="moc-mini"><img src="<?= $logo ?>" alt=""></span><?= $tongMoc ?></div>
-          <div class="cap">con Mộc em đã đóng được từ đầu năm</div>
+        <!-- Tab lật trang: Trang Mộc <-> Trang tổng kết -->
+        <div class="trang-tab" id="trangTab">
+          <button type="button" class="on" data-p="moc"><img src="<?= $logo ?>" alt="" style="width:16px;height:16px;object-fit:contain"> Trang Mộc</button>
+          <button type="button" data-p="tk">📋 Tổng kết</button>
         </div>
 
-        <!-- LỊCH ĐÓNG MỘC — JS dựng từng tháng từ dữ liệu mocNgay (lật tháng khỏi tải lại) -->
-        <div class="lich" id="lichMoc">
-          <div class="lich-dau">
-            <button type="button" id="lichTruoc" aria-label="Tháng trước">‹</button>
-            <b id="lichTen">—</b>
-            <button type="button" id="lichSau" aria-label="Tháng sau">›</button>
+        <div class="trang-khung">
+
+        <!-- ===== TRANG 1: TRANG MỘC ===== -->
+        <div class="trang-noi hien" data-p="moc">
+          <?php if ($mocHomNay > 0): ?>
+            <div class="homnay">✅ Hôm nay em đã được đóng <b>+<?= $mocHomNay ?></b> Mộc — giỏi quá!</div>
+          <?php else: ?>
+            <div class="homnay chua">🕒 Hôm nay chưa có Mộc mới — đi lễ / đi học Giáo Lý để được đóng nhé!</div>
+          <?php endif; ?>
+          <div class="tong-lon">
+            <div class="num"><span class="moc-mini"><img src="<?= $logo ?>" alt=""></span><?= $tongMoc ?></div>
+            <div class="cap">con Mộc em đã đóng được từ đầu năm</div>
           </div>
-          <div class="lich-tuan"><span class="cn">CN</span><span>T2</span><span>T3</span><span>T4</span><span>T5</span><span>T6</span><span>T7</span></div>
-          <div class="lich-luoi" id="lichLuoi"></div>
-          <div class="lich-tong" id="lichTong"></div>
-          <div class="lich-kien">🔎 Ô vàng là ngày em được đóng Mộc. Nếu em đi lễ/đi học mà ngày đó chưa có Mộc, hãy báo Huynh Trưởng để kiểm tra và chỉnh lại nhé!</div>
-        </div>
+          <!-- LỊCH ĐÓNG MỘC — JS dựng từng tháng (lật tháng khỏi tải lại) -->
+          <div class="lich" id="lichMoc">
+            <div class="lich-dau">
+              <button type="button" id="lichTruoc" aria-label="Tháng trước">‹</button>
+              <b id="lichTen">—</b>
+              <button type="button" id="lichSau" aria-label="Tháng sau">›</button>
+            </div>
+            <div class="lich-tuan"><span class="cn">CN</span><span>T2</span><span>T3</span><span>T4</span><span>T5</span><span>T6</span><span>T7</span></div>
+            <div class="lich-luoi" id="lichLuoi"></div>
+            <div class="lich-tong" id="lichTong"></div>
+            <div class="lich-kien">🔎 Ô vàng là ngày em được đóng Mộc. Nếu em đi lễ/đi học mà ngày đó chưa có Mộc, hãy báo Huynh Trưởng để kiểm tra và chỉnh lại nhé!</div>
+          </div>
+        </div><!-- /trang Mộc -->
 
-        <!-- ===== TRANG TỔNG KẾT ===== -->
-        <div class="muc">📋 TRANG TỔNG KẾT</div>
+        <!-- ===== TRANG 2: TRANG TỔNG KẾT ===== -->
+        <div class="trang-noi" data-p="tk">
         <div class="vi">
           <div class="o">
             <div class="nhan">VÍ MỘC</div>
@@ -664,6 +689,8 @@ form.tra button:active{transform:scale(.97)}
         </div>
         <div class="thu-cham"><?= e_($loi['cham']) ?></div>
         <div class="thu-ky">Thân mến,<br><b>Ban Huynh Trưởng · Đoàn TNTT Phú Trung</b> ✝️</div>
+        </div><!-- /trang Tổng kết -->
+        </div><!-- /.trang-khung -->
         </div><!-- /.trang-so -->
 
         <!-- BÌA SỔ (đóng) — bấm để mở -->
@@ -732,7 +759,27 @@ form.tra button:active{transform:scale(.97)}
   var b = document.getElementById('moSoBtn'), c = document.getElementById('soCanh');
   if (b && c) b.addEventListener('click', function(){ c.classList.add('mo'); });
 
+  // ----- LẬT TRANG: Trang Mộc <-> Trang tổng kết -----
+  var tab = document.getElementById('trangTab');
+  if (tab){
+    var pages = {}, order = ['moc','tk'], cur = 'moc';
+    Array.prototype.forEach.call(document.querySelectorAll('.trang-noi[data-p]'), function(el){ pages[el.getAttribute('data-p')] = el; });
+    Array.prototype.forEach.call(tab.querySelectorAll('button[data-p]'), function(btn){
+      btn.addEventListener('click', function(){
+        var p = btn.getAttribute('data-p'); if (p === cur) return;
+        var sang = order.indexOf(p) > order.indexOf(cur);   // sang trang sau?
+        Array.prototype.forEach.call(tab.querySelectorAll('button'), function(x){ x.classList.toggle('on', x === btn); });
+        Object.keys(pages).forEach(function(k){
+          var el = pages[k]; el.classList.remove('hien','vao-phai','vao-trai');
+          if (k === p) el.classList.add('hien', sang ? 'vao-phai' : 'vao-trai');
+        });
+        cur = p;
+      });
+    });
+  }
+
   // ----- LỊCH ĐÓNG MỘC -----
+  var LOGO = <?php echo json_encode($logo); ?>;
   var MOC = <?php echo json_encode($mocNgay, JSON_UNESCAPED_UNICODE); ?> || {};
   var luoi = document.getElementById('lichLuoi');
   if (!luoi) return;
@@ -767,7 +814,7 @@ form.tra button:active{transform:scale(.97)}
       var col = new Date(viewY, viewM, d).getDay(); // 0=CN
       var cls = 'o-ngay' + (col===0?' cn':'') + (moc>0?' co':'') + (key===todayKey?' today':'') + (key>todayKey?' tuonglai':'');
       html += '<div class="'+cls+'"><span class="d">'+d+'</span>'
-            + (moc>0 ? '<span class="badge">+'+moc+'</span>' : '') + '</div>';
+            + (moc>0 ? '<span class="moc-day"><img src="'+LOGO+'" alt=""><b>+'+moc+'</b></span>' : '') + '</div>';
       if (moc>0){ tongThang += moc; ngayCo++; }
     }
     luoi.innerHTML = html;
