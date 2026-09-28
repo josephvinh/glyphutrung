@@ -159,17 +159,18 @@ window.TNTT.qrscan = {
     _qrRung(ms) { if (navigator.vibrate) { try { navigator.vibrate(ms); } catch (e) {} } },
 
     /* ---------- CHẨN ĐOÁN camera (tạm thời) ----------
-       Chỉ chạy khi URL có ?qrdebug=1. Cứ ~700ms lại đọc kích thước khung
-       hình, readyState và độ sáng trung bình của khung camera rồi ghi vào
-       dòng trạng thái, giúp phân biệt: video đen vì KHÔNG có khung hình
-       (sáng ~0, hoặc kích thước 0×0) hay vì lỗi hiển thị CSS (có khung hình,
-       sáng > 0, nhưng màn vẫn đen). */
+       Cứ ~700ms lại đọc kích thước khung hình, readyState và độ sáng trung
+       bình của khung camera. CHỈ hiện lên dòng trạng thái khi phát hiện
+       khung đen (0×0 hoặc độ sáng rất thấp) để không làm phiền lúc camera
+       chạy tốt. Giúp phân biệt: đen vì KHÔNG có khung hình (sáng ~0, hoặc
+       0×0) hay vì lỗi hiển thị CSS (có khung hình, sáng > 0, mà màn vẫn
+       đen). Gỡ sau khi tìm ra nguyên nhân. */
     _qrTuKiemTra(video) {
         const cv = document.createElement('canvas');
         const ctx = cv.getContext('2d', { willReadFrequently: true });
         let n = 0;
         const tick = () => {
-            if (this._qrDung || n > 15) return;
+            if (this._qrDung || n > 20) return;
             n++;
             const vw = video.videoWidth, vh = video.videoHeight;
             let sang = -1;
@@ -183,13 +184,16 @@ window.TNTT.qrscan = {
                     sang = Math.round(s / (d.length / 4) / 3);   // 0 = đen, 255 = trắng
                 } catch (e) { sang = -2; }                        // canvas bị chặn đọc
             }
+            // Camera đang hiện hình rõ -> thôi, không quấy dòng trạng thái.
+            if (vw && vh && sang > 12) return;
+
             const tr = this._qrStream ? this._qrStream.getVideoTracks()[0] : null;
             this.qrTrangThai = 'CHẨN ĐOÁN ' + vw + '×' + vh
                 + ' rs' + video.readyState + ' sáng' + sang
                 + ' ' + (tr ? tr.readyState : '-') + (tr && tr.muted ? '/tắt' : '');
             setTimeout(tick, 700);
         };
-        tick();
+        setTimeout(tick, 900);   // chờ khung hình đầu ổn định rồi mới đo
     },
 
     async moQuetQR() {
@@ -301,11 +305,13 @@ window.TNTT.qrscan = {
         this._qrDung = false;
         this.qrTrangThai = 'Đưa thẻ vào khung';
 
-        // CHẨN ĐOÁN tạm thời: bật bằng ?qrdebug=1 trên URL. Hiện kích thước
-        // khung hình, readyState và ĐỘ SÁNG trung bình của khung để biết
-        // video đen là do không giải mã được hình (sáng ~0) hay do CSS
-        // (sáng > 0 mà màn vẫn đen). Gỡ sau khi tìm ra nguyên nhân.
-        if (/[?&]qrdebug=1/.test(location.search)) this._qrTuKiemTra(video);
+        // CHẨN ĐOÁN tạm thời: TỰ bật khi khung camera bị đen (không cần
+        // thêm ?qrdebug vào URL nữa). Nếu camera hiện hình bình thường thì
+        // không hiện gì; nếu đen sẽ thay dòng trạng thái bằng kích thước
+        // khung + readyState + ĐỘ SÁNG để biết đen do không có khung hình
+        // (sáng ~0 / 0×0) hay do CSS (sáng > 0 mà màn vẫn đen). Gỡ sau khi
+        // tìm ra nguyên nhân.
+        this._qrTuKiemTra(video);
 
         if (await this._qrCoNative()) {
             this._qrVongNative(video);
