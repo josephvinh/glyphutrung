@@ -364,9 +364,26 @@ window.TNTT.rewards = {
         }
 
         const video = this.$refs.rwVideo;
-        video.srcObject = this.rwScan.stream;
+
+        // iOS Safari: đặt muted/playsinline/autoplay TRƯỚC khi gán srcObject,
+        // nếu không Safari chặn tự phát và trả khung hình đen dù luồng vẫn sống.
+        video.muted = true;
+        video.setAttribute('muted', '');
         video.setAttribute('playsinline', '');
-        try { await video.play(); } catch (e) { /* một số máy cần cử chỉ, bỏ qua */ }
+        video.setAttribute('autoplay', '');
+        video.srcObject = this.rwScan.stream;
+
+        // Chờ có kích thước khung hình rồi mới play (iOS đôi khi cho khung đen
+        // nếu play() gọi trước 'loadedmetadata').
+        await new Promise((xong) => {
+            if (video.readyState >= 1 && video.videoWidth) return xong();
+            const t = setTimeout(xong, 1500);
+            video.addEventListener('loadedmetadata',
+                () => { clearTimeout(t); xong(); }, { once: true });
+        });
+
+        try { await video.play(); }
+        catch (e) { try { await video.play(); } catch (e2) { /* khung ngắm vẫn dùng được */ } }
         if (typeof this._qrBip === 'function') this._qrBip(880, 30);   // đánh thức âm thanh iOS
         this.rwScan.status = 'Đưa thẻ vào khung';
 
