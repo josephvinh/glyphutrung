@@ -247,7 +247,11 @@
             <button @click="rwCloseScan()" aria-label="Đóng" class="w-9 h-9 bg-white/15 rounded-full flex items-center justify-center active:scale-90"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
         <div class="flex-1 relative overflow-hidden">
-            <video x-ref="rwVideo" class="absolute inset-0 w-full h-full object-cover" muted playsinline></video>
+            <!-- Ép <video> lên lớp GPU riêng để iOS không vẽ camera thành ô đen
+                 (xem chú thích ở module_attendance.php). -->
+            <video x-ref="rwVideo" class="absolute inset-0 w-full h-full object-cover"
+                   style="transform: translateZ(0); -webkit-transform: translateZ(0);"
+                   muted playsinline autoplay></video>
             <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div class="w-56 h-56 border-4 border-white/80 rounded-3xl"></div>
             </div>

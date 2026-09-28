@@ -158,6 +158,40 @@ window.TNTT.qrscan = {
     _qrBipLoi() { this._qrBip(320, 220); },
     _qrRung(ms) { if (navigator.vibrate) { try { navigator.vibrate(ms); } catch (e) {} } },
 
+    /* ---------- CHẨN ĐOÁN camera (tạm thời) ----------
+       Chỉ chạy khi URL có ?qrdebug=1. Cứ ~700ms lại đọc kích thước khung
+       hình, readyState và độ sáng trung bình của khung camera rồi ghi vào
+       dòng trạng thái, giúp phân biệt: video đen vì KHÔNG có khung hình
+       (sáng ~0, hoặc kích thước 0×0) hay vì lỗi hiển thị CSS (có khung hình,
+       sáng > 0, nhưng màn vẫn đen). */
+    _qrTuKiemTra(video) {
+        const cv = document.createElement('canvas');
+        const ctx = cv.getContext('2d', { willReadFrequently: true });
+        let n = 0;
+        const tick = () => {
+            if (this._qrDung || n > 15) return;
+            n++;
+            const vw = video.videoWidth, vh = video.videoHeight;
+            let sang = -1;
+            if (vw && vh) {
+                cv.width = 32; cv.height = 32;
+                try {
+                    ctx.drawImage(video, 0, 0, 32, 32);
+                    const d = ctx.getImageData(0, 0, 32, 32).data;
+                    let s = 0;
+                    for (let i = 0; i < d.length; i += 4) s += d[i] + d[i + 1] + d[i + 2];
+                    sang = Math.round(s / (d.length / 4) / 3);   // 0 = đen, 255 = trắng
+                } catch (e) { sang = -2; }                        // canvas bị chặn đọc
+            }
+            const tr = this._qrStream ? this._qrStream.getVideoTracks()[0] : null;
+            this.qrTrangThai = 'CHẨN ĐOÁN ' + vw + '×' + vh
+                + ' rs' + video.readyState + ' sáng' + sang
+                + ' ' + (tr ? tr.readyState : '-') + (tr && tr.muted ? '/tắt' : '');
+            setTimeout(tick, 700);
+        };
+        tick();
+    },
+
     async moQuetQR() {
         if (!this.activeSession) { window.TNTT.toast.warning('Hãy chọn buổi điểm danh trước khi quét.'); return; }
 
@@ -266,6 +300,12 @@ window.TNTT.qrscan = {
 
         this._qrDung = false;
         this.qrTrangThai = 'Đưa thẻ vào khung';
+
+        // CHẨN ĐOÁN tạm thời: bật bằng ?qrdebug=1 trên URL. Hiện kích thước
+        // khung hình, readyState và ĐỘ SÁNG trung bình của khung để biết
+        // video đen là do không giải mã được hình (sáng ~0) hay do CSS
+        // (sáng > 0 mà màn vẫn đen). Gỡ sau khi tìm ra nguyên nhân.
+        if (/[?&]qrdebug=1/.test(location.search)) this._qrTuKiemTra(video);
 
         if (await this._qrCoNative()) {
             this._qrVongNative(video);
