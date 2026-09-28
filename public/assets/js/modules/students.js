@@ -32,8 +32,9 @@ window.TNTT.students = {
     // Dùng cho màn Khối & Lớp, vì students ở trên không đủ để đếm.
     classCounts: {},
 
-    // View mode: 'grid' | 'list' — lưu vào localStorage
-    viewMode: localStorage.getItem('studentsViewMode') || 'grid',
+    // Đã bỏ dạng card (grid): danh sách chỉ còn dạng list. Giữ biến để tương
+    // thích code cũ nhưng luôn là 'list'.
+    viewMode: 'list',
 
     searchQuery: '',
     filterStatus: '',
@@ -831,13 +832,6 @@ window.TNTT.students = {
         });
     },
 
-    // ==========================================
-    // 4. VIEW MODE (Grid/List Toggle)
-    // ==========================================
-    setViewMode(mode) {
-        this.viewMode = mode;
-        localStorage.setItem('studentsViewMode', mode);
-    },
 
     // ==========================================
     // 5. ENHANCED FILTERS
@@ -919,7 +913,6 @@ window.TNTT.students = {
     // ==========================================
     // 7. PDF EXPORT (Phase 4)
     // ==========================================
-    showPdfMenu: false,
 
     escapeHtml(text) {
         if (!text) return '';
@@ -1000,7 +993,6 @@ window.TNTT.students = {
     },
 
     exportPdf(type) {
-        this.showPdfMenu = false;
         const students = this.filteredStudents;
         if (students.length === 0) {
             window.TNTT.toast.warning(STUDENTS_I18N.NO_DATA_EXPORT);
