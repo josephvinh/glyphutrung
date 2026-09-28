@@ -437,8 +437,13 @@
      quét và nút Kết thúc mà không phải cuộn. Không chiếm hết màn
      hình vì GLV cần thấy mình đã ghi được bao nhiêu em.
      ========================================================== -->
+<!-- KHÔNG dùng backdrop-blur ở lớp phủ này: WebKit/Safari trên iOS có
+     lỗi compositing khiến thẻ <video> (nhất là camera trực tiếp) nằm dưới
+     một phần tử có backdrop-filter bị vẽ thành ô ĐEN — đúng triệu chứng
+     "mở máy quét mà khung hình tối om". Nền slate-900/95 đã đủ tối, không
+     cần làm mờ hậu cảnh. -->
 <div x-show="qrMo" style="display: none;"
-     class="fixed inset-0 z-[300] bg-slate-900/95 backdrop-blur-sm flex items-center justify-center p-4">
+     class="fixed inset-0 z-[300] bg-slate-900/95 flex items-center justify-center p-4">
 
     <div class="w-full max-w-sm bg-white rounded-sheet shadow-2xl overflow-hidden flex flex-col max-h-[90dvh]">
 

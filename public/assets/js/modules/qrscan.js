@@ -228,9 +228,31 @@ window.TNTT.qrscan = {
         }
 
         const video = this.$refs.qrVideo;
-        video.srcObject = this._qrStream;
+
+        // iOS Safari: các thuộc tính này PHẢI đặt TRƯỚC khi gán srcObject.
+        // Thiếu 'playsinline'/'muted' thì Safari đòi phát toàn màn hình hoặc
+        // chặn tự phát, và khung hình trả về đen dù luồng camera vẫn sống.
+        video.muted = true;
+        video.setAttribute('muted', '');
         video.setAttribute('playsinline', '');
-        await video.play();
+        video.setAttribute('autoplay', '');
+        video.srcObject = this._qrStream;
+
+        // Chờ có kích thước khung hình rồi mới play. Gọi play() trước
+        // 'loadedmetadata' trên iOS đôi khi cho ra khung đen đứng yên.
+        await new Promise((xong) => {
+            if (video.readyState >= 1 && video.videoWidth) return xong();
+            const t = setTimeout(xong, 1500);   // đừng treo mãi nếu sự kiện không bắn
+            video.addEventListener('loadedmetadata',
+                () => { clearTimeout(t); xong(); }, { once: true });
+        });
+
+        try {
+            await video.play();
+        } catch (e) {
+            // Vài máy cần gọi lại sau khi đã có khung hình đầu tiên.
+            try { await video.play(); } catch (e2) { /* khung ngắm vẫn dùng được */ }
+        }
 
         // Kiểm tra khả năng bật đèn Flash (Torch) của camera thiết bị
         const track = this._qrStream ? this._qrStream.getVideoTracks()[0] : null;
