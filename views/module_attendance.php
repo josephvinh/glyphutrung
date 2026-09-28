@@ -469,7 +469,13 @@
 
         <!-- Khung camera: vuông, vừa phải -->
         <div class="relative w-full aspect-square bg-slate-900 shrink-0">
-            <video x-ref="qrVideo" class="absolute inset-0 w-full h-full object-cover" muted playsinline></video>
+            <!-- transform: translateZ(0) ép <video> lên một lớp GPU riêng.
+                 iOS Safari hay vẽ camera trực tiếp thành ô đen khi thẻ video
+                 nằm trong một thẻ cha có overflow-hidden + bo góc (thẻ modal
+                 này). Tự lên lớp riêng thì WebKit vẽ đúng khung hình. -->
+            <video x-ref="qrVideo" class="absolute inset-0 w-full h-full object-cover"
+                   style="transform: translateZ(0); -webkit-transform: translateZ(0);"
+                   muted playsinline autoplay></video>
 
             <!-- Vùng ngắm: khớp đúng phần được giải mã (72% cạnh ngắn) -->
             <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
