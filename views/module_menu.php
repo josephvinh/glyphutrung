@@ -30,7 +30,7 @@
         <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100 flex flex-col">
             <div class="flex items-center justify-between mb-3">
                 <h3 class="text-sm font-black text-slate-800 flex items-center gap-2">
-                    <i data-lucide="calendar-check" class="w-4 h-4 text-teal-600"></i> Sắp tới
+                    <i data-lucide="calendar-check" class="w-4 h-4 text-blue-600"></i> Sắp tới
                 </h3>
                 <button @click="openNotes()" type="button" class="text-micro font-bold text-blue-600 flex items-center gap-0.5">
                     Mở lịch <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
@@ -40,9 +40,9 @@
                 <template x-for="it in homeUpcoming" :key="it.kind + '-' + it.id">
                     <button @click="openNotes()" type="button"
                             class="w-full flex items-center gap-3 p-2.5 rounded-2xl border text-left active:scale-[0.99] transition-transform"
-                            :class="it.kind === 'meeting' ? 'bg-teal-50/50 border-teal-100' : 'bg-slate-50 border-slate-100'">
+                            :class="it.kind === 'meeting' ? 'bg-blue-50/50 border-blue-100' : 'bg-slate-50 border-slate-100'">
                         <div class="w-12 shrink-0 text-center">
-                            <p class="text-micro font-black leading-none" :class="it.kind === 'meeting' ? 'text-teal-600' : 'text-blue-600'" x-text="itemTime(it)"></p>
+                            <p class="text-micro font-black leading-none" :class="it.kind === 'meeting' ? 'text-blue-600' : 'text-blue-600'" x-text="itemTime(it)"></p>
                             <p class="text-micro font-medium text-slate-400 mt-0.5" x-text="dayLabel(it.at.slice(0,10))"></p>
                         </div>
                         <div class="w-px self-stretch bg-slate-200"></div>

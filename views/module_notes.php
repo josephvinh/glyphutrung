@@ -28,17 +28,17 @@
                 <div class="space-y-2.5">
                     <template x-for="it in g.items" :key="it.kind + '-' + it.id">
                         <div class="bg-white rounded-card p-4 shadow-sm border"
-                             :class="it.kind === 'meeting' ? 'border-teal-200 bg-teal-50/30'
+                             :class="it.kind === 'meeting' ? 'border-blue-200 bg-blue-50/30'
                                      : (isItemOverdue(it) ? 'border-rose-200' : 'border-slate-100')">
 
                             <div class="flex items-start gap-3">
                                 <!-- Cột giờ -->
                                 <div class="w-14 shrink-0 text-center">
                                     <p class="text-sm font-black leading-none"
-                                       :class="it.kind === 'meeting' ? 'text-teal-600' : (isItemOverdue(it) ? 'text-rose-500' : 'text-blue-600')"
+                                       :class="it.kind === 'meeting' ? 'text-blue-600' : (isItemOverdue(it) ? 'text-rose-500' : 'text-blue-600')"
                                        x-text="itemTime(it)"></p>
                                     <p class="text-micro font-bold uppercase tracking-wide mt-1"
-                                       :class="it.kind === 'meeting' ? 'text-teal-500' : 'text-slate-400'"
+                                       :class="it.kind === 'meeting' ? 'text-blue-500' : 'text-slate-400'"
                                        x-text="it.kind === 'meeting' ? 'Họp' : 'Việc'"></p>
                                 </div>
 
@@ -160,7 +160,7 @@
 
             <div class="p-4 border-t border-slate-100 bg-white flex gap-3">
                 <button x-show="isEditingNote" style="display:none" @click="deleteNote(notes.find(n => n.id === noteForm.id))"
-                        class="w-14 shrink-0 bg-red-50 text-red-500 rounded-2xl border border-red-100 active:scale-95 transition-transform flex justify-center items-center">
+                        class="w-14 shrink-0 bg-rose-50 text-rose-500 rounded-2xl border border-rose-100 active:scale-95 transition-transform flex justify-center items-center">
                     <i data-lucide="trash-2" class="w-5 h-5"></i>
                 </button>
                 <button @click="saveNote()" type="button" class="flex-1 bg-blue-600 text-white font-bold py-3.5 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-blue-200 flex justify-center items-center">

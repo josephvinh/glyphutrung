@@ -48,13 +48,13 @@
 
         <!-- Giáo Lý Viên -->
         <div x-show="birthdaysTodayMembers.length > 0" style="display: none;"
-             class="bg-gradient-to-br from-indigo-600 to-indigo-700 rounded-card p-5 shadow-lg shadow-indigo-200 text-white">
+             class="bg-gradient-to-br from-blue-600 to-blue-700 rounded-card p-5 shadow-lg shadow-blue-200 text-white">
             <div class="flex items-center mb-3">
                 <div class="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center mr-3 backdrop-blur-sm">
                     <i data-lucide="cake" class="w-5 h-5"></i>
                 </div>
                 <div>
-                    <p class="text-micro font-bold uppercase tracking-wider text-indigo-200">Hôm nay · Giáo Lý Viên</p>
+                    <p class="text-micro font-bold uppercase tracking-wider text-blue-200">Hôm nay · Giáo Lý Viên</p>
                     <p class="text-sm font-black">Mừng sinh nhật anh chị GLV!</p>
                 </div>
             </div>
@@ -63,12 +63,12 @@
                     <div class="bg-white/15 backdrop-blur-sm rounded-2xl px-4 py-3 flex items-center justify-between">
                         <div class="min-w-0 pr-3">
                             <p class="text-sm font-black leading-snug">
-                                <span class="font-normal text-indigo-200" x-text="p.holyName"></span>
+                                <span class="font-normal text-blue-200" x-text="p.holyName"></span>
                                 <span x-text="p.name"></span>
                             </p>
-                            <p class="text-micro text-indigo-200 mt-0.5" x-text="p.sub"></p>
+                            <p class="text-micro text-blue-200 mt-0.5" x-text="p.sub"></p>
                         </div>
-                        <span class="shrink-0 text-xs font-black bg-white text-indigo-700 px-2.5 py-1 rounded-lg">
+                        <span class="shrink-0 text-xs font-black bg-white text-blue-700 px-2.5 py-1 rounded-lg">
                             <span x-text="turningAge(p)"></span> tuổi
                         </span>
                     </div>
@@ -84,7 +84,7 @@
             <template x-for="item in upcomingBirthdays" :key="item.student.key">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 shrink-0 rounded-2xl flex items-center justify-center"
-                         :class="item.student.kind === 'member' ? 'bg-indigo-50 text-indigo-600' : 'bg-amber-50 text-amber-500'">
+                         :class="item.student.kind === 'member' ? 'bg-blue-50 text-blue-600' : 'bg-amber-50 text-amber-500'">
                         <i data-lucide="cake" class="w-5 h-5"></i>
                     </div>
                     <div class="flex-1 min-w-0">
@@ -138,7 +138,7 @@
         </button>
         <button @click="birthdayKind = 'member'" type="button"
                 class="py-2.5 rounded-xl font-bold text-micro border transition-colors flex flex-col items-center gap-0.5"
-                :class="birthdayKind === 'member' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-500 border-slate-200'">
+                :class="birthdayKind === 'member' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-500 border-slate-200'">
             <span>Giáo Lý Viên</span>
             <span class="text-micro font-black opacity-80" x-text="birthdayCounts.member"></span>
         </button>
@@ -150,14 +150,14 @@
             <div style="content-visibility: auto; contain-intrinsic-size: auto 96px;"
                  class="bg-white rounded-field p-4 shadow-sm border flex items-center gap-3.5"
                  :class="isBirthdayToday(p)
-                        ? (p.kind === 'member' ? 'border-indigo-200 bg-indigo-50/40' : 'border-rose-200 bg-rose-50/40')
+                        ? (p.kind === 'member' ? 'border-blue-200 bg-blue-50/40' : 'border-rose-200 bg-rose-50/40')
                         : 'border-slate-100'">
 
                 <!-- Ô ngày: màu theo nhóm, tô đậm nếu đúng hôm nay -->
                 <div class="w-12 h-12 shrink-0 rounded-2xl flex flex-col items-center justify-center border"
                      :class="isBirthdayToday(p)
-                            ? (p.kind === 'member' ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-rose-500 border-rose-500 text-white')
-                            : (p.kind === 'member' ? 'bg-indigo-50 border-indigo-100 text-indigo-600' : 'bg-slate-50 border-slate-200 text-slate-600')">
+                            ? (p.kind === 'member' ? 'bg-blue-600 border-blue-600 text-white' : 'bg-rose-500 border-rose-500 text-white')
+                            : (p.kind === 'member' ? 'bg-blue-50 border-blue-100 text-blue-600' : 'bg-slate-50 border-slate-200 text-slate-600')">
                     <span class="text-base font-black leading-none" x-text="birthDay(p)"></span>
                     <span class="text-micro font-bold uppercase tracking-wide opacity-70">Ngày</span>
                 </div>
@@ -181,7 +181,7 @@
                 <!-- Gọi nhanh: thiếu nhi thì gọi mẹ, GLV thì gọi thẳng -->
                 <a :href="'tel:' + p.phone" :aria-label="p.phoneLabel + ' ' + p.name" :title="p.phoneLabel"
                    class="w-10 h-10 shrink-0 rounded-full flex items-center justify-center active:scale-90 transition-transform border"
-                   :class="p.kind === 'member' ? 'bg-indigo-50 text-indigo-600 border-indigo-100' : 'bg-rose-50 text-rose-500 border-rose-100'">
+                   :class="p.kind === 'member' ? 'bg-blue-50 text-blue-600 border-blue-100' : 'bg-rose-50 text-rose-500 border-rose-100'">
                     <i data-lucide="phone" class="w-4 h-4"></i>
                 </a>
             </div>

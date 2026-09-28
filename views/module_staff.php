@@ -293,7 +293,7 @@
         <div class="p-4 border-t border-slate-100 bg-white flex gap-3">
             <button aria-label="Xóa thành viên" x-show="isEditingMember && !isProtectedMember(memberForm)" style="display: none;"
                     @click="deleteMember(memberForm); showMemberModal = false"
-                    class="w-14 shrink-0 bg-red-50 text-red-500 rounded-2xl border border-red-100 active:scale-95 transition-transform flex justify-center items-center">
+                    class="w-14 shrink-0 bg-rose-50 text-rose-500 rounded-2xl border border-rose-100 active:scale-95 transition-transform flex justify-center items-center">
                 <i data-lucide="trash-2" class="w-5 h-5"></i>
             </button>
             <button @click="saveMember()" type="button" class="flex-1 bg-blue-600 text-white font-bold py-3.5 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-blue-200 flex justify-center items-center">

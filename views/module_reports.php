@@ -181,7 +181,7 @@
                             <i data-lucide="rotate-ccw" class="w-3 h-3"></i> Tính lại
                         </button>
                     </div>
-                    <div class="p-4 grid grid-cols-4 gap-2 text-center">
+                    <div class="p-4 grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
                         <div><p class="text-lg font-black text-emerald-600" x-text="reportForm.attendance ? reportForm.attendance.present : 0"></p><p class="text-micro font-bold text-slate-500 uppercase">Có mặt</p></div>
                         <div><p class="text-lg font-black text-amber-700" x-text="reportForm.attendance ? reportForm.attendance.late : 0"></p><p class="text-micro font-bold text-slate-500 uppercase">Đi trễ</p></div>
                         <div><p class="text-lg font-black text-blue-500" x-text="reportForm.attendance ? reportForm.attendance.excused : 0"></p><p class="text-micro font-bold text-slate-500 uppercase">Có phép</p></div>
@@ -242,7 +242,7 @@
 
             <div x-show="canWriteReports" class="p-4 border-t border-slate-100 bg-white flex gap-3">
                 <button aria-label="Xóa phiếu liên lạc" x-show="reportForm.id" style="display: none;" @click="deleteReport(reportForm.studentId)"
-                        class="w-14 shrink-0 bg-red-50 text-red-500 rounded-2xl border border-red-100 active:scale-95 transition-transform flex justify-center items-center">
+                        class="w-14 shrink-0 bg-rose-50 text-rose-500 rounded-2xl border border-rose-100 active:scale-95 transition-transform flex justify-center items-center">
                     <i data-lucide="trash-2" class="w-5 h-5"></i>
                 </button>
                 <button @click="saveReport(false)" type="button" class="flex-1 bg-slate-100 text-slate-600 font-bold py-3.5 rounded-2xl border border-slate-200 active:scale-[0.98] transition-transform">

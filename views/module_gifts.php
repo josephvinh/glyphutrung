@@ -54,7 +54,7 @@
                     <button aria-label="Sửa quà" @click="openEditGift(g)" type="button" class="tap-safe flex-1 h-8 bg-slate-50 rounded-full flex items-center justify-center text-slate-500 active:scale-90 border border-slate-200">
                         <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
                     </button>
-                    <button aria-label="Xóa quà" @click="deleteGift(g.id)" type="button" class="tap-safe flex-1 h-8 bg-red-50 rounded-full flex items-center justify-center text-red-400 active:scale-90 border border-red-100">
+                    <button aria-label="Xóa quà" @click="deleteGift(g.id)" type="button" class="tap-safe flex-1 h-8 bg-rose-50 rounded-full flex items-center justify-center text-rose-400 active:scale-90 border border-rose-100">
                         <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                     </button>
                 </div>

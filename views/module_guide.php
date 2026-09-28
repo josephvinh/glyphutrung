@@ -15,9 +15,9 @@
     </div>
 
     <!-- Giới thiệu -->
-    <div class="bg-sky-50 border border-sky-100 rounded-card p-4 mb-5 flex items-start gap-2.5">
-        <i data-lucide="info" class="w-4 h-4 text-sky-600 shrink-0 mt-0.5"></i>
-        <p class="text-micro text-sky-900 leading-relaxed"><?= htmlspecialchars($HD['gioi_thieu']) ?></p>
+    <div class="bg-blue-50 border border-blue-100 rounded-card p-4 mb-5 flex items-start gap-2.5">
+        <i data-lucide="info" class="w-4 h-4 text-blue-600 shrink-0 mt-0.5"></i>
+        <p class="text-micro text-blue-700 leading-relaxed"><?= htmlspecialchars($HD['gioi_thieu']) ?></p>
     </div>
 
     <div x-data="{ gr: user.role }">

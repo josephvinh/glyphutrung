@@ -406,7 +406,7 @@ window.TNTT.core = {
             if (this.pendingMembers && this.pendingMembers.length > 0) {
                 tasks.push({
                     key: 'new-staff', icon: 'user-plus',
-                    cls: 'bg-indigo-50 text-indigo-600 border-indigo-100',
+                    cls: 'bg-blue-50 text-blue-600 border-blue-100',
                     text: 'Duyệt ' + this.pendingMembers.length + ' hồ sơ nhân sự',
                     detail: 'có GLV mới đăng ký chờ duyệt',
                     go: 'staff'
@@ -478,7 +478,7 @@ window.TNTT.core = {
         duyet:      { icon: 'check',       label: 'Duyệt',      cls: 'bg-emerald-50 text-emerald-600 border-emerald-100' },
         tuchoi:     { icon: 'x',           label: 'Từ chối',    cls: 'bg-rose-50 text-rose-600 border-rose-100' },
         diemdanh:   { icon: 'clock',       label: 'Điểm danh',  cls: 'bg-amber-50 text-amber-600 border-amber-100' },
-        phanquyen:  { icon: 'shield-check', label: 'Phân quyền', cls: 'bg-indigo-50 text-indigo-600 border-indigo-100' },
+        phanquyen:  { icon: 'shield-check', label: 'Phân quyền', cls: 'bg-blue-50 text-blue-600 border-blue-100' },
         baotri:     { icon: 'wrench',      label: 'Bảo trì',    cls: 'bg-slate-100 text-slate-600 border-slate-200' }
     },
 
@@ -560,26 +560,26 @@ window.TNTT.core = {
         { key: 'students',      label: 'Thiếu Nhi',    icon: 'users',           color: 'text-blue-600',   area: 'glv', group: 'Hằng ngày' },
         { key: 'attendance',    label: 'Điểm danh',    icon: 'clipboard-check', color: 'text-blue-600',   area: 'glv', group: 'Hằng ngày' },
         { key: 'leave',         label: 'Xin phép',     icon: 'file-text',       color: 'text-blue-600',   area: 'glv', group: 'Hằng ngày', badge: 'leave' },
-        { key: 'notes',         label: 'Lịch của tôi', icon: 'calendar-check',  color: 'text-teal-600',   area: 'glv', group: 'Hằng ngày', badge: 'notes' },
+        { key: 'notes',         label: 'Lịch của tôi', icon: 'calendar-check',  color: 'text-blue-600',   area: 'glv', group: 'Hằng ngày', badge: 'notes' },
         { key: 'birthdays',     label: 'Sinh nhật',    icon: 'cake',            color: 'text-rose-500',   area: 'glv', group: 'Hằng ngày', badge: 'birthday', hidden: true },
         { key: 'reporthub',     label: 'Báo cáo',      icon: 'bar-chart-3',     color: 'text-emerald-600', area: 'glv', group: 'Theo dõi' },
         { key: 'stats',         label: 'Thống kê',     icon: 'bar-chart-3',     color: 'text-emerald-600', area: 'glv', group: 'Theo dõi', hidden: true },
-        { key: 'analytics',     label: 'Phân tích',    icon: 'bar-chart-2',     color: 'text-purple-600', area: 'glv', group: 'Theo dõi', hidden: true },
-        { key: 'org',           label: 'Khối lớp',     icon: 'layers',          color: 'text-indigo-600', area: 'glv', group: 'Quản lý' },
-        { key: 'guide',         label: 'Hướng dẫn',    icon: 'info',            color: 'text-sky-600',    area: 'glv', group: 'Theo dõi' },
+        { key: 'analytics',     label: 'Phân tích',    icon: 'bar-chart-2',     color: 'text-blue-600', area: 'glv', group: 'Theo dõi', hidden: true },
+        { key: 'org',           label: 'Khối lớp',     icon: 'layers',          color: 'text-blue-600', area: 'glv', group: 'Quản lý' },
+        { key: 'guide',         label: 'Hướng dẫn',    icon: 'info',            color: 'text-blue-600',    area: 'glv', group: 'Theo dõi' },
         { key: 'thu_vien',      label: 'Thư viện',     icon: 'scroll-text',     color: 'text-amber-600',  area: 'glv', group: 'Theo dõi' },
         // reports + scores gộp vào tile "Thiếu Nhi" (mở qua thẻ), ẩn khỏi lưới
         { key: 'reports',       label: 'Sổ liên lạc',  icon: 'clipboard-list',  color: 'text-amber-600',  area: 'glv', group: 'Hằng ngày', hidden: true },
-        { key: 'scores',        label: 'Điểm số',      icon: 'graduation-cap',  color: 'text-violet-600', area: 'glv', group: 'Hằng ngày', hidden: true },
+        { key: 'scores',        label: 'Điểm số',      icon: 'graduation-cap',  color: 'text-blue-600', area: 'glv', group: 'Hằng ngày', hidden: true },
         // Khu điều hành (icon màu để dùng chung lưới phẳng + thanh bên)
-        { key: 'promotion',     label: 'Lên lớp',      icon: 'trending-up',     color: 'text-violet-600', area: 'bdh', group: 'Chương trình' },
+        { key: 'promotion',     label: 'Lên lớp',      icon: 'trending-up',     color: 'text-blue-600', area: 'bdh', group: 'Chương trình' },
         { key: 'programs',      label: 'Chương trình', icon: 'calendar-plus',   color: 'text-amber-600',  area: 'bdh', group: 'Chương trình' },
-        { key: 'calendar',      label: 'Lịch trình',   icon: 'calendar-days',   color: 'text-teal-600',   area: 'bdh', group: 'Chương trình', hidden: true },
+        { key: 'calendar',      label: 'Lịch trình',   icon: 'calendar-days',   color: 'text-blue-600',   area: 'bdh', group: 'Chương trình', hidden: true },
         { key: 'announcements', label: 'Thông báo',    icon: 'megaphone',       color: 'text-rose-500',   area: 'bdh', group: 'Điều hành' },
-        { key: 'staff',         label: 'Nhân sự',      icon: 'user-cog',        color: 'text-cyan-600',   area: 'bdh', group: 'Điều hành', badge: 'staff' },
-        { key: 'years',         label: 'Niên khoá',    icon: 'calendar-range',  color: 'text-indigo-600', area: 'bdh', group: 'Điều hành' },
-        { key: 'gifts',         label: 'Danh mục quà', icon: 'gift',            color: 'text-pink-600',   area: 'bdh', group: 'Chương trình' },
-        { key: 'rewards',       label: 'Đổi quà',      icon: 'shopping-bag',    color: 'text-pink-600',   area: 'bdh', group: 'Chương trình' }
+        { key: 'staff',         label: 'Nhân sự',      icon: 'user-cog',        color: 'text-blue-600',   area: 'bdh', group: 'Điều hành', badge: 'staff' },
+        { key: 'years',         label: 'Niên khoá',    icon: 'calendar-range',  color: 'text-blue-600', area: 'bdh', group: 'Điều hành' },
+        { key: 'gifts',         label: 'Danh mục quà', icon: 'gift',            color: 'text-blue-600',   area: 'bdh', group: 'Chương trình' },
+        { key: 'rewards',       label: 'Đổi quà',      icon: 'shopping-bag',    color: 'text-blue-600',   area: 'bdh', group: 'Chương trình' }
     ],
 
     // Công tắc bảo trì. Tắt thì mọi người thấy nút mờ kèm nhãn "Bảo trì",

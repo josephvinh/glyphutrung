@@ -113,7 +113,7 @@ window.TNTT.notes = {
                 key: it.kind + '-' + it.id,
                 icon: it.kind === 'meeting' ? 'users' : (overdue ? 'alert-triangle' : 'calendar-check'),
                 cls: it.kind === 'meeting'
-                    ? 'bg-teal-50 text-teal-600 border-teal-100'
+                    ? 'bg-blue-50 text-blue-600 border-blue-100'
                     : (overdue ? 'bg-rose-50 text-rose-600 border-rose-100'
                                : 'bg-blue-50 text-blue-600 border-blue-100'),
                 text: (it.kind === 'meeting' ? 'Họp: ' : '') + it.title,

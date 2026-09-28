@@ -105,7 +105,7 @@ window.TNTT.birthdays = {
 
     birthdayChipClass(kind) {
         return kind === 'member'
-            ? 'bg-indigo-50 text-indigo-600 border-indigo-100'
+            ? 'bg-blue-50 text-blue-600 border-blue-100'
             : 'bg-rose-50 text-rose-600 border-rose-100';
     },
 
