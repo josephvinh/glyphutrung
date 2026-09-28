@@ -40,6 +40,11 @@ require __DIR__ . '/../config/db.php';
 require __DIR__ . '/api/_tracuu.php';
 require __DIR__ . '/api/_rewards.php'; // rewards_pending_order() + rewards_expire_due() — CHỈ ĐỌC dùng ở đây
 
+/* Trang này KHÔNG nạp _bootstrap.php (theo mẫu bxh.php) nên phải TỰ đặt múi
+   giờ VN — nếu không, date('Y-m-d') chạy theo giờ server (UTC), khiến "hôm
+   nay" của lịch/băng Mộc lệch một ngày vào sáng sớm giờ Việt Nam. */
+date_default_timezone_set('Asia/Ho_Chi_Minh');
+
 /* ---------- Niên khoá đang mở ---------- */
 $year = db_one("SELECT id FROM school_years WHERE is_current = 1 LIMIT 1");
 if (!$year) {
@@ -70,11 +75,20 @@ if ($ma !== '') {
  * truyền xuống cả doiQuaApp lẫn soMocPending qua JSON — 2 component Alpine
  * KHÔNG tự gọi action=pending lúc init nữa (fix round 1: double-throttle). */
 $pendingOut = null;
+$mocNgay = [];   // ['Y-m-d' => số Mộc đóng ngày đó] — cho LỊCH ĐÓNG MỘC
+$mocKhac = 0;    // Σ Mộc 'manual_adjust' (thưởng khác, không lên lịch)
 if ($ketQua) {
     $emRow = db_one('SELECT id FROM students WHERE code = ?', [$ma]);
     if ($emRow) {
         rewards_expire_due($yearId); // dọn lazy đơn đã quá hạn trước khi đọc (§6.5)
         $pendingOut = rewards_pending_order((int) $emRow['id'], $yearId);
+
+        /* Mộc đóng theo NGÀY (cả niên khoá) + Mộc "thưởng khác" (manual_adjust).
+           Logic thuần đã tách sang _tracuu.php để test được; đọc MỘT lần ở đây,
+           JS dựng lịch từng tháng phía trình duyệt nên lật tháng KHÔNG tốn thêm
+           lượt tra cứu. */
+        $mocNgay = tracuu_moc_by_day((int) $emRow['id'], $yearId);
+        $mocKhac = tracuu_moc_thuong_khac((int) $emRow['id'], $yearId);
     }
 }
 
@@ -118,6 +132,9 @@ function dinhDangGD(array $t): string {
     $dau = $t['amount'] > 0 ? '+' : '';
     return $dau . (int) $t['amount'];
 }
+
+// loiLaThu() đã chuyển sang public/api/_tracuu.php thành tracuu_loi_la_thu()
+// (logic thuần, test được bằng PHPUnit) — trang chỉ gọi lại ở phần hiển thị.
 ?><!doctype html>
 <html lang="vi">
 <head>
@@ -127,7 +144,7 @@ function dinhDangGD(array $t): string {
 <title>Tra Cứu Sổ Mộc · Thiếu Nhi Thánh Thể</title>
 <link rel="stylesheet" href="assets/css/font.css">
 <style>
-:root{--vang:#f6b100;--vang2:#ffd54a;--lua:#f97316;--nen:#0b1e4d;--nen2:#15347e;}
+:root{--vang:#f6b100;--vang2:#ffd54a;--lua:#f97316;--nen:#e11d36;--nen2:#b81528;}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
  color:#0f172a;background:linear-gradient(160deg,#eef3ff,#f8fafc 40%);min-height:100vh;padding:0 0 48px}
@@ -141,7 +158,7 @@ body{font-family:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",Roboto,sans
 .back-btn:active{background:rgba(255,255,255,.3);transform:scale(0.95)}
 
 .tabs{display:flex;background:#fff;border-radius:999px;padding:4px;box-shadow:0 8px 20px -12px rgba(15,23,42,.4);margin:-30px auto 16px;position:relative;z-index:2}
-.tabs a{flex:1;text-align:center;padding:9px 10px;border-radius:999px;font-size:13.5px;font-weight:800;color:#64748b;text-decoration:none}
+.tabs a{flex:1;text-align:center;white-space:nowrap;padding:9px 8px;border-radius:999px;font-size:13.5px;font-weight:800;color:#64748b;text-decoration:none}
 .tabs a.on{background:var(--nen2);color:#fff}
 
 form.tra{display:flex;gap:8px;margin-bottom:16px}
@@ -182,6 +199,184 @@ form.tra button:active{transform:scale(.97)}
 .foot{text-align:center;font-size:11px;color:#94a3b8;margin-top:16px}
 
 [x-cloak]{display:none !important}
+
+/* ============================================================
+   CUỐN SỔ MỘC — BẤM ĐỂ MỞ (không tự chạy).
+   Đầu tiên hiện BÌA SỔ gỗ (gáy lò xo + logo Đoàn); các em CHẠM để mở:
+   bìa lật lên, lộ TRANG GIẤY kẻ ô bên trong. Trên trang có "con Mộc"
+   (con dấu) đóng theo chuỗi đi lễ để thấy rõ "Mộc" của mình.
+   Máy bật "giảm chuyển động" thì mở thẳng, không hoạt hình.
+   ============================================================ */
+.so-canh{position:relative;perspective:1800px;max-width:390px;margin:8px auto 0;
+ --bia1:#7d5729;--bia2:#452e15;--spine:#e11d36}   /* mặc định: bìa gỗ, gáy đỏ */
+/* Màu BÌA theo NGÀNH */
+.so-canh.bia-hong{--bia1:#f06fa8;--bia2:#b0246a;--spine:#db2777}   /* Khai Tâm — hồng */
+.so-canh.bia-la  {--bia1:#34c98a;--bia2:#127a52;--spine:#059669}   /* Rước Lễ — xanh lá */
+.so-canh.bia-xanh{--bia1:#3b62c9;--bia2:#1b2a6b;--spine:#1e40af}   /* Thêm Sức — xanh đậm */
+.so-canh.bia-vang{--bia1:#f6c85f;--bia2:#d98f22;--spine:#c98a1a}   /* Bao Đồng — vàng */
+
+/* ===== KHUNG MỘT MÀN HÌNH — sổ lấp đầy bề ngang & vừa chiều cao 1 khung ===== */
+.doi-ma{text-align:center;margin-bottom:6px}
+.doi-ma a{display:inline-block;font-size:12.5px;font-weight:700;color:#fff;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);padding:5px 14px;border-radius:999px;text-decoration:none}
+.man-hinh{display:flex;align-items:flex-start;justify-content:center}
+.fit{transform-origin:top center;will-change:transform;width:100%}
+body:not(.khung-don) .man-hinh{display:block}
+
+body.khung-don{height:100dvh;overflow:hidden;padding:0;display:flex;flex-direction:column}
+/* Hero MẢNH để nhường chỗ cho sổ (chống ăn hết chiều cao -> khỏi phải thu nhỏ) */
+body.khung-don .hero{flex:0 0 auto;padding:8px 16px 12px;border-radius:0 0 18px 18px}
+body.khung-don .hero .ico{display:none}
+body.khung-don .hero h1{font-size:16px;margin:0;letter-spacing:.3px}
+body.khung-don .hero p{display:none}
+body.khung-don .hero .back-btn{width:32px;height:32px;top:8px;left:12px}
+/* wrap: KHÔNG clip (kẻo cắt hàng tab thụt âm); man-hình mới là chỗ ẩn tràn */
+body.khung-don .wrap{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;overflow:visible}
+body.khung-don .tabs{flex:0 0 auto;margin:10px auto 8px}   /* bỏ tuck âm -> không bị hero che/cắt */
+body.khung-don .doi-ma{flex:0 0 auto}
+body.khung-don .foot{display:none}
+body.khung-don .man-hinh{flex:1 1 auto;min-height:0;overflow:hidden}
+/* Sổ lấp đầy bề ngang khung (không còn thẻ nhỏ lọt giữa) */
+body.khung-don .so-canh{max-width:520px;width:100%;margin:0 auto}
+/* Nén chiều cao để vừa khung, đỡ phải scale */
+body.khung-don .trang-so{padding:16px 14px 12px}
+body.khung-don .trang-tieu{margin:0 0 8px}
+body.khung-don .hoso{margin-bottom:10px}
+body.khung-don .trang-tab{margin:10px 0 10px}
+body.khung-don .homnay{padding:7px 10px;margin-bottom:8px}
+body.khung-don .tong-lon{margin-bottom:8px}
+body.khung-don .tong-lon .num{font-size:26px}
+body.khung-don .lich{padding:10px}
+body.khung-don .lich-dau{margin-bottom:8px}
+body.khung-don .lich-tuan{margin-bottom:4px}
+body.khung-don .lich-tong{margin-top:8px}
+body.khung-don .lich-kien{margin-top:8px;padding:7px 9px;font-size:11px}
+body.khung-don .moc-khac{margin-top:8px;padding:7px 9px;font-size:11px}
+
+/* Con dấu tròn = logo Đoàn */
+.con-dau{border-radius:50%;background:radial-gradient(circle at 50% 40%,#fff,#ffe9ec 72%,#ffd6dc);
+ border:2px solid #e11d36;box-shadow:0 6px 14px -6px rgba(192,24,47,.6), inset 0 0 0 3px rgba(192,24,47,.12);
+ display:flex;align-items:center;justify-content:center;overflow:hidden}
+.con-dau img{width:80%;height:80%;object-fit:contain}
+
+/* Gáy lò xo trên cùng + ruy-băng đánh dấu — luôn hiện */
+.xoan{position:absolute;top:-8px;left:0;right:0;display:flex;justify-content:space-around;padding:0 22px;z-index:9;pointer-events:none}
+.xoan i{width:11px;height:16px;border-radius:6px;border:3px solid #9aa3af;border-top-color:#cbd5e1;background:#fff}
+.ruy-bang{position:absolute;top:-2px;right:30px;width:26px;height:66px;z-index:8;background:linear-gradient(#e11d36,#8a1120);
+ clip-path:polygon(0 0,100% 0,100% 100%,50% 80%,0 100%);box-shadow:0 6px 10px -6px rgba(138,17,32,.7)}
+
+/* Trang giấy bên trong (kẻ ô + lề đỏ + logo mờ) */
+.trang-so{position:relative;min-height:320px;
+ background:repeating-linear-gradient(0deg,transparent 0 29px,rgba(21,52,126,.06) 29px 30px),linear-gradient(180deg,#fffdf7,#fff7ea);
+ border:1px solid #e6dcc0;border-left:7px solid var(--spine);border-radius:6px 14px 14px 6px;
+ padding:26px 18px 20px 20px;box-shadow:0 26px 50px -24px rgba(60,40,10,.5);
+ transform-origin:top center;animation:trangMo .85s cubic-bezier(.2,.85,.25,1.05) both}
+@keyframes trangMo{0%{opacity:0;transform:rotateX(-82deg)}60%{opacity:1}100%{opacity:1;transform:rotateX(0)}}
+.trang-so .nen-logo{position:absolute;inset:0;background-position:center 64%;background-repeat:no-repeat;background-size:210px;opacity:.05;pointer-events:none}
+.trang-so > *{position:relative}
+.trang-tieu{text-align:center;font-size:13px;color:#8a5e08;font-weight:800;letter-spacing:.5px;margin:2px 0 14px}
+.trang-so .hoso .ten{font-size:17px}
+.trang-so .o{background:rgba(255,255,255,.6);border:1px solid #ece2c6}
+.trang-so .o .so{font-size:26px}
+/* Con dấu logo đóng ở góc trang */
+.dau-so{position:absolute;right:14px;bottom:12px;width:60px;height:60px;z-index:3;transform:rotate(-8deg);
+ animation:sapDong .5s .95s cubic-bezier(.3,1.4,.5,1) both}
+@keyframes sapDong{0%{opacity:0;transform:scale(2) rotate(-26deg)}70%{opacity:1;transform:scale(.9) rotate(-4deg)}100%{opacity:1;transform:scale(1) rotate(-8deg)}}
+
+/* --- BÌA SỔ (đóng) = nút bấm, phủ lên trang --- */
+.bia{position:absolute;inset:0;z-index:6;border:0;cursor:pointer;padding:22px 18px;font-family:inherit;
+ transform-origin:top center;backface-visibility:hidden;border-radius:6px 14px 14px 6px;
+ background:radial-gradient(120% 80% at 50% 0%,rgba(255,255,255,.22),rgba(255,255,255,0) 55%),linear-gradient(135deg,var(--bia1),var(--bia2));
+ box-shadow:0 22px 44px -18px rgba(15,23,42,.55), inset 0 0 0 2px rgba(255,255,255,.18), inset 0 0 40px rgba(0,0,0,.2);
+ color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;transition:transform .15s}
+.bia:active{transform:scale(.985)}
+.bia:focus-visible{outline:3px solid var(--vang);outline-offset:4px}
+.bia .khung{border:2px solid rgba(255,255,255,.45);border-radius:10px;padding:20px 18px;display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;max-width:250px}
+.bia .con-dau{width:78px;height:78px;border-color:rgba(246,200,95,.7);background:radial-gradient(circle at 50% 40%,#fff,#f7ead0)}
+.bia .tieu{font-size:20px;font-weight:900;letter-spacing:1px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.35)}
+.bia .phu{font-size:11.5px;opacity:.85}
+.bia .cham{margin-top:6px;font-size:12.5px;font-weight:800;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.45);color:#fff;padding:7px 14px;border-radius:999px}
+.so-canh.mo .bia{animation:biaLat .85s ease-in forwards;pointer-events:none}
+@keyframes biaLat{35%{opacity:1}100%{opacity:0;transform:rotateX(156deg)}}
+
+/* --- "CON MỘC" hữu hình --- */
+/* token nhỏ đứng trước số Ví */
+.moc-mini{display:inline-flex;width:20px;height:20px;border-radius:50%;overflow:hidden;vertical-align:-4px;margin-right:4px;border:1.5px solid #e11d36;background:#fff}
+.moc-mini img{width:82%;height:82%;object-fit:contain;margin:auto}
+/* Tiêu đề mục (ngăn Trang Mộc / Trang tổng kết) */
+.muc{display:flex;align-items:center;gap:8px;margin:20px 0 10px;color:#8a5e08;font-weight:900;font-size:13px;letter-spacing:.3px}
+.muc::before,.muc::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,transparent,#e6d6a8,transparent)}
+/* Băng "hôm nay đã đóng chưa" */
+.homnay{display:flex;align-items:center;gap:8px;justify-content:center;text-align:center;background:linear-gradient(135deg,#fff6d6,#ffe9a8);border:1px solid #f2cf6a;border-radius:12px;padding:9px 12px;font-size:12.5px;font-weight:800;color:#8a5e08;margin-bottom:12px}
+.homnay.chua{background:#f5f0e2;border-color:#ddcea6;color:#8a7a4a}
+/* Tổng số Mộc — dòng khoe gọn */
+.tong-lon{text-align:center;margin-bottom:12px}
+.tong-lon .num{font-size:34px;font-weight:900;color:#e11d36;line-height:1;display:inline-flex;align-items:center;gap:6px}
+.tong-lon .num .moc-mini{width:24px;height:24px}
+.tong-lon .cap{font-size:12px;color:#94a3b8;font-weight:700;margin-top:4px}
+
+/* ===== LỊCH ĐÓNG MỘC — phong cách hiện đại (nền trắng, tối giản) ===== */
+.lich{background:#fff;border:1px solid #eef1f5;border-radius:16px;padding:12px;box-shadow:0 10px 30px -20px rgba(15,23,42,.35)}
+.lich-dau{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
+.lich-dau b{font-size:clamp(14px,3.8vw,16px);font-weight:800;color:#0f172a;letter-spacing:.2px}
+.lich-dau button{width:34px;height:34px;border-radius:50%;border:0;background:#f1f5f9;color:#334155;font-size:18px;font-weight:800;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center;transition:background .15s,transform .1s}
+.lich-dau button:hover:not(:disabled){background:#e2e8f0}
+.lich-dau button:disabled{opacity:.35;cursor:default}
+.lich-dau button:active:not(:disabled){transform:scale(.9)}
+.lich-tuan,.lich-luoi{display:grid;grid-template-columns:repeat(7,1fr);gap:clamp(3px,1.2vw,6px)}
+.lich-tuan{margin-bottom:6px}
+.lich-tuan span{text-align:center;font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.4px}
+.lich-tuan span.cn{color:#e11d36}
+.o-ngay{aspect-ratio:1/1;border-radius:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+ background:#f8fafc;position:relative}
+.o-ngay.trong{background:transparent}
+.o-ngay .d{font-size:clamp(11px,3vw,13px);font-weight:600;color:#334155}
+.o-ngay.cn .d{color:#e11d36}
+/* Ngày ĐÃ đóng Mộc: nền đỏ nhạt, số đỏ đậm */
+.o-ngay.co{background:linear-gradient(160deg,rgba(225,29,54,.13),rgba(225,29,54,.07))}
+.o-ngay.co .d{color:#e11d36;font-weight:800}
+/* Con Mộc trong ô = LOGO Đoàn + số */
+.moc-day{display:inline-flex;align-items:center;gap:1px;line-height:1}
+.moc-day img{width:clamp(13px,3.6vw,16px);height:clamp(13px,3.6vw,16px);object-fit:contain;display:block}
+.moc-day b{font-size:clamp(9px,2.6vw,11px);font-weight:900;color:#e11d36}
+/* Hôm nay: viền tròn đỏ nổi bật */
+.o-ngay.today{box-shadow:inset 0 0 0 2px #e11d36}
+.o-ngay.today .d{color:#e11d36}
+.o-ngay.tuonglai{opacity:.35}
+.lich-tong{text-align:center;font-size:12px;color:#64748b;font-weight:600;margin-top:12px}
+.lich-tong b{color:#e11d36;font-weight:800}
+.lich-kien{margin-top:10px;font-size:11.5px;color:#64748b;background:#f8fafc;border:1px solid #e6ebf1;border-radius:12px;padding:9px 11px;line-height:1.55}
+.moc-khac{margin-top:10px;font-size:12px;color:#8a5e08;background:linear-gradient(135deg,#fff6d6,#ffe9a8);border:1px solid #f2cf6a;border-radius:12px;padding:9px 11px;line-height:1.5;text-align:center}
+.moc-khac b{color:#b81528;font-weight:900}
+.lich-trong{grid-column:1 / -1;text-align:center;color:#94a3b8;font-size:12px;padding:14px 0}
+
+/* ===== TAB CHUYỂN TRANG trong sổ (Trang Mộc ↔ Trang tổng kết) ===== */
+.trang-tab{display:flex;gap:6px;background:#f4ecd8;border:1px solid #e6dcc0;border-radius:999px;padding:4px;margin:14px 0 12px}
+.trang-tab button{flex:1;min-width:0;white-space:nowrap;border:0;background:transparent;font-family:inherit;font-weight:800;font-size:12.5px;color:#8a7a4a;padding:8px 4px;border-radius:999px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px}
+.trang-tab button.on{background:#fff;color:#e11d36;box-shadow:0 2px 6px -3px rgba(0,0,0,.25)}
+.trang-tab button:active{transform:scale(.97)}
+.trang-khung{position:relative;overflow:hidden}
+.trang-noi{display:none}
+.trang-noi.hien{display:block}
+.trang-noi.vao-phai{animation:trangPhai .5s ease both}
+.trang-noi.vao-trai{animation:trangTrai .5s ease both}
+@keyframes trangPhai{from{opacity:0;transform:translateX(40px) rotateY(-16deg)}to{opacity:1;transform:none}}
+@keyframes trangTrai{from{opacity:0;transform:translateX(-40px) rotateY(16deg)}to{opacity:1;transform:none}}
+
+/* Lời khen + động viên + nhắc nhở */
+.thu-loi{margin-top:16px;background:linear-gradient(135deg,#fff8e7,#fff2d2);border:1px solid #f4e0a3;border-radius:14px;padding:14px 16px}
+.thu-loi .khen{font-size:14px;font-weight:800;color:#8a5e08;line-height:1.55}
+.thu-loi .khen + .khen{margin-top:8px}
+.thu-loi .nhac{font-size:13px;color:#7c5a12;margin-top:8px;line-height:1.6;font-style:italic}
+.thu-cham{text-align:center;font-size:12.5px;color:var(--nen2);font-weight:700;font-style:italic;margin-top:16px;line-height:1.5;padding:0 8px}
+.thu-ky{margin-top:8px;text-align:right;font-size:13px;color:#475569;font-style:italic;line-height:1.5;padding-right:64px}
+.thu-ky b{color:var(--nen2);font-style:normal}
+
+@media (prefers-reduced-motion: reduce){
+ .so-canh.mo .bia{animation:none;display:none}
+ .trang-so{animation:none;opacity:1;transform:none}
+ .dau-so{animation:none;opacity:1;transform:rotate(-8deg)}
+ .trang-noi.vao-phai,.trang-noi.vao-trai{animation:none}
+}
 
 /* ---------- Tab Đổi quà: lưới quà + giỏ ---------- */
 .qua-luoi{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:24px}
@@ -233,7 +428,7 @@ form.tra button:active{transform:scale(.97)}
 .canh-bao-nho a{color:#b91c1c;font-weight:800;text-decoration:underline}
 </style>
 </head>
-<body>
+<body class="<?= ($tab === 'so-moc' && $ketQua && !$pendingOut) ? 'khung-don' : '' ?>">
 
 <div class="hero">
   <a href="index.php" class="back-btn" aria-label="Quay lại">
@@ -371,11 +566,15 @@ form.tra button:active{transform:scale(.97)}
 
   <?php else: ?>
 
+    <?php if (!$ketQua): ?>
     <form class="tra" method="get">
       <input type="hidden" name="tab" value="so-moc">
       <input type="text" name="ma" value="<?= e_($ma) ?>" placeholder="Nhập mã thiếu nhi (VD: HS001)" maxlength="32" autofocus required>
       <button type="submit">Tra cứu</button>
     </form>
+    <?php else: ?>
+    <div class="doi-ma"><a href="tracuu.php">↩︎ Tra mã khác</a></div>
+    <?php endif; ?>
 
     <?php if ($khongCo): ?>
       <div class="thongbao">Không tìm thấy thiếu nhi với mã "<?= e_($ma) ?>".<br>Vui lòng kiểm tra lại mã số.</div>
@@ -383,7 +582,32 @@ form.tra button:active{transform:scale(.97)}
 
     <?php if ($ketQua): ?>
 
-      <div class="card">
+      <?php
+        $loi = tracuu_loi_la_thu($ketQua);
+        $logo = 'assets/img/optimized/logo.webp';   // con dấu logo (nhẹ ~82KB, cache 1 lần)
+        $tongMoc   = (int) $ketQua['total_earned'];  // tổng con Mộc đã đóng (để khoe)
+        $today     = date('Y-m-d');
+        $mocHomNay = $mocNgay[$today] ?? 0;          // Mộc đóng HÔM NAY (theo lịch)
+
+        // Màu BÌA SỔ theo NGÀNH (tên lớp bắt đầu bằng tên khối):
+        //   Khai Tâm→hồng · Rước Lễ→xanh lá · Thêm Sức→xanh đậm · Bao Đồng→vàng
+        $lop = (string) ($ketQua['class_name'] ?? '');
+        $biaKey = '';
+        if      (mb_stripos($lop, 'Khai Tâm', 0, 'UTF-8') !== false) $biaKey = 'hong';
+        elseif  (mb_stripos($lop, 'Rước',     0, 'UTF-8') !== false) $biaKey = 'la';
+        elseif  (mb_stripos($lop, 'Thêm Sức', 0, 'UTF-8') !== false) $biaKey = 'xanh';
+        elseif  (mb_stripos($lop, 'Bao Đồng', 0, 'UTF-8') !== false) $biaKey = 'vang';
+      ?>
+      <div class="man-hinh" id="manHinh"><div class="fit" id="soWrap">
+      <div class="so-canh<?= $biaKey ? ' bia-' . $biaKey : '' ?>" id="soCanh">
+        <div class="xoan" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="ruy-bang" aria-hidden="true"></div>
+
+        <!-- TRANG TRONG (lộ ra khi mở bìa) -->
+        <div class="trang-so">
+        <div class="nen-logo" style="background-image:url('<?= $logo ?>')" aria-hidden="true"></div>
+        <div class="dau-so con-dau" aria-hidden="true"><img src="<?= $logo ?>" alt=""></div>
+        <div class="trang-tieu">✦ SỔ MỘC CỦA EM ✦</div>
         <div class="hoso">
           <div class="ava"><?= e_(mb_strtoupper(mb_substr(trim($ketQua['full_name']), 0, 1, 'UTF-8'), 'UTF-8')) ?></div>
           <div>
@@ -392,10 +616,48 @@ form.tra button:active{transform:scale(.97)}
           </div>
         </div>
 
+        <!-- Tab lật trang: Trang Mộc <-> Trang tổng kết -->
+        <div class="trang-tab" id="trangTab">
+          <button type="button" class="on" data-p="moc"><img src="<?= $logo ?>" alt="" style="width:16px;height:16px;object-fit:contain"> Trang Mộc</button>
+          <button type="button" data-p="tk">📋 Tổng kết</button>
+        </div>
+
+        <div class="trang-khung">
+
+        <!-- ===== TRANG 1: TRANG MỘC ===== -->
+        <div class="trang-noi hien" data-p="moc">
+          <?php if ($mocHomNay > 0): ?>
+            <div class="homnay">✅ Hôm nay em đã được đóng <b>+<?= $mocHomNay ?></b> Mộc — giỏi quá!</div>
+          <?php else: ?>
+            <div class="homnay chua">🕒 Hôm nay chưa có Mộc mới — đi lễ / đi học Giáo Lý để được đóng nhé!</div>
+          <?php endif; ?>
+          <div class="tong-lon">
+            <div class="num"><span class="moc-mini"><img src="<?= $logo ?>" alt=""></span><?= $tongMoc ?></div>
+            <div class="cap">con Mộc em đã đóng được từ đầu năm</div>
+          </div>
+          <!-- LỊCH ĐÓNG MỘC — JS dựng từng tháng (lật tháng khỏi tải lại) -->
+          <div class="lich" id="lichMoc">
+            <div class="lich-dau">
+              <button type="button" id="lichTruoc" aria-label="Tháng trước">‹</button>
+              <b id="lichTen">—</b>
+              <button type="button" id="lichSau" aria-label="Tháng sau">›</button>
+            </div>
+            <div class="lich-tuan"><span class="cn">CN</span><span>T2</span><span>T3</span><span>T4</span><span>T5</span><span>T6</span><span>T7</span></div>
+            <div class="lich-luoi" id="lichLuoi"></div>
+            <div class="lich-tong" id="lichTong"></div>
+            <div class="lich-kien">🔎 Ô vàng là ngày em được đóng Mộc. Nếu em đi lễ/đi học mà ngày đó chưa có Mộc, hãy báo Huynh Trưởng để kiểm tra và chỉnh lại nhé!</div>
+          </div>
+          <?php if ($mocKhac > 0): ?>
+            <div class="moc-khac">🎁 Mộc thưởng khác (Huynh Trưởng tặng): <b>+<?= (int) $mocKhac ?></b> — không nằm trên lịch nên đã cộng thẳng vào Ví của em.</div>
+          <?php endif; ?>
+        </div><!-- /trang Mộc -->
+
+        <!-- ===== TRANG 2: TRANG TỔNG KẾT ===== -->
+        <div class="trang-noi" data-p="tk">
         <div class="vi">
           <div class="o">
             <div class="nhan">VÍ MỘC</div>
-            <div class="so"><?= (int) $ketQua['current_balance'] ?></div>
+            <div class="so"><span class="moc-mini"><img src="<?= $logo ?>" alt=""></span><?= (int) $ketQua['current_balance'] ?></div>
           </div>
           <div class="o lua">
             <div class="nhan">🔥 CHUỖI ĐI LỄ</div>
@@ -405,12 +667,20 @@ form.tra button:active{transform:scale(.97)}
         <div class="vi">
           <div class="o">
             <div class="nhan">TỔNG ĐÃ KIẾM</div>
-            <div class="so"><?= (int) $ketQua['total_earned'] ?></div>
+            <div class="so"><span class="moc-mini"><img src="<?= $logo ?>" alt=""></span><?= (int) $ketQua['total_earned'] ?></div>
           </div>
           <div class="o lua">
             <div class="nhan">🏆 KỶ LỤC CHUỖI</div>
             <div class="so"><?= (int) $ketQua['longest_streak'] ?></div>
           </div>
+        </div>
+
+        <div class="thu-loi">
+          <div class="khen"><?= e_($loi['khen']) ?></div>
+          <?php if ($loi['themVi'] !== ''): ?>
+          <div class="khen"><?= e_($loi['themVi']) ?></div>
+          <?php endif; ?>
+          <div class="nhac"><?= e_($loi['nhac']) ?></div>
         </div>
 
         <div class="lichsu">
@@ -429,7 +699,24 @@ form.tra button:active{transform:scale(.97)}
             <?php endforeach; ?>
           <?php endif; ?>
         </div>
-      </div>
+        <div class="thu-cham"><?= e_($loi['cham']) ?></div>
+        <div class="thu-ky">Thân mến,<br><b>Ban Huynh Trưởng · Đoàn TNTT Phú Trung</b> ✝️</div>
+        </div><!-- /trang Tổng kết -->
+        </div><!-- /.trang-khung -->
+        </div><!-- /.trang-so -->
+
+        <!-- BÌA SỔ (đóng) — bấm để mở -->
+        <button type="button" class="bia" id="moSoBtn"
+                aria-label="Chạm để mở Sổ Mộc của <?= e_($ketQua['full_name']) ?>">
+          <span class="khung">
+            <span class="con-dau"><img src="<?= $logo ?>" alt="" width="78" height="78"></span>
+            <span class="tieu">SỔ MỘC</span>
+            <span class="phu">Đoàn TNTT · Phú Trung</span>
+            <span class="cham">📖 Chạm để mở sổ</span>
+          </span>
+        </button>
+      </div><!-- /.so-canh -->
+      </div></div><!-- /.fit /.man-hinh -->
 
       <div x-data="soMocPending(<?= j_($ma) ?>, <?= j_($pendingOut) ?>)" x-cloak>
         <template x-if="pending">
@@ -478,6 +765,107 @@ form.tra button:active{transform:scale(.97)}
          soMocPending/doiQuaApp trước khi Alpine quét DOM (mẫu views/layout_login.php). */ ?>
 <script src="assets/js/tracuu.js?v=<?php echo @filemtime(__DIR__ . '/assets/js/tracuu.js') ?: 0; ?>"></script>
 <script defer src="assets/js/vendor/alpine.js?v=<?php echo @filemtime(__DIR__ . '/assets/js/vendor/alpine.js') ?: 0; ?>"></script>
+
+<?php /* Bấm bìa sổ -> mở sổ; và dựng LỊCH ĐÓNG MỘC từ dữ liệu theo ngày. */ ?>
+<script>
+(function(){
+  var b = document.getElementById('moSoBtn'), c = document.getElementById('soCanh');
+  if (b && c) b.addEventListener('click', function(){ c.classList.add('mo'); fit(); });
+
+  // ----- CO DÃN: thu nhỏ cuốn sổ cho vừa đúng 1 khung màn hình (khỏi cuộn) -----
+  var manHinh = document.getElementById('manHinh'), soWrap = document.getElementById('soWrap');
+  function fit(){
+    if (!manHinh || !soWrap || !document.body.classList.contains('khung-don')) return;
+    soWrap.style.transform = 'none';
+    var availH = manHinh.clientHeight, availW = manHinh.clientWidth;
+    var ch = soWrap.offsetHeight, cw = soWrap.offsetWidth;
+    if (!ch || !cw || !availH) return;
+    var k = Math.min(1, availH / ch, availW / cw);
+    soWrap.style.transform = 'scale(' + k + ')';
+  }
+  var hen;
+  function fitSoon(){ clearTimeout(hen); hen = setTimeout(fit, 60); }
+  window.addEventListener('resize', fitSoon);
+  window.addEventListener('orientationchange', fitSoon);
+  window.addEventListener('load', fit);
+  // logo tải xong có thể đổi chiều cao -> căn lại
+  Array.prototype.forEach.call(document.querySelectorAll('#soCanh img'), function(im){
+    if (!im.complete) im.addEventListener('load', fitSoon);
+  });
+
+  // ----- LẬT TRANG: Trang Mộc <-> Trang tổng kết -----
+  var tab = document.getElementById('trangTab');
+  if (tab){
+    var pages = {}, order = ['moc','tk'], cur = 'moc';
+    Array.prototype.forEach.call(document.querySelectorAll('.trang-noi[data-p]'), function(el){ pages[el.getAttribute('data-p')] = el; });
+    Array.prototype.forEach.call(tab.querySelectorAll('button[data-p]'), function(btn){
+      btn.addEventListener('click', function(){
+        var p = btn.getAttribute('data-p'); if (p === cur) return;
+        var sang = order.indexOf(p) > order.indexOf(cur);   // sang trang sau?
+        Array.prototype.forEach.call(tab.querySelectorAll('button'), function(x){ x.classList.toggle('on', x === btn); });
+        Object.keys(pages).forEach(function(k){
+          var el = pages[k]; el.classList.remove('hien','vao-phai','vao-trai');
+          if (k === p) el.classList.add('hien', sang ? 'vao-phai' : 'vao-trai');
+        });
+        cur = p;
+        fit();
+      });
+    });
+  }
+
+  // ----- LỊCH ĐÓNG MỘC -----
+  var LOGO = <?php echo json_encode($logo); ?>;
+  var MOC = <?php echo json_encode($mocNgay, JSON_UNESCAPED_UNICODE); ?> || {};
+  var luoi = document.getElementById('lichLuoi');
+  if (!luoi) return;
+  var elTen = document.getElementById('lichTen'),
+      elTong = document.getElementById('lichTong'),
+      btPrev = document.getElementById('lichTruoc'),
+      btNext = document.getElementById('lichSau');
+  var TEN_THANG = ['Một','Hai','Ba','Tư','Năm','Sáu','Bảy','Tám','Chín','Mười','Mười một','Mười hai'];
+
+  function p2(n){ return (n<10?'0':'')+n; }
+  var now = new Date(); var curY = now.getFullYear(), curM = now.getMonth();
+  var todayKey = curY+'-'+p2(curM+1)+'-'+p2(now.getDate());
+
+  // Giới hạn lật: từ tháng có Mộc sớm nhất -> tháng hiện tại (không sang tương lai)
+  var minY = curY, minM = curM;
+  Object.keys(MOC).forEach(function(k){
+    var pr = k.split('-'); var y=+pr[0], m=+pr[1]-1;
+    if (y<minY || (y===minY && m<minM)){ minY=y; minM=m; }
+  });
+  var viewY = curY, viewM = curM;
+
+  function ve(){
+    var first = new Date(viewY, viewM, 1);
+    var batDau = first.getDay();               // 0=CN ... khớp cột CN đầu
+    var soNgay = new Date(viewY, viewM+1, 0).getDate();
+    elTen.textContent = 'Tháng ' + TEN_THANG[viewM] + ' / ' + viewY;
+    var html = '', tongThang = 0, ngayCo = 0;
+    for (var i=0;i<batDau;i++) html += '<div class="o-ngay trong"></div>';
+    for (var d=1; d<=soNgay; d++){
+      var key = viewY+'-'+p2(viewM+1)+'-'+p2(d);
+      var moc = MOC[key] || 0;
+      var col = new Date(viewY, viewM, d).getDay(); // 0=CN
+      var cls = 'o-ngay' + (col===0?' cn':'') + (moc>0?' co':'') + (key===todayKey?' today':'') + (key>todayKey?' tuonglai':'');
+      html += '<div class="'+cls+'"><span class="d">'+d+'</span>'
+            + (moc>0 ? '<span class="moc-day"><img src="'+LOGO+'" alt=""><b>+'+moc+'</b></span>' : '') + '</div>';
+      if (moc>0){ tongThang += moc; ngayCo++; }
+    }
+    luoi.innerHTML = html;
+    elTong.innerHTML = ngayCo>0
+      ? ('Tháng này: <b>'+tongThang+'</b> con Mộc · '+ngayCo+' ngày được đóng')
+      : 'Tháng này chưa có con Mộc nào — cố lên nhé!';
+    var truocDuoc = (viewY>minY) || (viewY===minY && viewM>minM);
+    var sauDuoc   = (viewY<curY) || (viewY===curY && viewM<curM);
+    btPrev.disabled = !truocDuoc; btNext.disabled = !sauDuoc;
+    fit();
+  }
+  btPrev.addEventListener('click', function(){ if(viewM===0){viewM=11;viewY--;}else viewM--; ve(); });
+  btNext.addEventListener('click', function(){ if(viewM===11){viewM=0;viewY++;}else viewM++; ve(); });
+  ve();
+})();
+</script>
 
 </body>
 </html>
