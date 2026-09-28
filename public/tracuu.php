@@ -76,29 +76,19 @@ if ($ma !== '') {
  * KHÔNG tự gọi action=pending lúc init nữa (fix round 1: double-throttle). */
 $pendingOut = null;
 $mocNgay = [];   // ['Y-m-d' => số Mộc đóng ngày đó] — cho LỊCH ĐÓNG MỘC
+$mocKhac = 0;    // Σ Mộc 'manual_adjust' (thưởng khác, không lên lịch)
 if ($ketQua) {
     $emRow = db_one('SELECT id FROM students WHERE code = ?', [$ma]);
     if ($emRow) {
         rewards_expire_due($yearId); // dọn lazy đơn đã quá hạn trước khi đọc (§6.5)
         $pendingOut = rewards_pending_order((int) $emRow['id'], $yearId);
 
-        /* Mộc đóng theo NGÀY (cả niên khoá) — ghép giao dịch earn/bonus với
-           ngày điểm danh THẬT (attendances.session_date), không dùng created_at
-           (là lúc recalc). Đọc một lần, JS dựng lịch từng tháng phía trình duyệt
-           nên lật tháng KHÔNG tốn thêm lượt tra cứu. */
-        $rowsLich = db_all(
-            "SELECT a.session_date AS ngay, SUM(st.amount) AS moc
-               FROM stamp_transactions st
-               JOIN attendances a ON a.id = st.ref_attendance_id
-              WHERE st.student_id = ? AND st.year_id = ?
-                AND st.type IN ('attendance','streak_bonus')
-              GROUP BY a.session_date",
-            [(int) $emRow['id'], $yearId]
-        );
-        foreach ($rowsLich as $r) {
-            $m = (int) $r['moc'];
-            if ($m > 0) $mocNgay[(string) $r['ngay']] = $m;
-        }
+        /* Mộc đóng theo NGÀY (cả niên khoá) + Mộc "thưởng khác" (manual_adjust).
+           Logic thuần đã tách sang _tracuu.php để test được; đọc MỘT lần ở đây,
+           JS dựng lịch từng tháng phía trình duyệt nên lật tháng KHÔNG tốn thêm
+           lượt tra cứu. */
+        $mocNgay = tracuu_moc_by_day((int) $emRow['id'], $yearId);
+        $mocKhac = tracuu_moc_thuong_khac((int) $emRow['id'], $yearId);
     }
 }
 
@@ -143,56 +133,8 @@ function dinhDangGD(array $t): string {
     return $dau . (int) $t['amount'];
 }
 
-/**
- * Lời trong "lá thư": một câu KHEN/động viên (đổi theo chuỗi đi lễ của em)
- * và một câu NHẮC NHỞ chung. Xưng "em" cho gần gũi, gọi bằng tên (từ cuối họ tên).
- */
-function loiLaThu(array $k): array {
-    $streak  = (int) ($k['current_streak'] ?? 0);
-    $longest = (int) ($k['longest_streak'] ?? 0);
-    $bal     = (int) ($k['current_balance'] ?? 0);
-    $parts   = preg_split('/\s+/', trim((string) ($k['full_name'] ?? '')));
-    $goi     = (is_array($parts) && $parts && end($parts) !== '') ? end($parts) : 'em';
-
-    // (1) KHEN theo chuỗi đi lễ — có nhánh AN ỦI khi chuỗi vừa đứt.
-    if ($streak >= 8) {
-        $khen = "🔥 Quá tuyệt, $goi ơi! Em đã đi lễ $streak tuần liền không nghỉ — Chúa và các Huynh Trưởng tự hào về em lắm!";
-    } elseif ($streak >= 4) {
-        $khen = "🔥 Giỏi lắm $goi! Chuỗi đi lễ $streak tuần liền của em đang cháy rất đẹp — ráng giữ lửa nhé!";
-    } elseif ($streak >= 1) {
-        $khen = "🌱 $goi đang có chuỗi $streak tuần đi lễ rồi đó — cố thêm chút nữa cho ngọn lửa lớn hơn nhé!";
-    } elseif ($longest >= 3) {
-        // Chuỗi đang là 0 nhưng từng giữ được khá lâu -> an ủi, mời quay lại.
-        $khen = "🫂 Đừng buồn nếu chuỗi bị gián đoạn nhé $goi — em từng giữ được $longest tuần liền cơ mà! Chúa Nhật này quay lại đi lễ là ngọn lửa cháy lại ngay.";
-    } else {
-        $khen = "🕊️ Chúa Nhật này $goi nhớ tới nhà thờ dự lễ, để nhóm lại ngọn lửa yêu Chúa nhé!";
-    }
-
-    // (2) Nhánh riêng khi Ví nhiều Mộc -> gợi ý đổi quà.
-    $themVi = ($bal >= 100)
-        ? "🎁 Em đã dành dụm được $bal Mộc rồi — ghé mục Đổi quà chọn một phần thưởng xứng đáng cho mình nhé!"
-        : "";
-
-    // (3) NHẮC NHỞ xoay vòng mỗi lần xem cho đỡ nhàm.
-    $dsNhac = [
-        "Nhớ đi lễ Chúa Nhật đều đặn, chuyên cần học Giáo Lý và luôn sống ngoan, vâng lời ông bà cha mẹ em nhé! 💛",
-        "Mỗi ngày cố gắng làm một việc hy sinh nhỏ và một việc tốt cho bạn bè em nhé! 💛",
-        "Nhớ đọc kinh sáng tối và siêng năng rước lễ để ở gần Chúa Giêsu hơn nhé! 💛",
-        "Đi học Giáo Lý đúng giờ, mặc đồng phục gọn gàng và lễ phép với mọi người em nhé! 💛",
-    ];
-    $nhac = $dsNhac[array_rand($dsNhac)];
-
-    // Khẩu hiệu / Lời Chúa theo văn phong TNTT — cũng xoay vòng.
-    $dsCham = [
-        "Cầu nguyện · Rước lễ · Hy sinh · Làm tông đồ",
-        "“Hãy để trẻ nhỏ đến với Thầy” (Mc 10,14)",
-        "“Các con là muối cho đời, là ánh sáng cho trần gian” (x. Mt 5,13-14)",
-        "Sống ngày Thánh Thể: Chúa ở cùng em mọi ngày!",
-    ];
-    $cham = $dsCham[array_rand($dsCham)];
-
-    return ['khen' => $khen, 'themVi' => $themVi, 'nhac' => $nhac, 'cham' => $cham];
-}
+// loiLaThu() đã chuyển sang public/api/_tracuu.php thành tracuu_loi_la_thu()
+// (logic thuần, test được bằng PHPUnit) — trang chỉ gọi lại ở phần hiển thị.
 ?><!doctype html>
 <html lang="vi">
 <head>
@@ -308,6 +250,7 @@ body.khung-don .lich-dau{margin-bottom:8px}
 body.khung-don .lich-tuan{margin-bottom:4px}
 body.khung-don .lich-tong{margin-top:8px}
 body.khung-don .lich-kien{margin-top:8px;padding:7px 9px;font-size:11px}
+body.khung-don .moc-khac{margin-top:8px;padding:7px 9px;font-size:11px}
 
 /* Con dấu tròn = logo Đoàn */
 .con-dau{border-radius:50%;background:radial-gradient(circle at 50% 40%,#fff,#ffe9ec 72%,#ffd6dc);
@@ -402,6 +345,8 @@ body.khung-don .lich-kien{margin-top:8px;padding:7px 9px;font-size:11px}
 .lich-tong{text-align:center;font-size:12px;color:#64748b;font-weight:600;margin-top:12px}
 .lich-tong b{color:#e11d36;font-weight:800}
 .lich-kien{margin-top:10px;font-size:11.5px;color:#64748b;background:#f8fafc;border:1px solid #e6ebf1;border-radius:12px;padding:9px 11px;line-height:1.55}
+.moc-khac{margin-top:10px;font-size:12px;color:#8a5e08;background:linear-gradient(135deg,#fff6d6,#ffe9a8);border:1px solid #f2cf6a;border-radius:12px;padding:9px 11px;line-height:1.5;text-align:center}
+.moc-khac b{color:#b81528;font-weight:900}
 .lich-trong{grid-column:1 / -1;text-align:center;color:#94a3b8;font-size:12px;padding:14px 0}
 
 /* ===== TAB CHUYỂN TRANG trong sổ (Trang Mộc ↔ Trang tổng kết) ===== */
@@ -638,7 +583,7 @@ body.khung-don .lich-kien{margin-top:8px;padding:7px 9px;font-size:11px}
     <?php if ($ketQua): ?>
 
       <?php
-        $loi = loiLaThu($ketQua);
+        $loi = tracuu_loi_la_thu($ketQua);
         $logo = 'assets/img/optimized/logo.webp';   // con dấu logo (nhẹ ~82KB, cache 1 lần)
         $tongMoc   = (int) $ketQua['total_earned'];  // tổng con Mộc đã đóng (để khoe)
         $today     = date('Y-m-d');
@@ -702,6 +647,9 @@ body.khung-don .lich-kien{margin-top:8px;padding:7px 9px;font-size:11px}
             <div class="lich-tong" id="lichTong"></div>
             <div class="lich-kien">🔎 Ô vàng là ngày em được đóng Mộc. Nếu em đi lễ/đi học mà ngày đó chưa có Mộc, hãy báo Huynh Trưởng để kiểm tra và chỉnh lại nhé!</div>
           </div>
+          <?php if ($mocKhac > 0): ?>
+            <div class="moc-khac">🎁 Mộc thưởng khác (Huynh Trưởng tặng): <b>+<?= (int) $mocKhac ?></b> — không nằm trên lịch nên đã cộng thẳng vào Ví của em.</div>
+          <?php endif; ?>
         </div><!-- /trang Mộc -->
 
         <!-- ===== TRANG 2: TRANG TỔNG KẾT ===== -->

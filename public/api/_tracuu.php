@@ -116,3 +116,121 @@ function tracuu_public_summary(string $code, int $yearId): ?array
         'recent_transactions' => $summary['recent_transactions'],
     ];
 }
+
+/**
+ * MỘC ĐÓNG THEO NGÀY (cả niên khoá) — cho LỊCH ĐÓNG MỘC của trang tra cứu.
+ *
+ * Ghép giao dịch earn/bonus với NGÀY ĐIỂM DANH THẬT (attendances.session_date
+ * qua ref_attendance_id), KHÔNG dùng created_at (là lúc recalc chạy, có thể
+ * khác ngày đi lễ). Chỉ lấy 'attendance' + 'streak_bonus' — đúng phần Mộc kiếm
+ * được (khớp total_earned ở StampService); 'spend' (đổi quà) và 'manual_adjust'
+ * (điều chỉnh tay) KHÔNG gắn với một ngày đi lễ nên không lên lịch (xem
+ * tracuu_moc_thuong_khac() cho phần 'manual_adjust').
+ *
+ * Tách khỏi tracuu.php để test được bằng PHPUnit mà không cần dựng HTML/HTTP.
+ *
+ * @return array<string,int>  ['Y-m-d' => tổng Mộc đóng ngày đó], chỉ ngày >0,
+ *   dùng làm nguồn cho JS dựng lịch từng tháng (lật tháng không tốn lượt tra).
+ */
+function tracuu_moc_by_day(int $studentId, int $yearId): array
+{
+    $rows = db_all(
+        "SELECT a.session_date AS ngay, SUM(st.amount) AS moc
+           FROM stamp_transactions st
+           JOIN attendances a ON a.id = st.ref_attendance_id
+          WHERE st.student_id = ? AND st.year_id = ?
+            AND st.type IN ('attendance','streak_bonus')
+          GROUP BY a.session_date",
+        [$studentId, $yearId]
+    );
+
+    $out = [];
+    foreach ($rows as $r) {
+        $m = (int) $r['moc'];
+        if ($m > 0) $out[(string) $r['ngay']] = $m;
+    }
+    return $out;
+}
+
+/**
+ * TỔNG MỘC "THƯỞNG KHÁC" — phần 'manual_adjust' (Huynh Trưởng tặng/điều chỉnh
+ * tay), KHÔNG gắn với một buổi đi lễ nên KHÔNG hiện trên lịch và KHÔNG nằm
+ * trong total_earned (StampService chỉ cộng earn/bonus vào total_earned; phần
+ * manual_adjust chỉ chảy vào current_balance của ví).
+ *
+ * Trang tra cứu hiện MỘT dòng "🎁 Mộc thưởng khác: +N" khi số này > 0 để em/phụ
+ * huynh hiểu vì sao Ví có thể nhiều hơn tổng Mộc trên lịch (tránh "kiện cáo"
+ * nhầm là thiếu Mộc). Trả về TỔNG RÒNG (điều chỉnh âm cũng cộng dồn); nơi gọi
+ * tự quyết chỉ khoe khi > 0.
+ *
+ * @return int  Σ amount của các giao dịch type='manual_adjust' trong năm.
+ */
+function tracuu_moc_thuong_khac(int $studentId, int $yearId): int
+{
+    return (int) (db_val(
+        "SELECT COALESCE(SUM(amount),0) FROM stamp_transactions
+          WHERE student_id = ? AND year_id = ? AND type = 'manual_adjust'",
+        [$studentId, $yearId]
+    ) ?? 0);
+}
+
+/**
+ * LỜI TRONG "LÁ THƯ" của trang tra cứu: một câu KHEN/động viên (đổi theo chuỗi
+ * đi lễ của em), một gợi ý đổi quà khi Ví nhiều Mộc, một câu NHẮC NHỞ và một
+ * câu châm ngôn/Lời Chúa (hai câu sau xoay vòng ngẫu nhiên cho đỡ nhàm). Xưng
+ * "em", gọi bằng tên (từ cuối họ tên).
+ *
+ * Tách khỏi tracuu.php để test được nhánh KHEN theo chuỗi (deterministic);
+ * phần 'nhac'/'cham' dùng array_rand nên test chỉ kiểm cấu trúc, không kiểm giá
+ * trị cụ thể.
+ *
+ * @param array $k  bản tổng hợp có current_streak/longest_streak/current_balance/full_name
+ * @return array{khen:string, themVi:string, nhac:string, cham:string}
+ */
+function tracuu_loi_la_thu(array $k): array
+{
+    $streak  = (int) ($k['current_streak'] ?? 0);
+    $longest = (int) ($k['longest_streak'] ?? 0);
+    $bal     = (int) ($k['current_balance'] ?? 0);
+    $parts   = preg_split('/\s+/', trim((string) ($k['full_name'] ?? '')));
+    $goi     = (is_array($parts) && $parts && end($parts) !== '') ? end($parts) : 'em';
+
+    // (1) KHEN theo chuỗi đi lễ — có nhánh AN ỦI khi chuỗi vừa đứt.
+    if ($streak >= 8) {
+        $khen = "🔥 Quá tuyệt, $goi ơi! Em đã đi lễ $streak tuần liền không nghỉ — Chúa và các Huynh Trưởng tự hào về em lắm!";
+    } elseif ($streak >= 4) {
+        $khen = "🔥 Giỏi lắm $goi! Chuỗi đi lễ $streak tuần liền của em đang cháy rất đẹp — ráng giữ lửa nhé!";
+    } elseif ($streak >= 1) {
+        $khen = "🌱 $goi đang có chuỗi $streak tuần đi lễ rồi đó — cố thêm chút nữa cho ngọn lửa lớn hơn nhé!";
+    } elseif ($longest >= 3) {
+        // Chuỗi đang là 0 nhưng từng giữ được khá lâu -> an ủi, mời quay lại.
+        $khen = "🫂 Đừng buồn nếu chuỗi bị gián đoạn nhé $goi — em từng giữ được $longest tuần liền cơ mà! Chúa Nhật này quay lại đi lễ là ngọn lửa cháy lại ngay.";
+    } else {
+        $khen = "🕊️ Chúa Nhật này $goi nhớ tới nhà thờ dự lễ, để nhóm lại ngọn lửa yêu Chúa nhé!";
+    }
+
+    // (2) Nhánh riêng khi Ví nhiều Mộc -> gợi ý đổi quà.
+    $themVi = ($bal >= 100)
+        ? "🎁 Em đã dành dụm được $bal Mộc rồi — ghé mục Đổi quà chọn một phần thưởng xứng đáng cho mình nhé!"
+        : "";
+
+    // (3) NHẮC NHỞ xoay vòng mỗi lần xem cho đỡ nhàm.
+    $dsNhac = [
+        "Nhớ đi lễ Chúa Nhật đều đặn, chuyên cần học Giáo Lý và luôn sống ngoan, vâng lời ông bà cha mẹ em nhé! 💛",
+        "Mỗi ngày cố gắng làm một việc hy sinh nhỏ và một việc tốt cho bạn bè em nhé! 💛",
+        "Nhớ đọc kinh sáng tối và siêng năng rước lễ để ở gần Chúa Giêsu hơn nhé! 💛",
+        "Đi học Giáo Lý đúng giờ, mặc đồng phục gọn gàng và lễ phép với mọi người em nhé! 💛",
+    ];
+    $nhac = $dsNhac[array_rand($dsNhac)];
+
+    // Khẩu hiệu / Lời Chúa theo văn phong TNTT — cũng xoay vòng.
+    $dsCham = [
+        "Cầu nguyện · Rước lễ · Hy sinh · Làm tông đồ",
+        "“Hãy để trẻ nhỏ đến với Thầy” (Mc 10,14)",
+        "“Các con là muối cho đời, là ánh sáng cho trần gian” (x. Mt 5,13-14)",
+        "Sống ngày Thánh Thể: Chúa ở cùng em mọi ngày!",
+    ];
+    $cham = $dsCham[array_rand($dsCham)];
+
+    return ['khen' => $khen, 'themVi' => $themVi, 'nhac' => $nhac, 'cham' => $cham];
+}
