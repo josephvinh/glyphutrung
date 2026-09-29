@@ -117,6 +117,11 @@ switch ($action) {
             json_fail('Lúc duyệt chỉ đặt vai Giáo Lý Viên, Dự Bị hoặc Demo (chỉ xem). Chức vụ cụ thể gán sau ở màn Khối & Lớp.');
         }
 
+        // Vai Demo (chỉ xem) chỉ Quản Trị được cấp.
+        if ($role === 'demo' && ($me['role_code'] ?? '') !== 'admin') {
+            json_fail('Chỉ Quản Trị Hệ Thống mới được cấp vai Demo.', 403);
+        }
+
         $titleId = db_one('SELECT id FROM titles WHERE role_code=? ORDER BY sort_order LIMIT 1', [$role])['id'] ?? null;
 
         try {
