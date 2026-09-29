@@ -115,7 +115,7 @@
                 <i data-lucide="user-plus" class="w-4 h-4"></i> Thêm
             </button>
 
-            <input type="file" x-ref="fileInput" accept=".csv,text/csv" class="hidden" @change="handleImport($event)">
+            <input type="file" x-ref="fileInput" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" class="hidden" @change="handleImport($event)">
             <!-- Hỏi hệ thống phân quyền, KHÔNG khoá cứng theo vai trò.
                  Trước đây chỗ này ghi ['admin','bdh'] nên GLV Chủ Nhiệm
                  dù được cấp quyền sửa vẫn không thấy nút — mà gọi thẳng
@@ -127,11 +127,11 @@
                 <i data-lucide="file-down" class="w-4 h-4"></i> Nhập
             </button>
 
-            <!-- XUẤT: gộp toàn bộ in ấn (CSV + PDF danh sách + PDF thẻ) vào một
-                 dropdown để chọn nội dung xuất. Danh sách rỗng thì CSV là TẢI MẪU. -->
+            <!-- XUẤT: gộp toàn bộ in ấn (Excel + PDF danh sách + PDF thẻ) vào một
+                 dropdown để chọn nội dung xuất. Danh sách rỗng thì Excel là TẢI MẪU. -->
             <div class="relative" x-data="{ showExportMenu: false }" @click.away="showExportMenu = false" @keydown.escape.window="showExportMenu = false">
                 <button @click="showExportMenu = !showExportMenu" type="button"
-                        :title="filteredStudents.length === 0 ? 'Tải file mẫu CSV để điền rồi nhập lại' : 'Xuất / in danh sách'"
+                        :title="filteredStudents.length === 0 ? 'Tải file mẫu Excel để điền rồi nhập lại' : 'Xuất / in danh sách'"
                         class="flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold text-xs active:scale-95 transition-transform shadow-sm border"
                         :class="filteredStudents.length === 0
                                 ? 'bg-amber-50 text-amber-700 border-amber-200'
@@ -142,11 +142,11 @@
                 </button>
                 <div x-show="showExportMenu" style="display: none;" x-transition
                      class="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-lg border p-2 z-50 min-w-[200px]">
-                    <!-- CSV: rỗng => tải mẫu, có dữ liệu => xuất danh sách -->
-                    <button @click="exportToCSV(); showExportMenu = false" type="button"
+                    <!-- Excel: rỗng => tải mẫu, có dữ liệu => xuất danh sách -->
+                    <button @click="exportToExcel(); showExportMenu = false" type="button"
                             class="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 rounded-lg flex items-center gap-2">
                         <i data-lucide="file-up" class="w-4 h-4 text-emerald-500"></i>
-                        <span x-text="filteredStudents.length === 0 ? 'Tải file mẫu (CSV)' : 'Xuất CSV danh sách'"></span>
+                        <span x-text="filteredStudents.length === 0 ? 'Tải file mẫu (Excel)' : 'Xuất Excel danh sách'"></span>
                     </button>
                     <!-- In PDF chỉ hiện khi có dữ liệu -->
                     <template x-if="filteredStudents.length > 0">

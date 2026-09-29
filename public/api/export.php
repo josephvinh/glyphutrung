@@ -6,7 +6,8 @@
  *   POST api/export.php?action=attendance   { yearId, format }
  *   POST api/export.php?action=scores       { termId, classId, format }
  *
- * Returns data URLs for browser-side download (no server file storage).
+ * Trả về dữ liệu bảng ({sheet:{name,rows}, filename}); trình duyệt tự dựng file .xlsx
+ * (không lưu file trên máy chủ, không cần thư viện zip phía PHP).
  */
 
 require __DIR__ . '/_bootstrap.php';
@@ -17,9 +18,9 @@ if (!$year) json_fail('Chưa có niên khoá nào đang mở.', 409);
 
 $in     = json_input();
 $action = $_GET['action'] ?? '';
-$format = strtolower($in['format'] ?? 'csv');
+$format = strtolower($in['format'] ?? 'xlsx');
 
-if (!in_array($format, ['pdf', 'excel', 'csv'])) {
+if (!in_array($format, ['pdf', 'xlsx'])) {
     json_fail('Định dạng không hỗ trợ.', 400);
 }
 
@@ -68,16 +69,13 @@ switch ($action) {
             $url = 'data:text/html;charset=utf-8,' . rawurlencode($html);
             json_out(['ok' => true, 'url' => $url, 'filename' => 'Phieu_Lien_Lac_' . preg_replace('/\s+/', '_', $student['full_name']) . '.html']);
         } else {
-            // For CSV/Excel export of report
-            $csv = build_report_csv($student, $term, $report);
-            $mime = $format === 'excel' ? 'application/vnd.ms-excel' : 'text/csv';
-            $url = 'data:' . $mime . ';charset=utf-8;base64,' . base64_encode($csv);
-            $ext = $format === 'excel' ? 'xls' : 'csv';
-            json_out(['ok' => true, 'url' => $url, 'filename' => 'Phieu_Lien_Lac_' . preg_replace('/\s+/', '_', $student['full_name']) . '.' . $ext]);
+            json_out(['ok' => true,
+                'sheet' => ['name' => 'Phiếu liên lạc', 'rows' => build_report_rows($student, $term, $report)],
+                'filename' => 'Phieu_Lien_Lac_' . preg_replace('/\s+/', '_', $student['full_name']) . '.xlsx']);
         }
 
     // -------------------------------------------------------------
-    // EXPORT ATTENDANCE SHEET (CSV/Excel)
+    // EXPORT ATTENDANCE SHEET (xlsx)
     // -------------------------------------------------------------
     case 'attendance':
         $classId = (int) ($in['classId'] ?? 0);
@@ -117,15 +115,12 @@ switch ($action) {
             [$year['id'], $year['id']]);
 
         // Build attendance matrix
-        $csv = build_attendance_csv($students, $sessions, $year);
-
-        $mime = $format === 'excel' ? 'application/vnd.ms-excel' : 'text/csv';
-        $url = 'data:' . $mime . ';charset=utf-8;base64,' . base64_encode($csv);
-        $ext = $format === 'excel' ? 'xls' : 'csv';
-        json_out(['ok' => true, 'url' => $url, 'filename' => 'Bang_Diem_Danh_' . date('Y-m-d') . '.' . $ext]);
+        json_out(['ok' => true,
+            'sheet' => ['name' => 'Điểm danh', 'rows' => build_attendance_rows($students, $sessions, $year)],
+            'filename' => 'Bang_Diem_Danh_' . date('Y-m-d') . '.xlsx']);
 
     // -------------------------------------------------------------
-    // EXPORT SCORES (CSV/Excel)
+    // EXPORT SCORES (xlsx)
     // -------------------------------------------------------------
     case 'scores':
         $termId  = (int) ($in['termId'] ?? 0);
@@ -169,15 +164,12 @@ switch ($action) {
         // Get scores
         $scores = db_all('SELECT * FROM scores WHERE term_id = ?', [$termId]);
 
-        $csv = build_scores_csv($students, $scores, $scoreTypes, $term);
-
-        $mime = $format === 'excel' ? 'application/vnd.ms-excel' : 'text/csv';
-        $url = 'data:' . $mime . ';charset=utf-8;base64,' . base64_encode($csv);
-        $ext = $format === 'excel' ? 'xls' : 'csv';
-        json_out(['ok' => true, 'url' => $url, 'filename' => 'Bang_Diem_' . preg_replace('/\s+/', '_', $term['name']) . '_' . date('Y-m-d') . '.' . $ext]);
+        json_out(['ok' => true,
+            'sheet' => ['name' => 'Bảng điểm', 'rows' => build_scores_rows($students, $scores, $scoreTypes)],
+            'filename' => 'Bang_Diem_' . preg_replace('/\s+/', '_', $term['name']) . '_' . date('Y-m-d') . '.xlsx']);
 
     // -------------------------------------------------------------
-    // EXPORT ATTENDANCE DETAIL (CSV)
+    // EXPORT ATTENDANCE DETAIL (xlsx)
     // each row = 1 attendance record with full details
     // -------------------------------------------------------------
     case 'attendance-detail':
@@ -362,10 +354,6 @@ switch ($action) {
             return strcmp($a['code'], $b['code']);
         });
 
-        // Build CSV
-        $csv = build_attendance_detail_csv($rows, $classId);
-
-        $url = 'data:text/csv;charset=utf-8;base64,' . base64_encode($csv);
 
         // Filename - sanitize special characters
         $className = '';
@@ -377,9 +365,11 @@ switch ($action) {
                 $className = preg_replace('/\s+/', '_', $safeClassName) . '_';
             }
         }
-        $filename = 'Diem_Danh_' . $className . $fromDate . '_' . $toDate . '.csv';
+        $filename = 'Diem_Danh_' . $className . $fromDate . '_' . $toDate . '.xlsx';
 
-        json_out(['ok' => true, 'url' => $url, 'filename' => $filename, 'count' => count($rows)]);
+        json_out(['ok' => true,
+            'sheet' => ['name' => 'Điểm danh chi tiết', 'rows' => build_attendance_detail_rows($rows)],
+            'filename' => $filename, 'count' => count($rows)]);
 
     // -------------------------------------------------------------
     default:
@@ -441,11 +431,8 @@ function build_report_card_html(array $student, array $term, ?array $report): st
     return ob_get_clean();
 }
 
-function build_report_csv(array $student, array $term, ?array $report): string
+function build_report_rows(array $student, array $term, ?array $report): array
 {
-    $rows = [];
-    $rows[] = "\xEF\xBB\xBF" . 'Mã số,Họ tên,Lớp,Học kỳ,Tổng buổi,Có mặt,Đi trễ,Vắng có phép,Vắng không phép,Tỷ lệ,Điểm,Hạnh kiểm,Xếp loại,Nhận xét,Trạng thái';
-
     $att = $report ? [
         (int) ($report['att_total'] ?? 0),
         (int) ($report['att_present'] ?? 0),
@@ -455,25 +442,25 @@ function build_report_csv(array $student, array $term, ?array $report): string
         (int) ($report['att_rate'] ?? 0),
     ] : [0, 0, 0, 0, 0, 0];
 
-    $rows[] = sprintf('%s,%s,%s,%s,%d,%d,%d,%d,%d,%d%%,%s,%s,%s,"%s",%s',
-        csv_escape($student['code'] ?? ''),
-        csv_escape(($student['holy_name'] ?? '') . ' ' . ($student['full_name'] ?? '')),
-        csv_escape($student['class_name'] ?? ''),
-        csv_escape($term['name']),
-        $att[0], $att[1], $att[2], $att[3], $att[4], $att[5],
-        csv_escape($report['score'] ?? ''),
-        csv_escape($report['conduct'] ?? ''),
-        csv_escape($report['rank_label'] ?? ''),
-        csv_escape($report['remark'] ?? ''),
-        csv_escape($report['status'] ?? 'chưa lập')
-    );
-
-    return implode("\r\n", $rows);
+    return [
+        ['Mã số', 'Họ tên', 'Lớp', 'Học kỳ', 'Tổng buổi', 'Có mặt', 'Đi trễ', 'Vắng có phép', 'Vắng không phép', 'Tỷ lệ', 'Điểm', 'Hạnh kiểm', 'Xếp loại', 'Nhận xét', 'Trạng thái'],
+        [
+            (string) ($student['code'] ?? ''),
+            trim(($student['holy_name'] ?? '') . ' ' . ($student['full_name'] ?? '')),
+            (string) ($student['class_name'] ?? ''),
+            (string) $term['name'],
+            $att[0], $att[1], $att[2], $att[3], $att[4], $att[5] . '%',
+            (string) ($report['score'] ?? ''),
+            (string) ($report['conduct'] ?? ''),
+            (string) ($report['rank_label'] ?? ''),
+            (string) ($report['remark'] ?? ''),
+            (string) ($report['status'] ?? 'chưa lập'),
+        ],
+    ];
 }
 
-function build_attendance_csv(array $students, array $sessions, array $year): string
+function build_attendance_rows(array $students, array $sessions, array $year): array
 {
-    // Get attendance records
     $attendance = db_all(
         "SELECT student_id, program_id, session_date, status FROM attendances
          WHERE year_id = ?",
@@ -482,147 +469,96 @@ function build_attendance_csv(array $students, array $sessions, array $year): st
     // Index attendance by student_id|program_id|session_date
     $attIndex = [];
     foreach ($attendance as $a) {
-        $key = $a['student_id'] . '|' . $a['program_id'] . '|' . $a['session_date'];
-        $attIndex[$key] = $a['status'];
+        $attIndex[$a['student_id'] . '|' . $a['program_id'] . '|' . $a['session_date']] = $a['status'];
     }
 
-    // Build headers: Student info + each session date
     $headers = ['Mã số', 'Họ tên', 'Lớp'];
     $sessionCols = [];
-
     foreach ($sessions as $s) {
         if ($s['session_date']) {
             $headers[] = date('d/m', strtotime($s['session_date']));
             $sessionCols[] = $s;
         }
     }
+    $headers[] = 'Tỷ lệ';
 
-    $rows = [];
-    $rows[] = "\xEF\xBB\xBF" . implode(',', array_map('csv_escape', $headers));
-
+    $rows = [$headers];
     foreach ($students as $st) {
         $row = [
-            csv_escape($st['code'] ?? ''),
-            csv_escape(($st['holy_name'] ?? '') . ' ' . ($st['full_name'] ?? '')),
-            csv_escape($st['class_name'] ?? ''),
+            (string) ($st['code'] ?? ''),
+            trim(($st['holy_name'] ?? '') . ' ' . ($st['full_name'] ?? '')),
+            (string) ($st['class_name'] ?? ''),
         ];
-
         $present = 0;
         $total = 0;
-
         foreach ($sessionCols as $sc) {
-            $key = $st['id'] . '|' . $sc['program_id'] . '|' . $sc['session_date'];
-            $status = $attIndex[$key] ?? null;
-
-            if ($status !== null) {
-                $total++;
-                if ($status === 'có mặt' || $status === 'đi trễ') {
-                    $present++;
-                }
-                // Short codes: P=present, L=late, E=excused, A=absent
-                $shortCode = $status === 'có mặt' ? 'P' : ($status === 'đi trễ' ? 'L' : ($status === 'vắng có phép' ? 'E' : 'A'));
-                $row[] = $shortCode;
-            } else {
-                $row[] = '-';
-            }
+            $status = $attIndex[$st['id'] . '|' . $sc['program_id'] . '|' . $sc['session_date']] ?? null;
+            if ($status === null) { $row[] = '-'; continue; }
+            $total++;
+            if ($status === 'có mặt' || $status === 'đi trễ') $present++;
+            // P=có mặt, L=trễ, E=vắng có phép, A=vắng không phép
+            $row[] = $status === 'có mặt' ? 'P' : ($status === 'đi trễ' ? 'L' : ($status === 'vắng có phép' ? 'E' : 'A'));
         }
-
-        // Add attendance rate at the end
-        $rate = $total > 0 ? round($present / $total * 100) : 0;
-        $row[] = $rate . '%';
-
-        $rows[] = implode(',', $row);
+        $row[] = ($total > 0 ? round($present / $total * 100) : 0) . '%';
+        $rows[] = $row;
     }
-
-    return implode("\r\n", $rows);
+    return $rows;
 }
 
-function build_scores_csv(array $students, array $scores, array $scoreTypes, array $term): string
+function build_scores_rows(array $students, array $scores, array $scoreTypes): array
 {
-    // Index scores by student_id|type_code
     $scoreIndex = [];
     foreach ($scores as $s) {
         $scoreIndex[$s['student_id'] . '|' . $s['type_code']] = $s['value'];
     }
 
-    // Build headers
     $headers = ['Mã số', 'Họ tên', 'Lớp'];
     foreach ($scoreTypes as $st) {
         $headers[] = $st['label'] ?? $st['code'];
     }
     $headers[] = 'Trung bình';
 
-    $rows = [];
-    $rows[] = "\xEF\xBB\xBF" . implode(',', array_map('csv_escape', $headers));
-
+    $rows = [$headers];
     foreach ($students as $st) {
         $row = [
-            csv_escape($st['code'] ?? ''),
-            csv_escape(($st['holy_name'] ?? '') . ' ' . ($st['full_name'] ?? '')),
-            csv_escape($st['class_name'] ?? ''),
+            (string) ($st['code'] ?? ''),
+            trim(($st['holy_name'] ?? '') . ' ' . ($st['full_name'] ?? '')),
+            (string) ($st['class_name'] ?? ''),
         ];
-
         $sum = 0;
         $count = 0;
-
         foreach ($scoreTypes as $stType) {
-            $key = $st['id'] . '|' . $stType['code'];
-            $val = $scoreIndex[$key] ?? null;
-
+            $val = $scoreIndex[$st['id'] . '|' . $stType['code']] ?? null;
             if ($val !== null) {
-                $row[] = $val;
+                $row[] = (float) $val;
                 $sum += $val;
                 $count++;
             } else {
                 $row[] = '';
             }
         }
-
-        $avg = $count > 0 ? round($sum / $count, 1) : '';
-        $row[] = $avg;
-
-        $rows[] = implode(',', $row);
+        $row[] = $count > 0 ? round($sum / $count, 1) : '';
+        $rows[] = $row;
     }
-
-    return implode("\r\n", $rows);
+    return $rows;
 }
 
-function csv_escape(string $value): string
+function build_attendance_detail_rows(array $rows): array
 {
-    // CHỐNG CSV/EXCEL FORMULA INJECTION:
-    // Ô bắt đầu bằng = + - @ (hoặc tab/xuống dòng) bị Excel/Google Sheets
-    // hiểu là CÔNG THỨC. Kẻ xấu đặt tên/nhận xét kiểu =HYPERLINK(...) hay
-    // =cmd|... để lừa người mở file. Thêm dấu nháy đơn ở đầu -> ép thành
-    // văn bản thuần, không còn là công thức.
-    if ($value !== '' && in_array($value[0], ['=', '+', '-', '@', "\t", "\r"], true)) {
-        $value = "'" . $value;
-    }
-    if (strpos($value, ',') !== false || strpos($value, '"') !== false || strpos($value, "\n") !== false) {
-        return '"' . str_replace('"', '""', $value) . '"';
-    }
-    return $value;
-}
-
-function build_attendance_detail_csv(array $rows, ?int $classId): string
-{
-    // CSV header
-    $headers = ['STT', 'Mã số', 'Họ tên', 'Lớp', 'Ngày', 'Buổi', 'Trạng thái', 'Ghi chú', 'Người ghi'];
-    $csv = "\xEF\xBB\xBF" . implode(',', array_map('csv_escape', $headers)) . "\r\n";
-
+    $out = [['STT', 'Mã số', 'Họ tên', 'Lớp', 'Ngày', 'Buổi', 'Trạng thái', 'Ghi chú', 'Người ghi']];
     $seq = 1;
     foreach ($rows as $r) {
-        $csv .= implode(',', [
+        $out[] = [
             $seq++,
-            csv_escape($r['code'] ?? ''),
-            csv_escape($r['name'] ?? ''),
-            csv_escape($r['class'] ?? ''),
-            csv_escape($r['date'] ?? ''),
-            csv_escape($r['program'] ?? ''),
-            csv_escape($r['status'] ?? ''),
-            csv_escape($r['note'] ?? ''),
-            csv_escape($r['marked_by'] ?? ''),
-        ]) . "\r\n";
+            (string) ($r['code'] ?? ''),
+            (string) ($r['name'] ?? ''),
+            (string) ($r['class'] ?? ''),
+            (string) ($r['date'] ?? ''),
+            (string) ($r['program'] ?? ''),
+            (string) ($r['status'] ?? ''),
+            (string) ($r['note'] ?? ''),
+            (string) ($r['marked_by'] ?? ''),
+        ];
     }
-
-    return $csv;
+    return $out;
 }

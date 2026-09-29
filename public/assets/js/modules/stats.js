@@ -270,9 +270,9 @@ window.TNTT.stats = {
         return 'bg-rose-500';
     },
 
-    // Xuất bảng TỔNG KẾT (CSV, mỗi em một dòng) cho mảng đang chọn — hoặc
+    // Xuất bảng TỔNG KẾT (Excel, mỗi em một dòng) cho mảng đang chọn — hoặc
     // truyền 'chuyen_can' / 'thi_dua' để xuất đích danh một mảng.
-    exportStatsCSV(cat) {
+    exportStatsExcel(cat) {
         cat = cat || this.statCategory;
         const sum = this.summaryFor(cat);
         if (sum.countedSessions === 0) {
@@ -280,30 +280,25 @@ window.TNTT.stats = {
             return;
         }
         const headers = ['Mã số', 'Tên Thánh', 'Họ và Tên', 'Lớp', 'Số buổi', 'Có mặt', 'Đi trễ', 'Vắng có phép', 'Vắng không phép', 'Tỷ lệ có mặt (%)'];
-        const lines = [headers.map(h => this.csvCell(h)).join(',')];
+        const rows = [headers];
 
         this.accessibleStudents
             .filter(s => s.status === 'đang sinh hoạt')
             .forEach(s => {
                 const t = sum.byStudent[s.id];
-                lines.push([s.code, s.holyName, s.name, s.className,
-                            t.total, t.present, t.late, t.excused, t.unexcused, this.attendRate(t)]
-                           .map(v => this.csvCell(v)).join(','));
+                rows.push([s.code, s.holyName, s.name, s.className,
+                           t.total, t.present, t.late, t.excused, t.unexcused, this.attendRate(t)]);
             });
 
-        const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = 'Tong_Ket_' + this.categorySlug(cat) + '_' + this.statMonth + '.csv';
-        link.click();
-        URL.revokeObjectURL(url);
+        this.downloadXlsx([{ name: 'Tổng kết', rows }],
+            'Tong_Ket_' + this.categorySlug(cat) + '_' + this.statMonth + '.xlsx');
     },
+
 
     // ==========================================
     // XUẤT SỔ ĐIỂM DANH (dạng lưới, có định dạng)
     //
-    // Khác với "Tổng kết" (CSV, một dòng mỗi em), bản này mô phỏng đúng
+    // Khác với "Tổng kết" (Excel, một dòng mỗi em), bản này mô phỏng đúng
     // cuốn SỔ ĐIỂM DANH giấy và giữ được MÀU/VIỀN/Ô GỘP:
     //   - Cột đầu: Mã thiếu nhi · Tên Thánh · Họ và Tên
     //   - Mỗi TUẦN là một ô lớn (gộp) đè lên các CHƯƠNG TRÌNH của mảng đang

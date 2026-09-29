@@ -53,23 +53,23 @@
             <p class="text-xs font-medium text-slate-500 mt-2 ml-1" x-text="formatFullDate(attendanceDate)"></p>
         </div>
 
-        <!-- XUẤT BÁO CÁO CSV -->
+        <!-- XUẤT BÁO CÁO EXCEL -->
         <div class="bg-white rounded-card p-4 shadow-sm border border-slate-100 mb-5">
             <div class="flex items-center justify-between">
                 <div>
-                    <h3 class="text-sm font-bold text-slate-700">Xuất Báo Cáo CSV</h3>
+                    <h3 class="text-sm font-bold text-slate-700">Xuất Báo Cáo Excel</h3>
                     <p class="text-xs text-slate-500 mt-0.5">Tải danh sách điểm danh theo lớp và khoảng thời gian</p>
                 </div>
-                <button @click="openExportCSVModal()" type="button"
+                <button @click="openExportModal()" type="button"
                         class="shrink-0 px-4 py-2 bg-emerald-600 text-white rounded-xl font-bold text-xs flex items-center gap-2 active:scale-95 transition-transform">
-                    <i data-lucide="download" class="w-4 h-4"></i> Xuất CSV
+                    <i data-lucide="download" class="w-4 h-4"></i> Xuất Excel
                 </button>
             </div>
         </div>
 
-        <!-- MODAL XUẤT CSV -->
-        <div x-show="showExportCSVModal" style="display: none;"
-             x-on:keydown.escape.window="showExportCSVModal = false"
+        <!-- MODAL XUẤT EXCEL -->
+        <div x-show="showExportModal" style="display: none;"
+             x-on:keydown.escape.window="showExportModal = false"
              class="fixed inset-0 z-[200] bg-black/50 flex items-center justify-center p-4"
              x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0"
              x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150"
@@ -85,7 +85,7 @@
                         <h3 class="font-black text-slate-800 text-base">Xuất Báo Cáo Điểm Danh</h3>
                         <p class="text-micro text-slate-500 mt-0.5">Mỗi dòng là một bản ghi điểm danh</p>
                     </div>
-                    <button @click="showExportCSVModal = false" type="button"
+                    <button @click="showExportModal = false" type="button"
                             class="w-9 h-9 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center active:scale-90 transition-transform">
                         <i data-lucide="x" class="w-5 h-5 text-slate-500"></i>
                     </button>
@@ -96,7 +96,7 @@
                     <!-- Chọn lớp -->
                     <div>
                         <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-2">Lớp</label>
-                        <select x-model="exportCSV.classId"
+                        <select x-model="exportForm.classId"
                                 class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                             <option value="">-- Toàn đoàn --</option>
                             <template x-for="cls in availableClasses" :key="cls">
@@ -108,35 +108,35 @@
                     <!-- Từ ngày -->
                     <div>
                         <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-2">Từ ngày</label>
-                        <input x-model="exportCSV.fromDate" type="date"
+                        <input x-model="exportForm.fromDate" type="date"
                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                     </div>
 
                     <!-- Đến ngày -->
                     <div>
                         <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-2">Đến ngày</label>
-                        <input x-model="exportCSV.toDate" type="date"
+                        <input x-model="exportForm.toDate" type="date"
                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                     </div>
 
                     <!-- Validation error -->
-                    <p x-show="exportCSV.error" style="display: none;"
-                       class="text-xs text-rose-600 font-semibold" x-text="exportCSV.error"></p>
+                    <p x-show="exportForm.error" style="display: none;"
+                       class="text-xs text-rose-600 font-semibold" x-text="exportForm.error"></p>
                 </div>
 
                 <!-- Footer -->
                 <div class="px-5 py-4 border-t border-slate-100 flex items-center justify-end gap-3"
                      style="padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px))">
-                    <button @click="showExportCSVModal = false" type="button"
+                    <button @click="showExportModal = false" type="button"
                             class="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl font-bold text-sm active:scale-95 transition-transform">
                         Huỷ
                     </button>
-                    <button @click="exportAttendanceCSV()" type="button"
-                            :disabled="exportCSV.loading"
-                            :class="exportCSV.loading ? 'opacity-50' : ''"
+                    <button @click="exportAttendanceExcel()" type="button"
+                            :disabled="exportForm.loading"
+                            :class="exportForm.loading ? 'opacity-50' : ''"
                             class="px-5 py-2 bg-emerald-600 text-white rounded-xl font-bold text-sm active:scale-95 transition-transform flex items-center gap-2">
-                        <span x-show="!exportCSV.loading"><i data-lucide="download" class="w-4 h-4"></i> Tải về</span>
-                        <span x-show="exportCSV.loading" style="display: none;">Đang tải...</span>
+                        <span x-show="!exportForm.loading"><i data-lucide="download" class="w-4 h-4"></i> Tải về</span>
+                        <span x-show="exportForm.loading" style="display: none;">Đang tải...</span>
                     </button>
                 </div>
             </div>

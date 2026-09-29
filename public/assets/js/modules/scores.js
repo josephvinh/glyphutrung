@@ -155,29 +155,26 @@ window.TNTT.scores = {
         return this.scoreTypes.find(t => t.key === this.scoreType) || this.scoreTypes[0];
     },
 
-    exportScoresCSV() {
+    exportScoresExcel() {
         const list = this.scoreStudents;
         if (list.length === 0) { window.TNTT.toast.warning('Lớp này chưa có em nào!'); return; }
         const term = this.terms.find(t => t.id === Number(this.scoreTermId));
         const headers = ['Mã số', 'Tên Thánh', 'Họ và Tên', 'Lớp', 'Học kỳ']
             .concat(this.scoreTypes.map(t => t.label + ' (hệ số ' + t.weight + ')'))
             .concat(['Điểm trung bình', 'Học lực']);
-        const lines = [headers.map(h => this.csvCell(h)).join(',')];
+        const rows = [headers];
 
         list.forEach(s => {
             const avg = this.termAverage(s.id, this.scoreTermId);
-            lines.push([s.code, s.holyName, s.name, s.className, term.name]
-                .concat(this.scoreTypes.map(t => this.scoreOf(s.id, t.key)))
-                .concat([avg === null ? '' : avg, this.academicRank(avg)])
-                .map(v => this.csvCell(v)).join(','));
+            // Điểm là số thật để Excel tính/sắp xếp được; ô trống giữ ''
+            const num = (v) => (v === '' || v === null || v === undefined || isNaN(Number(v))) ? '' : Number(v);
+            rows.push([s.code, s.holyName, s.name, s.className, term.name]
+                .concat(this.scoreTypes.map(t => num(this.scoreOf(s.id, t.key))))
+                .concat([avg === null ? '' : num(avg), this.academicRank(avg)]));
         });
 
-        const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = 'Bang_Diem_' + this.scoreClass.replace(/\s+/g, '_') + '.csv';
-        link.click();
-        URL.revokeObjectURL(url);
+        this.downloadXlsx([{ name: 'Bảng điểm', rows }],
+            'Bang_Diem_' + this.scoreClass.replace(/\s+/g, '_') + '.xlsx');
     },
+
 };
