@@ -471,6 +471,7 @@ switch ($action) {
             }
             $validIds[] = $sid;
         }
+        $validIds = array_values(array_unique($validIds));
 
         if (count($validIds) === 0) {
             if ($hasHistory > 0) {
@@ -484,7 +485,12 @@ switch ($action) {
         try {
             // Xóa hẳn em; điểm danh, điểm, nhận xét... của em xóa theo (ON DELETE CASCADE).
             $ph = implode(',', array_fill(0, count($validIds), '?'));
-            db_run("DELETE FROM students WHERE id IN ($ph)", $validIds);
+            // Kiểm tra lại "chưa có niên khoá khác" ngay trong câu xóa để không lệch nếu
+            // vừa có ghi danh mới chen vào giữa lúc kiểm tra và lúc xóa.
+            db_run("DELETE FROM students WHERE id IN ($ph)
+                    AND NOT EXISTS (SELECT 1 FROM enrollments e
+                                    WHERE e.student_id = students.id AND e.year_id <> ?)",
+                   array_merge($validIds, [$yid]));
 
             db()->commit();
         } catch (Throwable $e) {
