@@ -55,7 +55,7 @@ if (!$__dev) ob_start();
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#c8203a">
     <!-- Áp chế độ tối TRƯỚC khi vẽ trang, tránh nháy trắng -->
-    <script>try{var d=localStorage.getItem('darkMode');if(d===null)d=matchMedia('(prefers-color-scheme: dark)').matches?'true':'false';if(d==='true')document.documentElement.classList.add('dark')}catch(e){}</script>
+    <script>try{var d=localStorage.getItem('darkMode');if(d==='true')document.documentElement.classList.add('dark')}catch(e){}</script>
 
     <!-- BIỂU TƯỢNG APP
          icon.svg   : tab trình duyệt, nét sắc ở mọi cỡ

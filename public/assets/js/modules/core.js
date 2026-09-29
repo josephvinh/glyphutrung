@@ -45,13 +45,13 @@ window.TNTT.core = {
     assignments: window.TNTT.boot?.assignments || [],
     primaryAssignment: window.TNTT.boot?.primaryAssignment || null,
 
-    // Chế độ tối: đọc lựa chọn đã lưu; chưa chọn thì theo cài đặt của máy.
+    // Chế độ tối: chỉ bật khi người dùng tự chọn; mặc định SÁNG.
     dark: (() => {
         try {
             const saved = localStorage.getItem('darkMode');
             if (saved !== null) return saved === 'true';
         } catch (e) { /* localStorage bị chặn — dùng mặc định */ }
-        return !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        return false;
     })(),
 
     init() {
