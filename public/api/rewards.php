@@ -3,7 +3,7 @@
  * TRẠM ĐỔI QUÀ (POS) — Thủ thư đứng quầy đổi Mộc lấy quà cho các em.
  *
  *   POST api/rewards.php?action=lookup  { code }        -> { student:{...} | null }
- *   GET  api/rewards.php?action=lookup&code=HS001       -> { student:{...} | null }
+ *   GET  api/rewards.php?action=lookup&code=GDGLPT260001       -> { student:{...} | null }
  *   POST api/rewards.php?action=redeem  { studentCode, items:[{giftId,qty}] }
  *          -> { ok, orderId, total, available, currentBalance }
  *

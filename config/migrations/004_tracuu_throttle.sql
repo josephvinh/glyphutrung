@@ -7,7 +7,7 @@
 --  CHỐNG DÒ MÃ THIẾU NHI Ở CỔNG TRA CỨU CÔNG KHAI (SPEC-MOC-DIEN-TU §6.3)
 --  Đếm lượt tra cứu theo IP trong một cửa sổ thời gian — mẫu y hệt
 --  login_attempts (đếm đăng nhập sai). Không gắn mã thiếu nhi vào bảng
---  đếm: chặn kẻ dò TOÀN BỘ dải mã (HS001, HS002, ...) từ một IP, không chỉ
+--  đếm: chặn kẻ dò TOÀN BỘ dải mã (GDGLPT260001, GDGLPT260002, ...) từ một IP, không chỉ
 --  một mã cụ thể.
 -- =====================================================================
 CREATE TABLE IF NOT EXISTS tracuu_attempts (

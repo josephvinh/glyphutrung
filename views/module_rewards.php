@@ -48,7 +48,7 @@
             <p class="text-center text-micro text-slate-400 mb-5">Hệ thống sẽ hiện tên em và số Mộc khả dụng.</p>
 
             <form @submit.prevent="rwSubmitCode()" class="flex gap-2 mb-3">
-                <input x-model="rwCode" type="text" inputmode="text" autocomplete="off" placeholder="VD: HS001"
+                <input x-model="rwCode" type="text" inputmode="text" autocomplete="off" placeholder="VD: GDGLPT260001"
                        class="flex-1 min-w-0 bg-slate-50 border border-slate-200 rounded-field py-3 px-4 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase">
                 <button type="submit" :disabled="rwLooking"
                         class="shrink-0 bg-blue-600 text-white font-bold text-sm px-5 rounded-2xl active:scale-95 transition-transform shadow-md shadow-blue-200 disabled:opacity-50 flex items-center gap-1">
@@ -157,7 +157,7 @@
             <p class="text-center text-micro text-slate-400 mb-5">Hệ thống sẽ hiện đơn đặt trước (nếu có) của em.</p>
 
             <form @submit.prevent="cfSubmitCode()" class="flex gap-2 mb-3">
-                <input x-model="cfCode" type="text" inputmode="text" autocomplete="off" placeholder="VD: HS001"
+                <input x-model="cfCode" type="text" inputmode="text" autocomplete="off" placeholder="VD: GDGLPT260001"
                        class="flex-1 min-w-0 bg-slate-50 border border-slate-200 rounded-field py-3 px-4 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase">
                 <button type="submit" :disabled="cfLooking"
                         class="shrink-0 bg-blue-600 text-white font-bold text-sm px-5 rounded-2xl active:scale-95 transition-transform shadow-md shadow-blue-200 disabled:opacity-50 flex items-center gap-1">

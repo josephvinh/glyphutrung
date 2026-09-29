@@ -452,7 +452,7 @@ body.khung-don .moc-khac{margin-top:8px;padding:7px 9px;font-size:11px}
 
       <form class="tra" method="get">
         <input type="hidden" name="tab" value="doi-qua">
-        <input type="text" name="ma" value="<?= e_($ma) ?>" placeholder="Nhập mã thiếu nhi (VD: HS001)" maxlength="32" autofocus required>
+        <input type="text" name="ma" value="<?= e_($ma) ?>" placeholder="Nhập mã thiếu nhi (VD: GDGLPT260001)" maxlength="32" autofocus required>
         <button type="submit">Tra cứu</button>
       </form>
 
@@ -569,7 +569,7 @@ body.khung-don .moc-khac{margin-top:8px;padding:7px 9px;font-size:11px}
     <?php if (!$ketQua): ?>
     <form class="tra" method="get">
       <input type="hidden" name="tab" value="so-moc">
-      <input type="text" name="ma" value="<?= e_($ma) ?>" placeholder="Nhập mã thiếu nhi (VD: HS001)" maxlength="32" autofocus required>
+      <input type="text" name="ma" value="<?= e_($ma) ?>" placeholder="Nhập mã thiếu nhi (VD: GDGLPT260001)" maxlength="32" autofocus required>
       <button type="submit">Tra cứu</button>
     </form>
     <?php else: ?>

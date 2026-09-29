@@ -155,7 +155,8 @@ h2{font-size:14px;font-weight:800;margin-bottom:10px}
   <form class="card login" method="post" action="tracuu.php" autocomplete="off">
     <?php if ($loi): ?><div class="loi" role="alert"><?php echo e_($loi); ?></div><?php endif; ?>
     <label for="ma">Mã thiếu nhi</label>
-    <input id="ma" type="text" name="ma" value="<?php echo e_($ma); ?>" placeholder="VD: HS001" maxlength="32" required autocapitalize="characters">
+    <input id="ma" type="text" name="ma" value="<?php echo e_($ma); ?>" placeholder="VD: GDGLPT260001" maxlength="32" required autocapitalize="characters" autocomplete="off" spellcheck="false">
+    <p class="goi-y" style="margin:-6px 0 12px;text-align:left">Mã gồm <b>GDGLPT</b> + 6 số (2 số năm nhập đoàn + 4 số thứ tự), in trên thẻ của em.</p>
     <label for="ns">Mật mã = tháng ngày năm sinh</label>
     <input id="ns" type="text" name="ns" inputmode="numeric" placeholder="mmddyyyy — VD: 03152014" maxlength="10" required aria-describedby="ns-goiy">
     <button type="submit">Xem kết quả</button>

@@ -12,7 +12,7 @@
  *     nó — KHÔNG bao giờ trả các trường khác của students (SĐT, địa chỉ,
  *     tên cha/mẹ...). Định danh em qua students.code, không qua id.
  *   - Rate-limit theo IP mượn mẫu login_throttle()/login_failed() trong
- *     _bootstrap.php để chặn dò quét toàn bộ dải mã (HS001, HS002, ...).
+ *     _bootstrap.php để chặn dò quét toàn bộ dải mã (GDGLPT260001, GDGLPT260002, ...).
  */
 
 require_once __DIR__ . '/../../config/db.php';
@@ -23,7 +23,7 @@ require_once __DIR__ . '/_http_util.php'; // client_ip() + json_out()/json_fail(
    RATE LIMIT — mượn mẫu login_throttle()/register_throttle() ở _bootstrap.php
    Cửa sổ 10 phút, tối đa 30 lượt/IP: đủ rộng để một gia đình tra vài lần
    liên tiếp (gõ nhầm mã, tra cho nhiều con...) nhưng đủ hẹp để chặn dò quét
-   tuần tự dải mã (HS001, HS002, ...) — mã thiếu nhi không có bí mật gì khác
+   tuần tự dải mã (GDGLPT260001, GDGLPT260002, ...) — mã thiếu nhi không có bí mật gì khác
    để đoán ngoài việc thử lần lượt nên phải chặn CHẶT hơn login (vốn còn có
    mật khẩu bảo vệ phía sau).
    ===================================================================== */
