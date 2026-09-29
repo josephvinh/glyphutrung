@@ -31,6 +31,10 @@ $writeActions = ['export_png', 'export_pdf', 'export_svg_inline', 'export_svg_zi
 if (in_array($action, $writeActions, true)) {
     require_post();
     require_csrf();
+    // Xuất file (png/pdf/svg) chỉ là tải về; lưu/xoá mẫu và logo mới là ghi dữ liệu.
+    if (in_array($action, ['save_preset', 'delete_preset', 'upload_logo', 'delete_logo'], true)) {
+        require_not_demo();
+    }
 }
 
 // Xử lý từng action

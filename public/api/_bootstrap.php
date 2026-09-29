@@ -311,6 +311,20 @@ function require_write(): void
 {
     require_post();
     require_csrf();
+    require_not_demo();
+}
+
+/**
+ * Tài khoản DEMO (vai 'demo') chỉ được XEM: chặn mọi hành động ghi, kể cả
+ * những endpoint chỉ cần đăng nhập (đổi mật khẩu, sửa hồ sơ, đăng ký push...)
+ * mà quyền theo module không chặn được.
+ */
+function require_not_demo(): void
+{
+    $me = current_member();
+    if ($me && ($me['role_code'] ?? '') === 'demo') {
+        json_fail('Tài khoản demo chỉ được xem, không được thay đổi.', 403);
+    }
 }
 
 /**
