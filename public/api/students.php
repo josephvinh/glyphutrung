@@ -470,16 +470,9 @@ switch ($action) {
 
         db()->beginTransaction();
         try {
-            // Soft delete: mark as 'dừng sinh hoạt' in enrollments (keep student records, just inactive)
+            // Xóa hẳn em; điểm danh, điểm, nhận xét... của em xóa theo (ON DELETE CASCADE).
             $ph = implode(',', array_fill(0, count($validIds), '?'));
-            $params = [];
-            foreach ($validIds as $sid) {
-                $params[] = $sid;
-            }
-            db_run(
-                "UPDATE enrollments SET status = 'dừng sinh hoạt' WHERE year_id = ? AND student_id IN ($ph)",
-                array_merge([$yid], $params)
-            );
+            db_run("DELETE FROM students WHERE id IN ($ph)", $validIds);
 
             db()->commit();
         } catch (Throwable $e) {
