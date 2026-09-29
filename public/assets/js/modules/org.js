@@ -465,12 +465,6 @@ window.TNTT.org = {
             .sort((a, b) => this.roleLevel(b.role) - this.roleLevel(a.role));
     },
 
-    openCreateMember() {
-        this.memberForm = { id: null, holyName: '', fullName: '', phone: '', birthDate: '', role: 'glv', title: 'GLV Phụ Tá', block: '', className: '', status: 'đang phục vụ' };
-        this.isEditingMember = false;
-        this.showMemberModal = true;
-    },
-
     openEditMember(m) {
         this.memberForm = JSON.parse(JSON.stringify(m));
         this.isEditingMember = true;
@@ -508,7 +502,7 @@ window.TNTT.org = {
         // Chủ nhiệm lớp / trưởng khối do màn Khối & Lớp quản qua phân công
         // (setClassHead/setBlockHead — backend tự hạ người cũ). Không đoán ở đây.
 
-        if (this.isEditingMember) {
+        {
             const i = this.members.findIndex(x => x.id === f.id);
             if (i !== -1) {
                 this.members[i] = f;
@@ -527,16 +521,10 @@ window.TNTT.org = {
                 }
             }
         }
-        this.logAction(this.isEditingMember ? 'sua' : 'tao', 'org',
-                       (this.isEditingMember ? 'Sửa' : 'Thêm') + ' thành viên ' + f.fullName,
+        this.logAction('sua', 'org', 'Sửa thành viên ' + f.fullName,
                        this.roleLabel(f.role) + ' · ' + (f.className || f.block || 'toàn đoàn'));
         this.showMemberModal = false;
-        // Người mới không có id thật cho tới khi máy chủ tạo xong → nạp lại danh
-        // sách thay vì chèn bản ghi id giả. Sửa: chỉ nạp lại khi máy chủ từ chối.
-        const isNew = !this.isEditingMember;
-        this.save('org', 'saveMember', f).then(r => {
-            if (isNew || !r || !r.ok) this.loadData();
-        });
+        this.save('org', 'saveMember', f).then(r => { if (!r || !r.ok) this.loadData(); });
     },
 
     async deleteMember(m) {

@@ -11,7 +11,7 @@
  *   POST api/org.php?action=setBlockHead { block, memberId }
  *
  * Nhân sự (quyền module 'staff'):
- *   POST api/org.php?action=saveMember    { id?, holyName, fullName, phone, role, title, block, className }
+ *   POST api/org.php?action=saveMember    { id, holyName, fullName, phone, role, title, block, className }
  *   POST api/org.php?action=deleteMember  { id }
  *   POST api/org.php?action=approveMember / rejectMember / resetPassword
  *
