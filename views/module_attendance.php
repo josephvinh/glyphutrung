@@ -469,12 +469,10 @@
 
         <!-- Khung camera: vuông, vừa phải -->
         <div class="relative w-full aspect-square bg-slate-900 shrink-0">
-            <!-- transform: translateZ(0) ép <video> lên một lớp GPU riêng.
-                 iOS Safari hay vẽ camera trực tiếp thành ô đen khi thẻ video
-                 nằm trong một thẻ cha có overflow-hidden + bo góc (thẻ modal
-                 này). Tự lên lớp riêng thì WebKit vẽ đúng khung hình. -->
+            <!-- <video> chỉ là NGUỒN hình (nằm dưới canvas, vẫn hiển thị để
+                 trình duyệt tiếp tục giải mã khung). Không thêm transform/
+                 filter/blur cho nó. -->
             <video x-ref="qrVideo" class="absolute inset-0 w-full h-full object-cover"
-                   style="transform: translateZ(0); -webkit-transform: translateZ(0);"
                    muted playsinline autoplay></video>
 
             <!-- HÌNH HIỂN THỊ THẬT là <canvas> này, không phải <video>.
@@ -491,7 +489,7 @@
 
             <!-- KHÔNG backdrop-blur ở đây: phần tử có backdrop-filter nằm đè
                  lên camera trực tiếp là nguyên nhân khung đen trên iOS. -->
-            <p class="absolute left-3 right-3 bottom-3 text-center text-white font-bold text-xs bg-slate-900/85 rounded-xl px-3 py-2 truncate"
+            <p class="absolute left-3 right-3 bottom-3 text-center text-white font-bold text-xs bg-slate-900/95 rounded-xl px-3 py-2 truncate"
                x-text="qrTrangThai"></p>
         </div>
 
@@ -525,7 +523,7 @@
             </p>
             <!-- Thông số camera (tạm thời) để biết máy nào đen hình vì sao -->
             <p x-show="qrChanDoan" style="display: none; font-size: 10px;" x-text="qrChanDoan"
-               class="mt-2 text-center text-slate-400 break-all"></p>
+               class="mt-2 text-center text-slate-400"></p>
         </div>
 
         <!-- Kết thúc -->

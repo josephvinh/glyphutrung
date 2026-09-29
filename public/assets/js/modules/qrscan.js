@@ -12,8 +12,9 @@
      2. Chặn trùng còn 700ms thay vì 3 giây. Việc chống ghi trùng đã do
         trạng thái "đã điểm danh" và khoá duy nhất của CSDL lo; mốc thời
         gian chỉ để khỏi xử lý lại cùng một khung hình.
-     3. Chỉ giải mã VÙNG GIỮA khung ngắm, không giải mã cả ảnh. Nhanh
-        hơn nhiều trên máy yếu.
+     3. Chỉ nhận mã nằm trong VÙNG GIỮA khung ngắm (75% cạnh ngắn), cả hai
+        đường giải mã. jsQR chỉ đọc đúng vùng đó (nhanh hơn nhiều trên máy
+        yếu); BarcodeDetector đọc cả khung nhưng bị lọc theo vị trí mã.
      4. Có tiếng bíp. GLV cầm 500 tấm thẻ thì không rảnh nhìn màn hình —
         phải nghe mà biết máy đã ăn.
 
@@ -162,7 +163,9 @@ window.TNTT.qrscan = {
 
     /* ---------- CHẨN ĐOÁN camera (tạm thời) ----------
        Ghi thông số camera vào qrChanDoan (dòng chữ nhỏ dưới danh sách, KHÔNG
-       lẫn với dòng trạng thái nên không bị ghi đè): kích thước khung hình,
+       lẫn với dòng trạng thái nên không bị ghi đè). CHỈ hiện khi khung hình
+       tối/không có (hoặc mở trang với ?qrdebug), lúc camera chạy tốt thì im.
+       Nội dung: kích thước khung hình,
        readyState, đang phát/dừng, độ sáng khung từ <video> và từ <canvas>
        hiển thị, trạng thái track, đường giải mã. Chụp màn hình dòng này là
        biết máy đen hình vì đâu:
@@ -170,13 +173,14 @@ window.TNTT.qrscan = {
          sáng video > 0 mà canvas = 0 -> lỗi vẽ canvas
          cả hai > 0 mà màn vẫn đen    -> lỗi CSS/compositing
        Gỡ sau khi các máy iOS đều chạy ổn. */
-    _qrTuKiemTra(video) {
+    _qrTuKiemTra(video, phien) {
+        const luonHien = /[?&]qrdebug\b/.test(location.search);
         const nho = document.createElement('canvas');
         const nctx = nho.getContext('2d', { willReadFrequently: true });
         const tb = (d) => { let t = 0; for (let i = 0; i < d.length; i += 4) t += d[i] + d[i + 1] + d[i + 2]; return Math.round(t / (d.length / 4) / 3); };
         let n = 0;
         const tick = () => {
-            if (this._qrDung) return;
+            if (this._qrDung || this._qrPhien !== phien) return;
             n++;
             const vw = video.videoWidth, vh = video.videoHeight;
             let sv = -1, sc = -1;
@@ -191,11 +195,13 @@ window.TNTT.qrscan = {
                 catch (e) { sc = -2; }
             }
             const tr = this._qrStream ? this._qrStream.getVideoTracks()[0] : null;
-            this.qrChanDoan = vw + '×' + vh + ' rs' + video.readyState + (video.paused ? ' DỪNG' : '')
-                + ' sángV' + sv + ' sángC' + sc
-                + ' ' + (tr ? tr.readyState + (tr.muted ? '/tắt' : '') : '-')
-                + ' ' + (this._qrDuong || '-') + (window.jsQR ? ' ✓' : '');
-            const toi = !(vw && vh && sv > 12);
+            const toi = !(vw && vh && sv > 12) || (n >= 2 && sc <= 12);
+            if (toi || luonHien) {
+                this.qrChanDoan = vw + '×' + vh + ' rs' + video.readyState + (video.paused ? ' DỪNG' : '')
+                    + ' sángV' + sv + ' sángC' + sc
+                    + ' ' + (tr ? tr.readyState + (tr.muted ? '/tắt' : '') : '-')
+                    + ' ' + (this._qrDuong || '-') + (window.jsQR ? ' ✓' : '');
+            }
             if (n < 8 || (toi && n < 40)) setTimeout(tick, 1000);
         };
         setTimeout(tick, 600);
@@ -308,28 +314,32 @@ window.TNTT.qrscan = {
         this._qrBip(880, 30);
 
         this._qrDung = false;
+        // Mã phiên: vòng lặp/hẹn giờ của phiên cũ tự dừng nếu mở lại nhanh.
+        const phien = this._qrPhien = (this._qrPhien || 0) + 1;
         this.qrTrangThai = 'Đưa thẻ vào khung';
 
-        // CHẨN ĐOÁN tạm thời: TỰ bật khi khung camera bị đen (không cần
-        // thêm ?qrdebug vào URL nữa). Nếu camera hiện hình bình thường thì
-        // không hiện gì; nếu đen sẽ thay dòng trạng thái bằng kích thước
-        // khung + readyState + ĐỘ SÁNG để biết đen do không có khung hình
-        // (sáng ~0 / 0×0) hay do CSS (sáng > 0 mà màn vẫn đen). Gỡ sau khi
-        // tìm ra nguyên nhân.
-        this._qrTuKiemTra(video);
+        // CHẨN ĐOÁN tạm thời: chỉ hiện dòng thông số (qrChanDoan) khi khung
+        // camera tối/không có khung hình, hoặc khi mở trang với ?qrdebug.
+        // Gỡ sau khi các máy iOS đều chạy ổn.
+        this._qrTuKiemTra(video, phien);
 
         // Hình xem trước chạy NGAY (không đợi jsQR tải xong) để GLV thấy camera.
         const native = await this._qrCoNative();
         this._qrDuong = native ? 'BarcodeDetector' : 'jsQR';
-        this._qrVongHinh(video, native);
+        this._qrVongHinh(video, native, phien);
 
         if (!native) {
             this.qrDangTai = true;
             this.qrTrangThai = 'Đang tải bộ giải mã…';
             try { await this._qrTaiJsQR(); }
-            catch (e) { this.qrDangTai = false; this.dongQuetQR(); window.TNTT.toast.error(e.message); return; }
+            catch (e) {
+                if (this._qrPhien !== phien || this._qrDung) return;    // đã đóng/mở lại thì thôi
+                this.qrDangTai = false; this.dongQuetQR(); window.TNTT.toast.error(e.message); return;
+            }
+            if (this._qrPhien !== phien || this._qrDung) return;
             this.qrDangTai = false;
-            this.qrTrangThai = 'Đưa thẻ vào khung';
+            // Không đè lên tên em / lỗi vừa hiện trong lúc chờ tải
+            if (this.qrTrangThai === 'Đang tải bộ giải mã…') this.qrTrangThai = 'Đưa thẻ vào khung';
         }
     },
 
@@ -344,18 +354,21 @@ window.TNTT.qrscan = {
      *   - BarcodeDetector: đọc thẳng từ <video>, hệ điều hành giải mã.
      *   - jsQR: chỉ đọc vùng giữa 75% (đúng phần trong khung ngắm).
      */
-    _qrVongHinh(video, native) {
-        const cv = this.$refs.qrCanvas;
-        if (!cv) return;
+    _qrVongHinh(video, native, phien) {
+        // Thiếu canvas hiển thị thì vẫn giải mã được (canvas ngoài màn hình),
+        // chỉ là không có hình xem trước — không để việc quét chết im lặng.
+        const cv = this.$refs.qrCanvas || document.createElement('canvas');
         const N = 560;                                   // canvas vuông N×N
         cv.width = cv.height = N;
-        const ctx = cv.getContext('2d', { willReadFrequently: true });
+        // willReadFrequently chỉ cần cho jsQR (đọc điểm ảnh liên tục); đường
+        // native không đọc điểm ảnh nên để trình duyệt dùng canvas GPU.
+        const ctx = cv.getContext('2d', native ? {} : { willReadFrequently: true });
         const lo = Math.floor(N * 0.125), canh = N - 2 * lo;   // khung ngắm = 75% giữa
         const det = native ? new window.BarcodeDetector({ formats: ['qr_code'] }) : null;
         let laiVe = 0, laiDoc = 0, dangDoc = false;
 
         const chay = () => {
-            if (this._qrDung) return;
+            if (this._qrDung || this._qrPhien !== phien) return;
             requestAnimationFrame(chay);
 
             const gio = performance.now();
@@ -374,7 +387,19 @@ window.TNTT.qrscan = {
                     if (!dangDoc) {
                         dangDoc = true;
                         det.detect(video)
-                           .then(ma => { for (const m of ma) this._qrNhan(m.rawValue); })
+                           .then(ma => {
+                               // Chỉ nhận mã nằm trong khung ngắm (75% giữa ô vuông đang
+                               // hiển thị), để hai đường giải mã quét CÙNG một vùng.
+                               const x0 = (vw - s) / 2 + s * 0.125, y0 = (vh - s) / 2 + s * 0.125, w = s * 0.75;
+                               for (const m of ma) {
+                                   const b = m.boundingBox;
+                                   if (b) {
+                                       const cx = b.x + b.width / 2, cy = b.y + b.height / 2;
+                                       if (cx < x0 || cx > x0 + w || cy < y0 || cy > y0 + w) continue;
+                                   }
+                                   this._qrNhan(m.rawValue);
+                               }
+                           })
                            .catch(() => { /* khung lỗi thì bỏ, thử khung sau */ })
                            .finally(() => { dangDoc = false; });
                     }
