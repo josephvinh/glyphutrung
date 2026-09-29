@@ -752,10 +752,27 @@ window.TNTT.students = {
     },
 
     // Tách CSV thủ công (xử lý ô bọc nháy kép, dấu phẩy và xuống dòng nằm bên trong ô)
+    // Đoán dấu phân cách: Excel bản tiếng Việt lưu CSV bằng dấu chấm phẩy (;)
+    detectDelimiter(text) {
+        for (const line of text.split(/\r?\n/)) {
+            if (!line.trim() || line.trim().startsWith('#')) continue;
+            const count = { ',': 0, ';': 0, '\t': 0 };
+            let q = false;
+            for (const ch of line) {
+                if (ch === '"') q = !q;
+                else if (!q && ch in count) count[ch]++;
+            }
+            const best = Object.keys(count).sort((a, b) => count[b] - count[a])[0];
+            if (count[best] > 0) return best;
+        }
+        return ',';
+    },
+
     parseCSV(text) {
         const rows = [];
         let row = [], field = '', inQuotes = false;
         if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+        const delim = this.detectDelimiter(text);
 
         for (let i = 0; i < text.length; i++) {
             const c = text[i];
@@ -766,7 +783,7 @@ window.TNTT.students = {
                 } else { field += c; }
             } else if (c === '"') {
                 inQuotes = true;
-            } else if (c === ',') {
+            } else if (c === delim) {
                 row.push(field); field = '';
             } else if (c === '\n') {
                 row.push(field); rows.push(row); row = []; field = '';
@@ -806,16 +823,30 @@ window.TNTT.students = {
             return;
         }
 
-        // Dò cột theo tên tiêu đề, không phụ thuộc thứ tự cột
-        const headerRow = rows[0].map(h => this.normalizeText(h));
-        const colIndex = {};
-        this.importColumns.forEach(c => {
-            const i = headerRow.indexOf(this.normalizeText(c.header));
-            if (i !== -1) colIndex[c.key] = i;
-        });
+        // Dò cột theo tên tiêu đề, không phụ thuộc thứ tự cột.
+        // Chuẩn hoá mạnh tay: bỏ dấu, khoảng trắng thừa/NBSP, ký tự lạ
+        const norm = (h) => this.normalizeText(String(h || '').replace(/[\u00A0\u200B]/g, ' '))
+            .replace(/[^a-z0-9]+/g, ' ').trim();
+        const nameAliases = ['ho va ten', 'ho ten', 'hoten', 'ho & ten'].map(norm);
 
-        if (colIndex.name === undefined) {
+        let headerIdx = -1, colIndex = {};
+        for (let r = 0; r < Math.min(rows.length, 15); r++) {
+            const hr = rows[r].map(norm);
+            const found = {};
+            this.importColumns.forEach(c => {
+                let i = hr.indexOf(norm(c.header));
+                if (i === -1 && c.key === 'name') i = hr.findIndex(h => nameAliases.includes(h));
+                if (i !== -1) found[c.key] = i;
+            });
+            if (found.name !== undefined) { headerIdx = r; colIndex = found; break; }
+        }
+
+        if (headerIdx === -1) {
             window.TNTT.toast.warning('File thiếu cột bắt buộc "Họ và Tên".\nHãy bấm nút Xuất để lấy file mẫu đúng định dạng.');
+            return;
+        }
+        if (rows.length <= headerIdx + 1) {
+            window.TNTT.toast.warning('File không có dòng dữ liệu nào.');
             return;
         }
 
@@ -827,7 +858,7 @@ window.TNTT.students = {
         this.displayLimit = 20;
         // Bật trạng thái đang đồng bộ để người dùng biết app đang làm việc
         this.syncing = true;
-        this.importToServer(rows.slice(1), colIndex, fileName).finally(() => {
+        this.importToServer(rows.slice(headerIdx + 1), colIndex, fileName).finally(() => {
             this.syncing = false;
         });
     },
