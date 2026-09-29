@@ -15,6 +15,31 @@
 require __DIR__ . '/_bootstrap.php';
 require __DIR__ . '/StampService.php';
 
+/**
+ * Trả JSON kèm ETag (băm nội dung). Máy khách gửi lại If-None-Match: nếu dữ
+ * liệu không đổi thì trả 304 rỗng — khỏi tải lại vài trăm KB điểm danh mỗi
+ * lần mở lại app. Băm trên chính nội dung nên không bao giờ trả bản cũ sai.
+ */
+function data_out(array $payload): never
+{
+    // Bản lấy từ cache đã qua json_decode nên {} rỗng thành []; ép về {} để
+    // nội dung (và ETag) không đổi tuỳ trúng/trượt cache.
+    if (isset($payload['programClasses']) && !$payload['programClasses']) {
+        $payload['programClasses'] = (object) [];
+    }
+    $body = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    $etag = '"' . md5($body) . '"';
+    header('ETag: ' . $etag);
+    header('Cache-Control: private, no-cache');
+    if (trim($_SERVER['HTTP_IF_NONE_MATCH'] ?? '') === $etag) {
+        http_response_code(304);
+        exit;
+    }
+    header('Content-Type: application/json; charset=utf-8');
+    echo $body;
+    exit;
+}
+
 // Rate limiting cho API đọc
 enforce_api_read_limit();
 
@@ -49,7 +74,7 @@ if (!in_array($part, ['core', 'heavy', 'all'], true)) $part = 'all';
 // Check cache first — khoá theo part để 3 loại không đè lên nhau
 $cacheKey = "data_{$yid}_{$me['id']}_{$part}";
 if ($cached = Cache::get($cacheKey)) {
-    json_out($cached);
+    data_out($cached);
 }
 
 // ---------------------------------------------------------------
@@ -302,7 +327,7 @@ $scores = $part === 'core' ? [] : array_map(fn($s) => [
 if ($part === 'heavy') {
     $heavy = ['ok' => true, 'attendances' => $attendances, 'scores' => $scores];
     Cache::set($cacheKey, $heavy, 60);
-    json_out($heavy);
+    data_out($heavy);
 }
 
 $reports = array_map(fn($r) => [
@@ -489,4 +514,4 @@ if ($isPaginated) {
 // của người khác. Kết hợp auto-đồng-bộ khi mở lại app (shell.js) để bớt
 // cảm giác "không realtime".
 Cache::set($cacheKey, $result, 60);
-json_out($result);
+data_out($result);
