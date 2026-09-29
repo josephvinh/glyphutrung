@@ -25,6 +25,49 @@ window.TNTT.csrfFetch = async (url, options = {}) => {
         },
     });
 };
+/**
+ * BẢN CHỤP DỮ LIỆU TRONG MÁY (IndexedDB)
+ * Mở app là vẽ ngay dữ liệu lần trước, rồi đồng bộ ngầm — người dùng không
+ * phải chờ mạng. Khoá gồm cả người dùng + niên khoá nên không lẫn dữ liệu.
+ * Lỗi/không hỗ trợ IndexedDB thì im lặng bỏ qua, app chạy như cũ.
+ */
+window.TNTT.snap = {
+    _db: null,
+    _gen: 0,   // tăng mỗi lần clear(): ghi khởi động TRƯỚC clear thì bị bỏ, không sống sót sau đăng xuất
+    _open() {
+        if (this._db) return this._db;
+        this._db = new Promise((resolve) => {
+            try {
+                const r = indexedDB.open('tntt-snap', 1);
+                r.onupgradeneeded = () => r.result.createObjectStore('s');
+                r.onsuccess = () => resolve(r.result);
+                r.onerror = () => resolve(null);
+            } catch (e) { resolve(null); }
+        });
+        return this._db;
+    },
+    async _tx(mode, fn) {
+        const db = await this._open();
+        if (!db) return undefined;
+        return new Promise((resolve) => {
+            try {
+                const st = db.transaction('s', mode).objectStore('s');
+                const rq = fn(st);
+                rq.onsuccess = () => resolve(rq.result);
+                rq.onerror = () => resolve(undefined);
+            } catch (e) { resolve(undefined); }
+        });
+    },
+    get(key)        { return this._tx('readonly',  (s) => s.get(key)); },
+    async set(key, value) {
+        const gen = this._gen;
+        await this._open();
+        if (gen !== this._gen) return undefined;
+        return this._tx('readwrite', (s) => s.put(value, key));
+    },
+    del(key)        { return this._tx('readwrite', (s) => s.delete(key)); },
+    clear()         { this._gen++; return this._tx('readwrite', (s) => s.clear()); },
+};
 window.TNTT.core = {
     currentModule: 'dashboard',
 
@@ -79,7 +122,9 @@ window.TNTT.core = {
     profileForm: {},
     year: null,              // niên khoá đang mở
     syncing: false,          // đang nạp dữ liệu
-    heavyLoaded: false,      // đã tải xong BƯỚC 2 (điểm danh + điểm) chưa
+    heavyLoaded: false,      // đã CÓ số liệu bước 2 (điểm danh + điểm) để hiển thị (có thể là bản chụp cũ)
+    heavyFresh: false,       // số liệu bước 2 đã được MÁY CHỦ xác nhận mới nhất — chỉ khi đó mới cho ghi điểm danh
+    _heavyYear: null,        // niên khoá của số liệu bước 2 đang giữ
 
     // ==========================================
     // LỚP GỌI MÁY CHỦ
@@ -161,47 +206,114 @@ window.TNTT.core = {
         window.TNTT.toast.success(msg);
     },
 
+    // Nạp một phần dữ liệu ('core' | 'heavy') kèm ETag: dữ liệu không đổi thì
+    // máy chủ trả 304 và ta dùng lại bản chụp trong máy. Trả về JSON đã parse.
+    async _fetchPart(part) {
+        const key  = this._snapKey(part);
+        const seq  = this._snapSeq = (this._snapSeq || 0) + 1;   // thứ tự bắt đầu nạp
+        const snap = await window.TNTT.snap.get(key);
+        const headers = snap && snap.etag ? { 'If-None-Match': snap.etag } : {};
+        const res = await fetch('api/data.php?part=' + part, { headers, cache: 'no-store' });
+        if (res.status === 401 || res.status === 403) {
+            // Phiên hết hạn / bị thu hồi: bỏ dữ liệu lưu trong máy rồi về màn đăng nhập
+            await window.TNTT.snap.clear();
+            setTimeout(() => location.reload(), 300);
+            return { ok: false, error: 'Phiên đăng nhập đã hết hạn.' };
+        }
+        if (res.status === 304 && snap) return snap.data;
+        const d = await res.json();
+        const etag = res.headers.get('ETag');
+        this._snapWritten = this._snapWritten || {};
+        if (d && d.ok && etag) {
+            // Chỉ ghi nếu chưa có lần nạp MỚI HƠN đã ghi trước (nạp chồng nhau)
+            if (seq > (this._snapWritten[key] || 0)) {
+                this._snapWritten[key] = seq;
+                await window.TNTT.snap.set(key, { etag, data: d });
+            }
+        } else {
+            await window.TNTT.snap.del(key);   // lỗi máy chủ: đừng giữ bản chụp cũ làm mốc
+        }
+        return d;
+    },
+    _snapKey(part) { return this.user.memberId + ':' + (this.year && this.year.id) + ':' + part; },
+
+    // Gán dữ liệu bước 1 (core) lên trạng thái app
+    _applyCore(d) {
+        this.students          = d.students;
+        this.rebuildStudentIndex();  // chỉ số em O(1) — studentById nhanh ở màn Xin phép
+        // Sổ Mộc: ví + chuỗi + lịch sử gần nhất, theo studentId — đã lọc
+        // theo đúng phạm vi lớp của this.students ở máy chủ (data.php).
+        this.stampSummaries    = d.stampSummaries || {};
+        // Sĩ số mọi lớp, đếm ở máy chủ. Cần vì this.students nay chỉ
+        // gồm phạm vi mình được xem, không đếm được lớp ngoài phạm vi.
+        this.classCounts       = d.classCounts || {};
+        this.programs          = d.programs;
+        // Chương trình gắn lớp: map programId -> [classId,...] (rỗng = toàn đoàn)
+        this.programClasses    = d.programClasses || {};
+        this.leaveRequests     = d.leaveRequests;
+        this.reports           = d.reports;
+        this.rebuildReportIndex();  // chỉ số phiếu O(1) — tránh chậm thao tác (myTasks + danh sách Phiếu LC)
+        this.announcements     = d.announcements;
+        this.readAnnouncements = d.readAnnouncements;
+        this.members           = d.members;
+        this.logs              = d.logs;
+        this.notes             = d.notes || [];
+        // Chỉ là CON SỐ chờ duyệt của Thư viện, để vẽ chấm đỏ trên icon
+        // mà không phải mở module (moduleBadge chạy ngay ở Trang chủ).
+        this.libraryPending    = d.libraryPending || 0;
+    },
+
+    // Gán dữ liệu bước 2 (điểm danh + điểm)
+    _applyHeavy(d, fresh) {
+        this._heavyYear  = this.year && this.year.id;
+        this.heavyFresh  = !!fresh;
+        this.attendances = d.attendances || [];
+        this.rebuildAttendanceIndex(); // index O(1) — tránh treo khi đoàn lớn
+        this.scores      = d.scores || [];
+        this.rebuildScoreIndex();      // chỉ số điểm O(1) — tránh treo Lên lớp/ĐTB
+        this.heavyLoaded = true;
+    },
+
     // Nạp toàn bộ dữ liệu nghiệp vụ của niên khoá đang mở
     // TẢI 2 BƯỚC (cho nhẹ máy yếu lúc mở app):
     //   Bước 1 (core): mọi thứ TRỪ điểm danh/điểm -> app dùng được NGAY
     //                  (trang chủ, danh sách, thông báo, lịch...).
     //   Bước 2 (heavy): điểm danh + điểm, tải NỀN ngay sau, không chặn màn.
-    // Nhờ vậy 5MB JSON điểm danh không còn parse chặn màn đầu trên điện thoại.
+    // Lần mở đầu tiên trong phiên: nếu có BẢN CHỤP trong máy thì vẽ ngay
+    // (không chờ mạng), đồng bộ bản mới ngầm ngay sau đó.
     async loadData() {
         this.syncing = true;
         try {
-            const res = await fetch('api/data.php?part=core');
-            const d = await res.json();
+            if (!this._snapTried) {
+                this._snapTried = true;
+                const sc = await window.TNTT.snap.get(this._snapKey('core'));
+                if (sc && sc.data && sc.data.ok) {
+                    this._applyCore(sc.data);
+                    const sh = await window.TNTT.snap.get(this._snapKey('heavy'));
+                    if (sh && sh.data && sh.data.ok) this._applyHeavy(sh.data, false);   // chỉ để xem, chưa cho ghi
+                    this.$nextTick(() => lucide.createIcons());
+                }
+            }
+
+            const d = await this._fetchPart('core');
             if (!d.ok) { window.TNTT.toast.error(d.error || 'Không nạp được dữ liệu.'); return false; }
 
-            this.students          = d.students;
-            this.rebuildStudentIndex();  // chỉ số em O(1) — studentById nhanh ở màn Xin phép
-            // Sổ Mộc: ví + chuỗi + lịch sử gần nhất, theo studentId — đã lọc
-            // theo đúng phạm vi lớp của this.students ở máy chủ (data.php).
-            this.stampSummaries    = d.stampSummaries || {};
-            // Sĩ số mọi lớp, đếm ở máy chủ. Cần vì this.students nay chỉ
-            // gồm phạm vi mình được xem, không đếm được lớp ngoài phạm vi.
-            this.classCounts       = d.classCounts || {};
-            this.programs          = d.programs;
-            // Chương trình gắn lớp: map programId -> [classId,...] (rỗng = toàn đoàn)
-            this.programClasses    = d.programClasses || {};
-            this.leaveRequests     = d.leaveRequests;
-            this.reports           = d.reports;
-            this.rebuildReportIndex();  // chỉ số phiếu O(1) — tránh chậm thao tác (myTasks + danh sách Phiếu LC)
-            this.announcements     = d.announcements;
-            this.readAnnouncements = d.readAnnouncements;
-            this.members           = d.members;
-            this.logs              = d.logs;
-            this.notes             = d.notes || [];
-            // Chỉ là CON SỐ chờ duyệt của Thư viện, để vẽ chấm đỏ trên icon
-            // mà không phải mở module (moduleBadge chạy ngay ở Trang chủ).
-            this.libraryPending    = d.libraryPending || 0;
+            this._applyCore(d);
 
-            // Điểm danh/điểm sẽ đổ vào ở bước 2. Đặt rỗng + index rỗng để
-            // các getter chạy an toàn (trả 0) trong lúc chờ.
-            this.attendances = []; this.rebuildAttendanceIndex();
-            this.scores      = []; this.rebuildScoreIndex();
-            this.heavyLoaded = false;
+            // Điểm danh/điểm: nếu CHƯA có (lần đầu, chưa có bản chụp) thì đặt rỗng
+            // + index rỗng để các getter chạy an toàn (trả 0) trong lúc chờ. Nếu
+            // ĐÃ có (bản chụp hoặc lần nạp trước) thì giữ nguyên tới khi bản mới
+            // về — khỏi chớp về 0 mỗi lần đồng bộ.
+            // Đổi niên khoá thì số liệu cũ không còn đúng: bỏ hẳn.
+            const yearChanged = this._heavyYear !== null && this._heavyYear !== (this.year && this.year.id);
+            if (yearChanged) this.heavyLoaded = false;
+            // Từ đây tới khi bước 2 về, số liệu điểm danh CHƯA được xác nhận mới nhất
+            // -> khoá thao tác ghi (như trước đây, khi heavyLoaded bị đặt lại false).
+            this.heavyFresh = false;
+            if (!this.heavyLoaded) {
+                this.attendances = []; this.rebuildAttendanceIndex();
+                this.scores      = []; this.rebuildScoreIndex();
+            }
 
             this._lastLoadAt = Date.now();  // mốc để auto-đồng-bộ khi mở lại app khỏi nạp dồn
             this.loadHeavy();               // BƯỚC 2 — tải nền, KHÔNG await
@@ -224,14 +336,9 @@ window.TNTT.core = {
     // dựng lại chỉ số và bật cờ heavyLoaded để các màn cần số liệu sáng lên.
     async loadHeavy() {
         try {
-            const res = await fetch('api/data.php?part=heavy');
-            const d = await res.json();
+            const d = await this._fetchPart('heavy');
             if (!d.ok) return;
-            this.attendances = d.attendances || [];
-            this.rebuildAttendanceIndex(); // index O(1) — tránh treo khi đoàn lớn
-            this.scores      = d.scores || [];
-            this.rebuildScoreIndex();      // chỉ số điểm O(1) — tránh treo Lên lớp/ĐTB
-            this.heavyLoaded = true;
+            this._applyHeavy(d, true);
             this.$nextTick(() => lucide.createIcons());
         } catch (e) {
             // Im lặng: lần đồng bộ sau (bấm Làm mới / mở lại app) sẽ tải lại.
@@ -255,6 +362,7 @@ window.TNTT.core = {
         try {
             await fetch('api/auth.php?action=logout', { method: 'POST' });
         } catch (e) { /* mất mạng thì vẫn chuyển về trang chủ */ }
+        try { await window.TNTT.snap.clear(); } catch (e) {}   // máy dùng chung: xoá dữ liệu lưu trong máy
         // Về TRANG CHỦ (landing) thay vì tải lại: tải lại tại chỗ sẽ rơi vào form
         // đăng nhập, và app lưu ra màn hình chính cũng mở lại đúng chỗ đó.
         location.replace('index.php');

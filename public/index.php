@@ -5,6 +5,16 @@
  * dữ liệu nghiệp vụ nào ra trình duyệt.
  */
 require __DIR__ . '/api/_bootstrap_page.php';
+
+// Nén gzip trang HTML. Trang chính ~600KB chữ thô (mọi màn hình dựng sẵn
+// trong HTML) nhưng nén còn ~95KB; không nén thì mỗi lần mở app trên mạng
+// yếu phải kéo cả 600KB. Bỏ qua nếu máy chủ đã tự nén.
+if (extension_loaded('zlib')
+    && !ini_get('zlib.output_compression')
+    && stripos($_SERVER['HTTP_ACCEPT_ENCODING'] ?? '', 'gzip') !== false) {
+    header('Vary: Accept-Encoding');
+    @ob_start('ob_gzhandler');
+}
 $me = current_member();
 // Khách chưa đăng nhập: hiện trang chủ điều hướng; bấm "Đăng nhập quản lý"
 // (?dangnhap=1) mới vào form đăng nhập. Người cần đổi mật khẩu vào thẳng form.
