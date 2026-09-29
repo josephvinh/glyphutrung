@@ -65,3 +65,22 @@ CHANGES_SUMMARY.md
 
 # Runtime logs (không commit log chạy máy)
 logs/*.log
+
+# ============================================================
+# RÁC Ở GỐC REPO — đã gỡ khỏi git, chặn không cho commit lại.
+# (Các dòng "NGOC VINH"/ ở trên viết sai cú pháp — dấu ngoặc kép
+# bị hiểu theo nghĩa đen — nên các mục dưới đây mới là bản đúng.)
+# ============================================================
+test-code/
+/cookies.txt
+/error_log
+/master/
+/master
+/Enter
+/NGOC VINH/
+/\[working-dir\] NGOC VINH/
+/*.sql
+/CHANGES_SUMMARY.md
+/CONTRIBUTING.md
+/SPEC-*.md
+/public/**/*.md
