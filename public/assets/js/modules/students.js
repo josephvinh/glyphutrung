@@ -443,6 +443,7 @@ window.TNTT.students = {
             });
             if (r && r.ok) {
                 window.TNTT.toast.info(`Đã xóa ${r.deleted || count} em.`);
+                if (r.kept > 0) window.TNTT.toast.warning(`${r.kept} em còn dữ liệu ở niên khoá khác nên được giữ lại. Hãy đổi tình trạng sang "dừng sinh hoạt".`);
                 this.selectedStudents = [];
                 await this.loadData();
             }

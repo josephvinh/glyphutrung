@@ -452,6 +452,7 @@ switch ($action) {
 
         // Validate each student's current class (IDOR prevention)
         $validIds = [];
+        $hasHistory = 0;
         foreach ($ids as $sid) {
             $sid = (int) $sid;
             if ($sid <= 0) continue;
@@ -461,10 +462,21 @@ switch ($action) {
                     continue;
                 }
             }
+            // Em còn hồ sơ ở niên khoá khác: xóa hẳn sẽ kéo theo cả lịch sử các năm đó
+            // (điểm danh, điểm, nhận xét...) nên không cho xóa, chỉ nên chuyển "dừng sinh hoạt".
+            $other = db_one('SELECT 1 AS x FROM enrollments WHERE student_id = ? AND year_id <> ? LIMIT 1', [$sid, $yid]);
+            if ($other) {
+                $hasHistory++;
+                continue;
+            }
             $validIds[] = $sid;
         }
 
         if (count($validIds) === 0) {
+            if ($hasHistory > 0) {
+                json_fail('Các em đã chọn còn dữ liệu ở niên khoá khác nên không xóa hẳn được. '
+                        . 'Hãy đổi tình trạng sang "dừng sinh hoạt" thay vì xóa.', 409);
+            }
             json_fail('Không có em nào bạn được phép xóa. Có thể các em không thuộc lớp bạn phụ trách.', 403);
         }
 
@@ -482,7 +494,7 @@ switch ($action) {
 
         log_action('xoa', 'students', 'Bulk xóa ' . count($validIds) . ' em');
         Cache::flush();
-        json_out(['ok' => true, 'deleted' => count($validIds)]);
+        json_out(['ok' => true, 'deleted' => count($validIds), 'kept' => $hasHistory]);
         break;
 
     // -------------------------------------------------------------
