@@ -430,8 +430,8 @@ window.TNTT.students = {
         }
 
         const confirmed = await window.TNTT.toast.confirm(
-            `Xóa ${count} em khỏi danh sách?\n\nHành động này không thể hoàn tác.`,
-            { danger: true, confirmText: `Xóa ${count} em`, cancelText: 'Hủy bỏ' }
+            `Xóa vĩnh viễn ${count} em?\n\nHồ sơ, điểm danh, điểm số và nhận xét của các em này sẽ bị xóa hẳn khỏi hệ thống. Hành động này không thể hoàn tác.`,
+            { title: 'Xác nhận xóa', danger: true, confirmText: `Xóa ${count} em`, cancelText: 'Hủy bỏ' }
         );
 
         if (!confirmed) return;
