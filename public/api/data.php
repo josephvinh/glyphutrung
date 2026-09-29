@@ -22,10 +22,10 @@ require __DIR__ . '/StampService.php';
  */
 function data_out(array $payload): never
 {
-    // Bản lấy từ cache đã qua json_decode nên {} rỗng thành []; ép về {} để
-    // nội dung (và ETag) không đổi tuỳ trúng/trượt cache.
-    if (isset($payload['programClasses']) && !$payload['programClasses']) {
-        $payload['programClasses'] = (object) [];
+    // Bản lấy từ cache đã qua json_decode nên {} rỗng thành []; ép về {} (cả hai map
+    // này vốn là object ở nguồn) để nội dung (và ETag) không đổi tuỳ trúng/trượt cache.
+    foreach (['programClasses', 'stampSummaries'] as $k) {
+        if (isset($payload[$k]) && !$payload[$k]) $payload[$k] = (object) [];
     }
     $body = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     $etag = '"' . md5($body) . '"';

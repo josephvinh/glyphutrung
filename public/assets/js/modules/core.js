@@ -33,6 +33,7 @@ window.TNTT.csrfFetch = async (url, options = {}) => {
  */
 window.TNTT.snap = {
     _db: null,
+    _gen: 0,   // tăng mỗi lần clear(): ghi khởi động TRƯỚC clear thì bị bỏ, không sống sót sau đăng xuất
     _open() {
         if (this._db) return this._db;
         this._db = new Promise((resolve) => {
@@ -58,8 +59,14 @@ window.TNTT.snap = {
         });
     },
     get(key)        { return this._tx('readonly',  (s) => s.get(key)); },
-    set(key, value) { return this._tx('readwrite', (s) => s.put(value, key)); },
-    clear()         { return this._tx('readwrite', (s) => s.clear()); },
+    async set(key, value) {
+        const gen = this._gen;
+        await this._open();
+        if (gen !== this._gen) return undefined;
+        return this._tx('readwrite', (s) => s.put(value, key));
+    },
+    del(key)        { return this._tx('readwrite', (s) => s.delete(key)); },
+    clear()         { this._gen++; return this._tx('readwrite', (s) => s.clear()); },
 };
 window.TNTT.core = {
     currentModule: 'dashboard',
@@ -115,7 +122,9 @@ window.TNTT.core = {
     profileForm: {},
     year: null,              // niên khoá đang mở
     syncing: false,          // đang nạp dữ liệu
-    heavyLoaded: false,      // đã tải xong BƯỚC 2 (điểm danh + điểm) chưa
+    heavyLoaded: false,      // đã CÓ số liệu bước 2 (điểm danh + điểm) để hiển thị (có thể là bản chụp cũ)
+    heavyFresh: false,       // số liệu bước 2 đã được MÁY CHỦ xác nhận mới nhất — chỉ khi đó mới cho ghi điểm danh
+    _heavyYear: null,        // niên khoá của số liệu bước 2 đang giữ
 
     // ==========================================
     // LỚP GỌI MÁY CHỦ
@@ -196,13 +205,29 @@ window.TNTT.core = {
     // máy chủ trả 304 và ta dùng lại bản chụp trong máy. Trả về JSON đã parse.
     async _fetchPart(part) {
         const key  = this._snapKey(part);
+        const seq  = this._snapSeq = (this._snapSeq || 0) + 1;   // thứ tự bắt đầu nạp
         const snap = await window.TNTT.snap.get(key);
         const headers = snap && snap.etag ? { 'If-None-Match': snap.etag } : {};
         const res = await fetch('api/data.php?part=' + part, { headers, cache: 'no-store' });
+        if (res.status === 401 || res.status === 403) {
+            // Phiên hết hạn / bị thu hồi: bỏ dữ liệu lưu trong máy rồi về màn đăng nhập
+            await window.TNTT.snap.clear();
+            setTimeout(() => location.reload(), 300);
+            return { ok: false, error: 'Phiên đăng nhập đã hết hạn.' };
+        }
         if (res.status === 304 && snap) return snap.data;
         const d = await res.json();
         const etag = res.headers.get('ETag');
-        if (d && d.ok && etag) window.TNTT.snap.set(key, { etag, data: d });
+        this._snapWritten = this._snapWritten || {};
+        if (d && d.ok && etag) {
+            // Chỉ ghi nếu chưa có lần nạp MỚI HƠN đã ghi trước (nạp chồng nhau)
+            if (seq > (this._snapWritten[key] || 0)) {
+                this._snapWritten[key] = seq;
+                await window.TNTT.snap.set(key, { etag, data: d });
+            }
+        } else {
+            await window.TNTT.snap.del(key);   // lỗi máy chủ: đừng giữ bản chụp cũ làm mốc
+        }
         return d;
     },
     _snapKey(part) { return this.user.memberId + ':' + (this.year && this.year.id) + ':' + part; },
@@ -234,7 +259,9 @@ window.TNTT.core = {
     },
 
     // Gán dữ liệu bước 2 (điểm danh + điểm)
-    _applyHeavy(d) {
+    _applyHeavy(d, fresh) {
+        this._heavyYear  = this.year && this.year.id;
+        this.heavyFresh  = !!fresh;
         this.attendances = d.attendances || [];
         this.rebuildAttendanceIndex(); // index O(1) — tránh treo khi đoàn lớn
         this.scores      = d.scores || [];
@@ -258,7 +285,7 @@ window.TNTT.core = {
                 if (sc && sc.data && sc.data.ok) {
                     this._applyCore(sc.data);
                     const sh = await window.TNTT.snap.get(this._snapKey('heavy'));
-                    if (sh && sh.data && sh.data.ok) this._applyHeavy(sh.data);
+                    if (sh && sh.data && sh.data.ok) this._applyHeavy(sh.data, false);   // chỉ để xem, chưa cho ghi
                     this.$nextTick(() => lucide.createIcons());
                 }
             }
@@ -272,6 +299,12 @@ window.TNTT.core = {
             // + index rỗng để các getter chạy an toàn (trả 0) trong lúc chờ. Nếu
             // ĐÃ có (bản chụp hoặc lần nạp trước) thì giữ nguyên tới khi bản mới
             // về — khỏi chớp về 0 mỗi lần đồng bộ.
+            // Đổi niên khoá thì số liệu cũ không còn đúng: bỏ hẳn.
+            const yearChanged = this._heavyYear !== null && this._heavyYear !== (this.year && this.year.id);
+            if (yearChanged) this.heavyLoaded = false;
+            // Từ đây tới khi bước 2 về, số liệu điểm danh CHƯA được xác nhận mới nhất
+            // -> khoá thao tác ghi (như trước đây, khi heavyLoaded bị đặt lại false).
+            this.heavyFresh = false;
             if (!this.heavyLoaded) {
                 this.attendances = []; this.rebuildAttendanceIndex();
                 this.scores      = []; this.rebuildScoreIndex();
@@ -300,7 +333,7 @@ window.TNTT.core = {
         try {
             const d = await this._fetchPart('heavy');
             if (!d.ok) return;
-            this._applyHeavy(d);
+            this._applyHeavy(d, true);
             this.$nextTick(() => lucide.createIcons());
         } catch (e) {
             // Im lặng: lần đồng bộ sau (bấm Làm mới / mở lại app) sẽ tải lại.

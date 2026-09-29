@@ -249,7 +249,7 @@ window.TNTT.attendance = {
     startSession(prog) {
         // Chặn khi số liệu điểm danh chưa tải xong (bước 2). Nếu không, sổ
         // sẽ hiện mọi em "chưa điểm danh" và dễ điểm danh đè lên bản ghi cũ.
-        if (!this.heavyLoaded) {
+        if (!this.heavyLoaded || !this.heavyFresh) {
             window.TNTT.toast.info('Đang tải số liệu điểm danh, đợi một chút rồi bắt đầu nhé.');
             return;
         }
