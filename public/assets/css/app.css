@@ -499,13 +499,6 @@ textarea:focus-visible:not(:disabled),
     .module-panel { animation: none; }
 }
 
-/* Làm tối phần ngoài khung ngắm QR.
-   Viết ở đây thay vì lớp gõ tay shadow-[...] của Tailwind: chuỗi đó có
-   dấu phẩy trong rgba() nên bộ quét của Tailwind không nhận ra. */
-.qr-toi-xung-quanh {
-    box-shadow: 0 0 0 9999px rgb(15 23 42 / 0.5);
-}
-
 /* ==========================================================
    CHẠM NHANH KHÔNG BỊ PHÓNG TO
 

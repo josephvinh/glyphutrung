@@ -477,12 +477,21 @@
                    style="transform: translateZ(0); -webkit-transform: translateZ(0);"
                    muted playsinline autoplay></video>
 
-            <!-- Vùng ngắm: khớp đúng phần được giải mã (72% cạnh ngắn) -->
+            <!-- HÌNH HIỂN THỊ THẬT là <canvas> này, không phải <video>.
+                 <video> chỉ làm nguồn hình. iOS WebKit hay không vẽ nổi thẻ
+                 video camera trực tiếp (ô đen) dù luồng vẫn sống; canvas thì
+                 vẽ ổn định. Phần tối bên ngoài khung ngắm cũng vẽ ngay trên
+                 canvas, không dùng box-shadow/backdrop-filter đè lên video. -->
+            <canvas x-ref="qrCanvas" class="absolute inset-0 w-full h-full"></canvas>
+
+            <!-- Vùng ngắm: khớp đúng phần được giải mã (75% cạnh ngắn) -->
             <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div class="w-3/4 h-3/4 rounded-2xl border-4 border-white/90 qr-toi-xung-quanh"></div>
+                <div class="w-3/4 h-3/4 rounded-2xl border-4 border-white/90"></div>
             </div>
 
-            <p class="absolute left-3 right-3 bottom-3 text-center text-white font-bold text-xs bg-slate-900/75 rounded-xl px-3 py-2 backdrop-blur-sm truncate"
+            <!-- KHÔNG backdrop-blur ở đây: phần tử có backdrop-filter nằm đè
+                 lên camera trực tiếp là nguyên nhân khung đen trên iOS. -->
+            <p class="absolute left-3 right-3 bottom-3 text-center text-white font-bold text-xs bg-slate-900/85 rounded-xl px-3 py-2 truncate"
                x-text="qrTrangThai"></p>
         </div>
 
@@ -514,6 +523,9 @@
             <p x-show="qrVuaGhi.length === 0" class="text-center text-slate-400 text-micro font-semibold py-3">
                 Đưa thẻ của em vào khung
             </p>
+            <!-- Thông số camera (tạm thời) để biết máy nào đen hình vì sao -->
+            <p x-show="qrChanDoan" style="display: none; font-size: 10px;" x-text="qrChanDoan"
+               class="mt-2 text-center text-slate-400 break-all"></p>
         </div>
 
         <!-- Kết thúc -->
