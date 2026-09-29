@@ -2,7 +2,7 @@
 /**
  * ORG SERVICE
  *
- * Tách logic nghiệp vụ ra khỏi org.php (499 dòng).
+ * Khối & Lớp: tách logic nghiệp vụ ra khỏi org.php.
  * Giữ nguyên cấu trúc switch/case để không phá API contract.
  *
  * TODO: Chuyển sang class-based endpoints khi có thời gian refactor đầy đủ
@@ -113,12 +113,17 @@ class OrgService
             return ['ok' => false, 'error' => 'Khối "' . $name . '" còn ' . $n . ' lớp. Hãy chuyển hoặc xóa hết lớp trước.'];
         }
 
-        // Kết thúc phân công trưởng khối
+        // Kết thúc phân công trưởng khối, rồi tính lại vai gốc của những người đó
+        $heads = array_column(db_all(
+            "SELECT DISTINCT member_id FROM member_assignments
+              WHERE block_id = ? AND to_date IS NULL", [$b['id']]), 'member_id');
         db_run("UPDATE member_assignments SET to_date = CURDATE()
-                  WHERE role_code = 'truong_khoi' AND block_id = ? AND to_date IS NULL",
-               [$b['id']]);
+                  WHERE block_id = ? AND to_date IS NULL", [$b['id']]);
 
         db_run('DELETE FROM blocks WHERE id=?', [$b['id']]);
+        foreach ($heads as $mid) {
+            recompute_member_primary((int) $mid);
+        }
         log_action('xoa', 'org', 'Xóa khối ' . $name, '');
         Cache::flush();
         return ['ok' => true];
@@ -166,6 +171,10 @@ class OrgService
             if (!$this->canManageClass((int) $oldCls['id'])) {
                 return ['ok' => false, 'error' => 'Bạn không có quyền sửa lớp "' . $old . '".', 'code' => 403];
             }
+            // Chuyển sang khối khác: phải quản lý cả khối đích
+            if ((int) $oldCls['block_id'] !== (int) $b['id'] && !$this->canManageBlock((int) $b['id'])) {
+                return ['ok' => false, 'error' => 'Bạn không có quyền chuyển lớp sang khối "' . $block . '".', 'code' => 403];
+            }
         }
 
         $dup = db_one('SELECT id FROM classes WHERE name=?', [$name]);
@@ -179,20 +188,30 @@ class OrgService
             log_action('tao', 'org', 'Thêm lớp ' . $name, 'khối ' . $block);
         } else {
             db_run('UPDATE classes SET name=?, block_id=? WHERE name=?', [$name, $b['id'], $old]);
+            if ((int) $oldCls['block_id'] !== (int) $b['id']) {
+                // Đổi khối: phân công đang hiệu lực + cột khối hiển thị của người
+                // trong lớp phải đi theo, nếu không họ vẫn "thuộc khối cũ".
+                db_run('UPDATE member_assignments SET block_id=? WHERE class_id=? AND to_date IS NULL',
+                       [$b['id'], $oldCls['id']]);
+                db_run('UPDATE members SET block_id=? WHERE class_id=?', [$b['id'], $oldCls['id']]);
+            }
             log_action('sua', 'org', 'Sửa lớp ' . $old, 'thành ' . $name . ' · khối ' . $block);
         }
 
-        // Sơ đồ lên lớp
-        $target = $this->in('nextClass');
-        if ($target === 'RA_TRUONG') {
-            db_run('UPDATE classes SET next_class_id=NULL, is_final=1 WHERE name=?', [$name]);
-        } elseif ($target !== '') {
-            $nextClass = db_one('SELECT id FROM classes WHERE name=?', [$target]);
-            if ($nextClass) {
-                db_run('UPDATE classes SET next_class_id=?, is_final=0 WHERE name=?', [$nextClass['id'], $name]);
+        // Sơ đồ lên lớp: CHỈ đổi khi client gửi nextClass. Form sửa tên/khối lớp
+        // không gửi trường này — trước đây mỗi lần lưu lớp là xóa mất sơ đồ.
+        if (array_key_exists('nextClass', $this->in)) {
+            $target = $this->in('nextClass');
+            if ($target === 'RA_TRUONG') {
+                db_run('UPDATE classes SET next_class_id=NULL, is_final=1 WHERE name=?', [$name]);
+            } elseif ($target !== '') {
+                $nextClass = db_one('SELECT id FROM classes WHERE name=?', [$target]);
+                if ($nextClass) {
+                    db_run('UPDATE classes SET next_class_id=?, is_final=0 WHERE name=?', [$nextClass['id'], $name]);
+                }
+            } else {
+                db_run('UPDATE classes SET next_class_id=NULL, is_final=0 WHERE name=?', [$name]);
             }
-        } else {
-            db_run('UPDATE classes SET next_class_id=NULL, is_final=0 WHERE name=?', [$name]);
         }
 
         Cache::flush();
@@ -220,54 +239,18 @@ class OrgService
             return ['ok' => false, 'error' => 'Lớp "' . $name . '" còn ' . $n . ' em. Hãy chuyển hoặc xóa hết em trước.'];
         }
 
-        // Kết thúc phân công GLV
-        db_run("UPDATE member_assignments SET to_date = CURDATE()
-                  WHERE role_code IN ('glv', 'glv_chu_nhiem') AND class_id = ? AND to_date IS NULL",
-               [$cls['id']]);
+        // Khớp với giao diện: còn người phụ trách (chủ nhiệm, GLV, Dự Bị) thì
+        // không xóa. Trước đây backend âm thầm kết thúc phân công — riêng Dự Bị
+        // bị sót, để lại phân công còn hiệu lực trỏ vào lớp đã xóa.
+        $glv = db_one("SELECT COUNT(*) n FROM member_assignments
+                        WHERE class_id = ? AND to_date IS NULL", [$cls['id']])['n'];
+        if ($glv > 0) {
+            return ['ok' => false, 'error' => 'Lớp "' . $name . '" còn ' . $glv . ' người được phân công (GLV/Dự Bị). Hãy gỡ hoặc chuyển họ sang lớp khác trước.'];
+        }
 
         db_run('DELETE FROM classes WHERE id=?', [$cls['id']]);
         log_action('xoa', 'org', 'Xóa lớp ' . $name, '');
         Cache::flush();
         return ['ok' => true];
-    }
-
-    /**
-     * Kiểm tra member có bảo vệ không
-     */
-    public function isProtected(array $member): bool
-    {
-        return in_array($member['role_code'], ['admin', 'bdh'], true);
-    }
-
-    /**
-     * Hạ vai member
-     */
-    public function demoteMember(int $memberId): void
-    {
-        $activeRoles = db_all(
-            "SELECT role_code, block_id, class_id FROM member_assignments
-             WHERE member_id = ? AND to_date IS NULL",
-            [$memberId]
-        );
-
-        $levels = ['admin' => 50, 'bdh' => 40, 'truong_khoi' => 30, 'glv_chu_nhiem' => 20, 'glv' => 10];
-        $highestLvl = 10;
-        $highestRole = 'glv';
-        $bestBlockId = null;
-        $bestClassId = null;
-
-        foreach ($activeRoles as $r) {
-            $lvl = $levels[$r['role_code']] ?? 10;
-            if ($lvl > $highestLvl) {
-                $highestLvl = $lvl;
-                $highestRole = $r['role_code'];
-                $bestBlockId = $r['block_id'];
-                $bestClassId = $r['class_id'];
-            }
-        }
-
-        $t = db_one("SELECT id FROM titles WHERE role_code=? ORDER BY sort_order LIMIT 1", [$highestRole]);
-        db_run("UPDATE members SET role_code=?, title_id=?, block_id=?, class_id=? WHERE id=?",
-               [$highestRole, $t['id'] ?? null, $bestBlockId, $bestClassId, $memberId]);
     }
 }

@@ -4,7 +4,7 @@
  *
  *   GET  ?action=list&memberId=N       tất cả assignments (kể cả lịch sử)
  *   GET  ?action=active&memberId=N     chỉ assignments đang hiệu lực
- *   POST ?action=create                tạo phân công mới
+ *   POST ?action=create                tạo phân công mới (kiểm tra phạm vi quản lý)
  *   POST ?action=end                   kết thúc phân công (set to_date)
  *   POST ?action=set_primary           đánh dấu phân công chính
  *   POST ?action=delete                xóa hẳn (chỉ khi đã kết thúc)
@@ -120,6 +120,25 @@ switch ($action) {
             $blockId = null;
             $classId = null;
         }
+        if ($roleRow['scope'] === 'khối') $classId = null;
+
+        if (!db_one('SELECT id FROM members WHERE id = ?', [$memberId]))
+            json_fail('Không tìm thấy thành viên.', 404);
+        if ($classId) {
+            // Khối của phân công luôn lấy từ lớp — không tin block_id client gửi
+            $cls = db_one('SELECT block_id FROM classes WHERE id = ?', [$classId]);
+            if (!$cls) json_fail('Không tìm thấy lớp.', 404);
+            $blockId = (int) $cls['block_id'];
+        } elseif ($blockId && !db_one('SELECT id FROM blocks WHERE id = ?', [$blockId])) {
+            json_fail('Không tìm thấy khối.', 404);
+        }
+
+        // Phạm vi: Trưởng khối chỉ phân công trong khối mình; phân công toàn đoàn
+        // (BĐH, Quản trị, Thủ Thư) chỉ Ban Điều Hành trở lên được cấp.
+        if (!can_manage_assignment_scope($meEditor, $blockId, $classId))
+            json_fail('Bạn không có quyền phân công ngoài phạm vi mình quản lý.', 403);
+        if (in_array($role, ['admin', 'bdh'], true) && ($meEditor['role_code'] ?? '') !== 'admin')
+            json_fail('Chỉ Quản Trị Hệ Thống mới được gán vai Quản trị hoặc Ban Điều Hành.', 403);
 
         // Thủ Thư là vai PHỤ TRỢ (kiêm nhiệm thêm, không đổi vai gốc): không bao
         // giờ làm phân công chính, và cấp lặp thì trả lại phân công đang có.
@@ -151,6 +170,7 @@ switch ($action) {
         if (!empty($in['isPrimary']) && $role !== 'thu_thu') {
             enforce_single_primary($memberId, $newId);
         }
+        recompute_member_primary($memberId);
 
         json_out(['ok' => true, 'id' => $newId, 'isPrimary' => (bool) $isPrimary]);
         break;
@@ -167,6 +187,9 @@ switch ($action) {
         $row = db_one('SELECT * FROM member_assignments WHERE id = ?', [$assignmentId]);
         if (!$row) json_fail('Không tìm thấy phân công.');
         if ($row['to_date'] !== null) json_fail('Phân công đã kết thúc trước đó.');
+        if (!can_manage_assignment_scope($meEditor, $row['block_id'] ? (int) $row['block_id'] : null,
+                                         $row['class_id'] ? (int) $row['class_id'] : null))
+            json_fail('Bạn không có quyền kết thúc phân công này.', 403);
 
         db_run(
             "UPDATE member_assignments SET to_date = CURDATE() WHERE id = ?",
@@ -183,6 +206,7 @@ switch ($action) {
                 [$row['member_id']]
             );
         }
+        recompute_member_primary((int) $row['member_id']);
 
         json_out(['ok' => true]);
         break;
@@ -196,10 +220,15 @@ switch ($action) {
         $assignmentId = (int) ($in['assignmentId'] ?? 0);
         if (!$assignmentId) json_fail('Thiếu assignmentId.');
 
-        $row = db_one('SELECT member_id FROM member_assignments WHERE id = ?', [$assignmentId]);
+        $row = db_one('SELECT member_id, block_id, class_id, to_date FROM member_assignments WHERE id = ?', [$assignmentId]);
         if (!$row) json_fail('Không tìm thấy phân công.');
+        if ($row['to_date'] !== null) json_fail('Phân công đã kết thúc, không đặt làm chính được.');
+        if (!can_manage_assignment_scope($meEditor, $row['block_id'] ? (int) $row['block_id'] : null,
+                                         $row['class_id'] ? (int) $row['class_id'] : null))
+            json_fail('Bạn không có quyền đổi phân công này.', 403);
 
         enforce_single_primary((int) $row['member_id'], $assignmentId);
+        recompute_member_primary((int) $row['member_id']);
         json_out(['ok' => true]);
         break;
 
@@ -215,6 +244,9 @@ switch ($action) {
         $row = db_one('SELECT * FROM member_assignments WHERE id = ?', [$assignmentId]);
         if (!$row) json_fail('Không tìm thấy phân công.');
         if ($row['to_date'] === null) json_fail('Chỉ xóa được phân công đã kết thúc.');
+        if (!can_manage_assignment_scope($meEditor, $row['block_id'] ? (int) $row['block_id'] : null,
+                                         $row['class_id'] ? (int) $row['class_id'] : null))
+            json_fail('Bạn không có quyền xóa phân công này.', 403);
 
         db_run('DELETE FROM member_assignments WHERE id = ?', [$assignmentId]);
         json_out(['ok' => true]);

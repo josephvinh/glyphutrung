@@ -123,6 +123,64 @@ function enforce_single_primary(int $memberId, int $primaryAssignmentId): void
     );
 }
 
+/**
+ * Tính lại vai gốc + khối/lớp hiển thị (members.role_code/block_id/class_id/
+ * title_id) từ các phân công đang hiệu lực. member_assignments là nguồn thật;
+ * các cột trên members chỉ là bản dẫn xuất — mọi chỗ đổi phân công (gán/gỡ
+ * chủ nhiệm, trưởng khối, thêm/gỡ GLV, xóa lớp/khối) đều gọi hàm này để hai
+ * bên không lệch nhau.
+ *
+ * Quy tắc:
+ *  - admin/bdh: vai gốc cố định, không đụng.
+ *  - Có phân công (trừ thu_thu — vai phụ trợ): lấy phân công cao nhất
+ *    (trưởng khối > chủ nhiệm > GLV > Dự Bị); ngang cấp thì ưu tiên phân công
+ *    chính rồi đến mới nhất.
+ *  - Hết phân công: người giữ chức (trưởng khối/chủ nhiệm) hạ về GLV; GLV và
+ *    Dự Bị giữ nguyên vai, khối/lớp về rỗng.
+ */
+function recompute_member_primary(int $memberId): void
+{
+    $m = db_one('SELECT id, role_code, title_id FROM members WHERE id = ?', [$memberId]);
+    if (!$m || in_array($m['role_code'], ['admin', 'bdh'], true)) return;
+
+    $rank = ['truong_khoi' => 4, 'glv_chu_nhiem' => 3, 'glv' => 2, 'du_bi' => 1];
+
+    $best = null;
+    $rows = db_all(
+        "SELECT a.role_code, a.block_id, a.class_id, c.block_id AS class_block_id
+           FROM member_assignments a
+           LEFT JOIN classes c ON c.id = a.class_id
+          WHERE a.member_id = ? AND a.to_date IS NULL AND a.role_code <> 'thu_thu'
+          ORDER BY a.is_primary DESC, a.from_date DESC, a.id DESC",
+        [$memberId]
+    );
+    foreach ($rows as $r) {
+        $rk = $rank[$r['role_code']] ?? 0;
+        if ($rk > 0 && ($best === null || $rk > $rank[$best['role_code']])) $best = $r;
+    }
+
+    if ($best) {
+        $role    = $best['role_code'];
+        $classId = $best['class_id'] !== null ? (int) $best['class_id'] : null;
+        $blockId = $best['class_block_id'] !== null ? (int) $best['class_block_id']
+                 : ($best['block_id'] !== null ? (int) $best['block_id'] : null);
+    } else {
+        $role    = in_array($m['role_code'], ['glv', 'du_bi'], true) ? $m['role_code'] : 'glv';
+        $classId = null;
+        $blockId = null;
+    }
+
+    $titleId = $m['title_id'];
+    if ($role !== $m['role_code'] || $titleId === null
+        || !db_one('SELECT 1 FROM titles WHERE id = ? AND role_code = ?', [$titleId, $role])) {
+        $t = db_one('SELECT id FROM titles WHERE role_code = ? ORDER BY sort_order LIMIT 1', [$role]);
+        $titleId = $t['id'] ?? null;
+    }
+
+    db_run('UPDATE members SET role_code=?, title_id=?, block_id=?, class_id=? WHERE id=?',
+           [$role, $titleId, $blockId, $classId, $memberId]);
+}
+
 /** Lấy phân công CHÍNH (primary) của thành viên — dùng cho permission mặc định */
 function primary_assignment(int $memberId): ?array
 {
