@@ -452,6 +452,7 @@ switch ($action) {
 
         // Validate each student's current class (IDOR prevention)
         $validIds = [];
+        $hasHistory = 0;
         foreach ($ids as $sid) {
             $sid = (int) $sid;
             if ($sid <= 0) continue;
@@ -461,25 +462,35 @@ switch ($action) {
                     continue;
                 }
             }
+            // Em còn hồ sơ ở niên khoá khác: xóa hẳn sẽ kéo theo cả lịch sử các năm đó
+            // (điểm danh, điểm, nhận xét...) nên không cho xóa, chỉ nên chuyển "dừng sinh hoạt".
+            $other = db_one('SELECT 1 AS x FROM enrollments WHERE student_id = ? AND year_id <> ? LIMIT 1', [$sid, $yid]);
+            if ($other) {
+                $hasHistory++;
+                continue;
+            }
             $validIds[] = $sid;
         }
+        $validIds = array_values(array_unique($validIds));
 
         if (count($validIds) === 0) {
+            if ($hasHistory > 0) {
+                json_fail('Các em đã chọn còn dữ liệu ở niên khoá khác nên không xóa hẳn được. '
+                        . 'Hãy đổi tình trạng sang "dừng sinh hoạt" thay vì xóa.', 409);
+            }
             json_fail('Không có em nào bạn được phép xóa. Có thể các em không thuộc lớp bạn phụ trách.', 403);
         }
 
         db()->beginTransaction();
         try {
-            // Soft delete: mark as 'dừng sinh hoạt' in enrollments (keep student records, just inactive)
+            // Xóa hẳn em; điểm danh, điểm, nhận xét... của em xóa theo (ON DELETE CASCADE).
             $ph = implode(',', array_fill(0, count($validIds), '?'));
-            $params = [];
-            foreach ($validIds as $sid) {
-                $params[] = $sid;
-            }
-            db_run(
-                "UPDATE enrollments SET status = 'dừng sinh hoạt' WHERE year_id = ? AND student_id IN ($ph)",
-                array_merge([$yid], $params)
-            );
+            // Kiểm tra lại "chưa có niên khoá khác" ngay trong câu xóa để không lệch nếu
+            // vừa có ghi danh mới chen vào giữa lúc kiểm tra và lúc xóa.
+            db_run("DELETE FROM students WHERE id IN ($ph)
+                    AND NOT EXISTS (SELECT 1 FROM enrollments e
+                                    WHERE e.student_id = students.id AND e.year_id <> ?)",
+                   array_merge($validIds, [$yid]));
 
             db()->commit();
         } catch (Throwable $e) {
@@ -489,7 +500,7 @@ switch ($action) {
 
         log_action('xoa', 'students', 'Bulk xóa ' . count($validIds) . ' em');
         Cache::flush();
-        json_out(['ok' => true, 'deleted' => count($validIds)]);
+        json_out(['ok' => true, 'deleted' => count($validIds), 'kept' => $hasHistory]);
         break;
 
     // -------------------------------------------------------------

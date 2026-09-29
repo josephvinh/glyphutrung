@@ -430,8 +430,8 @@ window.TNTT.students = {
         }
 
         const confirmed = await window.TNTT.toast.confirm(
-            `Xóa ${count} em khỏi danh sách?\n\nHành động này không thể hoàn tác.`,
-            { danger: true, confirmText: `Xóa ${count} em`, cancelText: 'Hủy bỏ' }
+            `Xóa vĩnh viễn ${count} em?\n\nHồ sơ, điểm danh, điểm số và nhận xét của các em này sẽ bị xóa hẳn khỏi hệ thống. Hành động này không thể hoàn tác.`,
+            { title: 'Xác nhận xóa', danger: true, confirmText: `Xóa ${count} em`, cancelText: 'Hủy bỏ' }
         );
 
         if (!confirmed) return;
@@ -443,6 +443,7 @@ window.TNTT.students = {
             });
             if (r && r.ok) {
                 window.TNTT.toast.info(`Đã xóa ${r.deleted || count} em.`);
+                if (r.kept > 0) window.TNTT.toast.warning(`${r.kept} em còn dữ liệu ở niên khoá khác nên được giữ lại. Hãy đổi tình trạng sang "dừng sinh hoạt".`);
                 this.selectedStudents = [];
                 await this.loadData();
             }
