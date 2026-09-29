@@ -1,5 +1,5 @@
 /* ==========================================================
-   BRAND — nhuộm tông XANH sang ĐỎ TƯƠI + điểm nhấn VÀNG GOLD theo
+   BRAND — nhuộm tông XANH sang ĐỎ TƯƠI theo
    logo "Gia Đình Giáo Lý Phú Trung". Nạp CUỐI CÙNG để ghi đè các lớp
    blue-* của tailwind.css (cùng độ đặc hiệu, đứng sau -> thắng).
    CHỈ đổi màu, không đụng layout/logic.
@@ -7,7 +7,6 @@
    Thang đỏ tươi: 50 #fdedef · 100 #fcdadf · 200 #f8b3bc · 300 #f28b98
                   400 #ec6076 · 500 #e73a58 · 600 #e11d36 (chính)
                   700 #b81528 · 800 #8a1120
-   Vàng gold:     #f2b84e -> #d98f22 (điểm nhấn banner Thi đua)
    ========================================================== */
 
 /* --- NỀN --- */
@@ -62,14 +61,3 @@
 
 /* --- FILL (icon điện thoại) --- */
 .fill-blue-100 { fill: #fcdadf; }
-
-/* ==========================================================
-   ĐIỂM NHẤN VÀNG GOLD — dùng cho banner Thi đua (🏆), khớp phần
-   vàng trong logo. Chữ tối cho đọc rõ trên nền vàng.
-   ========================================================== */
-.brand-gold {
-    background-image: linear-gradient(135deg, #f2b84e 0%, #d98f22 100%);
-    color: #5a0f19;
-    box-shadow: 0 6px 16px -6px rgba(217, 143, 34, .55);
-}
-.brand-gold .brand-gold-badge { background-color: rgba(255, 255, 255, .35); }

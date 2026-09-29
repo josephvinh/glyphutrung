@@ -10,17 +10,6 @@
          việc nhắc bằng CHẤM SỐ nhỏ trên icon chức năng tương ứng (điểm danh,
          xin phép, thông báo, Thiếu Nhi=phiếu liên lạc, lịch) — xem moduleBadge(). -->
 
-    <!-- BẢNG THI ĐUA (trang công khai, chỉ xem) — mở tab mới để chia sẻ cho các em -->
-    <a href="bxh.php"
-       class="brand-gold flex items-center gap-3 rounded-card p-4 active:scale-[0.99] transition-transform">
-        <span class="brand-gold-badge w-11 h-11 rounded-2xl flex items-center justify-center text-2xl shrink-0">🏆</span>
-        <span class="min-w-0">
-            <span class="block font-black leading-tight">Bảng thi đua</span>
-            <span class="block text-micro opacity-80">Xếp hạng tự động từ chuyên cần &amp; học tập · mở để khích lệ các em</span>
-        </span>
-        <i data-lucide="chevron-right" class="w-5 h-5 ml-auto shrink-0 opacity-70"></i>
-    </a>
-
     <!-- TỔNG QUAN: hai thẻ "Sắp tới" + "Thông báo gần đây".
          Lấp khoảng trống trên máy tính, đồng thời đưa lịch + thông báo lên
          ngay Trang chủ. Xếp 2 cột từ lg, dọc trên điện thoại. -->
