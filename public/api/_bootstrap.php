@@ -12,7 +12,7 @@ if (!defined('ROOT_PATH')) {
 }
 
 // client_ip() + json_out()/json_fail() — SINGLE SOURCE dùng chung với các
-// trang public không nạp toàn bộ file này (VD _tracuu.php, mẫu bxh.php).
+// trang public không nạp toàn bộ file này (VD _somoc.php, mẫu bxh.php).
 // Xem docblock trong _http_util.php để biết lý do tách riêng.
 require_once __DIR__ . '/_http_util.php';
 

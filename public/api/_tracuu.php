@@ -1,236 +1,260 @@
 <?php
 /**
- * LOGIC CỔNG TRA CỨU CÔNG KHAI (Sổ Mộc) — thuần, test được.
+ * LOGIC TRA CỨU ĐIỂM (tracuu.php; Sổ Mộc ở somoc.php / _somoc.php) — trang tra cứu điểm số / điểm danh / sổ liên lạc
+ * công khai (public/tracuu.php). Thuần, test được, KHÔNG nạp _bootstrap.php.
  *
- * Dùng bởi public/tracuu.php (trang public, KHÔNG đăng nhập, theo mẫu
- * public/bxh.php: chỉ nạp config/db.php, không nạp _bootstrap.php để khỏi
- * dính header Content-Type: application/json / session của tầng API).
- * Tách riêng khỏi trang để test bằng PHPUnit không cần dựng HTML/HTTP.
+ * Xác thực: mã thiếu nhi (students.code) + mật mã là THÁNG-NGÀY-NĂM SINH
+ * (mmddyyyy). Sai mã, sai ngày sinh, em chưa có ngày sinh: TẤT CẢ trả cùng
+ * một kết quả null để kẻ dò không phân biệt được "mã có tồn tại" hay không.
+ * Rate-limit dùng chung tracuu_throttle() (cùng bảng tracuu_attempts).
  *
- * Bảo mật (SPEC-MOC-DIEN-TU §6.3 + Global Constraints):
- *   - tracuu_public_summary() CHỈ lộ đúng 8 khoá liệt kê trong docblock của
- *     nó — KHÔNG bao giờ trả các trường khác của students (SĐT, địa chỉ,
- *     tên cha/mẹ...). Định danh em qua students.code, không qua id.
- *   - Rate-limit theo IP mượn mẫu login_throttle()/login_failed() trong
- *     _bootstrap.php để chặn dò quét toàn bộ dải mã (HS001, HS002, ...).
+ * Chỉ lộ: tên, lớp, điểm, điểm danh, phiếu liên lạc ĐÃ GỬI. KHÔNG lộ SĐT,
+ * địa chỉ, tên cha mẹ, phiếu nháp.
  */
 
-require_once __DIR__ . '/../../config/db.php';
-require_once __DIR__ . '/StampService.php';
-require_once __DIR__ . '/_http_util.php'; // client_ip() + json_out()/json_fail() — SINGLE SOURCE, xem docblock ở đó
-
-/* =====================================================================
-   RATE LIMIT — mượn mẫu login_throttle()/register_throttle() ở _bootstrap.php
-   Cửa sổ 10 phút, tối đa 30 lượt/IP: đủ rộng để một gia đình tra vài lần
-   liên tiếp (gõ nhầm mã, tra cho nhiều con...) nhưng đủ hẹp để chặn dò quét
-   tuần tự dải mã (HS001, HS002, ...) — mã thiếu nhi không có bí mật gì khác
-   để đoán ngoài việc thử lần lượt nên phải chặn CHẶT hơn login (vốn còn có
-   mật khẩu bảo vệ phía sau).
-   ===================================================================== */
-if (!defined('TRACUU_CUA_SO_PHUT')) define('TRACUU_CUA_SO_PHUT', 10);
-if (!defined('TRACUU_TOI_DA_IP'))   define('TRACUU_TOI_DA_IP', 30);
-
-// client_ip() và json_fail() đến từ _http_util.php (require ở trên) —
-// dùng CHUNG một bản với _bootstrap.php, không định nghĩa lại ở đây nữa
-// (tránh trôi lệch âm thầm + nguy cơ "Cannot redeclare" khi nạp khác thứ tự).
+require_once __DIR__ . '/_somoc.php'; // db.php + tracuu_throttle()/tracuu_attempt_record()
 
 /**
- * Chặn TRƯỚC khi tra cứu (mẫu login_throttle()): quá TRACUU_TOI_DA_IP lượt
- * trong TRACUU_CUA_SO_PHUT phút từ cùng một IP thì dừng luôn tại đây, trả
- * 429 qua json_fail(). GỌI TRƯỚC tracuu_public_summary() ở mỗi lượt submit.
+ * Chuẩn hoá ngày sinh người dùng gõ về 'mmddyyyy' (THÁNG trước, NGÀY sau).
+ * Nhận 03152014, 03/15/2014, 3-15-2014, 03.15.2014 (không đệm 0 — chỉ khi
+ * tách được bằng dấu).
+ * @return string|null null nếu không đọc ra ngày hợp lệ
  */
-function tracuu_throttle(): void
+function tracuu_norm_dob(string $raw): ?string
 {
-    $moc = date('Y-m-d H:i:s', time() - TRACUU_CUA_SO_PHUT * 60);
-    $n = (int) (db_one(
-        'SELECT COUNT(*) n FROM tracuu_attempts WHERE ip = ? AND tried_at > ?',
-        [client_ip(), $moc]
-    )['n'] ?? 0);
+    $raw = trim($raw);
+    if ($raw === '') return null;
 
-    if ($n >= TRACUU_TOI_DA_IP) {
-        json_fail(
-            'Bạn tra cứu quá nhiều lần. Vui lòng đợi ' . TRACUU_CUA_SO_PHUT . ' phút rồi thử lại.',
-            429
-        );
+    if (preg_match('/^(\d{1,2})\D+(\d{1,2})\D+(\d{4})$/', $raw, $m)) {
+        [$mo, $d, $y] = [(int) $m[1], (int) $m[2], (int) $m[3]];
+    } elseif (preg_match('/^(\d{2})(\d{2})(\d{4})$/', $raw, $m)) {
+        [$mo, $d, $y] = [(int) $m[1], (int) $m[2], (int) $m[3]];
+    } else {
+        return null;
     }
+    if (!checkdate($mo, $d, $y)) return null;
+    return sprintf('%02d%02d%04d', $mo, $d, $y);
+}
+
+/** 'Y-m-d' (students.birth_date) -> 'mmddyyyy' */
+function tracuu_dob_from_db(?string $ymd): ?string
+{
+    if (!$ymd || !preg_match('/^(\d{4})-(\d{2})-(\d{2})/', $ymd, $m)) return null;
+    return $m[2] . $m[3] . $m[1];
 }
 
 /**
- * Ghi nhận MỘT lượt tra cứu (mẫu login_failed()) — gọi cho MỌI lượt submit,
- * kể cả khi mã không tồn tại (đếm theo lượt gọi, không theo kết quả, để một
- * kẻ dò không "né" được bộ đếm bằng cách chỉ thử các mã sai). Nhân tiện dọn
- * các bản ghi đã quá cũ khỏi cửa sổ xét.
+ * Xác thực mã + ngày sinh.
+ * @return array{id:int,code:string,full_name:string,holy_name:?string}|null
  */
-function tracuu_attempt_record(): void
+function tracuu_auth(string $code, string $dobInput): ?array
 {
-    db_run('INSERT INTO tracuu_attempts (ip, tried_at) VALUES (?, NOW())', [client_ip()]);
-    db_run(
-        'DELETE FROM tracuu_attempts WHERE tried_at < ?',
-        [date('Y-m-d H:i:s', time() - TRACUU_CUA_SO_PHUT * 60)]
-    );
-}
+    $code = mb_substr(trim($code), 0, 32, 'UTF-8');
+    $dob  = tracuu_norm_dob($dobInput);
+    $st   = $code === '' ? null
+        : db_one('SELECT id, code, full_name, holy_name, birth_date FROM students WHERE code = ?', [$code]);
 
-/**
- * TRA CỨU SỔ MỘC CÔNG KHAI theo mã thiếu nhi — CHỈ ĐỌC, không cần đăng nhập.
- *
- * Tái dùng stamp_summary() (đã kẹp current_balance ≥ 0, đã giới hạn
- * recent_transactions) rồi GHÉP THÊM tên + lớp — không tự tính lại phần Mộc.
- * class_name lấy từ enrollment của em trong ĐÚNG $yearId (có thể null nếu
- * năm đó em không ghi danh lớp nào).
- *
- * @return array{
- *   code:string, full_name:string, class_name:?string,
- *   current_balance:int, total_earned:int,
- *   current_streak:int, longest_streak:int,
- *   recent_transactions: array<int,array{amount:int,type:string,description:string,created_at:string}>
- * }|null  null nếu không có em nào mang mã này. CHỈ đúng 8 khoá trên —
- *   TUYỆT ĐỐI không thêm trường nào khác của students (SĐT, địa chỉ, tên
- *   cha/mẹ...) vào đây.
- */
-function tracuu_public_summary(string $code, int $yearId): ?array
-{
-    $student = db_one('SELECT id, code, full_name FROM students WHERE code = ?', [$code]);
-    if (!$student) return null;
-
-    $sid = (int) $student['id'];
-
-    $enr = db_one(
-        "SELECT c.name AS class_name
-           FROM enrollments e
-           JOIN classes c ON c.id = e.class_id
-          WHERE e.student_id = ? AND e.year_id = ?
-          LIMIT 1",
-        [$sid, $yearId]
-    );
-
-    $summary = stamp_summary($sid, $yearId);
+    // Luôn so sánh (kể cả khi không có em) để thời gian phản hồi không lộ mã tồn tại.
+    $real = $st ? tracuu_dob_from_db($st['birth_date'] ?? null) : null;
+    $ok   = $st && $dob !== null && $real !== null && hash_equals($real, $dob);
+    if (!$ok) return null;
 
     return [
-        'code'                => $student['code'],
-        'full_name'           => $student['full_name'],
-        'class_name'          => $enr['class_name'] ?? null,
-        'current_balance'     => $summary['current_balance'],
-        'total_earned'        => $summary['total_earned'],
-        'current_streak'      => $summary['current_streak'],
-        'longest_streak'      => $summary['longest_streak'],
-        'recent_transactions' => $summary['recent_transactions'],
+        'id'        => (int) $st['id'],
+        'code'      => $st['code'],
+        'full_name' => $st['full_name'],
+        'holy_name' => $st['holy_name'],
     ];
 }
 
 /**
- * MỘC ĐÓNG THEO NGÀY (cả niên khoá) — cho LỊCH ĐÓNG MỘC của trang tra cứu.
- *
- * Ghép giao dịch earn/bonus với NGÀY ĐIỂM DANH THẬT (attendances.session_date
- * qua ref_attendance_id), KHÔNG dùng created_at (là lúc recalc chạy, có thể
- * khác ngày đi lễ). Chỉ lấy 'attendance' + 'streak_bonus' — đúng phần Mộc kiếm
- * được (khớp total_earned ở StampService); 'spend' (đổi quà) và 'manual_adjust'
- * (điều chỉnh tay) KHÔNG gắn với một ngày đi lễ nên không lên lịch (xem
- * tracuu_moc_thuong_khac() cho phần 'manual_adjust').
- *
- * Tách khỏi tracuu.php để test được bằng PHPUnit mà không cần dựng HTML/HTTP.
- *
- * @return array<string,int>  ['Y-m-d' => tổng Mộc đóng ngày đó], chỉ ngày >0,
- *   dùng làm nguồn cho JS dựng lịch từng tháng (lật tháng không tốn lượt tra).
+ * Điểm trung bình có trọng số (hệ số) của các cột ĐÃ có điểm; null nếu chưa có cột nào.
+ * @param array<int,array{weight:int,value:?float}> $cols
  */
-function tracuu_moc_by_day(int $studentId, int $yearId): array
+function tracuu_weighted_avg(array $cols): ?float
 {
+    $sum = 0.0; $w = 0;
+    foreach ($cols as $c) {
+        if ($c['value'] === null) continue;
+        $sum += $c['value'] * $c['weight'];
+        $w   += $c['weight'];
+    }
+    return $w > 0 ? round($sum / $w, 2) : null;
+}
+
+/**
+ * TAB ĐIỂM SỐ: mỗi học kỳ của niên khoá là một bảng, cột = loại điểm.
+ * @return array{types:array,terms:array}
+ */
+function tracuu_scores(int $studentId, int $yearId): array
+{
+    $types = db_all('SELECT code, label, short_label, weight FROM score_types ORDER BY sort_order, code');
+    $terms = db_all('SELECT id, name, start_date, end_date FROM terms WHERE year_id = ? ORDER BY sort_order, start_date', [$yearId]);
+
     $rows = db_all(
-        "SELECT a.session_date AS ngay, SUM(st.amount) AS moc
-           FROM stamp_transactions st
-           JOIN attendances a ON a.id = st.ref_attendance_id
-          WHERE st.student_id = ? AND st.year_id = ?
-            AND st.type IN ('attendance','streak_bonus')
-          GROUP BY a.session_date",
+        'SELECT sc.term_id, sc.type_code, sc.value
+           FROM scores sc JOIN terms t ON t.id = sc.term_id
+          WHERE sc.student_id = ? AND t.year_id = ?',
         [$studentId, $yearId]
     );
+    $byTerm = [];
+    foreach ($rows as $r) $byTerm[(int) $r['term_id']][$r['type_code']] = (float) $r['value'];
 
+    $outTypes = array_map(fn($t) => [
+        'code' => $t['code'], 'label' => $t['label'], 'short' => $t['short_label'], 'weight' => (int) $t['weight'],
+    ], $types);
+
+    $outTerms = [];
+    foreach ($terms as $t) {
+        $vals = $byTerm[(int) $t['id']] ?? [];
+        $cols = [];
+        foreach ($outTypes as $ty) {
+            $cols[] = ['weight' => $ty['weight'], 'value' => $vals[$ty['code']] ?? null];
+        }
+        $outTerms[] = [
+            'id'    => (int) $t['id'],
+            'name'  => $t['name'],
+            'from'  => $t['start_date'],
+            'to'    => $t['end_date'],
+            'cols'  => $cols,                       // song song với types
+            'avg'   => tracuu_weighted_avg($cols),
+        ];
+    }
+    return ['types' => $outTypes, 'terms' => $outTerms];
+}
+
+/**
+ * Xếp một buổi vào ô sổ điểm danh.
+ * @return string 'P' có mặt | 'L' đi trễ | 'E' vắng có phép | 'A' vắng không phép
+ */
+function tracuu_att_mark(?string $status, bool $hasLeave): string
+{
+    if ($status === 'có mặt') return 'P';
+    if ($status === 'đi trễ') return 'L';
+    return $hasLeave ? 'E' : 'A';
+}
+
+/**
+ * TAB ĐIỂM DANH — sổ chi tiết theo từng buổi trong niên khoá, tới hôm nay.
+ * Quy tắc như phiếu liên lạc (reports.js): chỉ tính buổi của chương trình
+ * count_for_attendance mà LỚP của em có ít nhất một em được ghi nhận
+ * (điểm danh hoặc xin phép đã duyệt) — buổi không ai điểm danh thì bỏ ra.
+ * Em không ghi danh lớp nào trong năm: chỉ liệt kê buổi chính em có mặt/xin phép.
+ *
+ * @return array{sessions:array,summary:array}
+ */
+function tracuu_attendance(int $studentId, int $yearId, ?string $today = null): array
+{
+    $today = $today ?: date('Y-m-d');
+
+    $enr = db_one('SELECT class_id FROM enrollments WHERE student_id = ? AND year_id = ?', [$studentId, $yearId]);
+    $classId = $enr ? (int) $enr['class_id'] : 0;
+
+    // Bản ghi của chính em
+    $mine = [];
+    foreach (db_all('SELECT program_id, session_date, status FROM attendances WHERE student_id = ? AND year_id = ?', [$studentId, $yearId]) as $r) {
+        $mine[$r['program_id'] . '|' . $r['session_date']]['att'] = $r['status'];
+    }
+    foreach (db_all("SELECT program_id, session_date FROM leave_requests WHERE student_id = ? AND year_id = ? AND status = 'đã duyệt'", [$studentId, $yearId]) as $r) {
+        $mine[$r['program_id'] . '|' . $r['session_date']]['leave'] = true;
+    }
+
+    // Buổi đã diễn ra của lớp (có ít nhất một em được ghi nhận)
+    $sessions = [];
+    if ($classId > 0) {
+        $sessions = db_all(
+            "SELECT s.program_id, s.session_date, p.name, p.start_time
+               FROM (
+                     SELECT a.program_id, a.session_date
+                       FROM attendances a JOIN enrollments e ON e.student_id = a.student_id AND e.year_id = a.year_id
+                      WHERE a.year_id = ? AND e.class_id = ?
+                     UNION
+                     SELECT l.program_id, l.session_date
+                       FROM leave_requests l JOIN enrollments e ON e.student_id = l.student_id AND e.year_id = l.year_id
+                      WHERE l.year_id = ? AND e.class_id = ? AND l.status = 'đã duyệt'
+                    ) s
+               JOIN programs p ON p.id = s.program_id
+              WHERE p.count_for_attendance = 1 AND s.session_date <= ?
+              ORDER BY s.session_date, p.start_time, p.id",
+            [$yearId, $classId, $yearId, $classId, $today]
+        );
+    } elseif ($mine) {
+        $ids = array_unique(array_map(fn($k) => (int) explode('|', $k)[0], array_keys($mine)));
+        $ph = implode(',', array_fill(0, count($ids), '?'));
+        $progs = [];
+        foreach (db_all("SELECT id, name, start_time FROM programs WHERE count_for_attendance = 1 AND id IN ($ph)", $ids) as $p) $progs[(int) $p['id']] = $p;
+        foreach (array_keys($mine) as $k) {
+            [$pid, $d] = explode('|', $k, 2);
+            if (isset($progs[(int) $pid]) && $d <= $today) {
+                $sessions[] = ['program_id' => $pid, 'session_date' => $d, 'name' => $progs[(int) $pid]['name'], 'start_time' => $progs[(int) $pid]['start_time']];
+            }
+        }
+        usort($sessions, fn($a, $b) => strcmp($a['session_date'], $b['session_date']));
+    }
+
+    $sum = ['present' => 0, 'late' => 0, 'excused' => 0, 'unexcused' => 0, 'total' => 0, 'rate' => 0];
     $out = [];
-    foreach ($rows as $r) {
-        $m = (int) $r['moc'];
-        if ($m > 0) $out[(string) $r['ngay']] = $m;
+    foreach ($sessions as $s) {
+        $m = $mine[$s['program_id'] . '|' . $s['session_date']] ?? [];
+        $mark = tracuu_att_mark($m['att'] ?? null, !empty($m['leave']));
+        $sum['total']++;
+        $sum[['P' => 'present', 'L' => 'late', 'E' => 'excused', 'A' => 'unexcused'][$mark]]++;
+        $out[] = [
+            'date'    => $s['session_date'],
+            'program' => $s['name'],
+            'mark'    => $mark,
+        ];
     }
-    return $out;
+    // Tỉ lệ chuyên cần: có mặt + trễ trên tổng buổi (cùng công thức build_attendance_csv)
+    $sum['rate'] = $sum['total'] > 0 ? (int) round(($sum['present'] + $sum['late']) / $sum['total'] * 100) : 0;
+
+    return ['sessions' => $out, 'summary' => $sum];
 }
 
 /**
- * TỔNG MỘC "THƯỞNG KHÁC" — phần 'manual_adjust' (Huynh Trưởng tặng/điều chỉnh
- * tay), KHÔNG gắn với một buổi đi lễ nên KHÔNG hiện trên lịch và KHÔNG nằm
- * trong total_earned (StampService chỉ cộng earn/bonus vào total_earned; phần
- * manual_adjust chỉ chảy vào current_balance của ví).
- *
- * Trang tra cứu hiện MỘT dòng "🎁 Mộc thưởng khác: +N" khi số này > 0 để em/phụ
- * huynh hiểu vì sao Ví có thể nhiều hơn tổng Mộc trên lịch (tránh "kiện cáo"
- * nhầm là thiếu Mộc). Trả về TỔNG RÒNG (điều chỉnh âm cũng cộng dồn); nơi gọi
- * tự quyết chỉ khoe khi > 0.
- *
- * @return int  Σ amount của các giao dịch type='manual_adjust' trong năm.
+ * TAB SỔ LIÊN LẠC — chỉ phiếu đã 'đã gửi'. Phiếu nháp / chưa lập = không có.
+ * @return array<int,array>  mỗi học kỳ đã có phiếu gửi
  */
-function tracuu_moc_thuong_khac(int $studentId, int $yearId): int
+function tracuu_reports(int $studentId, int $yearId): array
 {
-    return (int) (db_val(
-        "SELECT COALESCE(SUM(amount),0) FROM stamp_transactions
-          WHERE student_id = ? AND year_id = ? AND type = 'manual_adjust'",
+    $rows = db_all(
+        "SELECT r.*, t.name AS term_name, t.start_date, t.end_date
+           FROM reports r JOIN terms t ON t.id = r.term_id
+          WHERE r.student_id = ? AND t.year_id = ? AND r.status = 'đã gửi'
+          ORDER BY t.sort_order, t.start_date",
         [$studentId, $yearId]
-    ) ?? 0);
+    );
+    return array_map(fn($r) => [
+        'term'      => $r['term_name'],
+        'from'      => $r['start_date'],
+        'to'        => $r['end_date'],
+        'present'   => (int) $r['att_present'],
+        'late'      => (int) $r['att_late'],
+        'excused'   => (int) $r['att_excused'],
+        'unexcused' => (int) $r['att_unexcused'],
+        'total'     => (int) $r['att_total'],
+        'rate'      => (int) $r['att_rate'],
+        'score'     => $r['score'] !== null ? (float) $r['score'] : null,
+        'conduct'   => $r['conduct'],
+        'rank'      => $r['rank_label'],
+        'remark'    => $r['remark'],
+    ], $rows);
 }
 
-/**
- * LỜI TRONG "LÁ THƯ" của trang tra cứu: một câu KHEN/động viên (đổi theo chuỗi
- * đi lễ của em), một gợi ý đổi quà khi Ví nhiều Mộc, một câu NHẮC NHỞ và một
- * câu châm ngôn/Lời Chúa (hai câu sau xoay vòng ngẫu nhiên cho đỡ nhàm). Xưng
- * "em", gọi bằng tên (từ cuối họ tên).
- *
- * Tách khỏi tracuu.php để test được nhánh KHEN theo chuỗi (deterministic);
- * phần 'nhac'/'cham' dùng array_rand nên test chỉ kiểm cấu trúc, không kiểm giá
- * trị cụ thể.
- *
- * @param array $k  bản tổng hợp có current_streak/longest_streak/current_balance/full_name
- * @return array{khen:string, themVi:string, nhac:string, cham:string}
- */
-function tracuu_loi_la_thu(array $k): array
+/** Lớp của em trong niên khoá (null nếu chưa ghi danh). */
+function tracuu_class_name(int $studentId, int $yearId): ?string
 {
-    $streak  = (int) ($k['current_streak'] ?? 0);
-    $longest = (int) ($k['longest_streak'] ?? 0);
-    $bal     = (int) ($k['current_balance'] ?? 0);
-    $parts   = preg_split('/\s+/', trim((string) ($k['full_name'] ?? '')));
-    $goi     = (is_array($parts) && $parts && end($parts) !== '') ? end($parts) : 'em';
+    $r = db_one(
+        'SELECT c.name FROM enrollments e JOIN classes c ON c.id = e.class_id WHERE e.student_id = ? AND e.year_id = ? LIMIT 1',
+        [$studentId, $yearId]
+    );
+    return $r['name'] ?? null;
+}
 
-    // (1) KHEN theo chuỗi đi lễ — có nhánh AN ỦI khi chuỗi vừa đứt.
-    if ($streak >= 8) {
-        $khen = "🔥 Quá tuyệt, $goi ơi! Em đã đi lễ $streak tuần liền không nghỉ — Chúa và các Huynh Trưởng tự hào về em lắm!";
-    } elseif ($streak >= 4) {
-        $khen = "🔥 Giỏi lắm $goi! Chuỗi đi lễ $streak tuần liền của em đang cháy rất đẹp — ráng giữ lửa nhé!";
-    } elseif ($streak >= 1) {
-        $khen = "🌱 $goi đang có chuỗi $streak tuần đi lễ rồi đó — cố thêm chút nữa cho ngọn lửa lớn hơn nhé!";
-    } elseif ($longest >= 3) {
-        // Chuỗi đang là 0 nhưng từng giữ được khá lâu -> an ủi, mời quay lại.
-        $khen = "🫂 Đừng buồn nếu chuỗi bị gián đoạn nhé $goi — em từng giữ được $longest tuần liền cơ mà! Chúa Nhật này quay lại đi lễ là ngọn lửa cháy lại ngay.";
-    } else {
-        $khen = "🕊️ Chúa Nhật này $goi nhớ tới nhà thờ dự lễ, để nhóm lại ngọn lửa yêu Chúa nhé!";
-    }
-
-    // (2) Nhánh riêng khi Ví nhiều Mộc -> gợi ý đổi quà.
-    $themVi = ($bal >= 100)
-        ? "🎁 Em đã dành dụm được $bal Mộc rồi — ghé mục Đổi quà chọn một phần thưởng xứng đáng cho mình nhé!"
-        : "";
-
-    // (3) NHẮC NHỞ xoay vòng mỗi lần xem cho đỡ nhàm.
-    $dsNhac = [
-        "Nhớ đi lễ Chúa Nhật đều đặn, chuyên cần học Giáo Lý và luôn sống ngoan, vâng lời ông bà cha mẹ em nhé! 💛",
-        "Mỗi ngày cố gắng làm một việc hy sinh nhỏ và một việc tốt cho bạn bè em nhé! 💛",
-        "Nhớ đọc kinh sáng tối và siêng năng rước lễ để ở gần Chúa Giêsu hơn nhé! 💛",
-        "Đi học Giáo Lý đúng giờ, mặc đồng phục gọn gàng và lễ phép với mọi người em nhé! 💛",
-    ];
-    $nhac = $dsNhac[array_rand($dsNhac)];
-
-    // Khẩu hiệu / Lời Chúa theo văn phong TNTT — cũng xoay vòng.
-    $dsCham = [
-        "Cầu nguyện · Rước lễ · Hy sinh · Làm tông đồ",
-        "“Hãy để trẻ nhỏ đến với Thầy” (Mc 10,14)",
-        "“Các con là muối cho đời, là ánh sáng cho trần gian” (x. Mt 5,13-14)",
-        "Sống ngày Thánh Thể: Chúa ở cùng em mọi ngày!",
-    ];
-    $cham = $dsCham[array_rand($dsCham)];
-
-    return ['khen' => $khen, 'themVi' => $themVi, 'nhac' => $nhac, 'cham' => $cham];
+/** Đã vượt ngưỡng tra cứu theo IP chưa? (không exit — trang HTML tự báo lỗi thân thiện) */
+function tracuu_throttled(): bool
+{
+    $moc = date('Y-m-d H:i:s', time() - TRACUU_CUA_SO_PHUT * 60);
+    $n = (int) (db_one('SELECT COUNT(*) n FROM tracuu_attempts WHERE ip = ? AND tried_at > ?', [client_ip(), $moc])['n'] ?? 0);
+    return $n >= TRACUU_TOI_DA_IP;
 }

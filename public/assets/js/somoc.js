@@ -1,18 +1,18 @@
 /* ==========================================================
-   TRA CỨU SỔ MỘC (public/tracuu.php) — component Alpine cho:
+   SỔ MỘC (public/somoc.php) — component Alpine cho:
      - soMocPending : khu vực "đơn đang chờ lấy" ở tab Sổ Mộc + hủy đơn.
      - doiQuaApp    : lưới quà + giỏ nhiều món + đặt đơn ở tab Đổi quà.
 
-   Trang tracuu.php KHÔNG đăng nhập/không session, nên các hàm dưới đây chỉ
-   gọi ĐÚNG 2 action GHI của api/tracuu_order.php (place/cancel) — không có
+   Trang somoc.php KHÔNG đăng nhập/không session, nên các hàm dưới đây chỉ
+   gọi ĐÚNG 2 action GHI của api/somoc_order.php (place/cancel) — không có
    API nào khác được dùng ở đây. Lỗi nghiệp vụ (mã sai, thiếu Mộc, hết
    tồn...) đều được server GỘP thành một thông điệp chung (r.error) — phía
    JS chỉ hiển thị nguyên văn, không tự suy đoán/diễn giải thêm.
 
-   ĐƠN 'CHỜ LẤY' HIỆN CÓ (nếu có) do PHP (tracuu.php) đọc sẵn và truyền vào
+   ĐƠN 'CHỜ LẤY' HIỆN CÓ (nếu có) do PHP (somoc.php) đọc sẵn và truyền vào
    qua tham số khởi tạo — component KHÔNG tự gọi action=pending lúc mount
    nữa (fix round 1: mỗi action, kể cả 'pending' chỉ đọc, đều tính vào
-   rate-limit theo IP ở tracuu_order.php; 2 component cùng tự fetch khi
+   rate-limit theo IP ở somoc_order.php; 2 component cùng tự fetch khi
    trang vừa tải khiến 1 lượt xem trang tốn 2-3 lượt throttle, dễ khoá oan
    cả nhóm dùng chung IP/wifi giáo xứ). Sau khi NGƯỜI DÙNG chủ động đặt
    thành công thì vẫn dùng lại kết quả trả về từ chính lượt gọi đó (không
@@ -20,9 +20,9 @@
    tính lại đúng 1 lần trong lượt tải đó.
    ========================================================== */
 
-/** Gọi api/tracuu_order.php?action=... bằng POST JSON (place/cancel). */
-async function tracuuGoiApi(action, body) {
-    const res = await fetch('api/tracuu_order.php?action=' + encodeURIComponent(action), {
+/** Gọi api/somoc_order.php?action=... bằng POST JSON (place/cancel). */
+async function somocGoiApi(action, body) {
+    const res = await fetch('api/somoc_order.php?action=' + encodeURIComponent(action), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -31,7 +31,7 @@ async function tracuuGoiApi(action, body) {
 }
 
 /** Định dạng "H:i · d/m/Y" từ chuỗi datetime MySQL — dùng cho hạn lấy. */
-function tracuuDinhDangNgay(s) {
+function somocDinhDangNgay(s) {
     if (!s) return '';
     const d = new Date(String(s).replace(' ', 'T'));
     if (isNaN(d.getTime())) return s;
@@ -41,7 +41,7 @@ function tracuuDinhDangNgay(s) {
 
 /** Phòng thủ chiều sâu: chỉ nhận ảnh http(s) hợp lệ để bind vào :src — quà
  *  không có ảnh (hoặc URL không đúng dạng) thì hiện icon 🎁 thay vào đó. */
-function tracuuUrlAnhOk(u) {
+function somocUrlAnhOk(u) {
     return typeof u === 'string' && /^https?:\/\//i.test(u);
 }
 
@@ -56,7 +56,7 @@ document.addEventListener('alpine:init', () => {
         error: '',
         busy: false,
 
-        dinhDangNgay: tracuuDinhDangNgay,
+        dinhDangNgay: somocDinhDangNgay,
 
         openCancel() { this.password = ''; this.error = ''; this.showCancel = true; },
         closeCancel() { this.showCancel = false; },
@@ -66,7 +66,7 @@ document.addEventListener('alpine:init', () => {
             if (!this.password) { this.error = 'Vui lòng nhập mật mã đổi quà.'; return; }
             this.busy = true;
             try {
-                const r = await tracuuGoiApi('cancel', { code: this.ma, password: this.password });
+                const r = await somocGoiApi('cancel', { code: this.ma, password: this.password });
                 if (!r.ok) { this.error = r.error; return; }
                 // Hủy xong: làm mới cả trang — PHP tự tính lại pending đúng 1 lần
                 // trong lượt tải mới, khỏi phải tự fetch thêm ở đây.
@@ -94,8 +94,8 @@ document.addEventListener('alpine:init', () => {
         busy: false,
         success: null,      // { orderId, total, expiresAt } sau khi đặt thành công
 
-        dinhDangNgay: tracuuDinhDangNgay,
-        urlAnhOk: tracuuUrlAnhOk,
+        dinhDangNgay: somocDinhDangNgay,
+        urlAnhOk: somocUrlAnhOk,
 
         qty(id) { return this.cart[id] || 0; },
 
@@ -149,7 +149,7 @@ document.addEventListener('alpine:init', () => {
 
             this.busy = true;
             try {
-                const r = await tracuuGoiApi('place', { code: this.ma, items: items, password: this.pw1 });
+                const r = await somocGoiApi('place', { code: this.ma, items: items, password: this.pw1 });
                 if (!r.ok) { this.error = r.error; return; }
                 this.success = { orderId: r.orderId, total: r.total, expiresAt: r.expiresAt };
                 this.pending = this.success;

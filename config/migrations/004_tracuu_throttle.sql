@@ -1,5 +1,5 @@
 -- Migration: 004_tracuu_throttle.sql
--- Description: Bảng đếm rate-limit cho cổng tra cứu công khai (public/tracuu.php)
+-- Description: Bảng đếm rate-limit cho cổng tra cứu công khai (public/somoc.php và public/tracuu.php)
 -- Created: 2026-09-26
 -- Status: PENDING
 

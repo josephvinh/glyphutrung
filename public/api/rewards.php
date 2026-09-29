@@ -7,7 +7,7 @@
  *   POST api/rewards.php?action=redeem  { studentCode, items:[{giftId,qty}] }
  *          -> { ok, orderId, total, available, currentBalance }
  *
- *   -- Xác nhận ĐƠN ĐẶT TRƯỚC ONLINE (SPEC §6.4a, đơn do em tự đặt ở tracuu.php) --
+ *   -- Xác nhận ĐƠN ĐẶT TRƯỚC ONLINE (SPEC §6.4a, đơn do em tự đặt ở somoc.php) --
  *   POST api/rewards.php?action=staff_pending { code }
  *          -> { ok, student:{...}, pending:{...}|null }
  *   POST api/rewards.php?action=confirm { orderId? , studentCode?, password?, override? }

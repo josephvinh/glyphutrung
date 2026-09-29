@@ -7,10 +7,10 @@ $__cssV = @filemtime(__DIR__ . '/../public/assets/img/icon-192.png') ?: 0;
 $__links = [
     ['href' => 'index.php?dangnhap=1', 'icon' => '🔐', 'title' => 'Đăng nhập quản lý',
      'desc' => 'Dành cho Giáo Lý Viên, Trưởng Khối, Ban Điều Hành và Thủ Thư: điểm danh, điểm số, thiếu nhi, đổi quà…', 'cls' => 'primary'],
-    ['href' => 'tracuu.php', 'icon' => '📒', 'title' => 'Tra cứu Sổ Mộc',
+    ['href' => 'somoc.php', 'icon' => '📒', 'title' => 'Sổ Mộc',
      'desc' => 'Em và phụ huynh nhập mã thiếu nhi để xem Mộc, chuỗi đi lễ và đặt trước quà.', 'cls' => ''],
-    ['href' => 'sotay.php', 'icon' => '📘', 'title' => 'Sổ tay thiếu nhi',
-     'desc' => 'Xem điểm số, sổ điểm danh và sổ liên lạc của em — nhập mã thiếu nhi và ngày sinh.', 'cls' => ''],
+    ['href' => 'tracuu.php', 'icon' => '📘', 'title' => 'Tra cứu điểm',
+     'desc' => 'Xem điểm số, sổ điểm danh và sổ liên lạc của em — nhập mã thiếu nhi và ngày sinh (tháng-ngày-năm).', 'cls' => ''],
     ['href' => 'bxh.php', 'icon' => '🏆', 'title' => 'Bảng thi đua',
      'desc' => 'Xếp hạng chuyên cần &amp; học tập của các lớp, các em.', 'cls' => ''],
 ];

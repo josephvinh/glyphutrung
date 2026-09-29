@@ -3,17 +3,17 @@
  * TIỆN ÍCH HTTP DÙNG CHUNG — client_ip() + json_out()/json_fail()
  *
  * SINGLE SOURCE cho các hàm này. Trước đây `_bootstrap.php` định nghĩa
- * chúng inline, còn `public/api/_tracuu.php` (trang public không nạp
+ * chúng inline, còn `public/api/_somoc.php` (trang public không nạp
  * `_bootstrap.php`, mẫu `public/bxh.php`) phải ĐỊNH NGHĨA LẠI y hệt, bọc
  * `function_exists()`. Hai bản dễ TRÔI LỆCH ÂM THẦM (sửa `client_ip()` để
  * tin `X-Forwarded-For` sau proxy chẳng hạn — bản copy không theo, làm yếu
  * rate-limit) và có nguy cơ "Cannot redeclare function" nếu một file sau
  * này (Task P3-2/P3-3, trộn luồng public + `_bootstrap`) `require`
- * `_tracuu.php` TRƯỚC `_bootstrap.php`.
+ * `_somoc.php` TRƯỚC `_bootstrap.php`.
  *
  * Giải pháp: tách về ĐÚNG MỘT file nhỏ, không phụ thuộc gì khác (không
  * session, không CSP, không DB) — cả `_bootstrap.php` (đầu file) lẫn
- * `_tracuu.php` cùng `require_once` file này. Trang public vẫn nhẹ như
+ * `_somoc.php` cùng `require_once` file này. Trang public vẫn nhẹ như
  * `bxh.php` (không kéo theo toàn bộ `_bootstrap.php`), còn hai nơi gọi
  * cùng chạy chung một bản duy nhất, không còn nguy cơ redeclare dù nạp
  * theo thứ tự nào.
