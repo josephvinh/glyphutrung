@@ -41,9 +41,20 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $loi = 'Bạn tra cứu quá nhiều lần. Vui lòng đợi ' . TRACUU_CUA_SO_PHUT . ' phút rồi thử lại.';
     } else {
         tracuu_attempt_record();
-        $em = tracuu_auth($ma, $dob);
-        // Lỗi GỘP: không cho biết là sai mã hay sai ngày sinh
-        if (!$em) $loi = 'Mã thiếu nhi hoặc ngày sinh chưa đúng. Vui lòng kiểm tra lại.';
+        if (tracuu_code_locked($ma)) {
+            // Khoá theo MÃ (mọi chuỗi mã, kể cả không tồn tại) — không lộ mã nào có thật
+            http_response_code(429);
+            $loi = 'Đã nhập sai quá nhiều lần. Vui lòng đợi ' . TRACUU_MA_KHOA_PHUT . ' phút rồi thử lại, hoặc nhờ giáo lý viên hỗ trợ.';
+        } else {
+            $em = tracuu_auth($ma, $dob);
+            if ($em) {
+                tracuu_code_clear($ma);
+            } else {
+                tracuu_code_fail($ma);
+                // Lỗi GỘP: không cho biết là sai mã hay sai ngày sinh
+                $loi = 'Mã thiếu nhi hoặc ngày sinh chưa đúng. Vui lòng kiểm tra lại.';
+            }
+        }
     }
 }
 

@@ -258,3 +258,58 @@ function tracuu_throttled(): bool
     $n = (int) (db_one('SELECT COUNT(*) n FROM tracuu_attempts WHERE ip = ? AND tried_at > ?', [client_ip(), $moc])['n'] ?? 0);
     return $n >= TRACUU_TOI_DA_IP;
 }
+
+
+/* =====================================================================
+   KHOÁ TẠM THEO MÃ EM — bổ sung cho rate-limit theo IP.
+   Quá TRACUU_MA_TOI_DA_SAI lần nhập sai mật mã cho CÙNG một mã trong
+   TRACUU_MA_KHOA_PHUT phút thì khoá mã đó tạm thời, bất kể IP nào.
+   Áp cho MỌI chuỗi mã được gửi (kể cả không tồn tại) nên trạng thái khoá
+   không tiết lộ mã nào có thật. Đánh đổi có chủ đích: người ngoài cố ý
+   nhập sai có thể khoá tạm mã của một em (tối đa TRACUU_MA_KHOA_PHUT phút,
+   tự mở) — chấp nhận để đổi lấy việc không dò được ngày sinh.
+   Bảng chưa được tạo (chưa chạy migration 005): bỏ qua + ghi log, KHÔNG
+   làm sập trang.
+   ===================================================================== */
+if (!defined('TRACUU_MA_TOI_DA_SAI')) define('TRACUU_MA_TOI_DA_SAI', 5);
+if (!defined('TRACUU_MA_KHOA_PHUT'))  define('TRACUU_MA_KHOA_PHUT', 15);
+
+/** Chuẩn hoá mã để đếm: cắt khoảng trắng, IN HOA, tối đa 32 ký tự. */
+function tracuu_code_key(string $code): string
+{
+    return mb_strtoupper(mb_substr(trim($code), 0, 32, 'UTF-8'), 'UTF-8');
+}
+
+function tracuu_code_fails_ready(): bool
+{
+    if (db_has_table('tracuu_code_fails')) return true;
+    error_log('[tracuu] thiếu bảng tracuu_code_fails — chạy migration 005, khoá theo mã đang TẮT');
+    return false;
+}
+
+/** Mã này đang bị khoá tạm (sai quá ngưỡng trong cửa sổ)? */
+function tracuu_code_locked(string $code): bool
+{
+    $key = tracuu_code_key($code);
+    if ($key === '' || !tracuu_code_fails_ready()) return false;
+    $moc = date('Y-m-d H:i:s', time() - TRACUU_MA_KHOA_PHUT * 60);
+    $n = (int) (db_one('SELECT COUNT(*) n FROM tracuu_code_fails WHERE code = ? AND tried_at > ?', [$key, $moc])['n'] ?? 0);
+    return $n >= TRACUU_MA_TOI_DA_SAI;
+}
+
+/** Ghi một lần nhập sai cho mã (và dọn bản ghi đã quá cửa sổ). */
+function tracuu_code_fail(string $code): void
+{
+    $key = tracuu_code_key($code);
+    if ($key === '' || !tracuu_code_fails_ready()) return;
+    db_run('INSERT INTO tracuu_code_fails (code, tried_at) VALUES (?, NOW())', [$key]);
+    db_run('DELETE FROM tracuu_code_fails WHERE tried_at < ?', [date('Y-m-d H:i:s', time() - TRACUU_MA_KHOA_PHUT * 60)]);
+}
+
+/** Nhập đúng: xoá bộ đếm sai của mã. */
+function tracuu_code_clear(string $code): void
+{
+    $key = tracuu_code_key($code);
+    if ($key === '' || !tracuu_code_fails_ready()) return;
+    db_run('DELETE FROM tracuu_code_fails WHERE code = ?', [$key]);
+}

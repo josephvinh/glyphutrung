@@ -53,4 +53,10 @@ class TracuuTest extends TestCase
         $this->assertSame('E', tracuu_att_mark(null, true));
         $this->assertSame('A', tracuu_att_mark(null, false));
     }
+    public function testCodeKeyNormalizesForLockout(): void
+    {
+        $this->assertSame('GDGLPT260001', tracuu_code_key(' gdglpt260001 '));
+        $this->assertSame('', tracuu_code_key('   '));
+        $this->assertSame(32, mb_strlen(tracuu_code_key(str_repeat('a', 50))));
+    }
 }

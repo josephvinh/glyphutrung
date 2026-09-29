@@ -495,6 +495,18 @@ CREATE TABLE IF NOT EXISTS tracuu_attempts (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
+--  ĐẾM LẦN NHẬP SAI MẬT MÃ THEO MÃ EM (trang Tra cứu điểm)
+--  Xem migration 005_tracuu_code_fails.sql — bổ sung cho tracuu_attempts
+--  (đếm theo IP) để chặn dò ngày sinh phân tán nhiều IP.
+-- ============================================================
+CREATE TABLE IF NOT EXISTS tracuu_code_fails (
+    id       INT AUTO_INCREMENT PRIMARY KEY,
+    code     VARCHAR(32) NOT NULL,
+    tried_at DATETIME    NOT NULL,
+    KEY idx_tracuu_code (code, tried_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
 --  ĐĂNG KÝ NHẬN THÔNG BÁO ĐẨY
 --  Mỗi máy (điện thoại/máy tính) một dòng. Một người dùng có thể
 --  có nhiều máy; gỡ app hay xoá dữ liệu thì máy chủ nhận 404/410
