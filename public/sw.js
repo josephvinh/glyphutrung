@@ -17,7 +17,7 @@
      - Background sync cho offline actions
    ========================================================== */
 
-const PHIEN_BAN = 'tntt-sw-8';
+const PHIEN_BAN = 'tntt-sw-9';
 const KHO      = 'tntt-tinh-' + PHIEN_BAN;
 
 // Critical resources cần preload khi có network
@@ -103,20 +103,19 @@ self.addEventListener('fetch', (e) => {
         const kho = await caches.open(KHO);
         const cu  = await kho.match(req);
 
-        // Tải bản mới ở nền (stale-while-revalidate pattern)
-        // Đường dẫn đều kèm ?v=<thời điểm sửa tệp>,
-        // nên sửa tệp là thành khoá khác, không lo kẹt bản cũ.
+        // Đường dẫn kèm ?v=<mtime> là bất biến (đổi tệp là đổi URL), nên có
+        // trong kho thì trả luôn, KHÔNG tải lại ở nền. Trước đây mỗi lần mở app
+        // lại kéo cả bundle JS/CSS về song song với dữ liệu, tranh băng thông
+        // lúc sóng yếu — chính là chỗ làm bản màn hình chính đồng bộ chậm.
+        if (cu && url.searchParams.has('v')) return cu;
+
         const dangTai = fetch(req).then((res) => {
-            if (res && res.ok) {
-                // Clone response để có thể dùng nhiều lần
-                kho.put(req, res.clone());
-            }
+            if (res && res.ok) kho.put(req, res.clone());
             return res;
         }).catch(() => null);
 
-        // Có trong kho thì trả ngay, không chờ mạng
+        // Tệp không có ?v=: trả bản kho ngay, tải bản mới ở nền cho lần sau
         if (cu) {
-            // Vẫn tải bản mới ở nền để lần sau dùng
             dangTai;
             return cu;
         }

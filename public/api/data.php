@@ -31,6 +31,9 @@ $limit = isset($_GET['limit'])
 $isPaginated = isset($_GET['page']) && $_GET['page'] !== 'all';
 
 $me   = require_login();
+// Đọc xong phiên là nhả khoá ngay: PHP khoá file session suốt request, nên nếu giữ
+// thì core, heavy và nhịp dò sync.php xếp hàng nối đuôi nhau (PWA mở lại càng chậm).
+session_write_close();
 $year = current_year();
 if (!$year) json_fail('Chưa có niên khoá nào đang mở.', 409);
 
