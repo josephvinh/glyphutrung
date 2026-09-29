@@ -2,19 +2,19 @@
 /**
  * ĐẶT / HỦY / XEM ĐƠN ĐỔI QUÀ ONLINE — CỔNG CÔNG KHAI (không đăng nhập)
  *
- *   POST api/tracuu_order.php?action=place   { code, items:[{giftId,qty}], password }
+ *   POST api/somoc_order.php?action=place   { code, items:[{giftId,qty}], password }
  *          -> { ok, orderId, total, expiresAt }
- *   POST api/tracuu_order.php?action=cancel  { code, password }
+ *   POST api/somoc_order.php?action=cancel  { code, password }
  *          -> { ok, orderId, total }
- *   POST/GET api/tracuu_order.php?action=pending { code }   (CHỈ ĐỌC)
+ *   POST/GET api/somoc_order.php?action=pending { code }   (CHỈ ĐỌC)
  *          -> { ok, pending: {...}|null }
  *
- * Theo mẫu `public/api/_tracuu.php` / `public/tracuu.php` (SPEC-MOC-DIEN-TU
+ * Theo mẫu `public/api/_somoc.php` / `public/somoc.php` (SPEC-MOC-DIEN-TU
  * §6.3, §6.4a, §6.5, §6bis) — KHÔNG nạp `_bootstrap.php` (khỏi kéo theo
  * session/CSP/require_login của tầng API nội bộ). Chỉ nạp đúng những gì
  * logic cần: config/db.php, _http_util.php (client_ip/json_out/json_fail),
- * _tracuu.php (throttle theo IP), _rewards.php (lõi P3-1) + StampService.php
- * (được _tracuu.php require lại, vô hại vì require_once) + cache.php (để
+ * _somoc.php (throttle theo IP), _rewards.php (lõi P3-1) + StampService.php
+ * (được _somoc.php require lại, vô hại vì require_once) + cache.php (để
  * làm mới danh mục quà sau khi tồn kho đổi, cùng cách rewards.php/gifts.php
  * đang làm).
  *
@@ -42,13 +42,13 @@ header('Referrer-Policy: no-referrer');
 
 require_once __DIR__ . '/../../config/db.php';
 require_once __DIR__ . '/_http_util.php';
-require_once __DIR__ . '/_tracuu.php';
+require_once __DIR__ . '/_somoc.php';
 require_once __DIR__ . '/_rewards.php';
 require_once __DIR__ . '/cache.php';
 
 /** Đọc thân request JSON (mẫu json_input() ở _bootstrap.php, tự đứng một mình
  *  vì trang này không nạp _bootstrap.php) — quay về $_POST nếu không phải JSON. */
-function tracuu_order_input(): array
+function somoc_order_input(): array
 {
     $raw = file_get_contents('php://input');
     if ($raw === false || $raw === '') {
@@ -80,7 +80,7 @@ $yearId = (int) $year['id'];
 // Dọn đơn quá hạn lazy trước khi đọc/đặt (SPEC §6.5).
 rewards_expire_due($yearId);
 
-$in = tracuu_order_input();
+$in = somoc_order_input();
 
 switch ($action) {
 
@@ -110,10 +110,10 @@ switch ($action) {
         try {
             $r = rewards_place_order((int) $student['id'], $yearId, $items, $password);
         } catch (RewardsError $e) {
-            error_log('[tracuu_order place] ' . $e->getMessage());
+            error_log('[somoc_order place] ' . $e->getMessage());
             json_fail('Không đặt được đơn, vui lòng kiểm tra lại.');
         } catch (Throwable $e) {
-            error_log('[tracuu_order place] ' . $e->getMessage());
+            error_log('[somoc_order place] ' . $e->getMessage());
             json_fail('Không đặt được đơn, vui lòng kiểm tra lại.', 500);
         }
 
@@ -145,10 +145,10 @@ switch ($action) {
         try {
             $r = rewards_cancel_order((int) $student['id'], $yearId, $password);
         } catch (RewardsError $e) {
-            error_log('[tracuu_order cancel] ' . $e->getMessage());
+            error_log('[somoc_order cancel] ' . $e->getMessage());
             json_fail('Không hủy được đơn, vui lòng kiểm tra lại.');
         } catch (Throwable $e) {
-            error_log('[tracuu_order cancel] ' . $e->getMessage());
+            error_log('[somoc_order cancel] ' . $e->getMessage());
             json_fail('Không hủy được đơn, vui lòng kiểm tra lại.', 500);
         }
 
@@ -166,7 +166,7 @@ switch ($action) {
         }
 
         // Mã không tồn tại: trả pending=null như "không có đơn" — không phân
-        // biệt lỗi cụ thể để không lộ hơn những gì tracuu_public_summary() đã
+        // biệt lỗi cụ thể để không lộ hơn những gì somoc_public_summary() đã
         // lộ (trang Sổ Mộc vốn đã báo "không tìm thấy mã" công khai).
         $student = db_one('SELECT id FROM students WHERE code = ?', [$code]);
         $pending = $student ? rewards_pending_order((int) $student['id'], $yearId) : null;

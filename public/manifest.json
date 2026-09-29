@@ -3,7 +3,7 @@
   "short_name": "GĐGLPT",
   "description": "Quản lý Đoàn Thiếu Nhi Thánh Thể",
   "lang": "vi",
-  "start_url": "index.php?dangnhap=1",
+  "start_url": "index.php",
   "scope": ".",
   "display": "standalone",
   "orientation": "portrait",

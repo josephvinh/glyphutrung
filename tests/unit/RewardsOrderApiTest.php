@@ -2,7 +2,7 @@
 /**
  * Test cho LỚP API đặt/hủy/xác nhận đơn đổi quà (Task P3-2).
  *
- * Endpoint (`public/api/tracuu_order.php` cho public, `public/api/rewards.php`
+ * Endpoint (`public/api/somoc_order.php` cho public, `public/api/rewards.php`
  * cho Thủ thư) đọc `php://input` + gọi `require_login()`/`require_write()`
  * ngay khi được nạp, nên KHÔNG test trực tiếp qua HTTP (giống lý do
  * RewardsRedeemTest/RewardsOrderTest test thẳng _rewards.php thay vì
@@ -17,7 +17,7 @@
  *   3) HỢP ĐỒNG gọi lõi P3-1 mà mỗi action thực hiện: place rồi pending trả
  *      đúng đơn vừa đặt; cancel nhả đúng; confirm override bỏ qua mật mã;
  *      confirm mật mã sai bị từ chối. Đây là hình chiếu của những gì action
- *      trong tracuu_order.php / rewards.php sẽ làm, KHÔNG lặp lại toàn bộ
+ *      trong somoc_order.php / rewards.php sẽ làm, KHÔNG lặp lại toàn bộ
  *      RewardsOrderTest.php (chỉ tái khẳng định phần API dựa vào).
  */
 
@@ -158,7 +158,7 @@ class RewardsOrderApiTest extends TestCase
         $this->setWallet(50);
 
         // Mô phỏng API: chuẩn hoá items thô từ JSON rồi gọi thẳng lõi P3-1,
-        // đúng như action=place trong tracuu_order.php sẽ làm.
+        // đúng như action=place trong somoc_order.php sẽ làm.
         $items = rewards_normalize_items([['giftId' => (string) $g, 'qty' => '2']]);
         $placed = rewards_place_order($this->sid, $this->yearId, $items, 'matma123');
 

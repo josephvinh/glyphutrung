@@ -109,7 +109,11 @@ if (!$__dev) ob_start();
             Quên mật khẩu? Liên hệ Ban Điều Hành để được cấp lại.
         </p>
 
-        <div class="border-t border-slate-100 pt-4 mt-3">
+        <div class="border-t border-slate-100 pt-4 mt-3 space-y-2">
+            <a href="index.php"
+               class="w-full py-3 bg-white border border-slate-200 rounded-2xl font-bold text-sm text-slate-600 active:scale-[0.98] transition-transform flex items-center justify-center gap-2">
+                ‹ Về trang chủ
+            </a>
             <button @click="goRegister()" type="button"
                     class="w-full py-3 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-sm text-slate-600 active:scale-[0.98] transition-transform flex items-center justify-center gap-2">
                 <i data-lucide="user-plus" class="w-4 h-4"></i> Đăng ký làm Giáo Lý Viên

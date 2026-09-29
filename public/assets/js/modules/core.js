@@ -249,8 +249,10 @@ window.TNTT.core = {
         if (!await window.TNTT.toast.confirm('Đăng xuất khỏi hệ thống?', { confirmText: 'Đăng xuất' })) return;
         try {
             await fetch('api/auth.php?action=logout', { method: 'POST' });
-        } catch (e) { /* mất mạng thì vẫn tải lại để về màn đăng nhập */ }
-        location.reload();
+        } catch (e) { /* mất mạng thì vẫn chuyển về trang chủ */ }
+        // Về TRANG CHỦ (landing) thay vì tải lại: tải lại tại chỗ sẽ rơi vào form
+        // đăng nhập, và app lưu ra màn hình chính cũng mở lại đúng chỗ đó.
+        location.replace('index.php');
     },
 
     // Cá nhân không còn là màn riêng — nay là thẻ đầu trong Cài Đặt.

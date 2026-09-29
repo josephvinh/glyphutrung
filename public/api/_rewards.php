@@ -186,7 +186,7 @@ function rewards_lookup(string $code, int $yearId): ?array
  * CHUẨN HOÁ GIỎ QUÀ THÔ (JSON của người dùng gửi lên, Task P3-2) thành
  * `[['giftId'=>int,'qty'=>int], ...]` — hàm THUẦN, không đụng CSDL.
  *
- * Dùng ở cả hai lớp API (public `tracuu_order.php` lẫn Thủ thư
+ * Dùng ở cả hai lớp API (public `somoc_order.php` lẫn Thủ thư
  * `rewards.php`) TRƯỚC khi gọi rewards_place_order(), để:
  *   - ép kiểu int cho giftId/qty (client có thể gửi chuỗi số);
  *   - loại bỏ phần tử không phải mảng, thiếu khoá, hoặc giftId<=0/qty<=0

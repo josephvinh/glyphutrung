@@ -1,6 +1,6 @@
 /* ==========================================================
    REWARDS — Trạm Đổi Quà (POS) tại quầy (Quản trị / Thủ Thư)
-   + XÁC NHẬN ĐƠN ĐẶT TRƯỚC (đơn em tự đặt online ở tracuu.php, SPEC §6.4a)
+   + XÁC NHẬN ĐƠN ĐẶT TRƯỚC (đơn em tự đặt online ở somoc.php, SPEC §6.4a)
    Một mảnh của component tnttApp. app.js gộp tất cả các mảnh lại.
 
    Đổi quà là SPEND, gác quyền ĐOÀN-WIDE bằng module 'rewards' (không chia lớp).
@@ -197,7 +197,7 @@ window.TNTT.rewards = {
         }
     },
 
-    // ---- XÁC NHẬN ĐƠN ĐẶT TRƯỚC (đơn em tự đặt online ở tracuu.php) ------
+    // ---- XÁC NHẬN ĐƠN ĐẶT TRƯỚC (đơn em tự đặt online ở somoc.php) ------
     cfSubmitCode() {
         const code = (this.cfCode || '').trim();
         if (!code) { window.TNTT.toast.warning('Hãy nhập mã thiếu nhi trước.'); return; }
