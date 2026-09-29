@@ -82,7 +82,7 @@ header('X-Frame-Options: SAMEORIGIN');
 header('X-XSS-Protection: 1; mode=block');
 header('Referrer-Policy: strict-origin-when-cross-origin');
 header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self'; connect-src 'self'; frame-ancestors 'none';");
-header('Permissions-Policy: camera=(), microphone=(), geolocation=()');
+header('Permissions-Policy: camera=(self), microphone=(), geolocation=()');
 
 /** Trả JSON thành công: {ok:true, ...$data} */
 function json_success(array $data = [], int $code = 200): never

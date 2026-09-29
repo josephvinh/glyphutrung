@@ -221,6 +221,37 @@ class QrScanApiTest extends TestCase
     }
 
     // =================================================================
+    //  Camera: Permissions-Policy
+    // =================================================================
+
+    /**
+     * HỒI QUY: máy chủ từng gửi `Permissions-Policy: camera=()` — cấm camera
+     * trên toàn trang, khiến getUserMedia() luôn bị từ chối và máy quét QR
+     * không mở được trên mọi trình duyệt. Trang phải cho phép camera cho
+     * chính nó (`camera=(self)`); micro/vị trí vẫn phải bị chặn.
+     */
+    public function test_pages_allow_camera_for_same_origin(): void
+    {
+        foreach (['/index.php', '/api/auth.php?action=me'] as $path) {
+            $ch = curl_init(self::$base . $path);
+            curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_HEADER => true, CURLOPT_TIMEOUT => 20,
+                                    CURLOPT_COOKIEFILE => $this->cookieJar]);
+            $resp = (string) curl_exec($ch);
+            $hdrLen = (int) curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+            curl_close($ch);
+            $headers = substr($resp, 0, $hdrLen);
+
+            $this->assertSame(1, preg_match('/^Permissions-Policy:\s*(.+)$/mi', $headers, $m),
+                "$path phải gửi Permissions-Policy");
+            $policy = $m[1];
+            $this->assertStringContainsString('camera=(self)', $policy, "$path: camera phải cho phép same-origin");
+            $this->assertStringNotContainsString('camera=()', $policy, "$path: không được cấm hẳn camera");
+            $this->assertStringContainsString('microphone=()', $policy, "$path: micro vẫn phải bị chặn");
+            $this->assertStringContainsString('geolocation=()', $policy, "$path: vị trí vẫn phải bị chặn");
+        }
+    }
+
+    // =================================================================
     //  scan
     // =================================================================
 
