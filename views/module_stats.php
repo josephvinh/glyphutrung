@@ -25,8 +25,8 @@
                             <button @click="exportAttendanceGridXLS(c.k); exportOpen = false" type="button" class="w-full flex items-center gap-2 px-2 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 active:scale-[0.98] transition">
                                 <i data-lucide="table-2" class="w-4 h-4"></i> Sổ điểm danh <span class="text-slate-400 font-normal">(.xls)</span>
                             </button>
-                            <button @click="exportStatsCSV(c.k); exportOpen = false" type="button" class="w-full flex items-center gap-2 px-2 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-700 active:scale-[0.98] transition">
-                                <i data-lucide="file-text" class="w-4 h-4"></i> Bảng tổng kết <span class="text-slate-400 font-normal">(.csv)</span>
+                            <button @click="exportStatsExcel(c.k); exportOpen = false" type="button" class="w-full flex items-center gap-2 px-2 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-700 active:scale-[0.98] transition">
+                                <i data-lucide="file-text" class="w-4 h-4"></i> Bảng tổng kết <span class="text-slate-400 font-normal">(.xlsx)</span>
                             </button>
                         </div>
                     </template>

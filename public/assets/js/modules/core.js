@@ -124,11 +124,16 @@ window.TNTT.core = {
         return r;
     },
 
-    // Nhập CSV: giao diện chỉ tách file, còn ghi vào đâu là việc của
+    // Nhập Excel (.xlsx): giao diện chỉ tách file, còn ghi vào đâu là việc của
     // máy chủ — cả file nhập trong MỘT giao dịch, sai một dòng thì
     // hoàn tác sạch, không để danh sách nhập được nửa vời.
     async importToServer(rows, colIndex, fileName) {
-        const get = (row, key) => (colIndex[key] !== undefined ? (row[colIndex[key]] || '').trim() : '');
+        const get = (row, key) => {
+            let v = colIndex[key] !== undefined ? String(row[colIndex[key]] ?? '').trim() : '';
+            // Ô SĐT nhập kiểu số trong Excel mất số 0 đầu (0901... -> 901...)
+            if ((key === 'fatherPhone' || key === 'motherPhone') && /^[1-9]\d{8}$/.test(v)) v = '0' + v;
+            return v;
+        };
         const payload = rows.map(row => ({
             code:        get(row, 'code'),
             holyName:    get(row, 'holyName'),

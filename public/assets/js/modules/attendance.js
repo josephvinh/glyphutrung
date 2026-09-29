@@ -29,9 +29,9 @@ window.TNTT.attendance = {
     offlineAttendanceCount: 0,
     _isSyncingOffline: false,
 
-    // Export CSV modal state
-    showExportCSVModal: false,
-    exportCSV: {
+    // Export Excel modal state
+    showExportModal: false,
+    exportForm: {
         classId: '',
         fromDate: '',
         toDate: '',
@@ -569,24 +569,40 @@ window.TNTT.attendance = {
         return 'bg-slate-50 text-slate-400 border-slate-200';
     },
 
-    // Open export CSV modal with default values
-    openExportCSVModal() {
+    // Open export Excel modal with default values
+    openExportModal() {
         const today = this.toDateInput(new Date());
         // Default: from first day of month to today
         const firstOfMonth = today.substring(0, 8) + '01';
-        this.exportCSV = {
+        this.exportForm = {
             classId: '',
             fromDate: firstOfMonth,
             toDate: today,
             loading: false,
             error: ''
         };
-        this.showExportCSVModal = true;
+        this.showExportModal = true;
     },
 
-    // Export attendance to CSV
-    async exportAttendanceCSV() {
-        const ec = this.exportCSV;
+    // Gọi máy chủ lấy dữ liệu bảng rồi dựng file .xlsx ngay trên trình duyệt
+    async exportAttendanceDetail(classId, fromDate, toDate) {
+        const params = new URLSearchParams({ action: 'attendance-detail' });
+        if (classId) params.set('classId', classId);
+        if (fromDate) params.set('fromDate', fromDate);
+        if (toDate) params.set('toDate', toDate);
+
+        const resp = await fetch('/api/export.php?' + params.toString());
+        const data = await resp.json();
+        if (data.ok && data.sheet) {
+            return this.downloadXlsx([data.sheet], data.filename);
+        }
+        window.TNTT.toast.error(data.error || 'Không thể xuất báo cáo điểm danh.');
+        return false;
+    },
+
+    // Export attendance to Excel
+    async exportAttendanceExcel() {
+        const ec = this.exportForm;
 
         // Validation
         if (ec.fromDate && ec.toDate && ec.fromDate > ec.toDate) {
@@ -605,14 +621,14 @@ window.TNTT.attendance = {
                 classId = cls ? cls.id : null;
             }
 
-            const success = await window.TNTT.export.attendanceDetail(
+            const success = await this.exportAttendanceDetail(
                 classId,
                 ec.fromDate || '',
                 ec.toDate || ''
             );
 
             if (success) {
-                this.showExportCSVModal = false;
+                this.showExportModal = false;
                 window.TNTT.toast.success('Đã tải báo cáo điểm danh.');
             }
         } catch (e) {

@@ -1,5 +1,5 @@
 /* ==========================================================
-   STUDENTS — Danh sách thiếu nhi và xuất/nhập CSV
+   STUDENTS — Danh sách thiếu nhi và xuất/nhập Excel
    Một mảnh của component tnttApp. app.js gộp tất cả các mảnh lại.
 
    Phase 3: Favorites, Auto-save Draft, Keyboard Shortcuts
@@ -595,7 +595,7 @@ window.TNTT.students = {
     },
 
     // ==========================================
-    // 3. XUẤT / NHẬP FILE CSV
+    // 3. XUẤT / NHẬP FILE EXCEL (.xlsx)
     // ==========================================
     importColumns: [
         { header: 'Mã số',      key: 'code' },
@@ -613,38 +613,31 @@ window.TNTT.students = {
         { header: 'Địa chỉ',    key: 'address' }
     ],
 
-    // Bọc 1 ô CSV: nhân đôi dấu nháy kép, nếu không tên kiểu Nguyễn Văn "Bo" sẽ phá vỡ cấu trúc file
-    csvCell(value) {
-        const str = (value === null || value === undefined) ? '' : String(value);
-        return '"' + str.replace(/"/g, '""') + '"';
-    },
-
     // ==========================================
     // XUẤT FILE
     //
     // Có dữ liệu  -> xuất danh sách như bình thường.
     // Không có gì -> xuất FILE MẪU đúng định dạng, để GLV điền rồi
-    //                nhập ngược lại. Trước đây chỗ này chỉ báo "Không có
-    //                dữ liệu để xuất!" rồi thôi, trong khi thông báo lỗi
-    //                bên phần Nhập lại bảo người dùng "bấm Xuất để lấy
-    //                file mẫu" — hứa mà không có.
+    //                nhập ngược lại.
     // ==========================================
-    exportToCSV() {
+    exportToExcel() {
         if (this.filteredStudents.length === 0) {
-            this.exportTemplateCSV();
+            this.exportTemplateXlsx();
             return;
         }
 
-        const lines = [this.importColumns.map(c => this.csvCell(c.header)).join(',')];
+        const rows = [this.importColumns.map(c => c.header)];
         this.filteredStudents.forEach(s => {
-            lines.push(this.importColumns.map(c => {
-                if (c.key === 'gender')    return this.csvCell(this.genderLabel(s.gender));
-                if (c.key === 'birthDate') return this.csvCell(this.formatDate(s.birthDate));
-                return this.csvCell(s[c.key]);
-            }).join(','));
+            rows.push(this.importColumns.map(c => {
+                if (c.key === 'gender')    return this.genderLabel(s.gender);
+                if (c.key === 'birthDate') return this.formatDate(s.birthDate);
+                const v = s[c.key];
+                return v === null || v === undefined ? '' : String(v);
+            }));
         });
 
-        this.taiFileCSV(lines, 'Danh_Sach_Thieu_Nhi_' + this.todayStamp() + '.csv');
+        this.downloadXlsx([{ name: 'Danh sách', rows }],
+            'Danh_Sach_Thieu_Nhi_' + this.todayStamp() + '.xlsx');
     },
 
     // Bỏ dấu và thay khoảng trắng, để tên file không bị vỡ trên Windows
@@ -656,26 +649,15 @@ window.TNTT.students = {
             .replace(/^_+|_+$/g, '');
     },
 
-    taiFileCSV(lines, tenFile) {
-        // BOM (U+FEFF) để Excel nhận đúng tiếng Việt UTF-8
-        const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = tenFile;
-        link.click();
-        URL.revokeObjectURL(url);
-    },
-
     /**
-     * File mẫu để nhập danh sách.
+     * File mẫu để nhập danh sách (.xlsx, hai sheet).
      *
-     * Phần hướng dẫn nằm ở các dòng bắt đầu bằng #, và applyImport() bỏ
-     * qua chúng — nên người dùng KHÔNG cần xoá gì trước khi nhập lại.
-     * Danh sách lớp hợp lệ lấy từ dữ liệu sống, không chép cứng, nên
-     * luôn khớp với những gì đang khai ở màn Khối & Lớp.
+     *  - "Danh sách": hàng tiêu đề + một dòng ví dụ. Dòng có ô đầu bắt đầu
+     *    bằng # bị bỏ qua khi nhập, nên để nguyên dòng ví dụ cũng không sao.
+     *  - "Hướng dẫn": cách điền và danh sách lớp hợp lệ (lấy từ dữ liệu sống).
+     * Khi nhập, app đọc sheet "Danh sách" (hoặc sheet đầu tiên).
      */
-    exportTemplateCSV() {
+    exportTemplateXlsx() {
         // Không lọc lớp nào thì lấy lớp mình phụ trách — chủ nhiệm chỉ có
         // đúng một lớp, nên mẫu ra là đã đúng lớp, khỏi phải nhớ tên.
         const chiGhi = this.writableClasses;
@@ -701,122 +683,68 @@ window.TNTT.students = {
         const bat = this.importColumns.filter(c => ['name'].includes(c.key))
                                       .map(c => c.header).join(', ');
 
-        const lines = [];
-        const ghi = (t) => lines.push('# ' + t);
+        const guide = [
+            ['MẪU NHẬP DANH SÁCH THIẾU NHI — TNTT Super App'],
+        ];
+        if (lop)       guide.push(['Lớp: ' + lop + (khoi ? '  ·  Khối: ' + khoi : '')]);
+        if (this.year) guide.push(['Niên khoá: ' + this.year.name]);
+        guide.push(
+            ['Xuất lúc: ' + this.formatDate(this.toDateInput(new Date()))],
+            [''],
+            ['CÁCH DÙNG'],
+            ['1. Mở sheet "Danh sách", điền mỗi em một dòng, ngay dưới hàng tiêu đề.'],
+            ['2. Dòng ví dụ có dấu # ở đầu sẽ được bỏ qua, cứ để nguyên.'],
+            ['3. Lưu file dạng Excel (.xlsx), rồi bấm nút Nhập trên app.'],
+            [''],
+            ['BẮT BUỘC: ' + bat + ' (thiếu là bỏ qua dòng đó)'],
+            ['Mã số: để trống nếu nhập mới (hệ thống tự cấp). Ghi mã đã có để CẬP NHẬT.'],
+            ['Giới tính: Nam | Nữ'],
+            ['Ngày sinh: dd/mm/yyyy, ví dụ 05/09/2017'],
+            ['Tình trạng: ' + this.statusOptions.join(' | ')],
+            ['Khối: tự suy ra từ Lớp, ghi sai cũng không ảnh hưởng'],
+            ['Lớp: phải trùng đúng tên đã khai ở màn Khối & Lớp. Các lớp hợp lệ:']
+        );
+        if (dsLop.length) dsLop.forEach(n => guide.push(['    ' + n]));
+        else guide.push(['    (chưa khai lớp nào — hãy vào Khối & Lớp tạo trước)']);
 
-        lines.push('# ' + '='.repeat(58));
-        ghi('MẪU NHẬP DANH SÁCH THIẾU NHI — TNTT Super App');
-        if (lop)  ghi('Lớp: ' + lop + (khoi ? '  ·  Khối: ' + khoi : ''));
-        if (this.year) ghi('Niên khoá: ' + this.year.name);
-        ghi('Xuất lúc: ' + this.formatDate(this.toDateInput(new Date())));
-        ghi('');
-        ghi('CÁCH DÙNG');
-        ghi('  1. Mở file bằng Excel hoặc Google Sheet');
-        ghi('  2. Điền mỗi em một dòng, ngay dưới hàng tiêu đề');
-        ghi('  3. Lưu lại dạng CSV UTF-8, rồi bấm nút Nhập trên app');
-        ghi('');
-        ghi('Mọi dòng bắt đầu bằng dấu # đều được bỏ qua khi nhập,');
-        ghi('kể cả dòng ví dụ bên dưới — cứ để nguyên, không cần xoá.');
-        ghi('');
-        ghi('BẮT BUỘC   : ' + bat + '  (thiếu là bỏ qua dòng đó)');
-        ghi('Mã số      : để trống nếu nhập mới (hệ thống tự cấp). Ghi mã đã có để CẬP NHẬT.');
-        ghi('Giới tính  : Nam | Nữ');
-        ghi('Ngày sinh  : dd/mm/yyyy   ví dụ 05/09/2017');
-        ghi('Tình trạng : ' + this.statusOptions.join(' | '));
-        ghi('Khối       : tự suy ra từ Lớp, ghi sai cũng không ảnh hưởng');
-        ghi('Lớp        : phải trùng đúng tên đã khai ở màn Khối & Lớp');
-        if (dsLop.length) {
-            const dong = [];
-            for (let i = 0; i < dsLop.length; i += 3) dong.push(dsLop.slice(i, i + 3).join('  |  '));
-            dong.forEach((d, i) => ghi('             ' + d));
-        } else {
-            ghi('             (chưa khai lớp nào — hãy vào Khối & Lớp tạo trước)');
-        }
-        ghi('');
-        lines.push('# ' + '='.repeat(58));
-
-        // Hàng tiêu đề thật — chính là hàng mà applyImport() dò cột
-        lines.push(this.importColumns.map(c => this.csvCell(c.header)).join(','));
-
+        const header = this.importColumns.map(c => c.header);
         // Dòng ví dụ, gắn # ở ô đầu nên nhập lại cũng không tạo ra em ma
-        lines.push(this.importColumns.map((c, i) =>
-            this.csvCell((i === 0 ? '#' : '') + (viDu[c.key] || ''))).join(','));
+        const example = this.importColumns.map((c, i) => (i === 0 ? '#' : '') + (viDu[c.key] || ''));
 
-        this.taiFileCSV(lines,
-            'Mau_Nhap_Danh_Sach' + (lop ? '_' + this.tenFileAnToan(lop) : '') + '_' + this.todayStamp() + '.csv');
+        this.downloadXlsx([
+            { name: 'Danh sách', rows: [header, example], widths: [10, 12, 24, 10, 12, 12, 16, 16, 20, 14, 20, 14, 28] },
+            { name: 'Hướng dẫn', rows: guide, widths: [100] }
+        ], 'Mau_Nhap_Danh_Sach' + (lop ? '_' + this.tenFileAnToan(lop) : '') + '_' + this.todayStamp() + '.xlsx');
 
         window.TNTT.toast.info('Lớp này chưa có em nào.\n\n'
-            + 'Đã tải về FILE MẪU đúng định dạng'
+            + 'Đã tải về FILE MẪU Excel đúng định dạng'
             + (lop ? ' cho lớp ' + lop : '') + '.\n'
             + 'Điền vào rồi bấm Nhập để đưa danh sách lên.', 7000);
     },
 
-    // Tách CSV thủ công (xử lý ô bọc nháy kép, dấu phẩy và xuống dòng nằm bên trong ô)
-    // Đoán dấu phân cách: Excel bản tiếng Việt lưu CSV bằng dấu chấm phẩy (;)
-    detectDelimiter(text) {
-        for (const line of text.split(/\r?\n/)) {
-            if (!line.trim() || line.trim().startsWith('#')) continue;
-            const count = { ',': 0, ';': 0, '\t': 0 };
-            let q = false;
-            for (const ch of line) {
-                if (ch === '"') q = !q;
-                else if (!q && ch in count) count[ch]++;
-            }
-            const best = Object.keys(count).sort((a, b) => count[b] - count[a])[0];
-            if (count[best] > 0) return best;
-        }
-        return ',';
-    },
-
-    parseCSV(text) {
-        const rows = [];
-        let row = [], field = '', inQuotes = false;
-        if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
-        const delim = this.detectDelimiter(text);
-
-        for (let i = 0; i < text.length; i++) {
-            const c = text[i];
-            if (inQuotes) {
-                if (c === '"') {
-                    if (text[i + 1] === '"') { field += '"'; i++; }
-                    else { inQuotes = false; }
-                } else { field += c; }
-            } else if (c === '"') {
-                inQuotes = true;
-            } else if (c === delim) {
-                row.push(field); field = '';
-            } else if (c === '\n') {
-                row.push(field); rows.push(row); row = []; field = '';
-            } else if (c !== '\r') {
-                field += c;
-            }
-        }
-        if (field !== '' || row.length > 0) { row.push(field); rows.push(row); }
-
-        return rows.filter(r => r.some(cell => cell.trim() !== ''));
-    },
-
-    handleImport(event) {
+    async handleImport(event) {
         const file = event.target.files[0];
         event.target.value = ''; // reset để chọn lại đúng file đó vẫn kích hoạt được
         if (!file) return;
 
-        if (!/\.csv$/i.test(file.name)) {
-            window.TNTT.toast.warning('Hiện chỉ nhận file .csv.\nTrong Excel bạn chọn "Lưu dưới dạng" -> CSV UTF-8 rồi tải lên lại nhé.');
+        if (!/\.xlsx$/i.test(file.name)) {
+            window.TNTT.toast.warning('Chỉ nhận file Excel (.xlsx).\nBấm nút Tải mẫu để lấy file đúng định dạng, điền xong rồi tải lên lại nhé.');
             return;
         }
 
-        const reader = new FileReader();
-        reader.onerror = () => window.TNTT.toast.error('Không đọc được file. Vui lòng thử lại.');
-        reader.onload = (e) => this.applyImport(e.target.result, file.name);
-        reader.readAsText(file, 'UTF-8');
+        try {
+            const rows = await this.readXlsxRows(file, 'Danh sách');
+            this.applyImport(rows, file.name);
+        } catch (e) {
+            window.TNTT.toast.error('Không đọc được file Excel. File có thể bị hỏng hoặc đặt mật khẩu.');
+        }
     },
 
-    applyImport(text, fileName) {
+    applyImport(allRows, fileName) {
         // Dòng bắt đầu bằng # là chú thích trong file mẫu (phần hướng dẫn
         // và dòng ví dụ). Bỏ chúng TRƯỚC khi dò tiêu đề, để người dùng cứ
         // để nguyên phần hướng dẫn mà nhập vẫn chạy đúng.
-        const rows = this.parseCSV(text)
+        const rows = allRows
             .filter(r => !String(r[0] || "").trim().startsWith("#"));
         if (rows.length < 2) {
             window.TNTT.toast.warning('File không có dòng dữ liệu nào.');
