@@ -196,6 +196,8 @@ if (!$__dev) ob_start();
 
         </main>
 
+        <?php include __DIR__ . '/../views/partial_student_edit_modal.php'; ?>
+
         </div><!-- /.app-content -->
 
         <!-- THANH ĐIỀU HƯỚNG DƯỚI (ẩn trên máy tính, xem app.css) -->
