@@ -305,7 +305,8 @@ export type RoleCode =
   | 'truong_khoi'
   | 'glv_chu_nhiem'
   | 'glv'
-  | 'du_bi';
+  | 'du_bi'
+  | 'demo';
 
 export type Gender = 0 | 1; // 0: Nam, 1: Nữ
 

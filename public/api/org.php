@@ -113,8 +113,8 @@ switch ($action) {
         $role = (string) ($in['role'] ?? 'glv');
         // Chỉ khởi tạo vai cơ sở. Chức vụ có phạm vi (Chủ nhiệm, Trưởng khối, BĐH...)
         // do BĐH gán khi phân công, không đặt thẳng lúc duyệt.
-        if (!in_array($role, ['glv', 'du_bi'], true)) {
-            json_fail('Lúc duyệt chỉ đặt vai Giáo Lý Viên hoặc Dự Bị. Chức vụ cụ thể gán sau ở màn Khối & Lớp.');
+        if (!in_array($role, ['glv', 'du_bi', 'demo'], true)) {
+            json_fail('Lúc duyệt chỉ đặt vai Giáo Lý Viên, Dự Bị hoặc Demo (chỉ xem). Chức vụ cụ thể gán sau ở màn Khối & Lớp.');
         }
 
         $titleId = db_one('SELECT id FROM titles WHERE role_code=? ORDER BY sort_order LIMIT 1', [$role])['id'] ?? null;

@@ -5,6 +5,9 @@
  *   php config/migrate_demo_accounts.php
  *   TNTT_DEMO_PASSWORD='MatKhau123' php config/migrate_demo_accounts.php
  *
+ * Chỉ tạo vai, KHÔNG tạo 5 tài khoản cố định (thành viên tự đăng ký, BĐH
+ * duyệt với vai Demo): TNTT_DEMO_ROLE_ONLY=1 php config/migrate_demo_accounts.php
+ *
  * Idempotent. Vai 'demo' (toàn đoàn) có quyền 'view' trên MỌI module; các hành
  * động ghi còn bị chặn thêm ở require_write() (xem _bootstrap.php).
  * Đăng nhập: SĐT 0900000001..0900000005. Không đặt TNTT_DEMO_PASSWORD thì
@@ -23,6 +26,11 @@ $mods = array_column(db_all("SELECT module_key FROM modules"), 'module_key');
 foreach ($mods as $mod) {
     db_run("INSERT INTO permissions (module_key, role_code, level) VALUES (?, 'demo', 'view')
             ON DUPLICATE KEY UPDATE level='view'", [$mod]);
+}
+
+if (getenv('TNTT_DEMO_ROLE_ONLY') === '1') {
+    echo "Xong: đã tạo vai 'demo' (view trên " . count($mods) . " module). Duyệt thành viên với vai Demo ở màn Nhân sự.\n";
+    exit(0);
 }
 
 $title = db_one("SELECT id FROM titles WHERE role_code = 'demo' LIMIT 1");

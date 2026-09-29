@@ -94,7 +94,7 @@ class StaffService
         $callerIsAdmin = ($this->me['role_code'] ?? '') === 'admin';
         $roleChanging  = !$old || ($old['role_code'] !== $role);
         if ($roleChanging) {
-            $ASSIGNABLE = ['truong_khoi', 'glv_chu_nhiem', 'glv', 'du_bi'];
+            $ASSIGNABLE = ['truong_khoi', 'glv_chu_nhiem', 'glv', 'du_bi', 'demo'];
             // Chỉ Quản trị mới được tạo/gán vai Quản trị hoặc Ban Điều Hành.
             if (in_array($role, ['admin', 'bdh'], true) && !$callerIsAdmin) {
                 return ['ok' => false,
