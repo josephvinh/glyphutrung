@@ -17,11 +17,12 @@
 //
 //   A. scan_class_ids() — logic phạm vi thật (an ninh: chống leo thang, quét
 //      theo khối chứ không theo lớp).
-//   B. Round-trip DB đúng câu INSERT IGNORE mà nhánh 'scan' dùng — chứng minh
-//      bất biến quan trọng nhất: idempotent (quét trùng không nhân đôi) và
-//      CHỈ THÊM, không bao giờ gỡ (khác toggle).
-//   C. Đúng câu SELECT mà nhánh 'lookup' dùng — chứng minh phạm vi (lọc theo
-//      khối) và chỉ lấy em 'đang sinh hoạt'.
+//   B. Ràng buộc DB mà nhánh 'scan' dựa vào: câu INSERT IGNORE được CHÉP lại
+//      trong test (scanInsert) để chứng minh khoá uq_att khiến quét trùng là
+//      idempotent và CHỈ THÊM, không gỡ. ĐÂY LÀ BẢN SAO, không chạy mã của
+//      attendance.php — hành vi thật của endpoint được kiểm ở
+//      QrScanApiTest.php (gọi HTTP thật).
+//   C. Tương tự cho câu SELECT của 'lookup' (lookupCodes là bản sao).
 
 require_once __DIR__ . '/../bootstrap.php';
 require_once __DIR__ . '/../../config/db.php';
@@ -35,10 +36,10 @@ class QrScanTest extends TestCase
     private int $adminId = 0;
     private int $memberId = 0;
     private int $yearId = 0;
-    private array $blockA;         // một khối có lớp
-    private array $blockB;         // khối khác
-    private array $classA;         // lớp thuộc khối A
-    private array $classB;         // lớp thuộc khối B
+    private array $blockA = [];    // một khối có lớp
+    private array $blockB = [];    // khối khác
+    private ?array $classA = null; // lớp thuộc khối A (null nếu DB chưa đủ dữ liệu -> skip)
+    private ?array $classB = null; // lớp thuộc khối B
     private array $savedPerms = [];
     private array $createdStudentIds = [];
     private array $createdAttIds = [];
@@ -52,9 +53,9 @@ class QrScanTest extends TestCase
         // Hai khối khác nhau, mỗi khối có ít nhất một lớp.
         $this->classA = db_one(
             "SELECT id, block_id FROM classes WHERE block_id IS NOT NULL ORDER BY id LIMIT 1");
-        $this->classB = db_one(
+        $this->classB = $this->classA ? db_one(
             "SELECT id, block_id FROM classes WHERE block_id IS NOT NULL AND block_id <> ? ORDER BY id LIMIT 1",
-            [$this->classA['block_id']]);
+            [$this->classA['block_id']]) : null;
         if (!$this->classA || !$this->classB) {
             $this->markTestSkipped('Cần ít nhất 2 lớp ở 2 khối khác nhau.');
         }
