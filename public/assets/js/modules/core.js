@@ -45,12 +45,16 @@ window.TNTT.core = {
     assignments: window.TNTT.boot?.assignments || [],
     primaryAssignment: window.TNTT.boot?.primaryAssignment || null,
 
-    // Đã bỏ nút chỉnh sáng/tối trên header — app luôn ở chế độ SÁNG.
-    // Giữ 'dark' = false để applyDarkMode() gỡ class .dark nếu máy nào còn sót.
-    dark: false,
+    // Chế độ tối: đọc lựa chọn đã lưu; chưa chọn thì theo cài đặt của máy.
+    dark: (() => {
+        try {
+            const saved = localStorage.getItem('darkMode');
+            if (saved !== null) return saved === 'true';
+        } catch (e) { /* localStorage bị chặn — dùng mặc định */ }
+        return !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    })(),
 
     init() {
-        // Apply saved dark mode state
         this.applyDarkMode();
         if (typeof this.initOfflineAttendance === 'function') {
             this.initOfflineAttendance();
@@ -59,17 +63,15 @@ window.TNTT.core = {
 
     applyDarkMode() {
         document.documentElement.classList.toggle('dark', this.dark);
+        const meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute('content', this.dark ? '#0f172a' : '#c8203a');
     },
 
     toggleDark() {
         this.dark = !this.dark;
-    },
-
-    $watch: {
-        dark(val) {
-            this.applyDarkMode();
-            localStorage.setItem('darkMode', val);
-        }
+        this.applyDarkMode();
+        try { localStorage.setItem('darkMode', this.dark); } catch (e) { /* bỏ qua */ }
+        this.$nextTick(() => window.lucide && lucide.createIcons());
     },
 
     // ==========================================
