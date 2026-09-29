@@ -27,7 +27,7 @@
 | F-08 | Trung bình | Cho điểm danh trước cho buổi **tương lai** | Sai số liệu chuyên cần/Mộc |
 | F-09 | Trung bình | Thiếu kiểm tra dữ liệu thiếu nhi (ngày sinh 2099/1800, tên 300 ký tự, ngày sai định dạng → HTTP 500 thông báo rỗng) | Dữ liệu rác / trải nghiệm lỗi kém |
 | F-10 | Trung bình | Cài mới thiếu bảng QR-card; module `custom-qrcard` chưa nối vào giao diện; trang "Chưa cài đặt" hiện cho **mọi** lỗi thiếu bảng | Gây hiểu nhầm khi debug |
-| F-11…F-14 | Thấp | logout bằng GET, a11y/tap-target, payload 5,7 MB, các lỗi nhỏ | Xem mục 4 |
+| F-11…F-16 | Thấp/TB | logout bằng GET, a11y/tap-target, payload 5,7 MB, các lỗi nhỏ, BĐH sửa được tài khoản Quản trị (F-15), SĐT không hợp lệ (F-16) | Xem mục 4 và 8; toàn bộ đã có issue #78–#98 |
 
 **Số liệu kiểm thử**
 
@@ -36,6 +36,7 @@
 | Cú pháp (PHP lint 170 file / `node --check` 33 file JS) | ✅ 0 lỗi |
 | PHPUnit hiện có (164 test PHPUnit + 43 test kiểu script) | 157/164 đạt; **7 lỗi đều do test lỗi thời/thiếu dữ liệu mẫu, không phải lỗi ứng dụng** |
 | Kịch bản API/bảo mật/nghiệp vụ mới viết (mục 5) | khoảng 150 kiểm tra (đã loại các ô tự kiểm sai), phát hiện F-01…F-04, F-06…F-09 |
+| Đợt bổ sung (mục 8): chương trình, nhân sự, phân công, nhập Excel, thư viện, họp, đổi quà, lên lớp | 79 kiểm tra: 76 đạt; thêm lỗi F-15 (BĐH sửa được tài khoản Quản trị), F-16 (SĐT không hợp lệ) |
 | Giao diện tự động (Chromium, 3 vai × 3 kích thước, 138 lượt mở module + 15 trang) | 0 lỗi JS/console/HTTP, 0 tràn ngang; có lỗi a11y nhỏ |
 
 ---
@@ -52,7 +53,8 @@
 | Passkey/WebAuthn (đăng nhập sinh trắc) | Cần authenticator thật; chỉ xác nhận `getLoginArgs` công khai theo thiết kế |
 | Quét QR bằng camera thật, tia sáng/độ nét thẻ | Kiểm thử ở mức API (`scan`) và PHPUnit, không có camera |
 | Trình duyệt iOS Safari/Android thật, chế độ cài PWA/offline | Chỉ có Chromium desktop giả lập viewport |
-| Lên lớp cuối năm (`promotion.run`), nhập Excel (`students.import`), xoá thiếu nhi hàng loạt trên dữ liệu thật | Thao tác phá huỷ/nhiều dữ liệu; chỉ mở màn hình, không chạy lệnh |
+| Xoá thiếu nhi hàng loạt trên dữ liệu thật | Thao tác phá huỷ (đã kiểm phân quyền `bulk_delete`, không chạy trên dữ liệu thật) |
+| Lên lớp cuối năm, nhập Excel, chương trình, nhân sự, phân công, thư viện, đổi quà | **Đã kiểm ở đợt bổ sung, xem mục 8** |
 | Tải (load test), đồng thời (race condition) | Ngoài phạm vi |
 | Cookie `Secure`/HSTS | `php -S` chạy HTTP; code có nhánh HTTPS nhưng không chạy |
 | Bố cục in ấn (phiếu liên lạc, thẻ QR) bằng mắt | Chỉ kiểm escape HTML, không xem bản in |
@@ -224,7 +226,7 @@ Ký hiệu: ✅ đạt · ❌ lỗi (xem F-xx) · ⚠️ đạt một phần · 
 |--------|------------------|---------|
 | **Danh sách thiếu nhi** (`students`) | Thêm mới (mã `GDGLPT26xxxx` do máy chủ cấp + ghi danh) · sửa giữ mã · chuyển lớp hàng loạt · bỏ trống họ tên → 400 · favorites | ✅ |
 | | Ngày sinh vô lý / sai định dạng · tên 300 ký tự | ❌ F-09 |
-| | Nhập Excel · xoá hàng loạt trên dữ liệu thật | ⏭ |
+| | Nhập Excel (mục 8) | ⚠️ ngày sinh tương lai vẫn được nhập |
 | **Hồ sơ em** (`student_profile`) | Mở màn hình | ✅ UI · logic ⏭ |
 | **Điểm danh** (`attendance`) | Chạm bật/tắt · gỡ · trạng thái `đi trễ` sau giờ chốt · ngày không có chương trình → 400 · ngày sai định dạng · chương trình/em không tồn tại → 404 | ✅ |
 | | Ngày tương lai | ❌ F-08 |
@@ -239,9 +241,9 @@ Ký hiệu: ✅ đạt · ❌ lỗi (xem F-xx) · ⚠️ đạt một phần · 
 | **Niên khoá** (`years`) | Tạo · trùng tên → từ chối · ngày kết thúc < bắt đầu → từ chối · GLV không kích hoạt · khoá/mở khoá | ✅ |
 | **Khối & Lớp** (`org`) | Tạo khối/lớp · không xoá khối còn lớp · cấp lại mật khẩu (buộc đổi) | ✅ |
 | | Xoá lớp (rỗng hoặc còn em) | ❌ F-03 |
-| **Nhân sự** (`staff`) | Mở màn hình · duyệt/từ chối tài khoản đăng ký, đổi vai | UI ✅ · logic ⏭ |
-| **Chương trình** (`programs`) | Mở màn hình; logic ngày/giờ được kiểm gián tiếp qua điểm danh | UI ✅ · tạo/xoá ⏭ |
-| **Lên lớp** (`promotion`) | Mở màn hình | UI ✅ · `run` ⏭ (phá huỷ) |
+| **Nhân sự** (`staff`) | Xem mục 8 (STAFF-00…16, ASG-01…11) | ⚠️ 2 lỗi (mục 8) |
+| **Chương trình** (`programs`) | Xem mục 8 (PRG-01…06) | ✅ |
+| **Lên lớp** (`promotion`) | Xem mục 8 (PROMO-01…07) | ✅ |
 | **Ghi chú/Lịch** (`notes`, `calendar`) | Người khác không xoá được ghi chú riêng tư | ✅ |
 | **Thư viện** (`thu_vien`) | Đăng bài · GLV không duyệt · xoá · upload (mục 5.1) | ✅ |
 | **Quà & Đổi quà** (`gifts`, `rewards`) | Tạo quà · từ chối Mộc ≤ 0, tồn kho âm, tên rỗng | ✅ API · đổi quà: UT ✅ 26 test |
@@ -288,7 +290,34 @@ Tổng: 164 test PHPUnit (157 đạt, 7 lỗi) + 43 test kiểu script (đạt).
 
 ---
 
-## 8. Phụ lục — kịch bản tự động và cách chạy lại
+## 8. Đợt kiểm thử bổ sung (29–30/09/2026)
+
+Bổ sung các phần ở mục 2 chưa làm. Chạy `tests/e2e/extra.py` trên DB thử (sao lưu trước, khôi phục sau). **79 kiểm tra: 76 đạt, 3 lỗi** (sau khi sửa các ô tự kiểm sai: giả định tạo thành viên thủ công, giá trị RSVP, dữ liệu sơ đồ lên lớp thiếu).
+
+| Nhóm | Kịch bản | Kết quả |
+|------|----------|---------|
+| **Chương trình** PRG-01…06 | Tạo/sửa/xoá; từ chối giờ sai, chốt ≤ bắt đầu, tính vắng ≤ bắt đầu, thứ = 9, tên rỗng, ngày áp dụng ngược, chiến dịch thiếu ngày; GLV bị chặn; chương trình đã có điểm danh không xoá được (gợi ý đóng thay vì xoá) | ✅ 12/12 |
+| **Nhân sự** STAFF-00…16 | Tạo tay bị từ chối theo thiết kế; sửa hồ sơ; trùng SĐT; thiếu tên; chống BĐH nâng lên admin; TK không sửa được; đăng ký → chờ duyệt không đăng nhập được → duyệt → đăng nhập được; duyệt lần 2 / vai admin bị từ chối; từ chối tài khoản; GLV không duyệt; không xoá được admin | ✅ 15 · ❌ 2 |
+| **Phân công** ASG-01…11 | Phân công/kết thúc/xoá; thiếu lớp, vai lạ; TK không phân công ngoài khối, không gán admin; BĐH không gán admin/BĐH; GLV không tự phân công | ✅ 11/11 |
+| **Nhập Excel** IMP-01…06 | Dòng hợp lệ thêm, lớp lạ/tên rỗng bỏ qua; GVCN không ghi đè được em lớp khác bằng mã trùng; import rỗng bị từ chối; **3.000 dòng trong 1 request chạy được (200)**; thủ thư bị chặn | ✅ 5 · ❌ 1 |
+| **Thư viện** LIB-04…12 | GLV tải lên → chờ duyệt; không tự duyệt; admin duyệt; tệp chưa duyệt của người khác bị 403; chưa đăng nhập 401; xoá | ✅ 9/9 (tệp đã duyệt xem được bởi mọi thành viên đăng nhập, theo thiết kế) |
+| **Thông báo họp** ANN-06…11 | Tạo, RSVP, lựa chọn lạ bị từ chối, người xem kết quả bị giới hạn, ngày họp sai bị từ chối | ✅ 6/6 |
+| **Đổi quà** RWD-01…08 | Tra cứu; trừ đúng Mộc và tồn kho; thiếu Mộc, vượt tồn kho, qty âm/0/rất lớn, quà lạ đều bị từ chối và số dư không đổi; GLV bị chặn; **4 yêu cầu đồng thời chỉ 1 thành công, số dư không âm** | ✅ 12/12 |
+| **Lên lớp** PROMO-01…07 | Đích trùng/không tồn tại/đã khoá bị từ chối; GLV bị chặn; chạy cả khối đúng số em; chạy lại không tạo trùng; em được đánh "lên" chuyển đúng lớp kế tiếp | ✅ 7/7 (cần khai sơ đồ lên lớp trước, đúng thiết kế) |
+
+**Lỗi mới (đã tạo issue):**
+- **F-15 · Trung bình** — BĐH sửa được hồ sơ tài khoản Quản trị (đổi SĐT đăng nhập, đổi tên) qua `org.php?action=saveMember`; đăng nhập admin bằng SĐT cũ trả 401. [#97](https://github.com/josephvinh/glyphutrung/issues/97)
+- **F-16 · Thấp** — `saveMember` nhận SĐT không hợp lệ (`"12"` lưu thành `012`). [#98](https://github.com/josephvinh/glyphutrung/issues/98)
+- Mở rộng F-09: import Excel cũng nhận ngày sinh tương lai (bình luận tại [#86](https://github.com/josephvinh/glyphutrung/issues/86)).
+
+Chưa kiểm ở đợt này: Web Push, Passkey, camera QR thật, trình duyệt iOS/Android thật, tải/đồng thời ngoài đổi quà.
+
+### Tương ứng issue trên GitHub
+F-01 #78 · F-02 #79 · F-03 #80 · F-04 #81 · F-05 #82 · F-06 #83 · F-07 #84 · F-08 #85 · F-09 #86 · F-10 #87 · F-11 #88 · F-12 #89 · F-13 #90 · F-14: #91 (khoá trùng), #92 (icon tìm kiếm), #93 (env `TNTT_DB_NAME`), #94 (admin thiếu phân công), #95 (CSP), #96 (độ trễ đăng nhập sai) · F-15 #97 · F-16 #98
+
+---
+
+## 9. Phụ lục — kịch bản tự động và cách chạy lại
 
 Toàn bộ script nằm trong `tests/e2e/` (thư mục `tests/` đang bị `.gitignore`, **chưa commit**):
 
@@ -298,6 +327,7 @@ Toàn bộ script nằm trong `tests/e2e/` (thư mục `tests/` đang bị `.git
 | `e2e2.py` | IDOR, phạm vi `data.php`, XSS/CSV, đăng ký công khai |
 | `flows.py` | Luồng nghiệp vụ từng module (bảng 5.4) |
 | `orgflow.py` | Xoá khối/lớp (F-03) |
+| `extra.py` | Đợt bổ sung (mục 8): chương trình, nhân sự, phân công, nhập Excel, thư viện, họp/RSVP, đổi quà, lên lớp |
 | `ui.js`, `ui2.js` | Duyệt giao diện Playwright (3 vai × 3 kích thước) và tái hiện lỗi xuất Excel |
 | `out/` | Ảnh chụp minh hoạ |
 
