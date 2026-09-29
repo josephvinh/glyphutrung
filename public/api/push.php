@@ -3,7 +3,7 @@
  * THÔNG BÁO ĐẨY — ĐĂNG KÝ MÁY VÀ LẤY NỘI DUNG
  *
  *   GET  api/push.php?action=key       — khoá công khai để trình duyệt đăng ký
- *   GET  api/push.php?action=pending   — service worker gọi lấy nội dung mới nhất
+ *   POST api/push.php?action=pending { endpoint } — service worker gọi lấy nội dung mới nhất (không cần đăng nhập)
  *   GET  api/push.php?action=status    — máy này đã bật chưa, cả đoàn bao nhiêu máy
  *   POST api/push.php?action=subscribe { endpoint }
  *   POST api/push.php?action=unsubscribe { endpoint }
@@ -29,7 +29,17 @@ switch ($action) {
     // Service worker gọi khi nghe chuông. Lấy dòng cũ nhất chưa hiện,
     // đánh dấu đã lấy để lần sau không hiện lại.
     case 'pending':
-        $me = require_login();
+        // Service worker chạy ngoài trang nên có thể không còn phiên đăng
+        // nhập (đã đăng xuất / hết hạn). Vẫn phải nhận được thông báo, nên
+        // nhận diện bằng endpoint đã đăng ký: đó là địa chỉ dài, ngẫu nhiên,
+        // chỉ máy này biết. Không có endpoint thì quay về dùng phiên.
+        $ep = trim((string) ($in['endpoint'] ?? ''));
+        $me = null;
+        if ($ep !== '') {
+            $sub = db_one('SELECT member_id FROM push_subscriptions WHERE endpoint = ?', [$ep]);
+            if ($sub) $me = ['id' => (int) $sub['member_id']];
+        }
+        if (!$me) $me = require_login();
         $t  = db_one('SELECT * FROM push_outbox WHERE member_id = ? AND taken_at IS NULL
                       ORDER BY id ASC LIMIT 1', [$me['id']]);
         if (!$t) json_out(['ok' => true, 'item' => null]);
