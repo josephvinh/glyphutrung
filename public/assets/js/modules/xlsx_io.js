@@ -15,7 +15,7 @@ window.TNTT.xlsx_io = {
         if (!window.TNTT._xlsxPromise) {
             window.TNTT._xlsxPromise = new Promise((resolve, reject) => {
                 const s = document.createElement('script');
-                s.src = '/assets/js/vendor/xlsx.core.min.js?v=0.20.3';
+                s.src = '/assets/js/vendor/xlsx.core.min.js?v=0.20.3-tnr';
                 s.onload = () => resolve(window.XLSX);
                 s.onerror = () => { window.TNTT._xlsxPromise = null; reject(new Error('Không tải được thư viện Excel')); };
                 document.head.appendChild(s);
