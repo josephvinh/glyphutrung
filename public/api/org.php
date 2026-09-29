@@ -2,14 +2,22 @@
 /**
  * KHỐI · LỚP · NHÂN SỰ
  *
+ * Khối & Lớp (quyền module 'org'):
  *   POST api/org.php?action=saveBlock    { original?, name }
  *   POST api/org.php?action=deleteBlock  { name }
  *   POST api/org.php?action=saveClass    { original?, name, block, nextClass? }
  *   POST api/org.php?action=deleteClass  { name }
- *   POST api/org.php?action=saveMember   { id?, holyName, fullName, phone, role, title, block, className, status }
- *   POST api/org.php?action=deleteMember { id }
  *   POST api/org.php?action=setClassHead { className, memberId }
  *   POST api/org.php?action=setBlockHead { block, memberId }
+ *
+ * Nhân sự (quyền module 'staff'):
+ *   POST api/org.php?action=saveMember    { id, holyName, fullName, phone, role, title, block, className }
+ *   POST api/org.php?action=deleteMember  { id }
+ *   POST api/org.php?action=approveMember / rejectMember / resetPassword
+ *
+ * member_assignments là nguồn thật của "ai phụ trách chỗ nào"; các cột
+ * members.role_code/block_id/class_id chỉ là bản dẫn xuất, luôn tính lại bằng
+ * recompute_member_primary() sau khi phân công đổi.
  *
  * Đổi tên khối/lớp ở đây KHÔNG phải lan sang bảng khác như hồi chạy
  * dữ liệu giả lập — các bảng đều tham chiếu bằng id, nên đổi tên là
@@ -38,16 +46,6 @@ require_once __DIR__ . '/OrgService.php';
 require_once __DIR__ . '/StaffService.php';
 $org = new OrgService($me, $yid, $in);
 $staff = new StaffService($me, $yid, $in);
-
-/** Legacy helpers - dùng Services */
-function is_protected(array $m): bool {
-    return in_array($m['role_code'], ['admin', 'bdh'], true);
-}
-
-function demote(int $memberId): void {
-    global $org;
-    $org->demoteMember($memberId);
-}
 
 switch ($action) {
 
@@ -155,7 +153,7 @@ switch ($action) {
         if (!$m) json_fail('Không tìm thấy thành viên.', 404);
 
         // Chỉ Quản trị mới cấp lại được cho Ban Điều Hành
-        if (is_protected($m) && $me['role_code'] !== 'admin') {
+        if ($staff->isProtected($m) && $me['role_code'] !== 'admin') {
             json_fail('Chỉ Quản Trị Hệ Thống mới cấp lại mật khẩu cho Ban Điều Hành.', 403);
         }
 
@@ -193,60 +191,45 @@ switch ($action) {
             }
         }
 
+        $m = null;
+        if ($memberId) {
+            $m = db_one('SELECT id, role_code, full_name FROM members WHERE id=?', [$memberId]);
+            if (!$m) json_fail('Không tìm thấy thành viên.', 404);
+        }
+
+        $roleCode = $isClass ? 'glv_chu_nhiem' : 'truong_khoi';
+        $scopeCol = $isClass ? 'class_id' : 'block_id';
+
         db()->beginTransaction();
         try {
-            $roleCode = $isClass ? 'glv_chu_nhiem' : 'truong_khoi';
-            $scopeCol = $isClass ? 'class_id' : 'block_id';
-
             // Mỗi lớp 1 chủ nhiệm, mỗi khối 1 trưởng khối: kết thúc phân công
             // cũ của NGƯỜI KHÁC (giữ nếu vẫn là người này). memberId = 0 nghĩa
             // là gỡ hẳn chức, khi đó kết thúc tất cả.
-            $oldAssigns = db_all(
-                "SELECT member_id FROM member_assignments 
+            $affected = array_column(db_all(
+                "SELECT member_id FROM member_assignments
                   WHERE role_code = ? AND $scopeCol = ? AND to_date IS NULL AND member_id != ?",
                 [$roleCode, $target['id'], $memberId]
-            );
+            ), 'member_id');
             db_run(
                 "UPDATE member_assignments SET to_date = CURDATE()
                   WHERE role_code = ? AND $scopeCol = ? AND to_date IS NULL AND member_id != ?",
                 [$roleCode, $target['id'], $memberId]
             );
-            foreach ($oldAssigns as $old) {
-                $oldM = db_one('SELECT id, role_code, full_name FROM members WHERE id=?', [$old['member_id']]);
-                if ($oldM && !is_protected($oldM)) {
-                    demote((int) $old['member_id']);
-                }
-            }
 
-            if ($memberId) {
-                $m = db_one('SELECT id, role_code, full_name FROM members WHERE id=?', [$memberId]);
-                if (!$m) json_fail('Không tìm thấy thành viên.', 404);
-
-                if ($isClass) {
-                    // Thêm phân công kiêm nhiệm
-                    $existing = db_one(
-                        "SELECT id FROM member_assignments WHERE member_id = ? AND class_id = ? AND role_code = ? AND to_date IS NULL",
-                        [$memberId, $target['id'], $roleCode]
-                    );
-                    if (!$existing) {
+            if ($m) {
+                $existing = db_one(
+                    "SELECT id FROM member_assignments
+                      WHERE member_id = ? AND $scopeCol = ? AND role_code = ? AND to_date IS NULL",
+                    [$memberId, $target['id'], $roleCode]
+                );
+                if (!$existing) {
+                    if ($isClass) {
                         db_insert(
                             "INSERT INTO member_assignments (member_id, role_code, class_id, block_id, is_primary, from_date, assigned_by, note)
                              VALUES (?, ?, ?, ?, 0, CURDATE(), ?, ?)",
                             [$memberId, $roleCode, $target['id'], $target['block_id'], $me['id'], 'Phân công chủ nhiệm lớp']
                         );
-                    }
-                    db_run(
-                        "UPDATE member_assignments SET to_date = CURDATE()
-                          WHERE member_id = ? AND class_id = ? AND role_code = 'glv' AND to_date IS NULL",
-                        [$memberId, $target['id']]
-                    );
-                } else {
-                    // Trưởng khối - thêm vào block
-                    $existing = db_one(
-                        "SELECT id FROM member_assignments WHERE member_id = ? AND block_id = ? AND role_code = ? AND to_date IS NULL",
-                        [$memberId, $target['id'], $roleCode]
-                    );
-                    if (!$existing) {
+                    } else {
                         db_insert(
                             "INSERT INTO member_assignments (member_id, role_code, block_id, is_primary, from_date, assigned_by, note)
                              VALUES (?, ?, ?, 0, CURDATE(), ?, ?)",
@@ -254,24 +237,24 @@ switch ($action) {
                         );
                     }
                 }
-
-                // Cập nhật vai trò chính (bảng members) nếu được thăng cấp hoặc đổi lớp/khối ngang hàng
-                if (!is_protected($m)) {
-                    $levels = ['admin' => 50, 'bdh' => 40, 'truong_khoi' => 30, 'glv_chu_nhiem' => 20, 'glv' => 10];
-                    $curLvl = $levels[$m['role_code']] ?? 0;
-                    $newLvl = $levels[$roleCode] ?? 0;
-                    if ($newLvl > $curLvl) {
-                        $t = db_one('SELECT id FROM titles WHERE role_code=? ORDER BY sort_order LIMIT 1', [$roleCode]);
-                        db_run('UPDATE members SET role_code=?, title_id=?, block_id=?, class_id=? WHERE id=?',
-                               [$roleCode, $t['id'] ?? null, $target['block_id'] ?? $target['id'], $isClass ? $target['id'] : null, $memberId]);
-                    } elseif ($newLvl === $curLvl) {
-                        db_run('UPDATE members SET block_id=?, class_id=? WHERE id=?',
-                               [$target['block_id'] ?? $target['id'], $isClass ? $target['id'] : null, $memberId]);
-                    }
+                if ($isClass) {
+                    // Chủ nhiệm thay thế phân công GLV thường của chính lớp này
+                    db_run(
+                        "UPDATE member_assignments SET to_date = CURDATE()
+                          WHERE member_id = ? AND class_id = ? AND role_code = 'glv' AND to_date IS NULL",
+                        [$memberId, $target['id']]
+                    );
                 }
+                $affected[] = $memberId;
 
                 log_action('sua', 'org', 'Phân công ' . ($isClass ? 'chủ nhiệm lớp' : 'trưởng khối'),
                            $m['full_name']);
+            }
+
+            // Vai gốc + khối/lớp hiển thị là bản dẫn xuất — tính lại cho mọi
+            // người có phân công vừa đổi (người bị thay lẫn người mới nhận).
+            foreach (array_unique(array_map('intval', $affected)) as $mid) {
+                recompute_member_primary($mid);
             }
             db()->commit();
         } catch (Throwable $e) {

@@ -143,4 +143,79 @@ class AssignmentTest extends TestCase {
         $this->assertEquals(1, $assign2['is_primary'], 'assign2 should be primary');
         $this->assertEquals(0, $assign1['is_primary'], 'assign1 should no longer be primary');
     }
+
+    // ---- recompute_member_primary: member_assignments là nguồn thật ----
+
+    private function addActive(string $role, ?int $blockId, ?int $classId): void {
+        db_run(
+            "INSERT INTO member_assignments (member_id, role_code, block_id, class_id, is_primary, from_date, assigned_by)
+             VALUES (?, ?, ?, ?, 0, CURDATE(), ?)",
+            [$this->testMemberId, $role, $blockId, $classId, $this->adminId]
+        );
+    }
+
+    private function memberRow(): array {
+        return db_one("SELECT role_code, block_id, class_id FROM members WHERE id = ?", [$this->testMemberId]);
+    }
+
+    public function test_recompute_keeps_du_bi_role_when_no_assignment_left(): void {
+        db_run("UPDATE members SET role_code = 'du_bi' WHERE id = ?", [$this->testMemberId]);
+        // Từng có phân công (nay đã kết thúc) → đi vào nhánh "hết phân công"
+        $class = db_one("SELECT id, block_id FROM classes LIMIT 1");
+        $this->addActive('truong_khoi', (int) $class['block_id'], null);
+        db_run("UPDATE member_assignments SET to_date = CURDATE() WHERE member_id = ?", [$this->testMemberId]);
+
+        recompute_member_primary($this->testMemberId);
+        $m = $this->memberRow();
+        $this->assertEquals('du_bi', $m['role_code'], 'Dự Bị không bị hạ thành GLV');
+        $this->assertNull($m['class_id']);
+    }
+
+    public function test_recompute_leaves_legacy_member_without_any_assignment_alone(): void {
+        $block = db_one("SELECT id FROM blocks LIMIT 1");
+        db_run("UPDATE members SET role_code = 'truong_khoi', block_id = ? WHERE id = ?",
+               [$block['id'], $this->testMemberId]);
+        // Chỉ có Thủ Thư (vai phụ trợ) — không được làm mất vai/khối gốc
+        $this->addActive('thu_thu', null, null);
+
+        recompute_member_primary($this->testMemberId);
+        $m = $this->memberRow();
+        $this->assertEquals('truong_khoi', $m['role_code']);
+        $this->assertEquals((int) $block['id'], (int) $m['block_id']);
+    }
+
+    public function test_recompute_picks_highest_assignment_and_demotes_when_lost(): void {
+        $class = db_one("SELECT id, block_id FROM classes LIMIT 1");
+        $this->addActive('glv', (int) $class['block_id'], (int) $class['id']);
+        $this->addActive('truong_khoi', (int) $class['block_id'], null);
+
+        recompute_member_primary($this->testMemberId);
+        $m = $this->memberRow();
+        $this->assertEquals('truong_khoi', $m['role_code']);
+        $this->assertEquals((int) $class['block_id'], (int) $m['block_id']);
+        $this->assertNull($m['class_id']);
+
+        db_run("UPDATE member_assignments SET to_date = CURDATE()
+                 WHERE member_id = ? AND role_code = 'truong_khoi'", [$this->testMemberId]);
+        recompute_member_primary($this->testMemberId);
+        $m = $this->memberRow();
+        $this->assertEquals('glv', $m['role_code'], 'Mất chức trưởng khối thì về GLV còn phân công');
+        $this->assertEquals((int) $class['id'], (int) $m['class_id']);
+    }
+
+    public function test_recompute_never_touches_protected_roles(): void {
+        db_run("UPDATE members SET role_code = 'bdh' WHERE id = ?", [$this->testMemberId]);
+        recompute_member_primary($this->testMemberId);
+        $this->assertEquals('bdh', $this->memberRow()['role_code']);
+    }
+
+    public function test_assignment_scope_admin_all_and_toan_doan_needs_admin_or_bdh(): void {
+        $admin = db_one("SELECT * FROM members WHERE role_code = 'admin' LIMIT 1");
+        $block = db_one("SELECT id FROM blocks LIMIT 1");
+        $this->assertTrue(can_manage_assignment_scope($admin, (int) $block['id'], null));
+        $this->assertTrue(can_manage_assignment_scope($admin, null, null));
+
+        $glv = db_one("SELECT * FROM members WHERE id = ?", [$this->testMemberId]);
+        $this->assertFalse(can_manage_assignment_scope($glv, null, null), 'GLV không cấp được phân công toàn đoàn');
+    }
 }

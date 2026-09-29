@@ -457,6 +457,19 @@ function can_manage_class(array $me, int $classId): bool
     $c = db_one('SELECT block_id FROM classes WHERE id = ?', [$classId]);
     return $c && in_array((int) $c['block_id'], $blocks, true);
 }
+
+/**
+ * Người dùng có được thêm/gỡ/đổi một phân công thuộc phạm vi này không?
+ * Admin/BĐH: mọi phạm vi. Trưởng khối: lớp và khối THUỘC khối mình.
+ * Phân công toàn đoàn (không gắn khối/lớp) chỉ Admin/BĐH được đụng vào.
+ */
+function can_manage_assignment_scope(array $me, ?int $blockId, ?int $classId): bool
+{
+    if ($classId) return can_manage_class($me, $classId);
+    if ($blockId) return can_manage_block($me, $blockId);
+    return responsible_blocks($me) === null;
+}
+
 function allowed_class_ids(array $me): ?array
 {
     // Ranh giới XEM hồ sơ: mọi lớp/khối mình được phân công (kể cả kiêm nhiệm).

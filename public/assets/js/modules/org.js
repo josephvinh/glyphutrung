@@ -375,6 +375,8 @@ window.TNTT.org = {
                 if (this.filterClass === old) this.filterClass = name;
                 if (this.attendanceClass === old) this.attendanceClass = name;
             }
+            // Đổi khối/tên lớp kéo theo phân công của người trong lớp
+            this.loadAllAssignments();
         });
         this.showClassModal = false;
     },
@@ -463,12 +465,6 @@ window.TNTT.org = {
             .sort((a, b) => this.roleLevel(b.role) - this.roleLevel(a.role));
     },
 
-    openCreateMember() {
-        this.memberForm = { id: null, holyName: '', fullName: '', phone: '', birthDate: '', role: 'glv', title: 'GLV Phụ Tá', block: '', className: '', status: 'đang phục vụ' };
-        this.isEditingMember = false;
-        this.showMemberModal = true;
-    },
-
     openEditMember(m) {
         this.memberForm = JSON.parse(JSON.stringify(m));
         this.isEditingMember = true;
@@ -503,31 +499,10 @@ window.TNTT.org = {
             if (cls) f.block = cls.block;
         }
 
-        // Mỗi lớp chỉ một chủ nhiệm, mỗi khối chỉ một trưởng khối
-        if (f.role === 'glv_chu_nhiem') {
-            const cur = this.headOfClass(f.className);
-            if (cur && cur.id !== f.id) { 
-                cur.role = 'glv'; cur.title = 'GLV Phụ Tá'; 
-                if (cur.id === this.user.memberId) {
-                    this.user.role = cur.role;
-                    this.user.roleTitle = cur.title;
-                    this.assignments = [];
-                }
-            }
-        }
-        if (f.role === 'truong_khoi') {
-            const cur = this.headOfBlock(f.block);
-            if (cur && cur.id !== f.id) { 
-                cur.role = 'glv'; cur.title = 'GLV Phụ Tá'; 
-                if (cur.id === this.user.memberId) {
-                    this.user.role = cur.role;
-                    this.user.roleTitle = cur.title;
-                    this.assignments = [];
-                }
-            }
-        }
+        // Chủ nhiệm lớp / trưởng khối do màn Khối & Lớp quản qua phân công
+        // (setClassHead/setBlockHead — backend tự hạ người cũ). Không đoán ở đây.
 
-        if (this.isEditingMember) {
+        {
             const i = this.members.findIndex(x => x.id === f.id);
             if (i !== -1) {
                 this.members[i] = f;
@@ -545,18 +520,11 @@ window.TNTT.org = {
                     this.assignments = []; // Ép tính lại nhãn theo phân công mới nhất
                 }
             }
-        } else {
-            f.id = Date.now();
-            this.members.push(f);
         }
-        this.logAction(this.isEditingMember ? 'sua' : 'tao', 'org',
-                       (this.isEditingMember ? 'Sửa' : 'Thêm') + ' thành viên ' + f.fullName,
+        this.logAction('sua', 'org', 'Sửa thành viên ' + f.fullName,
                        this.roleLabel(f.role) + ' · ' + (f.className || f.block || 'toàn đoàn'));
         this.showMemberModal = false;
-        this.save('org', 'saveMember', f).then(r => { 
-            if (!r || !r.ok) this.loadData();
-            else if (r.id) f.id = r.id; 
-        });
+        this.save('org', 'saveMember', f).then(r => { if (!r || !r.ok) this.loadData(); });
     },
 
     async deleteMember(m) {
@@ -573,10 +541,4 @@ window.TNTT.org = {
 
     // Quản lý phân công kiêm nhiệm đã chuyển sang màn Khối & Lớp:
     // addClassMember / removeClassAssignment / setClassHead / setBlockHead.
-
-    blockIdByName(blockName) {
-        // Lookup block id from name - assumes blocks array contains objects or we need to check structure
-        const cls = this.classes.find(c => c.block === blockName);
-        return cls ? cls.blockId || blockName : blockName;
-    },
 };

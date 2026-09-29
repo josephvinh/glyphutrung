@@ -88,11 +88,6 @@
         </div>
     </div>
 
-    <button x-show="canManageOrg" @click="openCreateMember()" style="display: none;"
-            class="w-full mb-4 py-3 bg-blue-600 text-white rounded-field font-bold text-sm shadow-md shadow-blue-200 active:scale-[0.98] transition-transform flex items-center justify-center gap-2">
-        <i data-lucide="user-plus" class="w-4 h-4"></i> Thêm thành viên
-    </button>
-
     <!-- Tìm kiếm -->
     <div class="relative mb-3">
         <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
@@ -199,7 +194,7 @@
 
         <div class="flex justify-center pt-3 pb-2 bg-white"><div class="w-12 h-1.5 bg-slate-200 rounded-full"></div></div>
         <div class="flex justify-between items-center px-5 pb-4 border-b border-slate-100 bg-white">
-            <h3 class="text-lg font-black text-slate-800" x-text="isEditingMember ? 'Sửa thành viên' : 'Thêm thành viên'"></h3>
+            <h3 class="text-lg font-black text-slate-800" x-text="'Sửa thành viên'"></h3>
             <button aria-label="Đóng" @click="showMemberModal = false" class="tap-safe w-8 h-8 flex items-center justify-center bg-slate-100 rounded-full text-slate-500 active:scale-90 transition-transform"><i data-lucide="x" class="w-4 h-4"></i></button>
         </div>
 

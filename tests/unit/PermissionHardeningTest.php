@@ -8,12 +8,12 @@ use PHPUnit\Framework\TestCase;
 /**
  * Kiểm thử các bản vá phân quyền:
  *   F9 — can_see_admin(): chỉ admin thấy vai/tài khoản admin.
- *   F2 — StaffService::saveMember() whitelist: bdh không gán được admin/bdh
- *        và không gán được vai lạ.
+ *   F2 — StaffService::saveMember() whitelist: bdh không đổi ai thành admin/bdh
+ *        và không gán được vai lạ; không có id (tạo mới) thì bị từ chối.
  *   F1 — can_access_class() cho module students: lớp ngoài phạm vi bị chặn sửa.
  *
- * Các test whitelist (403/400) và can_see_admin KHÔNG chạm CSDL (trả về trước
- * khi truy vấn) nên chạy được cả khi không có DB. Các test có gắn @group db
+ * Test can_see_admin và test từ chối tạo mới KHÔNG chạm CSDL nên chạy được cả
+ * khi không có DB. Các test có gắn @group db
  * cần CSDL thật (chạy ở CI).
  */
 class PermissionHardeningTest extends TestCase
@@ -38,37 +38,38 @@ class PermissionHardeningTest extends TestCase
     }
 
     // ---------------------------------------------------------------- F2
-    public function test_bdh_cannot_create_admin(): void
+    /** Không còn tạo thành viên ở màn Nhân sự: phải tự đăng ký rồi BĐH duyệt */
+    public function test_save_member_without_id_is_refused(): void
     {
         $this->fakePost();
-        $svc = new StaffService(['id' => 1, 'role_code' => 'bdh'], 1, [
-            'fullName' => 'Puppet Admin', 'phone' => '0900000001', 'role' => 'admin',
-        ]);
-        $r = $svc->saveMember();
-        $this->assertFalse($r['ok']);
-        $this->assertSame(403, $r['code'] ?? 0);
-    }
-
-    public function test_bdh_cannot_create_bdh(): void
-    {
-        $this->fakePost();
-        $svc = new StaffService(['id' => 1, 'role_code' => 'bdh'], 1, [
-            'fullName' => 'Puppet BDH', 'phone' => '0900000002', 'role' => 'bdh',
-        ]);
-        $r = $svc->saveMember();
-        $this->assertFalse($r['ok']);
-        $this->assertSame(403, $r['code'] ?? 0);
-    }
-
-    public function test_bdh_cannot_assign_unknown_role(): void
-    {
-        $this->fakePost();
-        $svc = new StaffService(['id' => 1, 'role_code' => 'bdh'], 1, [
-            'fullName' => 'Weird Role', 'phone' => '0900000003', 'role' => 'superuser',
+        $svc = new StaffService(['id' => 1, 'role_code' => 'admin'], 1, [
+            'fullName' => 'Puppet', 'phone' => '0900000001', 'role' => 'glv',
         ]);
         $r = $svc->saveMember();
         $this->assertFalse($r['ok']);
         $this->assertSame(400, $r['code'] ?? 0);
+    }
+
+    /** @group db — BĐH không đổi được người có sẵn thành admin/bdh hay vai lạ */
+    public function test_bdh_cannot_escalate_or_assign_unknown_role(): void
+    {
+        require_once __DIR__ . '/../../public/api/_bootstrap.php';
+        $this->fakePost();
+
+        $mid = db_insert(
+            "INSERT INTO members (code, full_name, phone, password_hash, role_code)
+             VALUES ('F2_TEST', 'F2 Test', ?, ?, 'glv')",
+            ['09' . random_int(10000000, 99999999), password_hash('x', PASSWORD_DEFAULT)]
+        );
+        foreach ([['admin', 403], ['bdh', 403], ['superuser', 400]] as [$role, $code]) {
+            $svc = new StaffService(['id' => 1, 'role_code' => 'bdh'], 1, [
+                'id' => $mid, 'fullName' => 'F2 Test', 'phone' => '0900000009', 'role' => $role,
+            ]);
+            $r = $svc->saveMember();
+            $this->assertFalse($r['ok'], $role);
+            $this->assertSame($code, $r['code'] ?? 0, $role);
+        }
+        db_run("DELETE FROM members WHERE id=?", [$mid]);
     }
 
     // ------------------------------------------------------------- F1 (DB)

@@ -30,13 +30,18 @@ class StaffService
     }
 
     /**
-     * Lưu thành viên (tạo mới hoặc cập nhật)
+     * Sửa thông tin thành viên đã có (không tạo mới — xem auth.php đăng ký + approveMember)
      */
     public function saveMember(): array
     {
         require_write();
 
+        // Không tạo thành viên ở đây: thành viên tự đăng ký (auth.php) rồi BĐH
+        // duyệt (approveMember). Hàm này chỉ SỬA người đã có.
         $id = (int) ($this->in['id'] ?? 0);
+        if (!$id) {
+            return ['ok' => false, 'error' => 'Thành viên phải tự đăng ký tài khoản, rồi BĐH duyệt ở mục chờ duyệt.', 'code' => 400];
+        }
 
         $holyName = mb_convert_case(
             preg_replace('/\s+/', ' ', $this->in('holyName')),
@@ -165,7 +170,7 @@ class StaffService
         // cách non-destructive. saveMember chỉ quản DANH TÍNH + VAI GỐC.
         if ($old) {
             // Đang kiêm nhiệm (có ≥1 phân công hiệu lực) thì vai gốc + block/class
-            // là giá trị DẪN XUẤT từ phân công (xem demoteMember) — không sửa
+            // là giá trị DẪN XUẤT từ phân công (xem recompute_member_primary) — không sửa
             // ngược từ màn Nhân sự, chỉ cập nhật danh tính để không xoá kiêm nhiệm.
             if ($hasAssignments) {
                 // Không âm thầm nuốt thay đổi vai: nếu người dùng cố đổi vai gốc
@@ -191,39 +196,6 @@ class StaffService
             }
 
             log_action('sua', 'staff', 'Sửa nhân sự: ' . $name, $role);
-        } else {
-            // Tạo mới: chỉ tạo bản ghi members (trạng thái chờ duyệt). KHÔNG tạo
-            // assignment — phân lớp/khối làm sau ở màn Khối & Lớp.
-            $defaultPw = app_config('default_password') ?: 'tntt@2026';
-            $pwHash    = password_hash($defaultPw, PASSWORD_DEFAULT);
-            // Cấp mã GLV kế tiếp (giống luồng tự đăng ký ở auth.php). MAX+1 không
-            // nguyên tử nên hai lần tạo song song (kể cả cùng lúc với tự đăng ký)
-            // có thể trùng mã — members.code là UNIQUE. Thử lại vài lần với mã kế
-            // tiếp thay vì để lỗi trùng khoá làm hỏng cả yêu cầu (500).
-            $inserted = false;
-            for ($attempt = 0; $attempt < 5 && !$inserted; $attempt++) {
-                $max  = db_one("SELECT COALESCE(MAX(CAST(SUBSTRING(code,4) AS UNSIGNED)),0) n
-                                  FROM members WHERE code LIKE 'GLV%'");
-                $code = 'GLV' . str_pad((string) (((int) ($max['n'] ?? 0)) + 1), 3, '0', STR_PAD_LEFT);
-                try {
-                    db_insert(
-                        "INSERT INTO members (code, holy_name, full_name, phone, password_hash, role_code, title_id, block_id, class_id, status, created_at)
-                         VALUES (?,?,?,?,?,?,?,?,?,'chờ duyệt',NOW())",
-                        [$code, $holyName, $name, $phone, $pwHash, $role, $titleId, $blockId, $classId]
-                    );
-                    $inserted = true;
-                } catch (\PDOException $e) {
-                    // 23000 = vi phạm ràng buộc (khả năng trùng mã do đua). Nếu là
-                    // trùng SỐ ĐIỆN THOẠI thì đã chặn ở trên; còn lại thử mã mới.
-                    if ($e->getCode() !== '23000' || $attempt === 4) {
-                        return ['ok' => false,
-                                'error' => 'Không tạo được tài khoản (mã bị trùng do thao tác đồng thời), '
-                                         . 'vui lòng thử lại.', 'code' => 409];
-                    }
-                }
-            }
-
-            log_action('tao', 'staff', 'Tạo nhân sự: ' . $name, $role);
         }
 
         Cache::flush();
