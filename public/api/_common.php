@@ -137,6 +137,7 @@ function enforce_single_primary(int $memberId, int $primaryAssignmentId): void
  *    chính rồi đến mới nhất.
  *  - Hết phân công: người giữ chức (trưởng khối/chủ nhiệm) hạ về GLV; GLV và
  *    Dự Bị giữ nguyên vai, khối/lớp về rỗng.
+ *  - Người chưa từng có phân công nào (tài khoản cũ): không đụng.
  */
 function recompute_member_primary(int $memberId): void
 {
@@ -157,6 +158,15 @@ function recompute_member_primary(int $memberId): void
     foreach ($rows as $r) {
         $rk = $rank[$r['role_code']] ?? 0;
         if ($rk > 0 && ($best === null || $rk > $rank[$best['role_code']])) $best = $r;
+    }
+
+    if (!$best) {
+        // Tài khoản cũ chưa từng có phân công (vai + khối/lớp chỉ nằm ở members,
+        // xem fallback trong responsible_blocks): để nguyên, đừng hạ vai. Chỉ
+        // tính lại khi họ từng có phân công (nay đã hết) — tức đã đi qua Khối & Lớp.
+        $hadAny = db_one("SELECT 1 FROM member_assignments
+                           WHERE member_id = ? AND role_code <> 'thu_thu' LIMIT 1", [$memberId]);
+        if (!$hadAny) return;
     }
 
     if ($best) {

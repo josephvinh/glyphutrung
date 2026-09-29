@@ -160,8 +160,28 @@ class AssignmentTest extends TestCase {
 
     public function test_recompute_keeps_du_bi_role_when_no_assignment_left(): void {
         db_run("UPDATE members SET role_code = 'du_bi' WHERE id = ?", [$this->testMemberId]);
+        // Từng có phân công (nay đã kết thúc) → đi vào nhánh "hết phân công"
+        $class = db_one("SELECT id, block_id FROM classes LIMIT 1");
+        $this->addActive('truong_khoi', (int) $class['block_id'], null);
+        db_run("UPDATE member_assignments SET to_date = CURDATE() WHERE member_id = ?", [$this->testMemberId]);
+
         recompute_member_primary($this->testMemberId);
-        $this->assertEquals('du_bi', $this->memberRow()['role_code'], 'Dự Bị không bị hạ thành GLV');
+        $m = $this->memberRow();
+        $this->assertEquals('du_bi', $m['role_code'], 'Dự Bị không bị hạ thành GLV');
+        $this->assertNull($m['class_id']);
+    }
+
+    public function test_recompute_leaves_legacy_member_without_any_assignment_alone(): void {
+        $block = db_one("SELECT id FROM blocks LIMIT 1");
+        db_run("UPDATE members SET role_code = 'truong_khoi', block_id = ? WHERE id = ?",
+               [$block['id'], $this->testMemberId]);
+        // Chỉ có Thủ Thư (vai phụ trợ) — không được làm mất vai/khối gốc
+        $this->addActive('thu_thu', null, null);
+
+        recompute_member_primary($this->testMemberId);
+        $m = $this->memberRow();
+        $this->assertEquals('truong_khoi', $m['role_code']);
+        $this->assertEquals((int) $block['id'], (int) $m['block_id']);
     }
 
     public function test_recompute_picks_highest_assignment_and_demotes_when_lost(): void {
