@@ -6,7 +6,7 @@
    khi người dùng bấm xuất/nhập lần đầu, không làm chậm lúc mở app.
    ========================================================== */
 window.TNTT = window.TNTT || {};
-window.TNTT.xlsxIo = {
+window.TNTT.xlsx_io = {
 
     _xlsxPromise: null,
 
