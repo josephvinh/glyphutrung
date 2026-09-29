@@ -9,6 +9,8 @@ $__links = [
      'desc' => 'Dành cho Giáo Lý Viên, Trưởng Khối, Ban Điều Hành và Thủ Thư: điểm danh, điểm số, thiếu nhi, đổi quà…', 'cls' => 'primary'],
     ['href' => 'tracuu.php', 'icon' => '📒', 'title' => 'Tra cứu Sổ Mộc',
      'desc' => 'Em và phụ huynh nhập mã thiếu nhi để xem Mộc, chuỗi đi lễ và đặt trước quà.', 'cls' => ''],
+    ['href' => 'sotay.php', 'icon' => '📘', 'title' => 'Sổ tay thiếu nhi',
+     'desc' => 'Xem điểm số, sổ điểm danh và sổ liên lạc của em — nhập mã thiếu nhi và ngày sinh.', 'cls' => ''],
     ['href' => 'bxh.php', 'icon' => '🏆', 'title' => 'Bảng thi đua',
      'desc' => 'Xếp hạng chuyên cần &amp; học tập của các lớp, các em.', 'cls' => ''],
 ];
