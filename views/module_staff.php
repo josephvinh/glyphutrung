@@ -137,6 +137,8 @@
                                     class="text-micro font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border"
                               :class="roleChipClass(m.role)" x-text="roleLabelFor(m)"></span>
                         <span class="text-micro font-semibold text-slate-500" x-text="titleFor(m)"></span>
+                        <span x-show="m.role !== 'thu_thu' && librarianAssignment(m.id)" style="display: none;"
+                              class="text-micro font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border bg-pink-50 text-pink-600 border-pink-200">Thủ Thư</span>
                     </div>
                     <p class="text-micro font-medium text-slate-500 mt-1"
                        x-text="m.className || m.block || 'Toàn đoàn'"></p>
@@ -235,7 +237,7 @@
                 <select x-model="memberForm.role" @change="onMemberRoleChange()"
                         :disabled="roleFieldLocked(memberForm)"
                         class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed">
-                    <template x-for="r in roleDefs" :key="r.value">
+                    <template x-for="r in roleDefs.filter(x => x.value !== 'thu_thu')" :key="r.value">
                         <option :value="r.value" x-text="r.label"></option>
                     </template>
                 </select>
@@ -247,6 +249,19 @@
                 </p>
                 <p x-show="!roleFieldLocked(memberForm)" class="text-micro text-slate-500 mt-1.5 leading-snug"
                    x-text="'Phạm vi: ' + roleScope(memberForm.role)"></p>
+            </div>
+
+            <!-- THỦ THƯ: vai kiêm nhiệm thêm (đứng quầy đổi quà), giữ nguyên vai chính -->
+            <div x-show="isEditingMember && memberForm.role !== 'thu_thu' && memberForm.status === 'đang phục vụ'" style="display: none;"
+                 class="flex items-center justify-between gap-3 bg-pink-50/60 border border-pink-100 rounded-2xl p-3">
+                <div class="min-w-0">
+                    <p class="text-sm font-bold text-slate-800">Kiêm nhiệm Thủ Thư</p>
+                    <p class="text-micro text-slate-500 leading-snug">Được đứng quầy Đổi quà và quản Danh mục quà. Không đổi vai trò chính.</p>
+                </div>
+                <button type="button" @click="toggleLibrarian(memberForm)" :disabled="!canManageOrg"
+                        class="shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold border active:scale-95 transition-transform disabled:opacity-50"
+                        :class="librarianAssignment(memberForm.id) ? 'bg-pink-600 text-white border-pink-600' : 'bg-white text-pink-600 border-pink-200'"
+                        x-text="librarianAssignment(memberForm.id) ? 'Đang là Thủ Thư · Gỡ' : 'Giao Thủ Thư'"></button>
             </div>
 
             <!-- CHỨC DANH -->

@@ -6,6 +6,12 @@
  */
 require __DIR__ . '/api/_bootstrap_page.php';
 $me = current_member();
+// Khách chưa đăng nhập: hiện trang chủ điều hướng; bấm "Đăng nhập quản lý"
+// (?dangnhap=1) mới vào form đăng nhập. Người cần đổi mật khẩu vào thẳng form.
+if (!$me && !isset($_GET['dangnhap'])) {
+    include __DIR__ . '/../views/layout_landing.php';
+    exit;
+}
 if (!$me || $me['must_change_pw']) {
     include __DIR__ . '/../views/layout_login.php';
     exit;

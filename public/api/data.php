@@ -400,7 +400,8 @@ $members = array_map(fn($m) => [
 ], db_all(
     'SELECT m.*, t.label AS title_label, b.name AS block_name, c.name AS class_name,
             EXISTS(SELECT 1 FROM member_assignments a
-                    WHERE a.member_id = m.id AND a.to_date IS NULL) AS has_assignment
+                    WHERE a.member_id = m.id AND a.to_date IS NULL
+                      AND a.role_code <> \'thu_thu\') AS has_assignment
        FROM members m
        LEFT JOIN titles  t ON t.id = m.title_id
        LEFT JOIN blocks  b ON b.id = m.block_id
