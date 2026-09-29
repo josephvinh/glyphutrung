@@ -205,7 +205,7 @@ function tracuu_attendance(int $studentId, int $yearId, ?string $today = null): 
             'mark'    => $mark,
         ];
     }
-    // Tỉ lệ chuyên cần: có mặt + trễ trên tổng buổi (cùng công thức build_attendance_csv)
+    // Tỉ lệ chuyên cần: có mặt + trễ trên tổng buổi (cùng công thức build_attendance_rows)
     $sum['rate'] = $sum['total'] > 0 ? (int) round(($sum['present'] + $sum['late']) / $sum['total'] * 100) : 0;
 
     return ['sessions' => $out, 'summary' => $sum];
