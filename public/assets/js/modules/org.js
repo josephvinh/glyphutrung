@@ -25,7 +25,8 @@ window.TNTT.org = {
         bdh:            ['Đoàn Trưởng', 'Đoàn Phó', 'Thư Ký', 'Thủ Quỹ', 'Ủy Viên'],
         truong_khoi:    ['Trưởng Khối', 'Phó Khối'],
         glv_chu_nhiem:  ['GLV Chủ Nhiệm'],
-        glv:            ['GLV Phụ Tá', 'Huynh Trưởng', 'Dự Trưởng']
+        glv:            ['GLV Phụ Tá', 'Huynh Trưởng', 'Dự Trưởng'],
+        thu_thu:        ['Thủ Thư']
     },
 
     members: [],   // máy chủ nạp qua loadData()
@@ -62,6 +63,28 @@ window.TNTT.org = {
         this.memberSearch = '';
         this.memberRoleFilter = '';
         this.changeModule('staff');
+        this.loadAllAssignments();
+    },
+
+    // ---- THỦ THƯ: vai kiêm nhiệm thêm (phục vụ đổi quà), không đổi vai gốc ----
+    librarianAssignment(memberId) {
+        return (this.allAssignments || []).find(a => a.role === 'thu_thu' && a.memberId === memberId) || null;
+    },
+
+    isLibrarian(m) {
+        return !!m && (m.role === 'thu_thu' || !!this.librarianAssignment(m.id));
+    },
+
+    async toggleLibrarian(m) {
+        if (!m || !m.id || !this.canManageOrg) return;
+        const cur = this.librarianAssignment(m.id);
+        if (cur) {
+            if (!await window.TNTT.toast.confirm('Gỡ vai Thủ Thư của ' + this.memberFullName(m) + '?', { danger: true, confirmText: 'Gỡ' })) return;
+            await this.save('assignments', 'end', { assignmentId: cur.id });
+        } else {
+            await this.save('assignments', 'create', { memberId: Number(m.id), role: 'thu_thu' });
+        }
+        await this.loadAllAssignments();
     },
 
     // Chỉ Ban Điều Hành trở lên mới sửa được. Cấp dưới chỉ xem.

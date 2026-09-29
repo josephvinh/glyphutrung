@@ -121,13 +121,24 @@ switch ($action) {
             $classId = null;
         }
 
+        // Thủ Thư là vai PHỤ TRỢ (kiêm nhiệm thêm, không đổi vai gốc): không bao
+        // giờ làm phân công chính, và cấp lặp thì trả lại phân công đang có.
+        if ($role === 'thu_thu') {
+            $dup = db_one(
+                "SELECT id FROM member_assignments
+                  WHERE member_id = ? AND role_code = 'thu_thu' AND to_date IS NULL",
+                [$memberId]
+            );
+            if ($dup) json_out(['ok' => true, 'id' => (int) $dup['id'], 'isPrimary' => false]);
+        }
+
         // Nếu đây là assignment đầu tiên → tự động primary
         $hasActive = (int) db_one(
             "SELECT COUNT(*) AS c FROM member_assignments
               WHERE member_id = ? AND to_date IS NULL",
             [$memberId]
         )['c'];
-        $isPrimary = $hasActive === 0 ? 1 : 0;
+        $isPrimary = ($hasActive === 0 && $role !== 'thu_thu') ? 1 : 0;
 
         $newId = db_insert(
             "INSERT INTO member_assignments
@@ -137,7 +148,7 @@ switch ($action) {
         );
 
         // Nếu user yêu cầu primary, đẩy các cái khác xuống
-        if (!empty($in['isPrimary'])) {
+        if (!empty($in['isPrimary']) && $role !== 'thu_thu') {
             enforce_single_primary($memberId, $newId);
         }
 

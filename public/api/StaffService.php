@@ -77,7 +77,7 @@ class StaffService
         //  - Chặn đổi vai gốc ở màn Nhân sự (xem nhánh cập nhật bên dưới).
         $hasAssignments = $old
             ? ((int) db_one(
-                "SELECT COUNT(*) n FROM member_assignments WHERE member_id=? AND to_date IS NULL",
+                "SELECT COUNT(*) n FROM member_assignments WHERE member_id=? AND to_date IS NULL AND role_code <> 'thu_thu'",
                 [$id]
               )['n'] > 0)
             : false;
