@@ -71,10 +71,6 @@ window.TNTT.org = {
         return (this.allAssignments || []).find(a => a.role === 'thu_thu' && a.memberId === memberId) || null;
     },
 
-    isLibrarian(m) {
-        return !!m && (m.role === 'thu_thu' || !!this.librarianAssignment(m.id));
-    },
-
     async toggleLibrarian(m) {
         if (!m || !m.id || !this.canManageOrg) return;
         const cur = this.librarianAssignment(m.id);
