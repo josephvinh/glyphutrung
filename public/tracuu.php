@@ -3,8 +3,8 @@
  * TRA CỨU ĐIỂM — ĐIỂM SỐ · ĐIỂM DANH · SỔ LIÊN LẠC (công khai)
  *
  * Trang riêng, tách khỏi Sổ Mộc (somoc.php). Em/phụ huynh nhập
- * mã thiếu nhi + NGÀY SINH (mmddyyyy, làm mật mã). Đúng mã + đúng ngày sinh
- * mới thấy 3 tab:
+ * mã thiếu nhi + NGÀY SINH (ddmmyyyy, format Việt Nam dd/mm/yyyy).
+ * Đúng mã + đúng ngày sinh mới thấy 3 tab:
  *   1. Điểm số        — các cột điểm theo học kỳ
  *   2. Điểm danh      — sổ điểm danh chi tiết từng buổi
  *   3. Sổ liên lạc    — CHỈ hiện phiếu các anh chị đã lập và gửi
@@ -168,10 +168,10 @@ h2{font-size:14px;font-weight:800;margin-bottom:10px}
     <label for="ma">Mã thiếu nhi</label>
     <input id="ma" type="text" name="ma" value="<?php echo e_($ma); ?>" placeholder="VD: GDGLPT260001" maxlength="32" required autocapitalize="characters" autocomplete="off" spellcheck="false">
     <p class="goi-y" style="margin:-6px 0 12px;text-align:left">Mã gồm <b>GDGLPT</b> + 6 số (2 số năm nhập đoàn + 4 số thứ tự), in trên thẻ của em.</p>
-    <label for="ns">Mật mã = tháng ngày năm sinh</label>
-    <input id="ns" type="text" name="ns" inputmode="numeric" placeholder="mmddyyyy — VD: 03152014" maxlength="10" required aria-describedby="ns-goiy">
+    <label for="ns">Mật mã = ngày tháng năm sinh</label>
+    <input id="ns" type="text" name="ns" inputmode="numeric" placeholder="dd/mm/yyyy — VD: 15/03/2014" maxlength="10" required aria-describedby="ns-goiy">
     <button type="submit">Xem kết quả</button>
-    <p class="goi-y" id="ns-goiy">⚠️ Nhập theo thứ tự <b>THÁNG – NGÀY – NĂM</b> (mmddyyyy). Ví dụ em sinh ngày 15 tháng 3 năm 2014 thì nhập <b>03152014</b>.</p>
+    <p class="goi-y" id="ns-goiy">⚠️ Nhập theo thứ tự <b>NGÀY – THÁNG – NĂM</b> (dd/mm/yyyy). Ví dụ em sinh ngày 15 tháng 3 năm 2014 thì nhập <b>15/03/2014</b>.</p>
   </form>
 <?php else: ?>
   <div class="card hoso">

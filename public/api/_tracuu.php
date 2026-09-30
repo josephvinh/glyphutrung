@@ -3,8 +3,9 @@
  * LOGIC TRA CỨU ĐIỂM (tracuu.php; Sổ Mộc ở somoc.php / _somoc.php) — trang tra cứu điểm số / điểm danh / sổ liên lạc
  * công khai (public/tracuu.php). Thuần, test được, KHÔNG nạp _bootstrap.php.
  *
- * Xác thực: mã thiếu nhi (students.code) + mật mã là THÁNG-NGÀY-NĂM SINH
- * (mmddyyyy). Sai mã, sai ngày sinh, em chưa có ngày sinh: TẤT CẢ trả cùng
+ * Xác thực: mã thiếu nhi (students.code) + mật mã là NGÀY-THÁNG-NĂM SINH
+ * (ddmmyyyy, format Việt Nam). Ưu tiên dd/mm/yyyy, backup mm/dd/yyyy.
+ * Sai mã, sai ngày sinh, em chưa có ngày sinh: TẤT CẢ trả cùng
  * một kết quả null để kẻ dò không phân biệt được "mã có tồn tại" hay không.
  * Rate-limit dùng chung tracuu_throttle() (cùng bảng tracuu_attempts).
  *
@@ -15,9 +16,15 @@
 require_once __DIR__ . '/_somoc.php'; // db.php + tracuu_throttle()/tracuu_attempt_record()
 
 /**
- * Chuẩn hoá ngày sinh người dùng gõ về 'mmddyyyy' (THÁNG trước, NGÀY sau).
- * Nhận 03152014, 03/15/2014, 3-15-2014, 03.15.2014 (không đệm 0 — chỉ khi
- * tách được bằng dấu).
+ * Chuẩn hoá ngày sinh người dùng gõ về 'ddmmyyyy' (NGÀY trước, THÁNG sau).
+ *
+ * Ưu tiên định dạng VIỆT NAM (dd/mm/yyyy):
+ *   - Nếu phần đầu > 12 → rõ ràng là dd/mm → dùng luôn
+ *   - Nếu mơ hồ (cả hai ≤ 12) → thử cả hai, ưu tiên dd/mm nếu hợp lệ
+ *   - Backup: mm/dd/yyyy (legacy US format) nếu dd/mm không hợp lệ
+ *
+ * Nhận: 16/03/2020, 16-03-2020, 16032020, 03/15/2014 (legacy US), 03152014
+ *
  * @return string|null null nếu không đọc ra ngày hợp lệ
  */
 function tracuu_norm_dob(string $raw): ?string
@@ -25,22 +32,61 @@ function tracuu_norm_dob(string $raw): ?string
     $raw = trim($raw);
     if ($raw === '') return null;
 
+    // Format có separator: dd/mm/yyyy hoặc dd-mm-yyyy
     if (preg_match('/^(\d{1,2})\D+(\d{1,2})\D+(\d{4})$/', $raw, $m)) {
-        [$mo, $d, $y] = [(int) $m[1], (int) $m[2], (int) $m[3]];
-    } elseif (preg_match('/^(\d{2})(\d{2})(\d{4})$/', $raw, $m)) {
-        [$mo, $d, $y] = [(int) $m[1], (int) $m[2], (int) $m[3]];
-    } else {
+        $first = (int) $m[1];
+        $second = (int) $m[2];
+        $y = (int) $m[3];
+
+        // Nếu phần đầu > 12 → rõ ràng là dd/mm/yyyy (Việt Nam)
+        if ($first > 12) {
+            if (!checkdate($second, $first, $y)) return null;
+            return sprintf('%02d%02d%04d', $first, $second, $y);
+        }
+
+        // Mơ hồ: thử cả hai cách
+        // Ưu tiên dd/mm/yyyy (Việt Nam) nếu hợp lệ
+        if (checkdate($second, $first, $y)) {
+            return sprintf('%02d%02d%04d', $first, $second, $y);
+        }
+        // Backup: mm/dd/yyyy (legacy US format)
+        if (checkdate($first, $second, $y)) {
+            return sprintf('%02d%02d%04d', $second, $first, $y);
+        }
         return null;
     }
-    if (!checkdate($mo, $d, $y)) return null;
-    return sprintf('%02d%02d%04d', $mo, $d, $y);
+
+    // Format không separator: ddmmyyyy hoặc mmddyyyy
+    if (preg_match('/^(\d{2})(\d{2})(\d{4})$/', $raw, $m)) {
+        $first = (int) $m[1];
+        $second = (int) $m[2];
+        $y = (int) $m[3];
+
+        // Nếu phần đầu > 12 → rõ ràng là ddmmyyyy
+        if ($first > 12) {
+            if (!checkdate($second, $first, $y)) return null;
+            return sprintf('%02d%02d%04d', $first, $second, $y);
+        }
+
+        // Mơ hồ: ưu tiên ddmmyyyy (Việt Nam) nếu hợp lệ
+        if (checkdate($second, $first, $y)) {
+            return sprintf('%02d%02d%04d', $first, $second, $y);
+        }
+        // Backup: mmddyyyy (legacy US format)
+        if (checkdate($first, $second, $y)) {
+            return sprintf('%02d%02d%04d', $second, $first, $y);
+        }
+        return null;
+    }
+
+    return null;
 }
 
-/** 'Y-m-d' (students.birth_date) -> 'mmddyyyy' */
+/** 'Y-m-d' (students.birth_date) -> 'ddmmyyyy' (Việt Nam) */
 function tracuu_dob_from_db(?string $ymd): ?string
 {
     if (!$ymd || !preg_match('/^(\d{4})-(\d{2})-(\d{2})/', $ymd, $m)) return null;
-    return $m[2] . $m[3] . $m[1];
+    return $m[3] . $m[2] . $m[1]; // dd/mm/yyyy = ngày + tháng + năm
 }
 
 /**
