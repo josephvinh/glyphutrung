@@ -5,7 +5,7 @@
  *
  * Quy ước theo tests/unit/StampProfileTest.php / RewardsRedeemTest.php:
  *   - require_once bootstrap (tránh fatal app_config() redeclare) + StampService + _somoc
- *   - dựng ví/giao dịch tạm cho HS001 trong từng test, dọn ở setUp/tearDown.
+ *   - dựng ví/giao dịch tạm cho học sinh id=1 trong từng test, dọn ở setUp/tearDown.
  *
  * Trọng tâm bảo mật: hàm CHỈ được lộ đúng 8 khoá cho phép (không rò SĐT,
  * địa chỉ, tên cha mẹ... của students) và số dư hiển thị phải kẹp về 0
@@ -29,7 +29,8 @@ class SomocTest extends TestCase
 {
     private int $yearId = 1;
     private int $sid    = 1; // HS001
-    private string $code = 'HS001';
+    /** Mã của học sinh id=1 — đọc từ DB trong setUp (không giả định mã HS001). */
+    private string $code = '';
     private int $adminId = 1;
     /** @var int[] chương trình tạo trong test, để dọn */
     private array $progIds = [];
@@ -37,6 +38,9 @@ class SomocTest extends TestCase
     protected function setUp(): void
     {
         $this->adminId = (int) (db_one("SELECT id FROM members WHERE role_code='admin' LIMIT 1")['id'] ?? 1);
+        // Mã học sinh tuỳ dữ liệu mẫu (CI: HS001; DB demo: GDGLPT26xxxx) → lấy từ DB.
+        $this->code = (string) (db_val("SELECT code FROM students WHERE id = ?", [$this->sid]) ?? '');
+        $this->assertNotSame('', $this->code, 'thiếu học sinh id=1 trong dữ liệu mẫu');
         $this->cleanStudentData();
     }
 
@@ -122,7 +126,7 @@ class SomocTest extends TestCase
         $out = somoc_public_summary($this->code, $this->yearId);
 
         $this->assertNotNull($out);
-        $this->assertSame('HS001', $out['code']);
+        $this->assertSame($this->code, $out['code']);
         $this->assertNotSame('', $out['full_name']);
         $this->assertArrayHasKey('class_name', $out);
         $this->assertSame(15, $out['current_balance']);
@@ -192,11 +196,14 @@ class SomocTest extends TestCase
 
     public function test_moc_by_day_skips_non_positive_days(): void
     {
-        $prog = $this->makeProgram();
-        $a1 = $this->mark($prog, '2026-09-24');
         // Ngày có earn +1 rồi bị điều chỉnh earn -1 (net 0) → không hiện ô vàng.
+        // Schema hiện tại có UNIQUE uq_sttx_earn (ref_attendance_id, type): mỗi buổi điểm
+        // danh chỉ có tối đa MỘT giao dịch 'attendance'. Nên +1 và -1 gắn vào HAI buổi
+        // điểm danh (hai chương trình) CÙNG NGÀY — hàm vẫn gộp theo ngày ra net 0.
+        $a1 = $this->mark($this->makeProgram(), '2026-09-24');
+        $a2 = $this->mark($this->makeProgram(), '2026-09-24');
         $this->insertTxRef(1,  'attendance', $a1, '+1');
-        $this->insertTxRef(-1, 'attendance', $a1, 'điều chỉnh -1');
+        $this->insertTxRef(-1, 'attendance', $a2, 'điều chỉnh -1');
 
         $moc = somoc_moc_by_day($this->sid, $this->yearId);
         $this->assertArrayNotHasKey('2026-09-24', $moc, 'ngày tổng ≤ 0 không lên lịch');
