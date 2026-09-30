@@ -8,8 +8,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 """API / security e2e checks against a local php -S server on a throwaway DB."""
 import json, re, subprocess, sys, urllib.request, urllib.parse, http.cookiejar
 
-BASE = "http://127.0.0.1:8088"
-DB = "tntt_e2e"
+import os as _os
+BASE = _os.environ.get("E2E_BASE", "http://127.0.0.1:8088")
+DB = _os.environ.get("E2E_DB", "tntt_e2e")
 results = []  # (id, title, ok, detail)
 
 

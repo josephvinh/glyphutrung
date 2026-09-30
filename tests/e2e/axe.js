@@ -10,8 +10,8 @@ const fs = require('fs'); const OUT = __dirname + '/out';
       const r = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
       for (const v of r.violations) { const k = v.id; rep[k] = rep[k] || { impact: v.impact, help: v.help, nodes: 0, where: {}, sample: '' }; rep[k].nodes += v.nodes.length; rep[k].where[vp.n + ':' + name] = v.nodes.length; if (!rep[k].sample) rep[k].sample = v.nodes[0].html.slice(0, 140); }
     };
-    await page.goto('http://127.0.0.1:8088/', { waitUntil: 'networkidle' }); await scan('landing');
-    await page.goto('http://127.0.0.1:8088/?dangnhap=1', { waitUntil: 'networkidle' }); await scan('login');
+    await page.goto((process.env.E2E_BASE || 'http://127.0.0.1:8088') + '/', { waitUntil: 'networkidle' }); await scan('landing');
+    await page.goto((process.env.E2E_BASE || 'http://127.0.0.1:8088') + '/?dangnhap=1', { waitUntil: 'networkidle' }); await scan('login');
     await page.fill('input[type=tel]', '0901000001'); await page.fill('input[autocomplete=current-password]', 'tntt@2026');
     await Promise.all([page.waitForNavigation({ waitUntil: 'networkidle' }).catch(() => {}), page.click('button[type=submit]')]); await page.waitForTimeout(1200);
     const keys = await page.evaluate(() => { const a = window.Alpine.$data(document.querySelector('.app-shell')); return a.moduleDefs.filter((m) => a.canAccess(m.key)).map((m) => m.key); });

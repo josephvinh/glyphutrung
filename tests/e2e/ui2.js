@@ -3,7 +3,7 @@ const S=__dirname + '/out';
 (async()=>{
  const b=await chromium.launch(); const p=await (await b.newContext({viewport:{width:390,height:844}})).newPage();
  const seen=[]; p.on('response',r=>{ if(r.url().includes('export.php')) seen.push(r.status()+' '+r.url().split('/api/')[1]); });
- await p.goto('http://127.0.0.1:8088/?dangnhap=1',{waitUntil:'networkidle'});
+ await p.goto((process.env.E2E_BASE || 'http://127.0.0.1:8088') + '/?dangnhap=1',{waitUntil:'networkidle'});
  await p.fill('input[type=tel]','0901000001'); await p.fill('input[autocomplete=current-password]','tntt@2026');
  await Promise.all([p.waitForNavigation({waitUntil:'networkidle'}).catch(()=>{}),p.click('button[type=submit]')]);
  await p.waitForTimeout(1200);

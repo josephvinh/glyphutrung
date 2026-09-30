@@ -1,7 +1,7 @@
 // Excel qua giao diện: tải mẫu, nhập file thật (openpyxl), xuất danh sách/bảng điểm, đọc lại file kiểm nội dung + phông.
 const { chromium } = require('playwright'); const { execSync } = require('child_process'); const fs = require('fs');
-const OUT = __dirname + '/out'; const PYLIB = process.env.PYLIB; const BASE = 'http://127.0.0.1:8088';
-const sql = (q) => execSync(`mysql -uroot --default-character-set=utf8mb4 tntt_e2e -N -B -e "${q.replace(/"/g, '\\"')}"`).toString().trim();
+const OUT = __dirname + '/out'; const PYLIB = process.env.PYLIB; const BASE = process.env.E2E_BASE || 'http://127.0.0.1:8088';
+const sql = (q) => execSync(`mysql -uroot --default-character-set=utf8mb4 ${process.env.E2E_DB || 'tntt_e2e'} -N -B -e "${q.replace(/"/g, '\\"')}"`).toString().trim();
 const py = (code) => execSync(`PYTHONPATH=${PYLIB} python3 -c ${JSON.stringify(code)}`).toString().trim();
 const res = []; const rec = (id, t, ok, d = '') => { res.push({ id, t, ok: !!ok, d }); console.log((ok ? 'PASS ' : 'FAIL ') + id + ' ' + t + (d ? '  -> ' + d : '')); };
 (async () => {

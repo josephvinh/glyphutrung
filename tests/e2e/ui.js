@@ -1,7 +1,7 @@
 const { chromium } = require('playwright');
 const fs = require('fs');
 const S = __dirname + '/out';
-const BASE = 'http://127.0.0.1:8088';
+const BASE = process.env.E2E_BASE || 'http://127.0.0.1:8088';
 const roles = {
   admin: ['0901000001', 'tntt@2026'],
   glv: ['0911000004', 'Test@1234'],

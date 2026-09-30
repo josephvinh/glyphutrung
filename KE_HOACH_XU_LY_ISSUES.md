@@ -16,6 +16,19 @@ Việc gán model dưới đây là đề xuất theo vai trò (thiết kế/so�
 | 5 | Mật mã tra cứu: nhận cả ngày/tháng/năm, hay giữ tháng/ngày/năm? | #108 |
 | 6 | Bảng thi đua và sổ Mộc công khai có được hiện tên đầy đủ của trẻ không? | ghi chú trong #108 |
 
+## 1b. Quyết định của chủ dự án (30/09/2026)
+
+| # | Quyết định | Tác động lên kế hoạch |
+|---|------------|-----------------------|
+| 1 | GLV **được** xem danh bạ SĐT toàn bộ nhân sự | #78: giữ `members` cho vai có quyền `staff` ≥ view (GLV có); vai không có quyền `staff` (ví dụ Thủ thư) không nhận danh bạ. `scores`, `leaveRequests`, `reports` lọc theo phạm vi; `logs` chỉ khi có quyền `settings` |
+| 2 | Xoá lớp: chỉ xét **niên khoá hiện tại** | #80: đổi từ "mọi niên khoá" sang chỉ đếm ghi danh của niên khoá hiện tại. Khoá ngoại `fk_enr_class` là RESTRICT nên ghi danh niên khoá cũ vẫn chặn ở tầng CSDL: cần bắt lỗi và trả thông báo rõ thay vì 500 |
+| 3 | **Xoá** `custom-qrcard` | Xoá `public/api/custom-qrcard.php`, `custom-qrcard.js` và mọi tham chiếu; #104 đóng do xoá (P2 rút phần sửa `custom-qrcard.php`); #87 chỉ còn phần trang "Chưa cài đặt" gây hiểu nhầm; #106 gộp vào P6 |
+| 4 | Host **có** APCu | #102: dùng APCu; vẫn cần fallback an toàn (không im lặng vô hiệu) khi thiếu APCu (dev/CI) và gắn các hàm `enforce_*_limit` vào đúng chỗ |
+| 5 | Tra cứu nhận **dd/mm/yyyy**; **chuẩn hoá toàn web** theo định dạng này | #108 + gói mới **P7b** (kiểm kê mọi chỗ hiển thị/nhập ngày rồi chuẩn hoá `dd/mm/yyyy`); mật mã tra cứu: dd/mm/yyyy là chuẩn, tạm chấp nhận mm/dd/yyyy cũ khi không mơ hồ để phụ huynh đã được hướng dẫn trước đây không bị khoá |
+| 6 | Công khai tên trẻ ở `somoc.php`/`bxh.php` là **được** | Không đổi; ghi chú trong #108 xem như đã quyết |
+
+Kịch bản e2e nay đọc `E2E_BASE` (URL), `E2E_DB` (tên DB) và `E2E_ORIGIN` (PWA) từ biến môi trường để nhiều gói chạy song song trên DB và cổng riêng.
+
 ## 2. Các gói việc
 
 | Gói | Issue | Nội dung | Thiết kế / soát an ninh | Viết code | Duyệt độc lập |
@@ -28,6 +41,7 @@ Việc gán model dưới đây là đề xuất theo vai trò (thiết kế/so�
 | **P5 · Web Push** | #99, #100, #107 | SSRF mù, gửi push đồng bộ giữ request, chiếm subscription trùng endpoint | Opus 5.5 | Sonnet 5.5 | Opus 5.5 |
 | **P6 · Triển khai, cài đặt** | #81, #101, #87, #93, #94, #106 | File debug và `error_log` công khai, thiếu `login.min.js`, cài mới thiếu bảng, script bỏ qua `TNTT_DB_NAME`, admin thiếu phân công, mã chết | Sonnet 5.5 | Sonnet 5.5 (`tntt-devops`) | Opus 5.5 |
 | **P7 · Giao diện, khả năng truy cập** | #109, #92, #105, #91, #108 | 1.098 vi phạm tương phản, thiếu nhãn, icon đè placeholder, iframe ẩn, khoá trùng, UX mật mã tra cứu | Sonnet 5.5 | Sonnet 5.5; Haiku 4.5 cho sửa hàng loạt `aria-label` | Sonnet 5.5 kèm chạy axe-core |
+| **P7b · Định dạng ngày dd/mm/yyyy toàn web** | #108 (phần tra cứu) + kiểm kê toàn web | Nhập/hiển thị ngày không thống nhất (ô `<input type=date>` theo ngôn ngữ trình duyệt, `toLocaleDateString`, `date('Y-m-d')`), mật mã tra cứu | Sonnet 5.5 (kiểm kê chỉ đọc) | Sonnet 5.5 | Opus 5.5 |
 | **P8 · Hiệu năng** | #90 | `data.php` 5,7 MB (chưa nén) với 600 em | Opus 5.5 | Sonnet 5.5 | Opus 5.5 |
 
 Lý do giao model:

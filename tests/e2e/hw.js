@@ -3,9 +3,9 @@
 const { chromium } = require('playwright');
 const { execSync } = require('child_process');
 const OUT = __dirname + '/out';
-const BASE = 'http://localhost:8088';
+const BASE = process.env.E2E_BASE || 'http://localhost:8088';
 const Y4M = process.env.QR_Y4M;
-const sql = (q) => execSync(`mysql -uroot --default-character-set=utf8mb4 tntt_e2e -N -B -e "${q.replace(/"/g, '\\"')}"`).toString().trim();
+const sql = (q) => execSync(`mysql -uroot --default-character-set=utf8mb4 ${process.env.E2E_DB || 'tntt_e2e'} -N -B -e "${q.replace(/"/g, '\\"')}"`).toString().trim();
 const res = [];
 const rec = (id, title, ok, detail = '') => { res.push({ id, title, ok: !!ok, detail }); console.log((ok ? 'PASS ' : 'FAIL ') + id + ' ' + title + (detail ? '  -> ' + detail : '')); };
 

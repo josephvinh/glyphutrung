@@ -16,7 +16,7 @@ try:
     d=WebDriver(command_executor='http://127.0.0.1:4444',options=Opt())
     print('UA:',d.execute_script('return navigator.userAgent'))
     d.set_window_size(390,844)
-    d.get('http://127.0.0.1:8088/?dangnhap=1'); time.sleep(2)
+    d.get(os.environ.get('E2E_BASE','http://127.0.0.1:8088')+'/?dangnhap=1'); time.sleep(2)
     print('title:',d.title)
     d.save_screenshot(os.path.join(os.path.dirname(os.path.abspath(__file__)),'out')+'/webkit-login.png')
     tel=[e for e in d.find_elements(By.CSS_SELECTOR,'input[type=tel]') if e.is_displayed()][0]; tel.send_keys('0901000001')

@@ -2,8 +2,8 @@
 const { chromium } = require('playwright');
 const { execSync } = require('child_process');
 const OUT = __dirname + '/out';
-const ORIGIN = 'http://tntt.localhost:8088';
-const sql = (q) => execSync(`mysql -uroot --default-character-set=utf8mb4 tntt_e2e -N -B -e "${q.replace(/"/g, '\\"')}"`).toString().trim();
+const ORIGIN = process.env.E2E_ORIGIN || 'http://tntt.localhost:8088';
+const sql = (q) => execSync(`mysql -uroot --default-character-set=utf8mb4 ${process.env.E2E_DB || 'tntt_e2e'} -N -B -e "${q.replace(/"/g, '\\"')}"`).toString().trim();
 const res = []; const rec = (id, title, ok, detail = '') => { res.push({ id, title, ok: !!ok, detail }); console.log((ok ? 'PASS ' : 'FAIL ') + id + ' ' + title + (detail ? '  -> ' + detail : '')); };
 (async () => {
   sql("delete from login_attempts; update members set must_change_pw=0; delete from push_outbox");
