@@ -120,7 +120,8 @@ switch ($action) {
     // -------------------------------------------------------------
     case 'password':
         require_write();
-        $me      = require_login();
+        // Endpoint DUY NHẤT mở cho tài khoản đang buộc đổi mật khẩu (#83).
+        $me      = require_login_pending_pw();
         $current = (string) ($in['current'] ?? '');
         $new     = (string) ($in['new'] ?? '');
 
