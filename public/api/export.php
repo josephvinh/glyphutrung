@@ -106,13 +106,14 @@ switch ($action) {
             $params);
 
         // Get all sessions for the year
+        // (bảng program_sessions không tồn tại: buổi = các ngày đã có điểm danh của chương trình)
         $sessions = db_all(
-            "SELECT p.id, p.name, p.day_of_week, p.start_time, pr.session_date
-               FROM programs p
-               LEFT JOIN program_sessions pr ON pr.program_id = p.id AND pr.year_id = ?
-              WHERE p.year_id = ? AND p.status = 'kích hoạt'
-              ORDER BY pr.session_date, p.name",
-            [$year['id'], $year['id']]);
+            "SELECT DISTINCT p.id AS program_id, p.name, a.session_date
+               FROM attendances a
+               JOIN programs p ON p.id = a.program_id
+              WHERE a.year_id = ? AND p.status = 'kích hoạt'
+              ORDER BY a.session_date, p.name",
+            [$year['id']]);
 
         // Build attendance matrix
         json_out(['ok' => true,
@@ -139,7 +140,7 @@ switch ($action) {
         // Get students — chặn theo phạm vi 'scores'
         $allow = accessible_class_ids($me, 'scores', 'view'); // null = toàn đoàn
         $dk = '';
-        $params = [$year['id'], $termId];
+        $params = [$year['id']]; // SQL bên dưới chỉ có 1 dấu ? cho niên khoá; học kỳ chỉ dùng để lấy điểm
         if ($classId > 0) {
             if ($allow !== null && !in_array($classId, $allow, true)) {
                 json_fail('Bạn không phụ trách lớp này.', 403);
@@ -184,9 +185,9 @@ switch ($action) {
         $yearStart = null;
 
         // Get school year start date
-        $schoolYear = db_one('SELECT from_date, to_date FROM school_years WHERE is_current = 1 LIMIT 1');
+        $schoolYear = db_one('SELECT start_date, end_date FROM school_years WHERE is_current = 1 LIMIT 1');
         if ($schoolYear) {
-            $yearStart = $schoolYear['from_date'];
+            $yearStart = $schoolYear['start_date'];
         }
 
         // Default dates
@@ -245,7 +246,7 @@ switch ($action) {
                 c.name AS class_name,
                 p.name AS program_name,
                 a.status,
-                COALESCE(a.note, '') AS note,
+                '' AS note, -- attendances không có cột note
                 m.full_name AS marked_by_name
              FROM attendances a
              JOIN students s ON s.id = a.student_id
@@ -258,7 +259,7 @@ switch ($action) {
             $params);
 
         // Get approved leave requests for the same period/class
-        $lrParams = [$year['id'], $fromDate, $toDate];
+        $lrParams = [$year['id'], $fromDate, $toDate, 'đã duyệt']; // 4 dấu ? đầu: năm, từ, đến, trạng thái
         $lrDk = 'lr.year_id = ? AND lr.session_date BETWEEN ? AND ? AND lr.status = ?';
 
         if ($classId !== null) {

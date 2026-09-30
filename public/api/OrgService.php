@@ -234,9 +234,12 @@ class OrgService
             return ['ok' => false, 'error' => 'Bạn không có quyền xóa lớp "' . $name . '".', 'code' => 403];
         }
 
-        $n = db_one('SELECT COUNT(*) n FROM students WHERE class_id=?', [$cls['id']])['n'];
+        // Ghi danh theo niên khoá nằm ở enrollments (students không còn class_id).
+        // Chặn nếu còn BẤT KỲ dòng ghi danh nào, kể cả niên khoá cũ — enrollments.class_id
+        // là khoá ngoại RESTRICT nên xoá lớp sẽ mất lịch sử hoặc lỗi FK.
+        $n = (int) db_one('SELECT COUNT(DISTINCT student_id) n FROM enrollments WHERE class_id=?', [$cls['id']])['n'];
         if ($n > 0) {
-            return ['ok' => false, 'error' => 'Lớp "' . $name . '" còn ' . $n . ' em. Hãy chuyển hoặc xóa hết em trước.'];
+            return ['ok' => false, 'error' => 'Lớp "' . $name . '" còn ' . $n . ' em có ghi danh (kể cả các niên khoá trước). Hãy chuyển hoặc xóa hết em trước.'];
         }
 
         // Khớp với giao diện: còn người phụ trách (chủ nhiệm, GLV, Dự Bị) thì
