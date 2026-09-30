@@ -540,6 +540,7 @@ function push_dong_phan_hoi(): bool
 function push_sau_phan_hoi(): void
 {
     try {
+        if (db()->inTransaction()) return;        // giao dịch còn dở (chưa commit): không gửi
         if (!push_co_hang_doi()) return;          // không có gì để gửi thì đừng đụng tới phản hồi
         $daTach = push_dong_phan_hoi();
         ignore_user_abort(true);
@@ -601,7 +602,9 @@ function push_bao(array $memberIds, string $title, string $body,
         $chan = implode(',', array_fill(0, count($ids), '?'));
         $n = db_run("UPDATE push_subscriptions SET ring_seq = ring_seq + 1 WHERE member_id IN ($chan)", $ids);
 
-        if (PHP_SAPI === 'cli') push_xa_hang(200, 20.0);   // cron/CLI không có người chờ
+        // Đang trong giao dịch chưa commit thì CHƯA gửi (có thể bị rollback): để
+        // lượt xả sau (cron, status, request có push_bao khác) lo.
+        if (PHP_SAPI === 'cli') { if (!db()->inTransaction()) push_xa_hang(200, 20.0); }  // cron/CLI không có người chờ
         else                    push_hen_sau_phan_hoi();
         return $n;
     } catch (Throwable $e) {
