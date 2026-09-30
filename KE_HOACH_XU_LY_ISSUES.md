@@ -90,3 +90,39 @@ Kịch bản dùng để nghiệm thu từng gói (trong `tests/e2e/`):
 - Kịch bản e2e chạy trên DB thử nghiệm, xem `BAO_CAO_KIEM_THU.md` mục 9 để dựng môi trường.
 - Chưa kiểm được: gửi push tới máy chủ thật của Google/Apple, Passkey với vân tay/Face ID thật, thẻ QR in thật, tải lớn trên hosting thật. Nên có bước kiểm thủ công trên thiết bị thật sau P4, P5.
 - Mọi issue liên quan có liên kết chéo trong nội dung issue (ví dụ #79 ↔ #87, #81 ↔ #101, #87 ↔ #104).
+
+## 6. Tiến độ (cập nhật 30/09/2026, tạm dừng theo yêu cầu chủ dự án)
+
+Toàn bộ agent nền đã dừng. Chưa merge PR nào; chưa đóng issue nào (chỉ đóng khi PR được merge kèm bằng chứng).
+
+### 6.1 Đã làm
+
+| Gói | Nhánh | Trạng thái | PR | Ghi chú |
+|-----|-------|-----------|----|---------|
+| P2 | `fix/p2-schema-regressions` | Đã duyệt độc lập (Opus), chấp nhận | #112 | Closes #79, #80. Lỗi "Tỷ lệ" phát hiện thêm → #110. Test: `tests/e2e/p2_regress.py` (27 ca) |
+| P3 | `fix/p3-input-validation` | Đã duyệt độc lập (Opus), chấp nhận sau khi sửa điều kiện (bỏ qua qua `scan`) | #113 | Closes #85, #86. Test: `tests/e2e/p3_regress.py` (101 ca). #98 (SĐT nhân sự) chưa làm, chờ P1 |
+| P6 | `fix/p6-deploy-cleanup` | Đã duyệt độc lập (Opus), chấp nhận (Apache 2.4; gộp với W0: PHPUnit 207/207) | #114 | Closes #81, #101, #87, #93, #94, #104; tham chiếu #106 |
+| W0 | `fix/w0-ci-that` | Đã viết, PHPUnit 207 test/736 assertion xanh cục bộ. **Chưa qua duyệt độc lập** (phiên duyệt bị dừng giữa chừng) | chưa mở | #82 |
+| P1 | `fix/p1-scope-authz` | **Dở dang**, đã commit WIP `9d55496` và đẩy lên; chưa chạy đủ kịch bản, chưa duyệt | chưa mở | #78, #97, #83. Thiết kế: `docs/audit/P1_design.md` |
+| P5 | `fix/p5-web-push` | **Dở dang**, 5 commit đã đẩy (lược đồ token + hàng đợi, allowlist SSRF, gửi sau phản hồi, token subscription, chuông sau commit); còn thiếu unit test, kịch bản `push.py` nghiệm thu, duyệt | chưa mở | #99, #100, #107. Thiết kế: `docs/audit/P5_design.md` |
+
+### 6.2 Chưa làm (làm tiếp theo thứ tự)
+
+1. **W0**: chạy lại duyệt độc lập (Opus): đọc diff, kiểm test không bị làm yếu, fixture trung thực, `ci.yml` hợp lệ (PHP/PHPUnit tương thích, bước đếm testcase làm CI đỏ đúng lúc, lint không còn `|| true`), phá code cố ý ≥3 chỗ để chứng minh test bắt được, chạy trên DB `tntt_w0`. Sau đó mở PR.
+2. **P1**: hoàn tất cài đặt theo `docs/audit/P1_design.md`; chạy `e2e2.py` (SCOPE-01…03), `extra.py` (STAFF-06), `e2e.py` (AUTH-05) và `p1_regress.py`; duyệt độc lập; mở PR. Mặc định đã chốt: quản trị viên mới xem `logs`; BĐH không sửa BĐH khác nhưng sửa được định danh của mình; GLV không thấy tài khoản chờ duyệt; danh bạ SĐT giữ cho vai có quyền `staff` (GLV có).
+3. **P5**: hoàn tất unit test và nghiệm thu bằng `push.py` (PUSH-20, 21, 22); duyệt độc lập; mở PR. Mặc định đã chốt: gửi bất đồng bộ, chỉ 4 dịch vụ push, tự xoá subscription lỗi, quá độ 30 ngày, giới hạn "Send-test" để P4.
+4. **P4** (chưa bắt đầu): #84, #102 (APCu, fallback không im lặng), #88, #103, #96, #95, giới hạn tần suất "Send-test". Làm sau P1 vì cùng sửa `_bootstrap.php`.
+5. **P7b** (chưa bắt đầu): chuẩn hoá `dd/mm/yyyy` toàn web; #108 (tra cứu nhận dd/mm/yyyy, tạm chấp nhận mm/dd/yyyy cũ khi không mơ hồ); #111 (`parseDate` khi nhập Excel). Bước kiểm kê trước đó chưa hoàn tất, cần chạy lại.
+6. **P7** (chưa bắt đầu, làm cuối): #109, #92, #105, #91.
+7. **P8** (chưa bắt đầu, sau P1): #90 kích thước `data.php`.
+8. **#98** (sau P1): kiểm tra SĐT trong `StaffService`.
+9. Lỗi #110 ("Tỷ lệ" điểm danh) và #111 chưa có gói riêng ngoài P7b.
+10. Đề nghị đã ghi nhận nhưng chưa quyết: mất `class_id` của phân công đã kết thúc khi xoá lớp (chỉ mở issue nếu chủ dự án muốn).
+11. Hỏi chủ dự án có muốn theo dõi CI/review trên #112–#114 không.
+
+### 6.3 Ghi chú vận hành khi làm tiếp
+
+- Thay thế model: Fable 5.1 không dùng được (hết hạn mức), toàn bộ thiết kế/viết/duyệt P1 dùng Opus nên mức độc lập thấp hơn kế hoạch. Nên duyệt P1 bằng phiên khác hẳn phiên viết.
+- Mỗi agent dùng DB riêng (`tntt_p1`, `tntt_p5`, `tntt_w0`, ...), cổng riêng; không dùng `pkill`.
+- Môi trường dựng lại: MariaDB 10.11 cục bộ (`service mariadb start`), `php -S` kèm router; công cụ đã dùng: Playwright, axe-core, PHPStan phar, PHPUnit 11, openpyxl, ffmpeg (camera giả).
+- Hai bản thiết kế đã lưu trong repo tại `docs/audit/P1_design.md` và `docs/audit/P5_design.md`.
