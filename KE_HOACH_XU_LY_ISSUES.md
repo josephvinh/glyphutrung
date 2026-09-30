@@ -131,6 +131,7 @@ Thứ tự gộp: #114, #112, #113, #117, #119, #120, #118, rồi #116 (W0, gộ
 | P1 rò rỉ dữ liệu, phân quyền | `fix/p1-scope-authz` | Commit WIP `9d55496`; chưa chạy đủ kịch bản, chưa duyệt. Thiết kế: `docs/audit/P1_design.md`. Nhánh cần merge lại `master` mới (có P2/P3/P6/W0) | #78, #97, #83 |
 | P5 Web Push | `fix/p5-web-push` | 5 commit (lược đồ token + hàng đợi, allowlist SSRF, gửi sau phản hồi, token subscription, chuông sau commit); còn thiếu unit test, nghiệm thu `push.py`, duyệt. Thiết kế: `docs/audit/P5_design.md`. Cũng cần merge lại `master` | #99, #100, #107 |
 | #115 test export | `audit` | PR #131. 11 tests, 5 pass, 6 fail. Bugs mới: #129, #130 | #115, #129, #130 |
+| P8 data.php performance | `fix/p8-data-performance` | PR #132. 2 commits (perf changes + tests). Tests skip trên môi trường thiếu admin có thể login | #90 |
 
 ### 6.5 Chưa làm / Đang làm (thứ tự đề nghị)
 
@@ -141,7 +142,7 @@ Thứ tự gộp: #114, #112, #113, #117, #119, #120, #118, rồi #116 (W0, gộ
 5. **P5**: hoàn tất unit test, nghiệm thu `push.py` (PUSH-20, 21, 22); duyệt độc lập; mở PR. Mặc định đã chốt: gửi bất đồng bộ, chỉ 4 dịch vụ push, tự xoá subscription lỗi, quá độ 30 ngày, giới hạn "Send-test" để P4.
 6. **#98** (sau P1): kiểm tra SĐT trong `StaffService`.
 7. **P4** (sau P1, cùng sửa `_bootstrap.php`): #84, #102 (APCu, fallback không im lặng), #103, #96, #95, giới hạn tần suất "Send-test", và CSRF cho logout.
-8. **P8** (sau P1): #90 kích thước `data.php`.
+8. ~~**P8**~~ ✅ PR #132. attDays (default 30), scores scope (default current), details=0 ẩn sensitive info, gzip compression.
 9. **P7b**: chuẩn hoá `dd/mm/yyyy` toàn web; #108 (tra cứu nhận dd/mm/yyyy, tạm chấp nhận mm/dd/yyyy cũ khi không mơ hồ); #111 (`parseDate` khi nhập Excel). Bước kiểm kê trước đó chưa hoàn tất, cần chạy lại.
 10. **P7** (làm cuối, chạm nhiều `views/*.php`): #109 (a11y), #122 (build lại `tailwind.css`, thiếu nhiều lớp đang dùng), #121 (khoá trùng giữa module JS, gồm `init` làm điểm danh ngoại tuyến không tự đồng bộ).
 11. **#124**: CI chưa chạy `tests/UnitTest.php` và e2e; 12 khối `<script>` trong 6 file PHP chưa lint; `eslint@9` chưa ghim; **branch protection chưa bật (hoãn theo chủ dự án)**.
