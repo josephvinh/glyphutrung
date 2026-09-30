@@ -251,13 +251,17 @@ if (!$__dev) ob_start();
                     <div class="text-slate-700 text-sm leading-relaxed" style="white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word" x-text="($store.libViewer.item || {}).body || ''"></div>
                 </div>
                 <!-- PDF -->
-                <iframe x-show="($store.libViewer.item || {}).type==='file' && (($store.libViewer.item || {}).ext || '')==='pdf'"
-                        :src="($store.libViewer.item || {}).fileUrl + '&mode=view'" class="w-full h-64 sm:h-80 border-0"></iframe>
+                <!-- Chỉ dựng iframe khi thật sự đang xem PDF: x-show không chặn được :src, nên trước đây
+                     iframe ẩn vẫn tải "undefined&mode=view" mỗi lần mở app (#105). -->
+                <template x-if="($store.libViewer.item || {}).type==='file' && (($store.libViewer.item || {}).ext || '')==='pdf'">
+                    <iframe :src="($store.libViewer.item || {}).fileUrl + '&mode=view'" class="w-full h-64 sm:h-80 border-0"></iframe>
+                </template>
                 <!-- Ảnh: hiện thẳng, không cần tải về. -->
-                <img x-show="($store.libViewer.item || {}).type==='file' && ($store.libViewer.item || {}).viewable && (($store.libViewer.item || {}).ext || '')!=='pdf'"
-                     :src="($store.libViewer.item || {}).fileUrl + '&mode=view'"
-                     :alt="($store.libViewer.item || {}).title || ''"
-                     class="w-full max-h-[60dvh] object-contain bg-slate-50">
+                <template x-if="($store.libViewer.item || {}).type==='file' && ($store.libViewer.item || {}).viewable && (($store.libViewer.item || {}).ext || '')!=='pdf'">
+                    <img :src="($store.libViewer.item || {}).fileUrl + '&mode=view'"
+                         :alt="($store.libViewer.item || {}).title || ''"
+                         class="w-full max-h-[60dvh] object-contain bg-slate-50">
+                </template>
                 <!-- Tệp không xem được -->
                 <div x-show="($store.libViewer.item || {}).type==='file' && !($store.libViewer.item || {}).viewable" class="flex flex-col items-center justify-center text-center p-8">
                     <i data-lucide="file-down" class="w-12 h-12 text-slate-300 mb-3"></i>
