@@ -18,7 +18,7 @@ if (!$cli) header('Content-Type: text/plain; charset=utf-8');
 
 function say(string $msg): void { echo $msg . PHP_EOL; }
 
-$cfg = app_config('db');
+$cfg = db_config();   // đã áp biến môi trường TNTT_DB_* (đúng DB đang kết nối)
 
 // ---------------------------------------------------------------
 // 1. KIỂM CƠ SỞ DỮ LIỆU ĐÃ CÓ CHƯA
@@ -53,7 +53,7 @@ try {
     }
     exit(1);
 }
-say("✓ Cơ sở dữ liệu `{$cfg['name']}` mở được");
+say('✓ Cơ sở dữ liệu `' . (db_val('SELECT DATABASE()') ?: $cfg['name']) . '` mở được');
 
 // ---------------------------------------------------------------
 // 2. CHẠY LƯỢC ĐỒ
@@ -344,7 +344,7 @@ $admin = db_one("SELECT id FROM members WHERE role_code = 'admin' LIMIT 1")
       ?: db_one('SELECT id FROM members WHERE code = ?', ['GLV001']);
 if (!$admin) {
     $titleAdmin = db_one("SELECT id FROM titles WHERE role_code='admin' LIMIT 1");
-    db_insert('INSERT INTO members (code, holy_name, full_name, phone, password_hash,
+    $adminId = db_insert('INSERT INTO members (code, holy_name, full_name, phone, password_hash,
                                     role_code, title_id, status, must_change_pw)
                VALUES (?,?,?,?,?,?,?,?,1)',
         ['GLV001', 'Phêrô', 'Nguyễn Văn A', '0901000001',
@@ -355,6 +355,31 @@ if (!$admin) {
 } else {
     say('· Tài khoản quản trị đã có, bỏ qua');
 }
+
+// --- Phân công CHÍNH của Quản Trị (member_assignments) ---
+//
+// member_assignments mới là nguồn thật của vai trò (effective_assignments()
+// đọc từ đây); tạo members mà thiếu dòng này thì admin "không có phân công
+// nào". Bù cho MỌI tài khoản admin chưa có dòng admin đang hiệu lực (kể cả
+// admin tạo từ bản cài cũ). Idempotent: đã có thì không tạo thêm.
+// Chỉ đặt is_primary=1 khi người đó chưa có phân công chính nào khác đang
+// hiệu lực, để không bao giờ có hai dòng chính.
+$nAssign = 0;
+foreach (db_all("SELECT id FROM members WHERE role_code = 'admin'") as $ad) {
+    $mid = (int) $ad['id'];
+    $coDong = db_one("SELECT id FROM member_assignments
+                       WHERE member_id = ? AND role_code = 'admin' AND to_date IS NULL LIMIT 1", [$mid]);
+    if ($coDong) continue;
+    $coChinh = db_one('SELECT id FROM member_assignments
+                        WHERE member_id = ? AND is_primary = 1 AND to_date IS NULL LIMIT 1', [$mid]);
+    db_run("INSERT INTO member_assignments
+                (member_id, role_code, is_primary, from_date, assigned_by, note)
+            VALUES (?, 'admin', ?, CURDATE(), ?, 'Tạo bởi trình cài đặt')",
+        [$mid, $coChinh ? 0 : 1, $mid]);
+    $nAssign++;
+}
+say($nAssign > 0 ? "✓ Phân công chính cho Quản Trị: $nAssign"
+                 : '· Phân công của Quản Trị đã đủ, bỏ qua');
 
 // --- Chương trình mặc định: 3 buổi Chúa Nhật ---
 $hasProg = db_one('SELECT id FROM programs WHERE year_id = ? LIMIT 1', [$yearId]);
