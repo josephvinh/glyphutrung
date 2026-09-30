@@ -99,7 +99,7 @@ Thứ tự gộp: #114 (P6), #112 (P2), #113 (P3), #117 (#91), #119 (#105), #120
 
 Phát hiện khi gộp thử W0 lên `master` mới: 7 test của `QrScanApiTest` đỏ vì dùng "Chúa Nhật tuần sau" để quét, trong khi P3 (#85) nay từ chối buổi tương lai. Đã sửa test dùng buổi hôm nay / cùng thứ tuần trước, thêm `test_scan_rejects_future_date` (xác nhận đỏ khi tắt kiểm ngày tương lai): 208 test xanh cục bộ trước khi gộp. Test chỉ đúng nếu không chạy sát nửa đêm (chương trình thử bắt đầu 23:59).
 
-Còn phải làm cho W0: xem CI của commit gộp `7c115a6` trên GitHub (lần đầu CI chạy thật, PHP 8.2 chưa thử); gỡ phần tạo phân công admin trong `ci_seed.php` (#114 đã sửa gốc); đổi `no-dupe-keys` lên mức lỗi (PR riêng, #117 đã gộp); #115.
+CI thật đã xác nhận: chạy `workflow_dispatch` trên `master` (commit `7c115a6`, run #322): 3 job đều xanh (PHPUnit Tests, PHP Syntax Check, JavaScript Lint); bước "Run PHPUnit" chạy thật ~10 giây và qua bước kiểm sàn ≥ 200 test. Còn phải làm cho W0: gỡ phần tạo phân công admin trong `ci_seed.php` (#114 đã sửa gốc); đổi `no-dupe-keys` lên mức lỗi (PR riêng, #117 đã gộp); #115.
 
 Issue mới mở: #121 (khoá trùng giữa các module JS, gồm `init` làm điểm danh ngoại tuyến không tự đồng bộ), #122 (`tailwind.css` biên dịch sẵn đã cũ, thiếu nhiều lớp đang dùng; gộp vào P7).
 
