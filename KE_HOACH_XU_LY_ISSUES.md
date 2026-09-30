@@ -128,6 +128,7 @@ Thứ tự gộp: #114, #112, #113, #117, #119, #120, #118, rồi #116 (W0, gộ
 | #133 | `fix/p7b-date-format` | tracuu_norm_dob dd/mm/yyyy | Chờ review |
 | #134 | `fix/p4-security` | register_ok, RateLimiter fallback | Chờ review |
 | #135 | `fix/p7-a11y-ux` | Key collision 5 khoá | Chờ review |
+| #137 | `fix/p9-ci-scope` | ghim eslint, cảnh báo test ngoài tests/unit/ | Chờ review |
 
 ### 6.4 Dở dang (đã đẩy lên nhánh, chưa có PR)
 
@@ -141,7 +142,7 @@ Thứ tự gộp: #114, #112, #113, #117, #119, #120, #118, rồi #116 (W0, gộ
 
 1. ~~**Gộp #125**~~ ✅ ĐÃ GỘP.
 2. ~~**#115**~~ ✅ PR #131. Viết `ExportApiTest.php` (11 tests). Bugs: #129, #130.
-3. **#123**: Bật `failOnRisky`/`failOnWarning`. Đã commit `ea2cdaf`. Sửa QrScanApiTest cho Windows.
+3. ~~**#123**~~ ✅ ĐÃ GỘP. Bật `failOnRisky`/`failOnWarning`.
 4. **P1**: hoàn tất theo `docs/audit/P1_design.md`; chạy `e2e2.py` (SCOPE-01…03), `extra.py` (STAFF-06), `e2e.py` (AUTH-05), `p1_regress.py`; duyệt độc lập bằng phiên khác phiên viết; mở PR. Mặc định đã chốt: chỉ quản trị viên xem `logs`; BĐH không sửa BĐH khác nhưng sửa được định danh của mình; GLV không thấy tài khoản chờ duyệt; danh bạ SĐT giữ cho vai có quyền `staff` (GLV có).
 5. **P5**: hoàn tất unit test, nghiệm thu `push.py` (PUSH-20, 21, 22); duyệt độc lập; mở PR. Mặc định đã chốt: gửi bất đồng bộ, chỉ 4 dịch vụ push, tự xoá subscription lỗi, quá độ 30 ngày, giới hạn "Send-test" để P4.
 6. **#98** (sau P1): kiểm tra SĐT trong `StaffService`.
@@ -150,7 +151,7 @@ Thứ tự gộp: #114, #112, #113, #117, #119, #120, #118, rồi #116 (W0, gộ
 9. **P7b**: chuẩn hoá `dd/mm/yyyy` toàn web; #108 (tra cứu nhận dd/mm/yyyy, tạm chấp nhận mm/dd/yyyy cũ khi không mơ hồ); #111 (`parseDate` khi nhập Excel). Bước kiểm kê trước đó chưa hoàn tất, cần chạy lại.
 10. ~~**P7 (#121)**~~ ✅ PR #135. 5 khoá trùng: init→initCore, printReport→printClassReport, xoá hasActiveFilter/clearFilters (access), attendanceRate (dashboard).
 11. **P7 (2)**: #109 (a11y 1098 vi phạm tương phản), #122 (build lại tailwind.css thiếu lớp).
-12. **#124**: CI chưa chạy `tests/UnitTest.php` và e2e; 12 khối `<script>` trong 6 file PHP chưa lint; `eslint@9` chưa ghim; **branch protection chưa bật (hoãn theo chủ dự án)**.
+12. ~~**#124**~~ ✅ PR #137. Đã ghim eslint, tạo eslint.config.js, thêm CI kiểm tra test ngoài tests/unit/, cảnh báo inline JS. **Branch protection chưa bật (hoãn)**.
 12. **#110** (action `attendance` của `export.php`, cột "Tỷ lệ"): cần chủ dự án quyết định giữ hay bỏ action (xem #106).
 13. Đề nghị chưa quyết: phân công đã kết thúc mất `class_id` khi xoá lớp (chỉ mở issue nếu chủ dự án muốn).
 
