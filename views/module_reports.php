@@ -330,7 +330,7 @@
             </div>
 
             <div class="p-4 border-t border-slate-100 bg-white no-print">
-                <button @click="printReport()" type="button" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-blue-200 flex justify-center items-center">
+                <button @click="printClassReport()" type="button" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-blue-200 flex justify-center items-center">
                     <i data-lucide="printer" class="w-5 h-5 mr-2"></i> In phiếu
                 </button>
             </div>

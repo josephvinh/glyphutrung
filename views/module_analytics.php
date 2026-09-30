@@ -30,7 +30,7 @@
             </div>
             <p class="text-2xl font-black leading-none"
                :class="attendanceRate >= 75 ? 'text-emerald-600' : (attendanceRate >= 50 ? 'text-amber-500' : 'text-rose-500')">
-                <span x-text="attendanceRate">0</span><span class="text-base">%</span>
+                <span x-text="attendanceRate || 0">0</span><span class="text-base">%</span>
             </p>
             <p class="text-micro font-bold text-slate-500 uppercase tracking-wide mt-1">Có mặt</p>
         </div>

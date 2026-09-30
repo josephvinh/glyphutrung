@@ -261,6 +261,11 @@ window.TNTT.shell = {
 
         this.initIconWatcher();
 
+        // Gọi initCore() để khởi tạo dark mode và điểm danh ngoại tuyến (#121)
+        if (typeof this.initCore === 'function') {
+            this.initCore();
+        }
+
         // Dò tình trạng thông báo đẩy của máy này. Không hỏi quyền ở đây —
         // trình duyệt chỉ cho hỏi khi người dùng chạm vào nút, và hỏi ngay
         // lúc mở app thì hầu hết mọi người bấm Chặn cho xong.

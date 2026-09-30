@@ -237,7 +237,8 @@ window.TNTT.reports = {
         return this.previewStudentId ? this.studentById(this.previewStudentId) : null;
     },
 
-    printReport() {
+    // Đổi tên thành printClassReport để tránh trùng với student_profile.printReport (#121)
+    printClassReport() {
         if (!this.previewStudentId) return;
         window.open('print.php?type=report&termId=' + this.reportTermId + '&studentId=' + this.previewStudentId, '_blank');
     },
