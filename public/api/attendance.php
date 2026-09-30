@@ -23,9 +23,19 @@ if ($year['status'] === 'đã khóa') json_fail('Niên khoá đã khoá sổ, kh
 
 $in        = json_input();
 $programId = (int) ($in['programId'] ?? 0);
-$date      = (string) ($in['date'] ?? '');
+$rawDate   = $in['date'] ?? '';
 
-if (!$programId || !$date) json_fail('Thiếu thông tin buổi điểm danh.');
+if (!$programId || $rawDate === '' || $rawDate === null) json_fail('Thiếu thông tin buổi điểm danh.');
+
+// Ngày phải ĐÚNG dạng YYYY-MM-DD, là ngày có thật, không thừa ký tự nào
+// (\z: cả xuống dòng cuối cũng bị loại). Không cho rác lọt xuống SQL:
+// INSERT IGNORE sẽ hạ lỗi strict thành cảnh báo và MariaDB cắt chuỗi
+// '2026-10-01abc' còn '2026-10-01' rồi lưu.
+$date = is_string($rawDate) ? $rawDate : '';
+if (!preg_match('/\A(\d{4})-(\d{2})-(\d{2})\z/', $date, $md)
+    || !checkdate((int) $md[2], (int) $md[3], (int) $md[1])) {
+    json_fail('Ngày không hợp lệ (cần dạng năm-tháng-ngày, ví dụ 2026-10-04).', 400);
+}
 
 $prog = db_one('SELECT * FROM programs WHERE id = ? AND year_id = ?', [$programId, $year['id']]);
 if (!$prog) json_fail('Không tìm thấy chương trình.', 404);
@@ -48,6 +58,10 @@ if ($prog['type'] === 'chiến dịch') {
     if ($hopLe && !empty($effTo)   && $date > $effTo)   $hopLe = false;
 }
 if (!$hopLe) json_fail('Buổi này không diễn ra vào ngày ' . $date . '.');
+
+// Không điểm danh trước cho buổi CHƯA diễn ra (giờ Việt Nam). Ngày quá khứ
+// vẫn được (điểm danh bù). $date đã chuẩn ISO nên so thẳng chuỗi.
+$laTuongLai = $date > date('Y-m-d');
 
 // Giờ chốt do máy chủ tính
 $cutoffMin  = (int) app_config('cutoff_minutes');
@@ -122,6 +136,7 @@ if (($_GET['action'] ?? '') === 'lookup') {
 // =====================================================================
 if (($_GET['action'] ?? '') === 'scan') {
     if (isset($prog['allow_qr']) && !$prog['allow_qr']) json_fail('Buổi này không cho phép quét QR.');
+    if ($laTuongLai) json_fail('Buổi ngày ' . $date . ' chưa diễn ra, chưa điểm danh được.', 400);
     if ($pastAbsent) json_fail('Đã quá giờ "tính vắng" của buổi — không ghi thêm được.');
 
     $codes = $in['codes'] ?? [];
@@ -243,6 +258,12 @@ if ($existing) {
     }
     Cache::flush();
     json_out(['ok' => true, 'removed' => true]);
+}
+
+// GHI MỚI cho buổi tương lai bị chặn. (Đặt SAU nhánh gỡ ở trên: lỡ đã có
+// dữ liệu tương lai thì vẫn bấm lần nữa để gỡ được, không bị kẹt.)
+if ($laTuongLai) {
+    json_fail('Buổi ngày ' . $date . ' chưa diễn ra, chưa điểm danh được.', 400);
 }
 
 // GHI MỚI: lớp của em phải tham gia chương trình (nếu chương trình có gắn lớp)
