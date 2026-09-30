@@ -48,7 +48,6 @@ window.TNTT.library = {
     libRejectBox: { open: false, item: null, reason: '', busy: false },
 
     get libCanEdit() { return this.canEditModule('thu_vien'); },
-    get libItemIcon() { return (it) => this._libItemIcon(it); },
 
     // Alpine store cho libViewer (dùng chung bởi bottom sheet bên ngoài component)
     initLibViewer() {

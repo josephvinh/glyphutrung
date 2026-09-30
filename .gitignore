@@ -65,6 +65,9 @@ CHANGES_SUMMARY.md
 
 # Runtime logs (không commit log chạy máy)
 logs/*.log
+# Nhật ký lỗi PHP của máy chủ (tệp `error_log` không đuôi, ở mọi thư mục) — có thể chứa đường dẫn, SQL, dữ liệu
+error_log
+*/error_log
 
 # ============================================================
 # RÁC Ở GỐC REPO — đã gỡ khỏi git, chặn không cho commit lại.

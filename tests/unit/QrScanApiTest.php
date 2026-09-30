@@ -190,12 +190,12 @@ class QrScanApiTest extends TestCase
         return ['id' => $sid, 'code' => $code];
     }
 
-    /** Chương trình Chúa Nhật 07:00, tuỳ chỉnh qua $extra (cột => giá trị). */
+    /** Chương trình lặp hằng tuần vào thứ của hôm nay, 23:59, tuỳ chỉnh qua $extra (cột => giá trị). */
     private function makeProgram(array $extra = []): int
     {
         $cols = array_merge([
             'year_id' => $this->yearId, 'name' => 'QR Api Buổi', 'type' => 'bắt buộc',
-            'status' => 'kích hoạt', 'day_of_week' => 0, 'start_time' => '07:00:00',
+            'status' => 'kích hoạt', 'day_of_week' => (int) date('w'), 'start_time' => '23:59:00',
         ], $extra);
         $pid = db_insert(
             'INSERT INTO programs (' . implode(',', array_keys($cols)) . ') VALUES ('
@@ -205,9 +205,14 @@ class QrScanApiTest extends TestCase
         return $pid;
     }
 
-    /** Chúa Nhật SẮP TỚI (chưa quá giờ chốt) và Chúa Nhật VỪA QUA (đã quá giờ chốt). */
-    private function futureSunday(): string { return date('Y-m-d', strtotime('next sunday +7 days')); }
-    private function pastSunday(): string   { return date('Y-m-d', strtotime('last sunday -7 days')); }
+    /**
+     * Buổi HÔM NAY (chưa quá giờ chốt) và buổi CÙNG THỨ tuần trước (đã quá giờ chốt).
+     * Không dùng ngày tương lai: attendance.php từ chối điểm danh buổi chưa diễn ra (#85).
+     * Chương trình mặc định diễn ra vào thứ của hôm nay, bắt đầu 23:59 nên chỉ quá giờ
+     * chốt khi chạy test sát nửa đêm.
+     */
+    private function todaySession(): string { return date('Y-m-d'); }
+    private function pastSession(): string  { return date('Y-m-d', strtotime('-7 days')); }
 
     private function attRow(int $programId, string $date, int $studentId): ?array
     {
@@ -257,7 +262,7 @@ class QrScanApiTest extends TestCase
 
     public function test_scan_adds_in_scope_student_with_method_qr(): void
     {
-        $pid = $this->makeProgram(); $d = $this->futureSunday();
+        $pid = $this->makeProgram(); $d = $this->todaySession();
         $em = $this->makeStudent((int) $this->classA2['id']);   // lớp khác, CÙNG khối
 
         $r = $this->scan($pid, $d, [$em['code']]);
@@ -268,7 +273,7 @@ class QrScanApiTest extends TestCase
 
     public function test_scan_skips_student_outside_block(): void
     {
-        $pid = $this->makeProgram(); $d = $this->futureSunday();
+        $pid = $this->makeProgram(); $d = $this->todaySession();
         $out = $this->makeStudent((int) $this->classB['id']);
 
         $r = $this->scan($pid, $d, [$out['code']]);
@@ -279,7 +284,7 @@ class QrScanApiTest extends TestCase
 
     public function test_scan_skips_inactive_enrollment(): void
     {
-        $pid = $this->makeProgram(); $d = $this->futureSunday();
+        $pid = $this->makeProgram(); $d = $this->todaySession();
         $em = $this->makeStudent((int) $this->classA['id'], 'dừng sinh hoạt');
 
         $r = $this->scan($pid, $d, [$em['code']]);
@@ -290,7 +295,7 @@ class QrScanApiTest extends TestCase
 
     public function test_scan_skips_unknown_code(): void
     {
-        $pid = $this->makeProgram(); $d = $this->futureSunday();
+        $pid = $this->makeProgram(); $d = $this->todaySession();
         $r = $this->scan($pid, $d, ['KHONG-CO-MA-NAY']);
         $this->assertSame(0, $r['json']['added']);
         $this->assertContains('KHONG-CO-MA-NAY', $this->skippedCodes($r));
@@ -298,7 +303,7 @@ class QrScanApiTest extends TestCase
 
     public function test_scan_skips_class_outside_program(): void
     {
-        $pid = $this->makeProgram(); $d = $this->futureSunday();
+        $pid = $this->makeProgram(); $d = $this->todaySession();
         // Chương trình chỉ áp dụng cho classA; em ở classA2 (cùng khối, trong phạm vi quét) phải bị bỏ.
         db_run("INSERT INTO program_classes (program_id, class_id) VALUES (?,?)", [$pid, $this->classA['id']]);
         $inProg  = $this->makeStudent((int) $this->classA['id']);
@@ -313,7 +318,7 @@ class QrScanApiTest extends TestCase
 
     public function test_scan_rejected_when_program_disallows_qr(): void
     {
-        $pid = $this->makeProgram(['allow_qr' => 0]); $d = $this->futureSunday();
+        $pid = $this->makeProgram(['allow_qr' => 0]); $d = $this->todaySession();
         $em = $this->makeStudent((int) $this->classA['id']);
 
         $r = $this->scan($pid, $d, [$em['code']]);
@@ -324,7 +329,7 @@ class QrScanApiTest extends TestCase
     public function test_scan_rejected_after_absent_time(): void
     {
         // Buổi đã qua + mốc "vắng" 00:01 => đã quá giờ tính vắng.
-        $pid = $this->makeProgram(['absent_time' => '00:01:00']); $d = $this->pastSunday();
+        $pid = $this->makeProgram(['absent_time' => '00:01:00']); $d = $this->pastSession();
         $em = $this->makeStudent((int) $this->classA['id']);
 
         $r = $this->scan($pid, $d, [$em['code']]);
@@ -334,7 +339,7 @@ class QrScanApiTest extends TestCase
 
     public function test_scan_caps_batch_at_200_codes(): void
     {
-        $pid = $this->makeProgram(); $d = $this->futureSunday();
+        $pid = $this->makeProgram(); $d = $this->todaySession();
         $codes = array_map(fn($i) => "X$i", range(1, 201));
         $r = $this->scan($pid, $d, $codes);
         $this->assertSame(false, $r['json']['ok'] ?? null, 'Lô 201 mã phải bị từ chối');
@@ -349,13 +354,13 @@ class QrScanApiTest extends TestCase
         $em2 = $this->makeStudent((int) $this->classA['id']);
 
         // Buổi CHƯA tới giờ chốt -> 'có mặt'; client gửi status='đi trễ' bị bỏ qua.
-        $pidFuture = $this->makeProgram(); $dF = $this->futureSunday();
+        $pidFuture = $this->makeProgram(); $dF = $this->todaySession();
         $r = $this->scan($pidFuture, $dF, [$em1['code']], ['status' => 'đi trễ']);
         $this->assertSame('có mặt', $r['json']['status']);
         $this->assertSame('có mặt', $this->attRow($pidFuture, $dF, $em1['id'])['status']);
 
         // Buổi ĐÃ quá giờ chốt -> 'đi trễ'; client gửi status='có mặt' cũng vô hiệu.
-        $pidPast = $this->makeProgram(); $dP = $this->pastSunday();
+        $pidPast = $this->makeProgram(); $dP = $this->pastSession();
         $r = $this->scan($pidPast, $dP, [$em2['code']], ['status' => 'có mặt']);
         $this->assertSame('đi trễ', $r['json']['status']);
         $this->assertSame('đi trễ', $this->attRow($pidPast, $dP, $em2['id'])['status']);
@@ -364,7 +369,7 @@ class QrScanApiTest extends TestCase
     public function test_scan_rejects_unauthenticated_request(): void
     {
         // Không phiên, không CSRF: require_write() chặn (403) trước cả require_login() (401).
-        $pid = $this->makeProgram(); $d = $this->futureSunday();
+        $pid = $this->makeProgram(); $d = $this->todaySession();
         $em = $this->makeStudent((int) $this->classA['id']);
         $r = $this->http('POST', '/api/attendance.php?action=scan',
             ['programId' => $pid, 'date' => $d, 'codes' => [$em['code']]], false, false);
@@ -372,9 +377,19 @@ class QrScanApiTest extends TestCase
         $this->assertNull($this->attRow($pid, $d, $em['id']), 'Chưa đăng nhập thì không được ghi');
     }
 
+    public function test_scan_rejects_future_date(): void
+    {
+        // #85: không điểm danh trước cho buổi chưa diễn ra (cùng thứ, +7 ngày).
+        $pid = $this->makeProgram(); $d = date('Y-m-d', strtotime('+7 days'));
+        $em = $this->makeStudent((int) $this->classA['id']);
+        $r = $this->scan($pid, $d, [$em['code']]);
+        $this->assertSame(400, $r['code'], $r['raw']);
+        $this->assertNull($this->attRow($pid, $d, $em['id']), 'Buổi tương lai thì không được ghi');
+    }
+
     public function test_scan_requires_csrf_token(): void
     {
-        $pid = $this->makeProgram(); $d = $this->futureSunday();
+        $pid = $this->makeProgram(); $d = $this->todaySession();
         $em = $this->makeStudent((int) $this->classA['id']);
         $r = $this->http('POST', '/api/attendance.php?action=scan',
             ['programId' => $pid, 'date' => $d, 'codes' => [$em['code']]], false);
@@ -388,7 +403,7 @@ class QrScanApiTest extends TestCase
 
     public function test_lookup_scoped_to_block_and_active_only(): void
     {
-        $pid = $this->makeProgram(); $d = $this->futureSunday();
+        $pid = $this->makeProgram(); $d = $this->todaySession();
         $inBlock  = $this->makeStudent((int) $this->classA2['id']);
         $outBlock = $this->makeStudent((int) $this->classB['id']);
         $inactive = $this->makeStudent((int) $this->classA['id'], 'dừng sinh hoạt');
@@ -407,7 +422,7 @@ class QrScanApiTest extends TestCase
 
     public function test_lookup_respects_program_classes(): void
     {
-        $pid = $this->makeProgram(); $d = $this->futureSunday();
+        $pid = $this->makeProgram(); $d = $this->todaySession();
         db_run("INSERT INTO program_classes (program_id, class_id) VALUES (?,?)", [$pid, $this->classA['id']]);
         $inProg  = $this->makeStudent((int) $this->classA['id']);
         $outProg = $this->makeStudent((int) $this->classA2['id']);   // trong khối nhưng ngoài chương trình
