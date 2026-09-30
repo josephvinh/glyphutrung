@@ -93,57 +93,67 @@ Kịch bản dùng để nghiệm thu từng gói (trong `tests/e2e/`):
 
 ## 6. Tiến độ (cập nhật 30/09/2026)
 
-### 6.0 Đã gộp vào `master` (theo yêu cầu chủ dự án, sau duyệt độc lập)
+Tóm tắt: 8 PR đã gộp vào `master` (W0, P2, P3, P6 và 4 issue nhẹ); CI giờ chạy test thật và đã kiểm là biết đỏ. Đang chờ: PR #125 (việc còn lại của W0). Dở dang: P1 và P5. Chưa bắt đầu: P4, P7, P7b, P8.
 
-Thứ tự gộp: #114 (P6), #112 (P2), #113 (P3), #117 (#91), #119 (#105), #120 (#88), #118 (#92), #116 (W0, gộp cuối để CI thật chạy trên `master` đã có mọi bản sửa). Các issue có `Closes` trong PR tự đóng khi gộp: #79, #80, #81, #82, #85, #86, #87, #88, #91, #92, #93, #94, #101, #104, #105.
+### 6.1 Đã gộp vào `master` (sau duyệt độc lập)
 
-Phát hiện khi gộp thử W0 lên `master` mới: 7 test của `QrScanApiTest` đỏ vì dùng "Chúa Nhật tuần sau" để quét, trong khi P3 (#85) nay từ chối buổi tương lai. Đã sửa test dùng buổi hôm nay / cùng thứ tuần trước, thêm `test_scan_rejects_future_date` (xác nhận đỏ khi tắt kiểm ngày tương lai): 208 test xanh cục bộ trước khi gộp. Test chỉ đúng nếu không chạy sát nửa đêm (chương trình thử bắt đầu 23:59).
+Thứ tự gộp: #114, #112, #113, #117, #119, #120, #118, rồi #116 (W0, gộp cuối để CI thật chạy trên `master` đã có mọi bản sửa).
 
-CI thật đã xác nhận: chạy `workflow_dispatch` trên `master` (commit `7c115a6`, run #322): 3 job đều xanh (PHPUnit Tests, PHP Syntax Check, JavaScript Lint); bước "Run PHPUnit" chạy thật ~10 giây và qua bước kiểm sàn ≥ 200 test. Kiểm CI có còn "xanh giả" không: đẩy 2 nhánh tạm phá cố ý rồi chạy `workflow_dispatch` (run #323, #324; PHP 8.2.34, PHPUnit 10.5.65, đã xoá nhánh tạm): (a) lỗi cú pháp PHP + biến `const` khai báo lại + test assert sai -> cả 3 job PHP Syntax Check, JavaScript Lint, PHPUnit Tests đều ĐỎ; (b) file test gọi `exit(0)` lúc nạp (lỗi gốc #82) -> PHPUnit Tests ĐỎ ngay ở bước "Run PHPUnit" với thông báo "Không có junit.xml — PHPUnit chết trước khi chạy xong?" (PHP Syntax và Lint xanh vì không có lỗi ở phần đó). Chưa thử trên runner: test bị skip (không có ngưỡng) và `tests/UnitTest.php` (CI không chạy). Việc còn lại của W0 đã làm ở nhánh `fix/w0-followups` (PR mở sau #116; duyệt độc lập Opus: chấp nhận có điều kiện, điều kiện đã sửa ở `2be60f3`; CI thật trên nhánh, run #325: 3 job xanh, 208 test/741 assertion, PHP 8.2.34): `no-dupe-keys` thành lỗi; `ci_seed.php` chỉ kiểm phân công chính của admin (không tạo hộ, #94); CI chặn test bị skip. Còn hở, đã mở issue: #123 (test risky/warning vẫn xanh; sàn `min_tests=200` lỏng so với 208; chưa có sàn assertion), #124 (CI không chạy `tests/UnitTest.php` và e2e; 12 khối `<script>` trong 6 file PHP chưa lint; `eslint@9` chưa ghim; branch protection chưa rõ, cần chủ repo bật), và #115 (viết lại `ExportTest`, test `accessible_class_ids`). Hai nhánh tạm `ci-fake-check-a/b` vẫn còn trên GitHub (xoá từ máy tôi bị proxy ngắt), cần xoá tay.
+| Gói / issue | Nhánh | PR | Issue đóng | Ghi chú |
+|-------------|-------|----|-----------|---------|
+| P6 triển khai, cài đặt | `fix/p6-deploy-cleanup` | #114 | #81, #101, #87, #93, #94, #104 | Tham chiếu #106 (còn `src/Router.php` vì `tests/UnitTest.php` dùng). Duyệt: Opus, có thử Apache 2.4 |
+| P2 schema | `fix/p2-schema-regressions` | #112 | #79, #80 | Test `tests/e2e/p2_regress.py` (27 ca). Lỗi "Tỷ lệ" → #110 |
+| P3 kiểm tra đầu vào | `fix/p3-input-validation` | #113 | #85, #86 | Test `p3_regress.py` (101 ca). Duyệt: chấp nhận sau khi vá điều kiện (bỏ qua qua `scan`) |
+| W0 CI thật | `fix/w0-ci-that` | #116 | #82 | Gộp thử lên `master` mới phát hiện 7 test `QrScanApiTest` đỏ vì P3 (#85) nay từ chối buổi tương lai; đã sửa test dùng buổi hôm nay/tuần trước và thêm `test_scan_rejects_future_date` (xác nhận đỏ khi tắt kiểm ngày). Test chỉ đúng nếu không chạy sát nửa đêm |
+| #91 khoá trùng `libItemIcon` | `fix/91-library-dupe-key` | #117 | #91 | Duyệt: chấp nhận có điều kiện (đưa `no-dupe-keys` vào CI → #125) |
+| #92 kính lúp đè placeholder | `fix/92-search-padding` | #118 | #92 | `pl-10` và `left-3.5` không có trong `tailwind.css` → dùng `pl-11`, `left-4`. Chưa kiểm chế độ tối |
+| #105 iframe/ảnh ẩn tải `undefined` | `fix/105-hidden-iframe` | #119 | #105 | Đo: 2 request thừa → 0 |
+| #88 logout nhận GET | `fix/88-logout-post` | #120 | #88 | GET → 405. Logout chưa đòi CSRF (xét trong P4) |
 
-Issue mới mở: #121 (khoá trùng giữa các module JS, gồm `init` làm điểm danh ngoại tuyến không tự đồng bộ), #122 (`tailwind.css` biên dịch sẵn đã cũ, thiếu nhiều lớp đang dùng; gộp vào P7).
+### 6.2 Kiểm CI thật (đã làm)
 
-Bảng 6.1 dưới đây là trạng thái lúc tạm dừng; các dòng P2, P3, P6, W0 và các issue nhẹ nay đã gộp.
+- `workflow_dispatch` trên `master` (commit `7c115a6`, run #322): 3 job xanh (PHPUnit Tests, PHP Syntax Check, JavaScript Lint), PHP 8.2.34, PHPUnit 10.5.65.
+- Kiểm CI có còn xanh giả không, bằng nhánh tạm phá cố ý (run #323, #324): lỗi cú pháp PHP + `const` khai báo lại + test assert sai → cả 3 job đỏ; file test gọi `exit(0)` lúc nạp (lỗi gốc #82) → PHPUnit đỏ với thông báo "Không có junit.xml — PHPUnit chết trước khi chạy xong?".
+- Kiểm branch protection (PR thử #126, đã đóng): CI đỏ nhưng trạng thái gộp là `unstable`, không phải `blocked`; `master` ghi `protected: false`. Kết luận: **chưa có quy tắc bảo vệ nhánh nào bắt buộc CI xanh** (có thể do quy tắc chưa lưu/chưa bật, hoặc gói repo không hỗ trợ). Chủ dự án hoãn việc này; xem #124.
 
-### 6.1 Đã làm
+### 6.3 Đang chờ duyệt/gộp
 
-| Gói | Nhánh | Trạng thái | PR | Ghi chú |
-|-----|-------|-----------|----|---------|
-| P2 | `fix/p2-schema-regressions` | Đã duyệt độc lập (Opus), chấp nhận | #112 | Closes #79, #80. Lỗi "Tỷ lệ" phát hiện thêm → #110. Test: `tests/e2e/p2_regress.py` (27 ca) |
-| P3 | `fix/p3-input-validation` | Đã duyệt độc lập (Opus), chấp nhận sau khi sửa điều kiện (bỏ qua qua `scan`) | #113 | Closes #85, #86. Test: `tests/e2e/p3_regress.py` (101 ca). #98 (SĐT nhân sự) chưa làm, chờ P1 |
-| P6 | `fix/p6-deploy-cleanup` | Đã duyệt độc lập (Opus), chấp nhận (Apache 2.4; gộp với W0: PHPUnit 207/207) | #114 | Closes #81, #101, #87, #93, #94, #104; tham chiếu #106 |
-| W0 | `fix/w0-ci-that` | Đã duyệt độc lập (Opus): chấp nhận có điều kiện. Điều kiện 2 (sàn ≥ 200 test, báo lỗi khi thiếu junit.xml) đã làm ở commit `0e3f4cd`. Còn: chạy `workflow_dispatch` trên PHP 8.2 thật; gỡ phần tạo phân công admin trong fixture sau khi #114 merge; `no-dupe-keys` về mức lỗi sau #91 | #116 | Closes #82. Khoảng trống độ phủ (ExportTest không chạy export.php, thiếu test từ chối quyền lớp) → #115 |
-| P1 | `fix/p1-scope-authz` | **Dở dang**, đã commit WIP `9d55496` và đẩy lên; chưa chạy đủ kịch bản, chưa duyệt | chưa mở | #78, #97, #83. Thiết kế: `docs/audit/P1_design.md` |
-| P5 | `fix/p5-web-push` | **Dở dang**, 5 commit đã đẩy (lược đồ token + hàng đợi, allowlist SSRF, gửi sau phản hồi, token subscription, chuông sau commit); còn thiếu unit test, kịch bản `push.py` nghiệm thu, duyệt | chưa mở | #99, #100, #107. Thiết kế: `docs/audit/P5_design.md` |
+| PR | Nhánh | Nội dung | Trạng thái |
+|----|-------|----------|-----------|
+| #125 | `fix/w0-followups` | `no-dupe-keys` thành lỗi; `ci_seed.php` chỉ kiểm phân công chính (`is_primary=1`) của admin, không tạo hộ (#94); CI chặn test bị skip (`max_skipped=0`) | Duyệt độc lập (Opus): chấp nhận có điều kiện, điều kiện đã sửa ở `2be60f3`. CI thật trên PR: 3 job xanh (208 test, 741 assertion). Chờ chủ dự án gộp |
 
-### 6.1b Issue nhẹ đã xử lý ngoài các gói (30/09/2026)
+### 6.4 Dở dang (đã đẩy lên nhánh, chưa có PR)
 
-| Issue | Nhánh | PR |
-|-------|-------|----|
-| #91 khoá trùng `libItemIcon` | `fix/91-library-dupe-key` | #117 |
-| #92 kính lúp đè placeholder (`pl-10` không có trong tailwind.css) | `fix/92-search-padding` | #118 |
-| #105 iframe/ảnh ẩn tải `undefined&mode=view` | `fix/105-hidden-iframe` | #119 |
-| #88 logout nhận GET | `fix/88-logout-post` | #120 |
+| Gói | Nhánh | Tình trạng | Issue |
+|-----|-------|-----------|-------|
+| P1 rò rỉ dữ liệu, phân quyền | `fix/p1-scope-authz` | Commit WIP `9d55496`; chưa chạy đủ kịch bản, chưa duyệt. Thiết kế: `docs/audit/P1_design.md`. Nhánh cần merge lại `master` mới (có P2/P3/P6/W0) | #78, #97, #83 |
+| P5 Web Push | `fix/p5-web-push` | 5 commit (lược đồ token + hàng đợi, allowlist SSRF, gửi sau phản hồi, token subscription, chuông sau commit); còn thiếu unit test, nghiệm thu `push.py`, duyệt. Thiết kế: `docs/audit/P5_design.md`. Cũng cần merge lại `master` | #99, #100, #107 |
 
-Sau khi #117 và #116 merge: đổi `no-dupe-keys` trong `eslint.config.js` từ cảnh báo lên lỗi (PR riêng). #88: logout chưa đòi CSRF token, xét trong P4. #92 chưa kiểm chế độ tối.
+### 6.5 Chưa làm (thứ tự đề nghị)
 
-### 6.2 Chưa làm (làm tiếp theo thứ tự)
+1. **Gộp #125** (chủ dự án).
+2. **#115**: viết lại `ExportTest` để gọi `export.php` qua HTTP; test `accessible_class_ids` cho người bị giới hạn lớp; test 403 của export. Làm cùng hoặc ngay sau P1.
+3. **#123**: bật `failOnRisky`/`failOnWarning` trong `phpunit.xml`; nâng `min_tests` sát 208 và thêm sàn assertion; kiểm từng file có testcase.
+4. **P1**: hoàn tất theo `docs/audit/P1_design.md`; chạy `e2e2.py` (SCOPE-01…03), `extra.py` (STAFF-06), `e2e.py` (AUTH-05), `p1_regress.py`; duyệt độc lập bằng phiên khác phiên viết; mở PR. Mặc định đã chốt: chỉ quản trị viên xem `logs`; BĐH không sửa BĐH khác nhưng sửa được định danh của mình; GLV không thấy tài khoản chờ duyệt; danh bạ SĐT giữ cho vai có quyền `staff` (GLV có).
+5. **P5**: hoàn tất unit test, nghiệm thu `push.py` (PUSH-20, 21, 22); duyệt độc lập; mở PR. Mặc định đã chốt: gửi bất đồng bộ, chỉ 4 dịch vụ push, tự xoá subscription lỗi, quá độ 30 ngày, giới hạn "Send-test" để P4.
+6. **#98** (sau P1): kiểm tra SĐT trong `StaffService`.
+7. **P4** (sau P1, cùng sửa `_bootstrap.php`): #84, #102 (APCu, fallback không im lặng), #103, #96, #95, giới hạn tần suất "Send-test", và CSRF cho logout.
+8. **P8** (sau P1): #90 kích thước `data.php`.
+9. **P7b**: chuẩn hoá `dd/mm/yyyy` toàn web; #108 (tra cứu nhận dd/mm/yyyy, tạm chấp nhận mm/dd/yyyy cũ khi không mơ hồ); #111 (`parseDate` khi nhập Excel). Bước kiểm kê trước đó chưa hoàn tất, cần chạy lại.
+10. **P7** (làm cuối, chạm nhiều `views/*.php`): #109 (a11y), #122 (build lại `tailwind.css`, thiếu nhiều lớp đang dùng), #121 (khoá trùng giữa module JS, gồm `init` làm điểm danh ngoại tuyến không tự đồng bộ).
+11. **#124**: CI chưa chạy `tests/UnitTest.php` và e2e; 12 khối `<script>` trong 6 file PHP chưa lint; `eslint@9` chưa ghim; **branch protection chưa bật (hoãn theo chủ dự án)**.
+12. **#110** (action `attendance` của `export.php`, cột "Tỷ lệ"): cần chủ dự án quyết định giữ hay bỏ action (xem #106).
+13. Đề nghị chưa quyết: phân công đã kết thúc mất `class_id` khi xoá lớp (chỉ mở issue nếu chủ dự án muốn).
 
-1. **W0**: đã duyệt và mở PR #116. Còn lại: chạy `workflow_dispatch` một lần; xử lý #115 (viết lại ExportTest, test `accessible_class_ids` cho người bị giới hạn) — nên làm cùng hoặc ngay sau P1.
-2. **P1**: hoàn tất cài đặt theo `docs/audit/P1_design.md`; chạy `e2e2.py` (SCOPE-01…03), `extra.py` (STAFF-06), `e2e.py` (AUTH-05) và `p1_regress.py`; duyệt độc lập; mở PR. Mặc định đã chốt: quản trị viên mới xem `logs`; BĐH không sửa BĐH khác nhưng sửa được định danh của mình; GLV không thấy tài khoản chờ duyệt; danh bạ SĐT giữ cho vai có quyền `staff` (GLV có).
-3. **P5**: hoàn tất unit test và nghiệm thu bằng `push.py` (PUSH-20, 21, 22); duyệt độc lập; mở PR. Mặc định đã chốt: gửi bất đồng bộ, chỉ 4 dịch vụ push, tự xoá subscription lỗi, quá độ 30 ngày, giới hạn "Send-test" để P4.
-4. **P4** (chưa bắt đầu): #84, #102 (APCu, fallback không im lặng), #88, #103, #96, #95, giới hạn tần suất "Send-test". Làm sau P1 vì cùng sửa `_bootstrap.php`.
-5. **P7b** (chưa bắt đầu): chuẩn hoá `dd/mm/yyyy` toàn web; #108 (tra cứu nhận dd/mm/yyyy, tạm chấp nhận mm/dd/yyyy cũ khi không mơ hồ); #111 (`parseDate` khi nhập Excel). Bước kiểm kê trước đó chưa hoàn tất, cần chạy lại.
-6. **P7** (chưa bắt đầu, làm cuối): #109, #92, #105, #91.
-7. **P8** (chưa bắt đầu, sau P1): #90 kích thước `data.php`.
-8. **#98** (sau P1): kiểm tra SĐT trong `StaffService`.
-9. Lỗi #110 ("Tỷ lệ" điểm danh) và #111 chưa có gói riêng ngoài P7b.
-10. Đề nghị đã ghi nhận nhưng chưa quyết: mất `class_id` của phân công đã kết thúc khi xoá lớp (chỉ mở issue nếu chủ dự án muốn).
-11. Hỏi chủ dự án có muốn theo dõi CI/review trên #112–#114 không.
+### 6.6 Việc chủ dự án cần tự làm
 
-### 6.3 Ghi chú vận hành khi làm tiếp
+- Xoá nhánh tạm `ci-protect-test` trên GitHub (xoá từ máy của tôi bị chặn với HTTP 403).
+- Bật branch protection (hoãn): https://github.com/josephvinh/glyphutrung/settings/rules/new?target=branch ; bắt buộc 3 check PHPUnit Tests, PHP Syntax Check, JavaScript Lint. Repo private trên gói miễn phí không hỗ trợ tính năng này.
 
-- Thay thế model: Fable 5.1 không dùng được (hết hạn mức), toàn bộ thiết kế/viết/duyệt P1 dùng Opus nên mức độc lập thấp hơn kế hoạch. Nên duyệt P1 bằng phiên khác hẳn phiên viết.
-- Mỗi agent dùng DB riêng (`tntt_p1`, `tntt_p5`, `tntt_w0`, ...), cổng riêng; không dùng `pkill`.
-- Môi trường dựng lại: MariaDB 10.11 cục bộ (`service mariadb start`), `php -S` kèm router; công cụ đã dùng: Playwright, axe-core, PHPStan phar, PHPUnit 11, openpyxl, ffmpeg (camera giả).
-- Hai bản thiết kế đã lưu trong repo tại `docs/audit/P1_design.md` và `docs/audit/P5_design.md`.
+### 6.7 Ghi chú vận hành khi làm tiếp
+
+- Fable 5.1 không dùng được (hết hạn mức): thiết kế, viết, duyệt P1 đều dùng Opus nên mức độc lập thấp hơn kế hoạch. Nên duyệt P1 bằng phiên khác hẳn phiên viết.
+- Mỗi agent dùng DB riêng (`tntt_p1`, `tntt_p5`, ...) và cổng riêng; không dùng `pkill`. MariaDB cục bộ hay bị dừng giữa các phiên: `service mariadb start`.
+- Môi trường dựng lại: MariaDB 10.11 cục bộ, `php -S` kèm router; công cụ đã dùng: Playwright, axe-core, PHPStan phar, PHPUnit 11, openpyxl, ffmpeg (camera giả).
+- Hai bản thiết kế nằm trong repo: `docs/audit/P1_design.md`, `docs/audit/P5_design.md`.
+- Phiên này bị chặn xoá nhánh và không đọc được cài đặt repo; việc cần quyền admin hoặc xoá nhánh phải do chủ dự án làm.
