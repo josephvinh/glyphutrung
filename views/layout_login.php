@@ -297,11 +297,26 @@ if (!$__dev) ob_start();
 
 <?php /* Script THƯỜNG (không defer) ở cuối body: chạy khi parser tới đây,
          TRƯỚC alpine (defer) -> kịp đăng ký component loginScreen + window.Passkey. */ ?>
-<?php if ($__dev): ?>
-<script src="assets/js/modules/passkey.js?v=<?php echo @filemtime(__DIR__ . '/../public/assets/js/modules/passkey.js') ?: 0; ?>"></script>
-<script src="assets/js/login.js?v=<?php echo @filemtime(__DIR__ . '/../public/assets/js/login.js') ?: 0; ?>"></script>
+<?php
+/* Bản thật: dùng login.min.js NẾU nó có và MỚI HƠN mọi tệp nguồn (cùng cách
+   assets/js/bundle.php). login.min.js bị .gitignore — thiếu hoặc cũ (quên build)
+   thì rơi về nạp nguồn passkey.js + login.js để trang đăng nhập không hỏng. */
+$__lgDir  = __DIR__ . '/../public/assets/js/';
+$__lgSrc  = [$__lgDir . 'modules/passkey.js', $__lgDir . 'login.js'];
+$__lgMin  = $__lgDir . 'login.min.js';
+$__lgUseMin = false;
+if (!$__dev && is_file($__lgMin)) {
+    $__lgUseMin = true;
+    foreach ($__lgSrc as $__f) {
+        if (is_file($__f) && filemtime($__f) > filemtime($__lgMin)) { $__lgUseMin = false; break; }
+    }
+}
+?>
+<?php if ($__lgUseMin): ?>
+<script src="assets/js/login.min.js?v=<?php echo @filemtime($__lgMin) ?: 0; ?>"></script>
 <?php else: ?>
-<script src="assets/js/login.min.js?v=<?php echo @filemtime(__DIR__ . '/../public/assets/js/login.min.js') ?: 0; ?>"></script>
+<script src="assets/js/modules/passkey.js?v=<?php echo @filemtime($__lgSrc[0]) ?: 0; ?>"></script>
+<script src="assets/js/login.js?v=<?php echo @filemtime($__lgSrc[1]) ?: 0; ?>"></script>
 <?php endif; ?>
 </body>
 </html>

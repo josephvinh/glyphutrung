@@ -15,6 +15,26 @@ function app_config(?string $key = null)
     return $key === null ? $config : ($config[$key] ?? null);
 }
 
+/**
+ * Cấu hình DB THỰC DÙNG: config.php đã bị biến môi trường TNTT_DB_* ghi đè.
+ * Cho phép TRỎ SANG DB KHÁC qua biến môi trường (tiện cho demo/staging/
+ * seed dữ liệu) mà không phải sửa config.php. Chỉ ghi đè khi biến tồn tại.
+ * Mọi chỗ cần TÊN DB (in ra màn hình, tra information_schema...) phải lấy từ
+ * đây hoặc từ SELECT DATABASE(), KHÔNG đọc app_config('db')['name'] — cái đó
+ * bỏ qua biến môi trường nên lệch với DB đang kết nối.
+ */
+function db_config(): array
+{
+    $c = app_config('db');
+    foreach (['host' => 'TNTT_DB_HOST', 'port' => 'TNTT_DB_PORT',
+              'name' => 'TNTT_DB_NAME', 'user' => 'TNTT_DB_USER',
+              'pass' => 'TNTT_DB_PASS'] as $k => $env) {
+        $v = getenv($env);
+        if ($v !== false) $c[$k] = $v;
+    }
+    return $c;
+}
+
 function db(): PDO
 {
     static $pdo = null;
@@ -22,15 +42,7 @@ function db(): PDO
         return $pdo;
     }
 
-    $c = app_config('db');
-    // Cho phép TRỎ SANG DB KHÁC qua biến môi trường (tiện cho demo/staging/
-    // seed dữ liệu) mà không phải sửa config.php. Chỉ ghi đè khi biến tồn tại.
-    foreach (['host' => 'TNTT_DB_HOST', 'port' => 'TNTT_DB_PORT',
-              'name' => 'TNTT_DB_NAME', 'user' => 'TNTT_DB_USER',
-              'pass' => 'TNTT_DB_PASS'] as $k => $env) {
-        $v = getenv($env);
-        if ($v !== false) $c[$k] = $v;
-    }
+    $c = db_config();
     $dsn = sprintf('mysql:host=%s;port=%d;dbname=%s;charset=%s',
         $c['host'], $c['port'], $c['name'], $c['charset']);
 
@@ -63,14 +75,31 @@ function db(): PDO
  * HTTP 500 trắng — không có manh mối nào để lần.
  *
  * Bắt riêng lỗi đó ra và nói thẳng phải làm gì.
+ *
+ * CHỈ báo "chưa cài đặt" khi bảng lõi `members` thật sự không có trong DB.
+ * Lỗi thiếu một bảng phụ (thiếu migration, đổi tên nhầm...) KHÔNG phải là
+ * "chưa dựng CSDL": hàm này trả về để lỗi đi tiếp như lỗi thường (API trả
+ * JSON 500 và ghi log, không trả trang HTML).
  */
 function db_bao_chua_cai_dat(Throwable $e): void
 {
     $msg = $e->getMessage();
     $chuaCoBang = str_contains($msg, 'Base table or view not found')
-               || str_contains($msg, 'doesn${q}t exist')
+               || str_contains($msg, "doesn't exist")
                || str_contains($msg, '42S02');
     if (!$chuaCoBang) return;
+
+    // Có bảng lõi rồi thì đây là thiếu bảng phụ -> để ExceptionHandler xử lý.
+    // Không xác minh được (lỗi kết nối...) cũng coi như lỗi thường, không đoán bừa.
+    try {
+        $coBangLoi = (int) db()->query(
+            "SELECT COUNT(*) FROM information_schema.tables
+              WHERE table_schema = DATABASE() AND table_name = 'members'"
+        )->fetchColumn() > 0;
+    } catch (Throwable $e2) {
+        return;
+    }
+    if ($coBangLoi) return;
 
     if (PHP_SAPI === 'cli') {
         exit("Cơ sở dữ liệu chưa có bảng nào. Hãy chạy:  php config/install.php
