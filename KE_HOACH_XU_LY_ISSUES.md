@@ -106,6 +106,17 @@ Toàn bộ agent nền đã dừng. Chưa merge PR nào; chưa đóng issue nào
 | P1 | `fix/p1-scope-authz` | **Dở dang**, đã commit WIP `9d55496` và đẩy lên; chưa chạy đủ kịch bản, chưa duyệt | chưa mở | #78, #97, #83. Thiết kế: `docs/audit/P1_design.md` |
 | P5 | `fix/p5-web-push` | **Dở dang**, 5 commit đã đẩy (lược đồ token + hàng đợi, allowlist SSRF, gửi sau phản hồi, token subscription, chuông sau commit); còn thiếu unit test, kịch bản `push.py` nghiệm thu, duyệt | chưa mở | #99, #100, #107. Thiết kế: `docs/audit/P5_design.md` |
 
+### 6.1b Issue nhẹ đã xử lý ngoài các gói (30/09/2026)
+
+| Issue | Nhánh | PR |
+|-------|-------|----|
+| #91 khoá trùng `libItemIcon` | `fix/91-library-dupe-key` | #117 |
+| #92 kính lúp đè placeholder (`pl-10` không có trong tailwind.css) | `fix/92-search-padding` | #118 |
+| #105 iframe/ảnh ẩn tải `undefined&mode=view` | `fix/105-hidden-iframe` | #119 |
+| #88 logout nhận GET | `fix/88-logout-post` | #120 |
+
+Sau khi #117 và #116 merge: đổi `no-dupe-keys` trong `eslint.config.js` từ cảnh báo lên lỗi (PR riêng). #88: logout chưa đòi CSRF token, xét trong P4. #92 chưa kiểm chế độ tối.
+
 ### 6.2 Chưa làm (làm tiếp theo thứ tự)
 
 1. **W0**: đã duyệt và mở PR #116. Còn lại: chạy `workflow_dispatch` một lần; xử lý #115 (viết lại ExportTest, test `accessible_class_ids` cho người bị giới hạn) — nên làm cùng hoặc ngay sau P1.
