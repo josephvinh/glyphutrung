@@ -143,7 +143,7 @@ Thứ tự gộp: #114, #112, #113, #117, #119, #120, #118, rồi #116 (W0, gộ
 6. **#98** (sau P1): kiểm tra SĐT trong `StaffService`.
 7. **P4** (sau P1, cùng sửa `_bootstrap.php`): #84, #102 (APCu, fallback không im lặng), #103, #96, #95, giới hạn tần suất "Send-test", và CSRF cho logout.
 8. ~~**P8**~~ ✅ PR #132. attDays (default 30), scores scope (default current), details=0 ẩn sensitive info, gzip compression.
-9. **P7b**: chuẩn hoá `dd/mm/yyyy` toàn web; #108 (tra cứu nhận dd/mm/yyyy, tạm chấp nhận mm/dd/yyyy cũ khi không mơ hồ); #111 (`parseDate` khi nhập Excel). Bước kiểm kê trước đó chưa hoàn tất, cần chạy lại.
+9. ~~**P7b**~~ ✅ PR #133. `tracuu_norm_dob()` ưu tiên dd/mm/yyyy Việt Nam, backup mm/dd/yyyy. 19 tests pass. Còn lại: #111 (parseDate Excel), kiểm kê toàn web.
 10. **P7** (làm cuối, chạm nhiều `views/*.php`): #109 (a11y), #122 (build lại `tailwind.css`, thiếu nhiều lớp đang dùng), #121 (khoá trùng giữa module JS, gồm `init` làm điểm danh ngoại tuyến không tự đồng bộ).
 11. **#124**: CI chưa chạy `tests/UnitTest.php` và e2e; 12 khối `<script>` trong 6 file PHP chưa lint; `eslint@9` chưa ghim; **branch protection chưa bật (hoãn theo chủ dự án)**.
 12. **#110** (action `attendance` của `export.php`, cột "Tỷ lệ"): cần chủ dự án quyết định giữ hay bỏ action (xem #106).
