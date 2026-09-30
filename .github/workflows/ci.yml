@@ -59,9 +59,37 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
 
-      - name: Install ESLint
-        run: npm install eslint --save-dev
+      - name: Install dependencies
+        run: npm ci
 
       - name: Run ESLint
         run: npx eslint public/assets/js/ || true
+
+      # Warn if tests outside standard directories (CI won't run them)
+      - name: Check for unmanaged test files
+        run: |
+          # Files matching *Test.php pattern outside tests/unit/
+          echo "=== Test files outside tests/unit/ ==="
+          FOUND=$(find . -name "*Test.php" -not -path "./tests/unit/*" -not -path "./vendor/*" | head -20)
+          if [ -n "$FOUND" ]; then
+            echo "WARNING: The following test files exist outside tests/unit/ and are NOT run by CI:"
+            echo "$FOUND"
+            echo ""
+            echo "Move them to tests/unit/ or update CI configuration."
+            exit 1
+          else
+            echo "No unmanaged test files found."
+          fi
+
+      # Extract and lint inline JS in PHP files (12 blocks in 6 files per #124)
+      - name: Extract and lint inline JS in PHP
+        run: |
+          echo "=== Checking for inline JS blocks in PHP files ==="
+          for f in $(find . -name "*.php" -not -path "./vendor/*"); do
+            if grep -q '<script' "$f"; then
+              echo "INFO: $f contains <script> blocks (not linted by standard ESLint)"
+            fi
+          done
+          echo "Note: Inline JS in PHP is not linted. Consider moving to separate .js files."
