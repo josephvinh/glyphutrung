@@ -66,9 +66,9 @@ foreach ($students as [$id, $code, $holy, $name, $gender, $birth]) {
 // --- Admin phải có phân công đang hiệu lực do install.php tạo (#94) -------
 // Không tạo hộ: làm vậy từng che lỗi cài mới thiếu dòng này.
 $has = db_one("SELECT id FROM member_assignments
-                WHERE member_id = ? AND role_code = 'admin' AND to_date IS NULL", [$adminId]);
+                WHERE member_id = ? AND role_code = 'admin' AND is_primary = 1 AND to_date IS NULL", [$adminId]);
 if (!$has) {
-    seed_fail('admin không có member_assignments đang hiệu lực — install.php phải tạo (#94).');
+    seed_fail('admin không có member_assignments chính (is_primary=1) đang hiệu lực — install.php phải tạo (#94).');
 }
 
 echo "ci_seed: OK — 3 thiếu nhi (HS001..HS003), ghi danh năm 1/lớp 1, admin có assignment (do install.php tạo).\n";
