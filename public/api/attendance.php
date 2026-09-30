@@ -49,6 +49,11 @@ if ($prog['type'] === 'chiến dịch') {
 }
 if (!$hopLe) json_fail('Buổi này không diễn ra vào ngày ' . $date . '.');
 
+// Không điểm danh trước cho buổi CHƯA diễn ra (giờ Việt Nam). Ngày quá khứ
+// vẫn được (điểm danh bù). Chuẩn hoá qua strtotime để ngày viết lệch dạng
+// ('2026-9-27') không lọt khi so sánh chuỗi.
+$laTuongLai = date('Y-m-d', strtotime($date)) > date('Y-m-d');
+
 // Giờ chốt do máy chủ tính
 $cutoffMin  = (int) app_config('cutoff_minutes');
 $cutoffTs   = strtotime($date . ' ' . $prog['start_time']) + $cutoffMin * 60;
@@ -122,6 +127,7 @@ if (($_GET['action'] ?? '') === 'lookup') {
 // =====================================================================
 if (($_GET['action'] ?? '') === 'scan') {
     if (isset($prog['allow_qr']) && !$prog['allow_qr']) json_fail('Buổi này không cho phép quét QR.');
+    if ($laTuongLai) json_fail('Buổi ngày ' . $date . ' chưa diễn ra, chưa điểm danh được.', 400);
     if ($pastAbsent) json_fail('Đã quá giờ "tính vắng" của buổi — không ghi thêm được.');
 
     $codes = $in['codes'] ?? [];
@@ -243,6 +249,12 @@ if ($existing) {
     }
     Cache::flush();
     json_out(['ok' => true, 'removed' => true]);
+}
+
+// GHI MỚI cho buổi tương lai bị chặn. (Đặt SAU nhánh gỡ ở trên: lỡ đã có
+// dữ liệu tương lai thì vẫn bấm lần nữa để gỡ được, không bị kẹt.)
+if ($laTuongLai) {
+    json_fail('Buổi ngày ' . $date . ' chưa diễn ra, chưa điểm danh được.', 400);
 }
 
 // GHI MỚI: lớp của em phải tham gia chương trình (nếu chương trình có gắn lớp)
