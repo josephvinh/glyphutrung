@@ -10,9 +10,20 @@
  * TUỲ CHỌN PAGINATION:
  * - ?page=1&limit=50 : phân trang danh sách thiếu nhi
  * - ?page=all : trả toàn bộ (backward compatible)
+ *
+ * TUỲ CHỌN PERFORMANCE (#90):
+ * - ?attDays=30 : chỉ attendance trong N ngày gần nhất (mặc định 30, max 90)
+ * - ?scores=current : chỉ scores học kỳ hiện tại (mặc định); scores=all cho toàn bộ
+ * - ?details=0 : chỉ thông tin cơ bản của thiếu nhi (ẩn địa chỉ, SĐT phụ huynh)
  */
 
 require __DIR__ . '/_bootstrap.php';
+
+// Bật gzip compression nếu trình duyệt hỗ trợ (#90)
+if (extension_loaded('zlib') && !headers_sent()) {
+    ini_set('zlib.output_compression', '4096');
+    header('Content-Encoding: gzip');
+}
 require __DIR__ . '/StampService.php';
 
 /**
@@ -54,6 +65,27 @@ $limit = isset($_GET['limit'])
     ? min(MAX_PAGE_LIMIT, max(1, (int) $_GET['limit']))
     : DEFAULT_PAGE_LIMIT;
 $isPaginated = isset($_GET['page']) && $_GET['page'] !== 'all';
+
+// Performance: giới hạn attendance gần đây (#90)
+const ATTENDANCE_DAYS_DEFAULT = 30;
+const ATTENDANCE_DAYS_MAX = 90;
+$attDays = isset($_GET['attDays'])
+    ? min(ATTENDANCE_DAYS_MAX, max(1, (int) $_GET['attDays']))
+    : ATTENDANCE_DAYS_DEFAULT;
+
+// Performance: giới hạn scores theo học kỳ (#90)
+const SCORES_SCOPE_CURRENT = 'current';
+const SCORES_SCOPE_ALL = 'all';
+$scoresScope = ($_GET['scores'] ?? SCORES_SCOPE_CURRENT) === SCORES_SCOPE_ALL
+    ? SCORES_SCOPE_ALL
+    : SCORES_SCOPE_CURRENT;
+
+// Performance: chi tiết thông tin thiếu nhi (#90)
+const STUDENT_DETAILS_FULL = 1;
+const STUDENT_DETAILS_BASIC = 0;
+$studentDetails = isset($_GET['details'])
+    ? ((int) $_GET['details'] === STUDENT_DETAILS_BASIC ? STUDENT_DETAILS_BASIC : STUDENT_DETAILS_FULL)
+    : STUDENT_DETAILS_FULL;
 
 $me   = require_login();
 // Đọc xong phiên là nhả khoá ngay: PHP khoá file session suốt request, nên nếu giữ
@@ -109,22 +141,28 @@ $students = (function () use ($yid, $me, $isPaginated, $page, $limit) {
           ORDER BY s.code
           {$limitClause}", $tham);
 
-    $data = array_map(fn($s) => [
-        'id'          => (int) $s['id'],
-        'code'        => $s['code'],
-        'holyName'    => $s['holy_name'],
-        'name'        => $s['full_name'],
-        'gender'      => (int) $s['gender'],
-        'birthDate'   => $s['birth_date'],
-        'address'     => $s['address'],
-        'fatherName'  => $s['father_name'],
-        'fatherPhone' => $s['father_phone'],
-        'motherName'  => $s['mother_name'],
-        'motherPhone' => $s['mother_phone'],
-        'status'      => $s['status'],
-        'className'   => $s['class_name'],
-        'block'       => $s['block_name'],
-    ], $rows);
+    $data = array_map(function ($s) use ($studentDetails) {
+        $stu = [
+            'id'          => (int) $s['id'],
+            'code'        => $s['code'],
+            'holyName'    => $s['holy_name'],
+            'name'        => $s['full_name'],
+            'gender'      => (int) $s['gender'],
+            'birthDate'   => $s['birth_date'],
+            'status'      => $s['status'],
+            'className'   => $s['class_name'],
+            'block'       => $s['block_name'],
+        ];
+        if ($studentDetails === STUDENT_DETAILS_FULL) {
+            // Thông tin nhạy cảm: chỉ gửi khi ?details=1 (mặc định)
+            $stu['address']     = $s['address'];
+            $stu['fatherName']  = $s['father_name'];
+            $stu['fatherPhone'] = $s['father_phone'];
+            $stu['motherName']  = $s['mother_name'];
+            $stu['motherPhone'] = $s['mother_phone'];
+        }
+        return $stu;
+    }, $rows);
 
     return ['data' => $data, 'total' => $total, 'page' => $page, 'limit' => $limit];
 })();
@@ -244,6 +282,7 @@ $programClasses = (object) $programClasses;
 // GIỚI HẠN theo phạm vi: chỉ gửi điểm danh của các em người này được xem.
 // Admin/BĐH (phạm vi null) vẫn nhận toàn đoàn (họ cần thống kê cả đoàn);
 // GLV/Trưởng khối chỉ nhận lớp/khối mình -> payload nhẹ hẳn.
+// Performance (#90): giới hạn theo số ngày gần đây (mặc định 30).
 // ---------------------------------------------------------------
 $attRows = [];
 if ($part !== 'core') {                          // bước 'core' bỏ qua điểm danh
@@ -253,7 +292,8 @@ if ($part !== 'core') {                          // bước 'core' bỏ qua đi�
             'SELECT a.*, m.full_name AS marked_by_name
                FROM attendances a
                LEFT JOIN members m ON m.id = a.marked_by
-              WHERE a.year_id = ?', [$yid]);
+              WHERE a.year_id = ? AND a.session_date >= DATE_SUB(CURDATE(), INTERVAL ? DAY)',
+            [$yid, $attDays]);
     } else {
         // Chỉ điểm danh của các em trong phạm vi (dùng lại danh sách $students).
         // $students là cấu trúc phân trang ['data'=>[...], ...] (master #42) —
@@ -266,8 +306,9 @@ if ($part !== 'core') {                          // bước 'core' bỏ qua đi�
                 "SELECT a.*, m.full_name AS marked_by_name
                    FROM attendances a
                    LEFT JOIN members m ON m.id = a.marked_by
-                  WHERE a.year_id = ? AND a.student_id IN ($ph)",
-                array_merge([$yid], $stuIds));
+                  WHERE a.year_id = ? AND a.session_date >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
+                    AND a.student_id IN ($ph)",
+                array_merge([$yid, $attDays], $stuIds));
         }
     }
 }
@@ -307,25 +348,46 @@ $leaves = array_map(fn($l) => [
 
 // ---------------------------------------------------------------
 // Điểm số & sổ liên lạc — theo học kỳ của năm nay
+// Performance (#90): mặc định chỉ học kỳ hiện tại để giảm payload.
 // ---------------------------------------------------------------
-$scores = $part === 'core' ? [] : array_map(fn($s) => [
-    'studentId' => (int) $s['student_id'],
-    'termId'    => (int) $s['term_id'],
-    'type'      => $s['type_code'],
-    'value'     => (float) $s['value'],
-    'at'        => substr($s['updated_at'], 0, 16),
-    'by'        => $s['by_name'] ?? '',
-], db_all(
-    'SELECT sc.*, m.full_name AS by_name
-       FROM scores sc
-       JOIN terms t ON t.id = sc.term_id
-       LEFT JOIN members m ON m.id = sc.updated_by
-      WHERE t.year_id = ?', [$yid]));
+$scores = $part === 'core' ? [] : (function () use ($yid, $scoresScope) {
+    $sql = 'SELECT sc.*, m.full_name AS by_name
+            FROM scores sc
+            JOIN terms t ON t.id = sc.term_id
+            LEFT JOIN members m ON m.id = sc.updated_by
+            WHERE t.year_id = ?';
+    $params = [$yid];
+    if ($scoresScope === SCORES_SCOPE_CURRENT) {
+        // Chỉ học kỳ hiện tại (nếu có)
+        $currentTerm = db_one('SELECT id FROM terms WHERE year_id = ? AND status = "hiện tại" LIMIT 1', [$yid]);
+        if ($currentTerm) {
+            $sql .= ' AND t.id = ?';
+            $params[] = $currentTerm['id'];
+        }
+        // Nếu không có học kỳ hiện tại, vẫn trả rỗng
+    }
+    return array_map(fn($s) => [
+        'studentId' => (int) $s['student_id'],
+        'termId'    => (int) $s['term_id'],
+        'type'      => $s['type_code'],
+        'value'     => (float) $s['value'],
+        'at'        => substr($s['updated_at'], 0, 16),
+        'by'        => $s['by_name'] ?? '',
+    ], db_all($sql, $params));
+})();
 
 // BƯỚC 2 (tải nền): chỉ cần điểm danh + điểm -> trả sớm, khỏi tính phần
 // còn lại (thông báo/RSVP, nhân sự, nhật ký...). Nhẹ và nhanh hơn hẳn.
 if ($part === 'heavy') {
-    $heavy = ['ok' => true, 'attendances' => $attendances, 'scores' => $scores];
+    $heavy = [
+        'ok' => true,
+        'meta' => [
+            'attDays'     => $attDays,
+            'scoresScope' => $scoresScope,
+        ],
+        'attendances' => $attendances,
+        'scores'      => $scores,
+    ];
     Cache::set($cacheKey, $heavy, 60);
     data_out($heavy);
 }
@@ -476,6 +538,14 @@ $libraryPending = (permission_of('thu_vien') === 'edit')
 // Build result
 $result = [
     'ok' => true,
+    // Metadata về performance (#90)
+    'meta' => [
+        'attDays'      => $attDays,
+        'scoresScope'  => $scoresScope,
+        'details'      => $studentDetails,
+        'totalAttendances' => count($attendances),
+        'totalStudents' => count($students['data']),
+    ],
     'notes'         => $notes,
     // 'students' được gán bên dưới (khối phân trang của master); ở đây chỉ thêm
     // Sổ Mộc cho các em trong phạm vi.
