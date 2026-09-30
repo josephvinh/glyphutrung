@@ -73,9 +73,14 @@ switch ($action) {
     case 'subscribe':
         require_write();
         $me = require_login();
-        $ep = trim((string) ($in['endpoint'] ?? ''));
-        if ($ep === '' || !preg_match('#^https://#', $ep)) json_fail('Đăng ký không hợp lệ.');
-        if (strlen($ep) > 500) json_fail('Địa chỉ đăng ký quá dài.');
+        // KHÔNG trim: khoảng trắng/CRLF ở đuôi phải bị từ chối chứ không được "sửa hộ".
+        $ep = (string) ($in['endpoint'] ?? '');
+        if ($ep === '') json_fail('Đăng ký không hợp lệ.');
+        // Chống SSRF (#99): chỉ nhận endpoint của các dịch vụ push thật.
+        // Thông điệp chung, không phản chiếu lại dữ liệu người gửi.
+        if (!push_endpoint_hop_le($ep)['ok']) {
+            json_fail('Trình duyệt này dùng máy chủ thông báo chưa được hỗ trợ.', 422);
+        }
 
         $ua = mb_substr((string) ($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255);
         // Cùng một máy đăng ký lại (đổi tài khoản, cài lại) thì chuyển

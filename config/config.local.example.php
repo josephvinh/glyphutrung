@@ -23,5 +23,11 @@ return [
     // Đổi khoá sẽ làm mọi máy đã đăng ký thông báo phải đăng ký lại.
     // 'push' => ['public' => '...', 'private' => '...', 'subject' => 'mailto:ban@giaoxu'],
 
+    // CHỈ DÙNG TRÊN MÁY DEV/THỬ, KHÔNG BAO GIỜ KHAI TRÊN MÁY CHỦ THẬT.
+    // Cho phép thử Web Push với máy chủ push giả chạy ở localhost. Mặc định
+    // Web Push chỉ nhận endpoint của FCM, Mozilla, Apple, Windows (chống SSRF).
+    // Chỉ có tác dụng khi 'production' => false; production => true thì bỏ qua.
+    // 'push' => [ ..., 'test_hosts' => ['localhost:9443'] ],   // dạng "host:cổng", chữ thường
+
     'production' => true,
 ];

@@ -91,6 +91,130 @@ function push_khoa_rieng(string $privB64, string $pubB64)
     return $k;
 }
 
+/* ==============================================================
+   KIỂM ĐỊA CHỈ ĐĂNG KÝ (endpoint) — CHỐNG SSRF (#99)
+
+   Endpoint do trình duyệt của người dùng gửi lên, nên phải coi là dữ
+   liệu không tin cậy: nếu để máy chủ POST tới bất cứ địa chỉ nào thì
+   ai có tài khoản cũng biến máy chủ thành "máy quét" mạng nội bộ, và
+   còn gửi kèm chữ ký VAPID tới máy của kẻ tấn công.
+
+   Vì vậy CHỈ nhận endpoint của bốn dịch vụ push thật. Danh sách viết
+   cứng ở đây — không cho cấu hình từ CSDL hay request.
+   ============================================================== */
+
+/** Host khớp CHÍNH XÁC (chữ thường) */
+const PUSH_HOST_CHINH_XAC = [
+    'fcm.googleapis.com',                // Chrome, Edge Android, Samsung, Opera, Brave...
+    'updates.push.services.mozilla.com', // Firefox
+];
+
+/** Host khớp theo HẬU TỐ — có dấu chấm đầu để "evilpush.apple.com" không lọt */
+const PUSH_HOST_HAU_TO = [
+    '.push.apple.com',       // Safari macOS 13+, iOS/iPadOS 16.4+
+    '.notify.windows.com',   // Edge trên Windows (WNS)
+];
+
+/**
+ * Danh sách "host:cổng" chỉ dùng khi thử trên máy dev (mock ở localhost).
+ *
+ * CHỈ đọc từ config.local.php và CHỈ khi 'production' => false. Không đọc
+ * biến môi trường, request hay CSDL. Mặc định (không khai) là rỗng.
+ *
+ * @return string[]
+ */
+function push_host_thu(): array
+{
+    if (app_config('production') !== false) return [];
+    $cfg = app_config('push');
+    $ds  = is_array($cfg) ? ($cfg['test_hosts'] ?? []) : [];
+    if (!is_array($ds)) return [];
+    $ra = [];
+    foreach ($ds as $h) {
+        if (is_string($h) && preg_match('/\A[a-z0-9.-]+:\d{1,5}\z/', $h)) $ra[] = $h;
+    }
+    return $ra;
+}
+
+/** Host có nằm trong danh sách dịch vụ push được phép không (chưa tính test_hosts) */
+function push_host_duoc_phep(string $host): bool
+{
+    if (in_array($host, PUSH_HOST_CHINH_XAC, true)) return true;
+    foreach (PUSH_HOST_HAU_TO as $ht) {
+        if (strlen($host) > strlen($ht) && str_ends_with($host, $ht)) return true;
+    }
+    return false;
+}
+
+/**
+ * Kiểm endpoint — hàm thuần, không I/O.
+ *
+ * @param string[] $hostThu danh sách "host:cổng" được thêm vào (chỉ môi trường thử)
+ * @return array{ok:bool, host?:string, port?:int, loi?:string}
+ */
+function push_kiem_endpoint(string $ep, array $hostThu = []): array
+{
+    if (strlen($ep) > 500) return ['ok' => false, 'loi' => 'dai'];
+
+    // Chặt cả chuỗi: https chữ thường, host chữ thường, không userinfo (@),
+    // không \, không #, không khoảng trắng/CR/LF, không [IPv6], bắt buộc có path.
+    $re = "#\\Ahttps://([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*)"
+        . "(?::(\\d{1,5}))?(/[A-Za-z0-9._~%!\$&'()*+,;=:@/?-]*)\\z#";
+    if (!preg_match($re, $ep, $m)) return ['ok' => false, 'loi' => 'regex'];
+
+    $host = $m[1];
+    $cong = ($m[2] ?? '') === '' ? 443 : (int) $m[2];
+    if (($m[2] ?? '') !== '' && $m[2] !== (string) $cong) return ['ok' => false, 'loi' => 'cong'];  // 0443...
+    if ($cong < 1 || $cong > 65535) return ['ok' => false, 'loi' => 'cong'];
+
+    $laHostThu = in_array($host . ':' . $cong, $hostThu, true);
+    if (!$laHostThu && $cong !== 443) return ['ok' => false, 'loi' => 'cong'];
+    if (!$laHostThu && !push_host_duoc_phep($host)) return ['ok' => false, 'loi' => 'host', 'host' => $host];
+
+    // Chống lệch bộ phân tích: parse_url phải thấy đúng host này
+    $u = parse_url($ep);
+    if (!is_array($u) || ($u['host'] ?? null) !== $host
+        || isset($u['user']) || isset($u['pass']) || isset($u['fragment'])) {
+        return ['ok' => false, 'loi' => 'parse'];
+    }
+
+    return ['ok' => true, 'host' => $host, 'port' => $cong];
+}
+
+/** Kiểm endpoint theo cấu hình của máy này (kể cả test_hosts nếu đang ở máy thử) */
+function push_endpoint_hop_le(string $ep): array
+{
+    $r = push_kiem_endpoint($ep, push_host_thu());
+    if (!$r['ok'] && ($r['loi'] ?? '') === 'host') {
+        // Chỉ ghi host, không ghi cả URL. Quản trị đọc log này để biết có
+        // trình duyệt nào dùng máy chủ push mới mà danh sách chưa có.
+        error_log('push: host không được phép: ' . $r['host']);
+    }
+    return $r;
+}
+
+/**
+ * IP này có phải địa chỉ công khai trên Internet không?
+ * Loại: loopback, riêng tư (10/8, 172.16/12, 192.168/16), link-local
+ * (169.254/16, gồm cả metadata đám mây), CGNAT 100.64/10, 0.0.0.0, IPv6 nội bộ
+ * và dạng ::ffff:127.0.0.1.
+ */
+function push_ip_cong_khai(string $ip): bool
+{
+    if (filter_var($ip, FILTER_VALIDATE_IP) === false) return false;
+    if (defined('FILTER_FLAG_GLOBAL_RANGE')) {
+        return filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_GLOBAL_RANGE) !== false;
+    }
+    // PHP < 8.2: tự loại thêm những dải mà cờ cũ không bao
+    if (filter_var($ip, FILTER_VALIDATE_IP,
+                   FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) return false;
+    if (str_contains($ip, ':')) {
+        return !preg_match('/\A(::ffff:|::1\z|fc|fd|fe[89ab])/i', $ip);
+    }
+    $p = array_map('intval', explode('.', $ip));
+    return !($p[0] === 100 && $p[1] >= 64 && $p[1] <= 127);
+}
+
 /**
  * Gửi một cú chuông tới một máy đã đăng ký.
  *
@@ -185,6 +309,11 @@ function push_bao(array $memberIds, string $title, string $body,
 
         $rung = 0;
         foreach ($dsMay as $may) {
+            // Dòng cũ có endpoint ngoài danh sách cho phép (đăng ký trước bản vá) → xoá
+            if (!push_endpoint_hop_le($may['endpoint'])['ok']) {
+                db_run('DELETE FROM push_subscriptions WHERE id=?', [$may['id']]);
+                continue;
+            }
             [$ok, $ma] = push_gui($may['endpoint']);
             if ($ok) {
                 $rung++;
