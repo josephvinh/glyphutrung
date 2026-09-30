@@ -11,9 +11,8 @@
  *   - lớp id = 1                                 <- install.php tạo (Khai Tâm 1A)
  *   - quản trị (admin) id = 1                    <- install.php tạo
  *   - thiếu nhi id 1..3, mã HS001..HS003, ghi danh năm 1 vào lớp 1  <- file này
- *   - admin có một dòng member_assignments đang hiệu lực            <- file này
- *     (cài mới không tạo dòng này — xem issue #94; fixture tạo hộ để
- *      PermissionTest không phụ thuộc vào việc #94 được sửa thế nào)
+ *   - admin có một dòng member_assignments đang hiệu lực            <- install.php tạo (#94)
+ *     (fixture chỉ KIỂM, không tạo hộ: nếu install.php ngừng tạo thì CI đỏ)
  *
  * Idempotent: chạy lại vô hại. Nếu các tiền đề của install.php không còn đúng
  * (id năm học/lớp/admin khác 1) thì DỪNG với mã ≠ 0 và nói rõ, thay vì để test
@@ -64,12 +63,12 @@ foreach ($students as [$id, $code, $holy, $name, $gender, $birth]) {
             VALUES (?,?,?, 'đang sinh hoạt')", [$yearId, $id, $classId]);
 }
 
-// --- Admin có phân công đang hiệu lực (workaround #94) ---------------------
+// --- Admin phải có phân công đang hiệu lực do install.php tạo (#94) -------
+// Không tạo hộ: làm vậy từng che lỗi cài mới thiếu dòng này.
 $has = db_one("SELECT id FROM member_assignments
                 WHERE member_id = ? AND role_code = 'admin' AND to_date IS NULL", [$adminId]);
 if (!$has) {
-    db_run("INSERT INTO member_assignments (member_id, role_code, is_primary, from_date, assigned_by)
-            VALUES (?, 'admin', 1, CURDATE(), ?)", [$adminId, $adminId]);
+    seed_fail('admin không có member_assignments đang hiệu lực — install.php phải tạo (#94).');
 }
 
-echo "ci_seed: OK — 3 thiếu nhi (HS001..HS003), ghi danh năm 1/lớp 1, admin có assignment.\n";
+echo "ci_seed: OK — 3 thiếu nhi (HS001..HS003), ghi danh năm 1/lớp 1, admin có assignment (do install.php tạo).\n";
