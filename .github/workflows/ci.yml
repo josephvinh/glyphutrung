@@ -93,8 +93,15 @@ jobs:
           tests=$(grep -c '<testcase ' junit.xml || true)
           files=$(ls tests/unit/*Test.php | wc -l)
           echo "Đã chạy $tests test từ $files file test"
-          # Sàn số test: hiện có 207. Nâng dần khi thêm test; hạ chỉ khi chủ ý xoá test.
+          # Sàn số test: hiện có 208. Nâng dần khi thêm test; hạ chỉ khi chủ ý xoá test.
           min_tests=200
+          # Test bị skip/incomplete là test không được kiểm: không cho âm thầm tăng.
+          skipped=$(grep -c '<skipped' junit.xml || true)
+          max_skipped=0
+          if [ "$skipped" -gt "$max_skipped" ]; then
+            echo "::error::Có $skipped test bị skip (tối đa cho phép $max_skipped). Sửa test, hoặc nâng max_skipped một cách có chủ ý."
+            exit 1
+          fi
           if [ "$tests" -lt "$min_tests" ] || [ "$tests" -lt "$files" ]; then
             echo "::error::Số test đã chạy ($tests) thấp hơn sàn $min_tests hoặc ít hơn số file test ($files) — mất test hoặc có file làm tiến trình thoát sớm?"
             exit 1
@@ -144,6 +151,6 @@ jobs:
 
       # Cấu hình ở eslint.config.js (không cần cài thêm gói nào ngoài eslint).
       # Trước đây `|| true` nên không bao giờ đỏ (#82). Nay mức "error" -> exit 1;
-      # mức "warn" (ví dụ no-dupe-keys, xem #91) không làm đỏ.
+      # mức "warn" không làm đỏ (hiện không luật nào để warn; no-dupe-keys là error sau #91).
       - name: Run ESLint
         run: npx --yes eslint@9 public/assets/js/ public/sw.js

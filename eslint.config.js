@@ -29,7 +29,7 @@ const browser = [
 ];
 
 // Thư viện nạp bằng <script> riêng (public/assets/js/vendor/*) hoặc nạp lười từ CDN
-// (html2canvas, jspdf — xem custom-qrcard.js, luôn kiểm tra window.* trước khi dùng)
+// (html2canvas, jspdf — nạp lười, luôn kiểm tra window.* trước khi dùng)
 const vendor = ['Alpine', 'lucide', 'XLSX', 'QRCode', 'jsQR', 'html2canvas', 'jspdf'];
 
 const globals = {};
@@ -62,10 +62,10 @@ module.exports = [
       'use-isnan': 'error',
       'valid-typeof': 'error',
 
-      // #91: public/assets/js/modules/library.js khai báo khoá trùng `libItemIcon`.
-      // Đó là lỗi thật nhưng nằm ngoài phạm vi #82 -> để WARN (không làm CI đỏ);
-      // khi #91 sửa xong hãy đổi lại thành 'error'.
-      'no-dupe-keys': 'warn',
+      // #91 (đã sửa): library.js từng khai báo khoá trùng `libItemIcon`. Giữ 'error'.
+      // Lưu ý: luật này chỉ thấy khoá trùng TRONG một object; khoá trùng GIỮA các
+      // module (module nạp sau đè module trước) xem #121.
+      'no-dupe-keys': 'error',
     },
   },
 ];
