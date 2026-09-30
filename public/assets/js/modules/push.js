@@ -27,6 +27,7 @@ window.TNTT.push = {
     tbSoMay: 0,
     tbLoiGui: null,      // mã lỗi của lần gửi gần nhất tới máy này (null = không lỗi)
     _epHienTai: '',
+    _canToken: false,    // máy chủ báo dòng đăng ký của máy này chưa có token (đăng ký từ bản cũ)
     _swReg: null,
 
     /** Gọi trong init(). Không hỏi quyền, chỉ dò xem đang ở tình trạng nào. */
@@ -49,26 +50,67 @@ window.TNTT.push = {
             this._swReg = await navigator.serviceWorker.register('sw.js');
             const dk = await this._swReg.pushManager.getSubscription();
             this.tbDaBat = !!dk && Notification.permission === 'granted';
-            await this._pushDongBo(dk ? dk.endpoint : '');
+            const daDongBo = await this._pushDongBo(dk ? dk.endpoint : '');
+
+            // Máy đã bật từ bản cũ (chưa có token) hoặc token cục bộ bị mất: đăng ký lại
+            // lặng lẽ để lấy token, service worker cần nó để nhận nội dung khi đã đăng xuất.
+            // Chỉ làm khi status vừa trả OK (đang đăng nhập) VÀ máy chủ xác nhận dòng
+            // này là của tài khoản đang đăng nhập (tbDaBat lấy từ onThisDevice). Máy đang
+            // giữ đăng ký của tài khoản khác thì KHÔNG tự đụng vào — để người dùng tự bật.
+            if (daDongBo && dk && Notification.permission === 'granted' && this.tbDaBat
+                && (this._canToken || !(await this._tokenDoc()))) {
+                const luu = await this.api('push', 'subscribe', { endpoint: dk.endpoint });
+                if (luu.ok && luu.token) await this._tokenLuu(luu.token);
+            }
         } catch (e) {
             console.warn('[TNTT] không đăng ký được service worker:', e);
             this.tbHoTro = false;
         }
     },
 
+    /** @returns {Promise<boolean>} true nếu máy chủ trả trạng thái hợp lệ (đang đăng nhập) */
     async _pushDongBo(endpoint) {
         try {
             const res = await window.TNTT.csrfFetch('api/push.php?action=status&endpoint=' + encodeURIComponent(endpoint));
             const d = await res.json();
-            if (!d.ok) return;
+            if (!d.ok) return false;
             this.tbSoMay = d.devices || 0;
             this._epHienTai = endpoint;
+            this._canToken = !!d.needToken;
             this.tbLoiGui = (typeof d.lastFailCode === 'number') ? d.lastFailCode : null;
-            if (!d.available) { this.tbHoTro = false; return; }   // máy chủ chưa cấu hình khoá
+            if (!d.available) { this.tbHoTro = false; return false; }   // máy chủ chưa cấu hình khoá
             // Máy chủ mới là nguồn sự thật: đăng ký còn trong trình duyệt
             // nhưng máy chủ đã xoá (gỡ app, đổi khoá) thì coi như chưa bật.
             if (endpoint) this.tbDaBat = d.onThisDevice;
+            return true;
         } catch (e) { /* mất mạng thì cứ để nguyên trạng thái đang hiện */ }
+        return false;
+    },
+
+    /* ---- Token máy: lưu trong Cache Storage vì cả trang lẫn service worker đều đọc được,
+       và còn nguyên sau khi đăng xuất. Mọi lỗi đều nuốt im lặng (không có kho thì
+       service worker quay về dùng phiên / câu thông báo chung). ---- */
+    _tokenKhoa() {
+        return new URL('__tntt_push_token', this._swReg ? this._swReg.scope : location.href).href;
+    },
+    async _tokenLuu(token) {
+        try {
+            if (!token || !('caches' in window)) return;
+            await (await caches.open('tntt-push')).put(this._tokenKhoa(),
+                new Response(token, { headers: { 'Content-Type': 'text/plain' } }));
+        } catch (e) { /* bỏ qua */ }
+    },
+    async _tokenDoc() {
+        try {
+            if (!('caches' in window)) return '';
+            const r = await (await caches.open('tntt-push')).match(this._tokenKhoa());
+            return r ? (await r.text()).trim() : '';
+        } catch (e) { return ''; }
+    },
+    async _tokenXoa() {
+        try {
+            if ('caches' in window) await (await caches.open('tntt-push')).delete(this._tokenKhoa());
+        } catch (e) { /* bỏ qua */ }
     },
 
     /** Nút gạt trong Cài đặt → Cá nhân */
@@ -105,17 +147,26 @@ window.TNTT.push = {
             return;
         }
 
-        const dk = await this._swReg.pushManager.subscribe({
+        const dangKy = () => this._swReg.pushManager.subscribe({
             userVisibleOnly: true,                    // bắt buộc, và app này đúng là luôn hiện ra
             applicationServerKey: this._sangMang(k.key)
         });
 
-        const luu = await this.api('push', 'subscribe', { endpoint: dk.endpoint });
+        let dk = await dangKy();
+        let luu = await this.api('push', 'subscribe', { endpoint: dk.endpoint });
+        if (!luu.ok && luu.code === 'endpoint_owned') {
+            // Máy dùng chung: đăng ký này đang thuộc tài khoản khác. Huỷ đăng ký trong
+            // trình duyệt rồi đăng ký lại để lấy endpoint MỚI (chỉ thử lại một lần).
+            try { await dk.unsubscribe(); } catch (e) { /* bỏ qua */ }
+            dk = await dangKy();
+            luu = await this.api('push', 'subscribe', { endpoint: dk.endpoint });
+        }
         if (!luu.ok) {
-            await dk.unsubscribe();                   // máy chủ không nhận thì đừng để lại rác
+            try { await dk.unsubscribe(); } catch (e) { /* bỏ qua */ }   // máy chủ không nhận thì đừng để lại rác
             window.TNTT.toast.error(luu.error || 'Không lưu được đăng ký.');
             return;
         }
+        await this._tokenLuu(luu.token);
         this.tbDaBat = true;
         await this._pushDongBo(dk.endpoint);
     },
@@ -126,6 +177,7 @@ window.TNTT.push = {
             await this.api('push', 'unsubscribe', { endpoint: dk.endpoint });
             await dk.unsubscribe();
         }
+        await this._tokenXoa();
         this.tbDaBat = false;
         await this._pushDongBo('');
     },

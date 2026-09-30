@@ -215,6 +215,47 @@ function push_ip_cong_khai(string $ip): bool
     return !($p[0] === 100 && $p[1] >= 64 && $p[1] <= 127);
 }
 
+/* ==============================================================
+   TOKEN MÁY (#107)
+
+   Trước đây service worker nhận diện máy bằng chính endpoint — mà endpoint
+   lại được trang gửi lên khi đăng ký và bị lộ qua query string của status,
+   nên biết endpoint là đọc được thông báo của người khác. Nay server sinh
+   một token ngẫu nhiên 256 bit khi đăng ký; chỉ lưu BĂM SHA-256 của nó.
+   Endpoint chỉ còn dùng tạm cho dòng cũ chưa có token, tới hạn chuyển tiếp.
+   ============================================================== */
+
+/** Hết hạn chuyển tiếp: tới ngày này (gồm cả ngày) dòng cũ chưa có token vẫn nhận bằng endpoint.
+ *  = ngày triển khai + 30 ngày. Ghi đè bằng app_config('push')['legacy_until'] (YYYY-MM-DD). */
+const PUSH_ENDPOINT_CU_HET_HAN = '2026-10-30';
+
+/** Còn trong thời hạn chuyển tiếp không? */
+function push_con_nhan_endpoint_cu(): bool
+{
+    $cfg = app_config('push');
+    $han = is_array($cfg) ? (string) ($cfg['legacy_until'] ?? '') : '';
+    if (!preg_match('/\A\d{4}-\d{2}-\d{2}\z/', $han)) $han = PUSH_ENDPOINT_CU_HET_HAN;
+    return date('Y-m-d') <= $han;
+}
+
+/** Token ngẫu nhiên 256 bit, base64url (43 ký tự) */
+function push_sinh_token(): string
+{
+    return push_b64(random_bytes(32));
+}
+
+/** Giá trị lưu trong CSDL: hex SHA-256 của token */
+function push_bam_token(string $token): string
+{
+    return hash('sha256', $token);
+}
+
+/** Đúng dạng token do push_sinh_token() sinh ra? */
+function push_token_dung_dinh_dang(string $token): bool
+{
+    return (bool) preg_match('/\A[A-Za-z0-9_-]{43}\z/', $token);
+}
+
 /**
  * Ký JWT VAPID cho một audience (https://host, không kèm cổng).
  * Trả null nếu chưa có khoá hoặc không ký được.
