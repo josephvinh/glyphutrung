@@ -5,18 +5,14 @@
  * GET api/logs.php?page=1&limit=20
  *
  * Trả về nhật ký hoạt động với pagination.
- * Chỉ admin/Ban Điều Hành mới được xem.
+ * Chỉ Quản trị mới được xem (can_view_logs).
  */
 require __DIR__ . '/_bootstrap.php';
 
 $me = require_login();
 
-// Chỉ người có quyền edit toàn đoàn mới xem nhật ký
-$role = $me['role'] ?? '';
-$isAdmin = in_array($role, ['admin', 'ban_dieu_hanh'], true);
-if (!$isAdmin) {
-    json_fail('Không có quyền xem nhật ký.', 403);
-}
+// Chỉ người được xem nhật ký (= quyền màn Cài đặt, hiện là Quản trị).
+if (!can_view_logs($me)) json_fail('Không có quyền xem nhật ký.', 403);
 
 // Pagination params
 $page  = max(1, (int) ($_GET['page'] ?? 1));

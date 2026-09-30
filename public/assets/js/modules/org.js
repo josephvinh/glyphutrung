@@ -113,6 +113,17 @@ window.TNTT.org = {
         return this.canManageOrg && !this.isProtectedMember(m);
     },
 
+    // #97 — khớp StaffService::guardTarget(): người không phải Quản trị không sửa
+    // được hồ sơ admin/BĐH khác, chỉ sửa danh tính của CHÍNH MÌNH (chức danh khoá).
+    canEditMemberRow(m) {
+        return this.isAdmin || !this.isProtectedMember(m) || m.id === this.user.memberId;
+    },
+
+    // Cấp lại mật khẩu cho admin/BĐH (kể cả chính mình): chỉ Quản trị.
+    canResetMemberPw(m) {
+        return this.isAdmin || !this.isProtectedMember(m);
+    },
+
     // ---- Tra cứu ----
     roleLabel(role) {
         const r = this.roleDefs.find(x => x.value === role);
