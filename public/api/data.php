@@ -52,7 +52,9 @@ function data_out(array $payload): never
  */
 function data_scope_for(array $me, string $mod): ?array
 {
-    $base = allowed_class_ids($me);
+    static $bases = [];                      // cùng $me gọi cho 3 module: tính P(me) một lần
+    $base = $bases[(int) $me['id']] ??= [allowed_class_ids($me)];
+    $base = $base[0];
     if ($base === []) return [];
     $m = accessible_class_ids($me, $mod, 'view');
     if ($m === null) return $base;           // base có thể null (toàn đoàn)
