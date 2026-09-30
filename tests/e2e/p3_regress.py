@@ -166,13 +166,34 @@ tmr = iso(TODAY + datetime.timedelta(days=1)); nxt = iso(TODAY + datetime.timede
 far = iso(TODAY + datetime.timedelta(days=400))
 tmr_odd = f"{(TODAY + datetime.timedelta(days=1)).year}-{(TODAY + datetime.timedelta(days=1)).month}-{(TODAY + datetime.timedelta(days=1)).day}"  # không đệm 0
 
-for lab, d in [("ngày mai", tmr), ("tuần sau", nxt), ("400 ngày nữa", far), ("ngày mai viết không đệm số 0", tmr_odd)]:
+for lab, d in [("ngày mai", tmr), ("tuần sau", nxt), ("400 ngày nữa", far)]:
     r = TG(adm, d, stA)
     rec("ATT85-01", f"toggle buổi tương lai ({lab}: {d}) -> 400 + thông báo tiếng Việt, không ghi",
         r[0] == 400 and 'chưa diễn ra' in err(r) and cnt(stA, d) == 0, show(r))
     r = SC(adm, d, [codeA])
     rec("ATT85-02", f"scan buổi tương lai ({lab}: {d}) -> 400 + thông báo tiếng Việt, không ghi",
         r[0] == 400 and 'chưa diễn ra' in err(r) and cnt(stA, d) == 0, show(r))
+
+# Chuỗi ngày xấu (rác phía sau, offset, xuống dòng, không đệm số 0, khoảng trắng, ngày không có thật, 0000-00-00, rỗng, mảng):
+# PHẢI 400 cho cả toggle, scan một mã và scan lô nhiều mã, và KHÔNG được sinh dòng nào trong attendances
+# (trước đây scan + '2026-10-01abc' bị MariaDB cắt còn '2026-10-01' rồi lưu thành bản ghi tương lai).
+BAD_DATES = [
+    ("rác phía sau (tương lai)", tmr + "abc"), ("offset +14:00", tmr + "T00:00:00+14:00"), ("xuống dòng cuối", tmr + "\n"),
+    ("không đệm số 0", tmr_odd), ("khoảng trắng đầu", " " + tmr), ("ngày không có thật", f"{TODAY.year}-02-30"),
+    ("0000-00-00", "0000-00-00"), ("chuỗi rỗng", ""), ("mảng", [tmr]), ("mảng rỗng", []),
+    ("rác phía sau (quá khứ)", yst + "abc"), ("dạng dd/mm/yyyy", TODAY.strftime("%d/%m/%Y")),
+]
+tot = lambda: int(sql("SELECT COUNT(*) FROM attendances"))
+for lab, d in BAD_DATES:
+    t0 = tot()
+    r = TG(adm, d, stA)
+    rec("ATT85-12", f"toggle ngày xấu [{lab}] {d!r} -> 400 (không 500), không ghi", r[0] == 400 and tot() == t0, show(r))
+    r = SC(adm, d, [codeA])
+    rec("ATT85-13", f"scan 1 mã ngày xấu [{lab}] {d!r} -> 400, không ghi", r[0] == 400 and tot() == t0, show(r))
+    r = SC(adm, d, [codeA, codeA2])
+    rec("ATT85-14", f"scan lô 2 mã ngày xấu [{lab}] {d!r} -> 400, không ghi", r[0] == 400 and tot() == t0, show(r))
+rec("ATT85-15", "không có dòng điểm danh nào ở tương lai sau toàn bộ ca ngày xấu",
+    int(sql(f"SELECT COUNT(*) FROM attendances WHERE program_id={PID} AND session_date > '{iso(TODAY)}'")) == 0, "")
 
 r = TG(adm, iso(TODAY), stA)
 rec("ATT85-03", "toggle HÔM NAY vẫn OK (ghi)", okj(r) and r[1].get('removed') is False and cnt(stA, iso(TODAY)) == 1, show(r))

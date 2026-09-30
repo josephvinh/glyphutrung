@@ -23,9 +23,19 @@ if ($year['status'] === 'đã khóa') json_fail('Niên khoá đã khoá sổ, kh
 
 $in        = json_input();
 $programId = (int) ($in['programId'] ?? 0);
-$date      = (string) ($in['date'] ?? '');
+$rawDate   = $in['date'] ?? '';
 
-if (!$programId || !$date) json_fail('Thiếu thông tin buổi điểm danh.');
+if (!$programId || $rawDate === '' || $rawDate === null) json_fail('Thiếu thông tin buổi điểm danh.');
+
+// Ngày phải ĐÚNG dạng YYYY-MM-DD, là ngày có thật, không thừa ký tự nào
+// (\z: cả xuống dòng cuối cũng bị loại). Không cho rác lọt xuống SQL:
+// INSERT IGNORE sẽ hạ lỗi strict thành cảnh báo và MariaDB cắt chuỗi
+// '2026-10-01abc' còn '2026-10-01' rồi lưu.
+$date = is_string($rawDate) ? $rawDate : '';
+if (!preg_match('/\A(\d{4})-(\d{2})-(\d{2})\z/', $date, $md)
+    || !checkdate((int) $md[2], (int) $md[3], (int) $md[1])) {
+    json_fail('Ngày không hợp lệ (cần dạng năm-tháng-ngày, ví dụ 2026-10-04).', 400);
+}
 
 $prog = db_one('SELECT * FROM programs WHERE id = ? AND year_id = ?', [$programId, $year['id']]);
 if (!$prog) json_fail('Không tìm thấy chương trình.', 404);
@@ -50,9 +60,8 @@ if ($prog['type'] === 'chiến dịch') {
 if (!$hopLe) json_fail('Buổi này không diễn ra vào ngày ' . $date . '.');
 
 // Không điểm danh trước cho buổi CHƯA diễn ra (giờ Việt Nam). Ngày quá khứ
-// vẫn được (điểm danh bù). Chuẩn hoá qua strtotime để ngày viết lệch dạng
-// ('2026-9-27') không lọt khi so sánh chuỗi.
-$laTuongLai = date('Y-m-d', strtotime($date)) > date('Y-m-d');
+// vẫn được (điểm danh bù). $date đã chuẩn ISO nên so thẳng chuỗi.
+$laTuongLai = $date > date('Y-m-d');
 
 // Giờ chốt do máy chủ tính
 $cutoffMin  = (int) app_config('cutoff_minutes');
