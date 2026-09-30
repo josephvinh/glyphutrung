@@ -40,7 +40,7 @@ if (!$__dev) ob_start();
 </head>
 <body class="text-slate-800 antialiased overflow-x-hidden">
 
-<div x-data="loginScreen" x-cloak data-must-change="<?= !empty($__mustChangePw) ? '1' : '0' ?>" data-csrf="<?= htmlspecialchars($__csrf ?? '', ENT_QUOTES) ?>" class="app-shell max-w-md sm:max-w-lg flex flex-col justify-center px-6 py-10">
+<div x-data="loginScreen" x-cloak class="app-shell max-w-md sm:max-w-lg flex flex-col justify-center px-6 py-10">
 
     <!-- Nhãn hiệu -->
     <div class="text-center mb-8">
@@ -287,10 +287,6 @@ if (!$__dev) ob_start();
                 class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-blue-200 flex justify-center items-center disabled:opacity-50">
             <i data-lucide="save" class="w-5 h-5 mr-2"></i>
             <span x-text="busy ? 'Đang lưu...' : 'Đổi mật khẩu và vào app'"></span>
-        </button>
-        <button @click="logoutPending()" type="button" :disabled="busy"
-                class="w-full py-3 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-sm text-slate-600 active:scale-[0.98] transition-transform disabled:opacity-50">
-            Đăng xuất / dùng tài khoản khác
         </button>
     </form>
 

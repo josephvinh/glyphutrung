@@ -142,12 +142,12 @@
                 </div>
 
                 <div class="flex flex-col gap-1.5 shrink-0 items-end">
-                    <button aria-label="Sửa thành viên" x-show="canManageOrg && canEditMemberRow(m)" @click="openEditMember(m)" style="display: none;"
+                    <button aria-label="Sửa thành viên" x-show="canManageOrg" @click="openEditMember(m)" style="display: none;"
                             class="tap-safe w-8 h-8 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 active:scale-90 border border-slate-200">
                         <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
                     </button>
                     <!-- Cấp lại mật khẩu: hiện mật khẩu tạm MỘT LẦN để BĐH đọc cho GLV -->
-                    <button aria-label="Cấp lại mật khẩu" x-show="canManageOrg && canResetMemberPw(m) && m.status !== 'chờ duyệt'" @click="resetMemberPassword(m)" style="display: none;"
+                    <button aria-label="Cấp lại mật khẩu" x-show="canManageOrg && m.status !== 'chờ duyệt'" @click="resetMemberPassword(m)" style="display: none;"
                             class="tap-safe w-8 h-8 bg-amber-50 rounded-full flex items-center justify-center text-amber-500 active:scale-90 border border-amber-100">
                         <i data-lucide="key-round" class="w-3.5 h-3.5"></i>
                     </button>
@@ -262,7 +262,7 @@
             <!-- CHỨC DANH -->
             <div>
                 <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Chức danh (hiển thị)</label>
-                <select x-model="memberForm.title" :disabled="isProtectedMember(memberForm) && !isAdmin" class="disabled:opacity-60 w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                <select x-model="memberForm.title" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                     <template x-for="t in titleOptionsFor(memberForm.role)" :key="t">
                         <option :value="t" x-text="t"></option>
                     </template>

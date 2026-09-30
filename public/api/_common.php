@@ -77,15 +77,6 @@ function can_see_admin(?array $me): bool
     return ($me['role_code'] ?? '') === 'admin';
 }
 
-/**
- * Được xem nhật ký thao tác toàn hệ thống — tương đương quyền màn Cài đặt
- * (settings.php: chỉ Quản trị). Dùng cho khoá 'logs' của data.php và logs.php.
- */
-function can_view_logs(?array $me): bool
-{
-    return ($me['role_code'] ?? '') === 'admin';
-}
-
 /* ============================================================================
    KIÊM NHIỆM — truy vấn bảng member_assignments
 

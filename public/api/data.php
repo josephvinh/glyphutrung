@@ -40,58 +40,8 @@ function data_out(array $payload): never
     exit;
 }
 
-/**
- * Lớp được XEM dữ liệu module $mod: giao phạm vi hồ sơ P(me) = allowed_class_ids()
- * với phạm vi các phân công có quyền ≥ view trên $mod (accessible_class_ids()).
- * null = toàn đoàn, [] = không gì.
- *
- * Lấy GIAO: (1) không bao giờ gửi dữ liệu của em mà người xem không nhận hồ sơ
- * (client ghép theo studentId, dữ liệu thừa chỉ là rò rỉ — #78); (2) tôn trọng ma
- * trận quyền chỉnh được trong app THEO TỪNG PHÂN CÔNG. Không dùng permission_of()
- * vì hàm đó gộp quyền mọi vai rồi bỏ qua phạm vi (lai phạm vi vai này với quyền vai kia).
- */
-function data_scope_for(array $me, string $mod): ?array
-{
-    static $bases = [];                      // cùng $me gọi cho 3 module: tính P(me) một lần
-    $base = $bases[(int) $me['id']] ??= [allowed_class_ids($me)];
-    $base = $base[0];
-    if ($base === []) return [];
-    $m = accessible_class_ids($me, $mod, 'view');
-    if ($m === null) return $base;           // base có thể null (toàn đoàn)
-    if ($base === null) return $m;
-    return array_values(array_intersect($base, $m));
-}
-
-/**
- * Mệnh đề lọc theo lớp qua ghi danh năm $yid: trả [sqlJoin, params] để chèn vào
- * FROM của truy vấn có cột em $studentCol; null = không lọc (toàn đoàn).
- * Lọc bằng id LỚP (vài chục phần tử, bind bằng ?) — không liệt kê id em.
- * uq_enr (year_id, student_id): mỗi em đúng một dòng ghi danh/năm nên JOIN không
- * nhân bản dòng. Gọi với $ids === [] là lỗi của nơi gọi (phải trả [] mà không truy vấn).
- */
-function data_class_filter(?array $ids, string $studentCol, int $yid): ?array
-{
-    if ($ids === null) return null;
-    $ph = implode(',', array_fill(0, count($ids), '?'));
-    return [" JOIN enrollments e ON e.student_id = {$studentCol} AND e.year_id = ? AND e.class_id IN ({$ph})",
-            array_merge([$yid], array_map('intval', $ids))];
-}
-
-/** Các dòng của một khối dữ liệu theo phạm vi: $sql chứa {JOIN} ngay sau bảng chính. */
-function data_scoped_rows(?array $ids, string $sql, string $studentCol, int $yid, array $params): array
-{
-    if ($ids === []) return [];
-    $f = data_class_filter($ids, $studentCol, $yid);
-    if ($f === null) return db_all(str_replace('{JOIN}', '', $sql), $params);   // SQL cũ, không đổi
-    return db_all(str_replace('{JOIN}', $f[0], $sql), array_merge($f[1], $params));
-}
-
 // Rate limiting cho API đọc
 enforce_api_read_limit();
-
-// Đổi phiên bản khi đổi hình dạng/phạm vi dữ liệu: khoá cache cũ (có thể đang
-// chứa dữ liệu rộng hơn phạm vi mới) không bao giờ được đọc lại và tự hết hạn.
-const DATA_CACHE_VER = 'v2';
 
 // Pagination config
 const DEFAULT_PAGE_LIMIT = 100;
@@ -122,7 +72,7 @@ $part = $_GET['part'] ?? 'all';
 if (!in_array($part, ['core', 'heavy', 'all'], true)) $part = 'all';
 
 // Check cache first — khoá theo part để 3 loại không đè lên nhau
-$cacheKey = "data_" . DATA_CACHE_VER . "_{$yid}_{$me['id']}_{$part}";
+$cacheKey = "data_{$yid}_{$me['id']}_{$part}";
 if ($cached = Cache::get($cacheKey)) {
     data_out($cached);
 }
@@ -333,7 +283,7 @@ $attendances = array_map(fn($a) => [
 ], $attRows);
 
 // ---------------------------------------------------------------
-// Đơn xin phép — chỉ đơn của em thuộc phạm vi được xem module 'leave' (#78)
+// Đơn xin phép
 // ---------------------------------------------------------------
 $leaves = array_map(fn($l) => [
     'id'           => (int) $l['id'],
@@ -347,17 +297,16 @@ $leaves = array_map(fn($l) => [
     'approvedBy'   => $l['approved_by_name'] ?? '',
     'approvedAt'   => $l['approved_at'] ? substr($l['approved_at'], 0, 16) : '',
     'rejectReason' => $l['reject_reason'] ?? '',
-], data_scoped_rows(data_scope_for($me, 'leave'),
+], db_all(
     'SELECT l.*, c.full_name AS created_by_name, a.full_name AS approved_by_name
-       FROM leave_requests l{JOIN}
+       FROM leave_requests l
        LEFT JOIN members c ON c.id = l.created_by
        LEFT JOIN members a ON a.id = l.approved_by
       WHERE l.year_id = ?
-      ORDER BY l.session_date DESC, l.id DESC', 'l.student_id', $yid, [$yid]));
+      ORDER BY l.session_date DESC, l.id DESC', [$yid]));
 
 // ---------------------------------------------------------------
-// Điểm số & sổ liên lạc — theo học kỳ của năm nay, chỉ em thuộc phạm vi
-// được xem module 'scores' / 'reports' (#78)
+// Điểm số & sổ liên lạc — theo học kỳ của năm nay
 // ---------------------------------------------------------------
 $scores = $part === 'core' ? [] : array_map(fn($s) => [
     'studentId' => (int) $s['student_id'],
@@ -366,12 +315,12 @@ $scores = $part === 'core' ? [] : array_map(fn($s) => [
     'value'     => (float) $s['value'],
     'at'        => substr($s['updated_at'], 0, 16),
     'by'        => $s['by_name'] ?? '',
-], data_scoped_rows(data_scope_for($me, 'scores'),
+], db_all(
     'SELECT sc.*, m.full_name AS by_name
-       FROM scores sc{JOIN}
+       FROM scores sc
        JOIN terms t ON t.id = sc.term_id
        LEFT JOIN members m ON m.id = sc.updated_by
-      WHERE t.year_id = ?', 'sc.student_id', $yid, [$yid]));
+      WHERE t.year_id = ?', [$yid]));
 
 // BƯỚC 2 (tải nền): chỉ cần điểm danh + điểm -> trả sớm, khỏi tính phần
 // còn lại (thông báo/RSVP, nhân sự, nhật ký...). Nhẹ và nhanh hơn hẳn.
@@ -400,12 +349,12 @@ $reports = array_map(fn($r) => [
     'status'    => $r['status'],
     'createdBy' => $r['by_name'] ?? '',
     'createdAt' => substr($r['created_at'], 0, 16),
-], data_scoped_rows(data_scope_for($me, 'reports'),
+], db_all(
     'SELECT r.*, m.full_name AS by_name
-       FROM reports r{JOIN}
+       FROM reports r
        JOIN terms t ON t.id = r.term_id
        LEFT JOIN members m ON m.id = r.created_by
-      WHERE t.year_id = ?', 'r.student_id', $yid, [$yid]));
+      WHERE t.year_id = ?', [$yid]));
 
 // ---------------------------------------------------------------
 // Thông báo — kèm dấu đã đọc của chính người đang đăng nhập
@@ -457,17 +406,9 @@ $readIds = array_map('intval', array_column(
     'announcement_id'));
 
 // ---------------------------------------------------------------
-// Nhân sự — danh bạ chỉ cho người có quyền 'staff' ≥ view (#78). Người chỉ
-// có quyền xem không nhận hồ sơ CHỜ DUYỆT và lời nhắn đăng ký (registerNote).
-// Không lọc theo lớp: GLV được xem danh bạ toàn bộ nhân sự.
-// KHÔNG bỏ khoá 'members' — client gọi .filter/.find trên nó; không được xem thì [].
+// Nhân sự
 // ---------------------------------------------------------------
-$staffLv = permission_of('staff');
-$memberWhere = [];
-// Ẩn tài khoản Quản trị khỏi mọi người trừ chính admin (F9).
-if (!can_see_admin($me))  $memberWhere[] = "m.role_code <> 'admin'";
-if ($staffLv !== 'edit') $memberWhere[] = "m.status <> 'chờ duyệt'";
-$members = $staffLv === 'none' ? [] : array_map(fn($m) => [
+$members = array_map(fn($m) => [
     'id'        => (int) $m['id'],
     'code'      => $m['code'],
     'holyName'  => $m['holy_name'],
@@ -479,7 +420,7 @@ $members = $staffLv === 'none' ? [] : array_map(fn($m) => [
     'block'     => $m['block_name'] ?? '',
     'className' => $m['class_name'] ?? '',
     'status'    => $m['status'],
-    'registerNote' => $staffLv === 'edit' ? ($m['register_note'] ?? '') : '',
+    'registerNote' => $m['register_note'] ?? '',
     // Đã có phân công đang hiệu lực chưa (kiêm nhiệm) — giao diện dùng để KHOÁ
     // ô vai trò ở màn Nhân sự: vai/chức vụ + lớp/khối của người có phân công do
     // màn Khối & Lớp quản (backend trả 409 nếu đổi ở đây). Xem StaffService A′.
@@ -493,15 +434,15 @@ $members = $staffLv === 'none' ? [] : array_map(fn($m) => [
        LEFT JOIN titles  t ON t.id = m.title_id
        LEFT JOIN blocks  b ON b.id = m.block_id
        LEFT JOIN classes c ON c.id = m.class_id'
-    . ($memberWhere ? ' WHERE ' . implode(' AND ', $memberWhere) : '')
+    // Ẩn tài khoản Quản trị khỏi mọi người trừ chính admin (F9).
+    . (can_see_admin($me) ? '' : " WHERE m.role_code <> 'admin'")
     . ' ORDER BY m.id'));
 
 // ---------------------------------------------------------------
-// Nhật ký — 50 dòng gần nhất (đủ xem, nhẹ bandwidth). CHỈ người được xem
-// nhật ký (= quyền màn Cài đặt, can_view_logs); người khác nhận [] (#78).
+// Nhật ký — 50 dòng gần nhất (đủ xem, nhẹ bandwidth)
 // ---------------------------------------------------------------
 // TODO: Chuyển sang API riêng có pagination khi có màn xem nhật ký
-$logs = !can_view_logs($me) ? [] : array_map(fn($l) => [
+$logs = array_map(fn($l) => [
     'id'     => (int) $l['id'],
     'at'     => substr($l['logged_at'], 0, 16),
     'ts'     => strtotime($l['logged_at']) * 1000,

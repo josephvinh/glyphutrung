@@ -153,19 +153,7 @@ window.TNTT.core = {
                 setTimeout(() => location.reload(), 1500);
                 return { ok: false, error: 'Phiên đăng nhập đã hết hạn.' };
             }
-            if (res.status === 403) {
-                // Bị buộc đổi mật khẩu giữa phiên (vd vừa được cấp lại mật khẩu):
-                // bỏ bản chụp rồi tải lại -> index.php đưa vào màn đổi mật khẩu.
-                let j = null;
-                try { j = await res.json(); } catch (e) { /* 403 không phải JSON */ }
-                if (j && j.code === 'must_change_pw') {
-                    if (window.TNTT?.toast) window.TNTT.toast.warning('Bạn cần đổi mật khẩu trước khi tiếp tục.');
-                    await window.TNTT.snap.clear();
-                    setTimeout(() => location.reload(), 1500);
-                    return { ok: false, error: j.error };
-                }
-                return { ok: false, error: 'Yêu cầu không hợp lệ (CSRF). Vui lòng tải lại trang.' };
-            }
+            if (res.status === 403) return { ok: false, error: 'Yêu cầu không hợp lệ (CSRF). Vui lòng tải lại trang.' };
             return await res.json();
         } catch (e) {
             return { ok: false, networkError: true, error: 'Mất kết nối máy chủ. Kiểm tra lại mạng.' };

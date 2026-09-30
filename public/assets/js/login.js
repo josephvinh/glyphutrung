@@ -11,9 +11,6 @@ document.addEventListener('alpine:init', () => {
         rHoly: '', rName: '', rPhone: '', rBirth: '', rPw: '', rPw2: '', rNote: '', rCode: '',
         rDanhXung: 'glv',
         error: '', busy: false,
-        // CSRF token của phiên đang buộc đổi mật khẩu: nhận từ phản hồi login hoặc
-        // từ data-csrf (index.php khi tải lại). Thiếu thì action=password luôn 403.
-        csrf: '',
 
         // Chuẩn hoá SĐT: bỏ khoảng trắng/dấu, đổi +84/84/0084 -> 0
         chuanHoaSdt(s) {
@@ -60,11 +57,9 @@ document.addEventListener('alpine:init', () => {
         },
 
         async post(action, body) {
-            const headers = { 'Content-Type': 'application/json' };
-            if (this.csrf) headers['X-CSRF-Token'] = this.csrf;
             const res = await fetch('api/auth.php?action=' + action, {
                 method: 'POST',
-                headers,
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body)
             });
             return res.json();
@@ -77,7 +72,6 @@ document.addEventListener('alpine:init', () => {
                 if (!r.ok) { this.error = r.error; return; }
                 // Lần đầu đăng nhập thì bắt đổi mật khẩu ngay, không cho vào thẳng
                 if (r.user.mustChangePw) {
-                    this.csrf = r.csrfToken || '';
                     this.oldPw = this.password;
                     this.step = 'changepw';
                     this.error = '';
@@ -118,21 +112,6 @@ document.addEventListener('alpine:init', () => {
             } finally { this.busy = false; }
         },
 
-        // Thoát khỏi màn buộc đổi mật khẩu (đăng nhập nhầm tài khoản...)
-        async logoutPending() {
-            this.busy = true;
-            try { await this.post('logout', {}); } catch (e) { /* vẫn về màn đăng nhập */ }
-            this.busy = false;
-            this.csrf = ''; this.oldPw = ''; this.newPw = ''; this.newPw2 = ''; this.password = '';
-            this.goLogin();
-        },
-
-        init() {
-            this.csrf = this.$el.dataset.csrf || '';
-            // Tải lại trang khi còn buộc đổi mật khẩu: vào thẳng bước đổi (ô
-            // "Mật khẩu hiện tại" để trống cho người dùng tự nhập mật khẩu tạm).
-            if (this.$el.dataset.mustChange === '1') this.step = 'changepw';
-            this.$nextTick(() => lucide.createIcons());
-        }
+        init() { this.$nextTick(() => lucide.createIcons()); }
     }));
 });

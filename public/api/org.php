@@ -102,7 +102,6 @@ switch ($action) {
         $id = (int) ($in['id'] ?? 0);
         $m  = db_one('SELECT id, role_code, full_name, status FROM members WHERE id=?', [$id]);
         if (!$m) json_fail('Không tìm thấy thành viên.', 404);
-        if ($e = $staff->guardTarget($m, 'approve')) json_fail($e['error'], $e['code']);
         if ($m['status'] !== 'chờ duyệt') json_fail('Tài khoản này đã được duyệt rồi.');
 
         // Duyệt chỉ BẬT tài khoản + đặt vai khởi tạo (GLV / Dự Bị). KHÔNG phân
@@ -139,7 +138,6 @@ switch ($action) {
         $id = (int) ($in['id'] ?? 0);
         $m  = db_one('SELECT id, role_code, full_name, phone, status FROM members WHERE id=?', [$id]);
         if (!$m) json_fail('Không tìm thấy thành viên.', 404);
-        if ($e = $staff->guardTarget($m, 'approve')) json_fail($e['error'], $e['code']);
         if ($m['status'] !== 'chờ duyệt') json_fail('Chỉ từ chối được tài khoản đang chờ duyệt.');
 
         db_run('DELETE FROM members WHERE id=?', [$id]);
@@ -154,9 +152,10 @@ switch ($action) {
         $m  = db_one('SELECT id, role_code, full_name, phone FROM members WHERE id=?', [$id]);
         if (!$m) json_fail('Không tìm thấy thành viên.', 404);
 
-        // Chỉ Quản trị mới cấp lại được cho Quản trị / Ban Điều Hành (kể cả chính mình
-        // — tự đổi ở màn Cá nhân); mục tiêu admin với người khác = 404 (F9).
-        if ($e = $staff->guardTarget($m, 'reset')) json_fail($e['error'], $e['code']);
+        // Chỉ Quản trị mới cấp lại được cho Ban Điều Hành
+        if ($staff->isProtected($m) && $me['role_code'] !== 'admin') {
+            json_fail('Chỉ Quản Trị Hệ Thống mới cấp lại mật khẩu cho Ban Điều Hành.', 403);
+        }
 
         // Mật khẩu tạm sinh ngẫu nhiên, không dùng chung một chuỗi cho mọi
         // người — nếu không thì ai cũng đoán được mật khẩu của người mới.

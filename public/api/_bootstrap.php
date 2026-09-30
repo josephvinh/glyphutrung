@@ -108,23 +108,8 @@ function json_input(): array
 }
 
 
-/**
- * Chặn cửa: mọi endpoint nghiệp vụ đều gọi hàm này trước tiên.
- * Thứ tự: chưa đăng nhập (401) → đã nghỉ (403) → đang buộc đổi mật khẩu
- * (403, code 'must_change_pw' — #83: trước đây chỉ chặn ở giao diện).
- */
+/** Chặn cửa: mọi endpoint nghiệp vụ đều gọi hàm này trước tiên */
 function require_login(): array
-{
-    $me = require_login_pending_pw();
-    if (!empty($me['must_change_pw'])) {
-        json_out(['ok' => false, 'code' => 'must_change_pw',
-                  'error' => 'Bạn cần đổi mật khẩu trước khi tiếp tục sử dụng.'], 403);
-    }
-    return $me;
-}
-
-/** Như require_login() nhưng CHO PHÉP tài khoản đang buộc đổi mật khẩu — CHỈ dùng cho auth.php?action=password. */
-function require_login_pending_pw(): array
 {
     $me = current_member();
     if (!$me) json_fail('Chưa đăng nhập.', 401);

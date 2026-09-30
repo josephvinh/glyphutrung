@@ -99,10 +99,7 @@ switch ($action) {
         db_run('UPDATE members SET last_login_at = NOW() WHERE id = ?', [$m['id']]);
         log_action('tao', 'auth', 'Đăng nhập hệ thống', $m['phone']);
 
-        // Trả kèm CSRF token (sinh SAU session_regenerate_id nên gắn với phiên
-        // mới): màn đổi mật khẩu bắt buộc chưa qua page_bootstrap() nên không có
-        // token nào khác để gọi action=password (require_write).
-        json_out(['ok' => true, 'user' => member_payload($m), 'csrfToken' => csrf_token()]);
+        json_out(['ok' => true, 'user' => member_payload($m)]);
 
     // -------------------------------------------------------------
     case 'logout':
@@ -120,8 +117,7 @@ switch ($action) {
     // -------------------------------------------------------------
     case 'password':
         require_write();
-        // Endpoint DUY NHẤT mở cho tài khoản đang buộc đổi mật khẩu (#83).
-        $me      = require_login_pending_pw();
+        $me      = require_login();
         $current = (string) ($in['current'] ?? '');
         $new     = (string) ($in['new'] ?? '');
 
