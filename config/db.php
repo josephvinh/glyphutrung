@@ -15,6 +15,26 @@ function app_config(?string $key = null)
     return $key === null ? $config : ($config[$key] ?? null);
 }
 
+/**
+ * Cấu hình DB THỰC DÙNG: config.php đã bị biến môi trường TNTT_DB_* ghi đè.
+ * Cho phép TRỎ SANG DB KHÁC qua biến môi trường (tiện cho demo/staging/
+ * seed dữ liệu) mà không phải sửa config.php. Chỉ ghi đè khi biến tồn tại.
+ * Mọi chỗ cần TÊN DB (in ra màn hình, tra information_schema...) phải lấy từ
+ * đây hoặc từ SELECT DATABASE(), KHÔNG đọc app_config('db')['name'] — cái đó
+ * bỏ qua biến môi trường nên lệch với DB đang kết nối.
+ */
+function db_config(): array
+{
+    $c = app_config('db');
+    foreach (['host' => 'TNTT_DB_HOST', 'port' => 'TNTT_DB_PORT',
+              'name' => 'TNTT_DB_NAME', 'user' => 'TNTT_DB_USER',
+              'pass' => 'TNTT_DB_PASS'] as $k => $env) {
+        $v = getenv($env);
+        if ($v !== false) $c[$k] = $v;
+    }
+    return $c;
+}
+
 function db(): PDO
 {
     static $pdo = null;
@@ -22,15 +42,7 @@ function db(): PDO
         return $pdo;
     }
 
-    $c = app_config('db');
-    // Cho phép TRỎ SANG DB KHÁC qua biến môi trường (tiện cho demo/staging/
-    // seed dữ liệu) mà không phải sửa config.php. Chỉ ghi đè khi biến tồn tại.
-    foreach (['host' => 'TNTT_DB_HOST', 'port' => 'TNTT_DB_PORT',
-              'name' => 'TNTT_DB_NAME', 'user' => 'TNTT_DB_USER',
-              'pass' => 'TNTT_DB_PASS'] as $k => $env) {
-        $v = getenv($env);
-        if ($v !== false) $c[$k] = $v;
-    }
+    $c = db_config();
     $dsn = sprintf('mysql:host=%s;port=%d;dbname=%s;charset=%s',
         $c['host'], $c['port'], $c['name'], $c['charset']);
 

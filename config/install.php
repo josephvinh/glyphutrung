@@ -18,7 +18,7 @@ if (!$cli) header('Content-Type: text/plain; charset=utf-8');
 
 function say(string $msg): void { echo $msg . PHP_EOL; }
 
-$cfg = app_config('db');
+$cfg = db_config();   // đã áp biến môi trường TNTT_DB_* (đúng DB đang kết nối)
 
 // ---------------------------------------------------------------
 // 1. KIỂM CƠ SỞ DỮ LIỆU ĐÃ CÓ CHƯA
@@ -53,7 +53,7 @@ try {
     }
     exit(1);
 }
-say("✓ Cơ sở dữ liệu `{$cfg['name']}` mở được");
+say('✓ Cơ sở dữ liệu `' . (db_val('SELECT DATABASE()') ?: $cfg['name']) . '` mở được');
 
 // ---------------------------------------------------------------
 // 2. CHẠY LƯỢC ĐỒ
