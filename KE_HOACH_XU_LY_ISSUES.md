@@ -1,5 +1,7 @@
 # Kế hoạch xử lý các issue sau đợt kiểm thử (29–30/09/2026)
 
+**Agent mới: đọc `BAN_GIAO.md` trước** (quy ước làm việc, dựng môi trường, bẫy kỹ thuật, việc tiếp theo).
+
 Nguồn: `BAO_CAO_KIEM_THU.md` và 31 issue #78–#109 (không có #89) trên `josephvinh/glyphutrung`.
 Nguyên tắc: chia thành 8 gói nhỏ, mỗi gói một PR, không giao một model ôm cả danh sách. Gói nào chạm cùng file thì làm tuần tự; gói độc lập thì chạy song song.
 
