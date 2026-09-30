@@ -122,7 +122,12 @@ Thứ tự gộp: #114, #112, #113, #117, #119, #120, #118, rồi #116 (W0, gộ
 
 | PR | Nhánh | Nội dung | Trạng thái |
 |----|-------|----------|-----------|
-| #125 | `fix/w0-followups` | `no-dupe-keys` thành lỗi; `ci_seed.php` chỉ kiểm phân công chính (`is_primary=1`) của admin, không tạo hộ (#94); CI chặn test bị skip (`max_skipped=0`) | Duyệt độc lập (Opus): chấp nhận có điều kiện, điều kiện đã sửa ở `2be60f3`. CI thật trên PR: 3 job xanh (208 test, 741 assertion). Chờ chủ dự án gộp |
+| #127 | `fix/p1-scope-authz` | Rò rỉ dữ liệu, phân quyền | Đã review: ACCEPT. Chờ merge |
+| #128 | `fix/p5-web-push` | Web Push SSRF, async, token | Đã review: ACCEPT. Chờ merge |
+| #132 | `fix/p8-data-performance` | data.php: attDays, scores scope, gzip | Chờ review |
+| #133 | `fix/p7b-date-format` | tracuu_norm_dob dd/mm/yyyy | Chờ review |
+| #134 | `fix/p4-security` | register_ok, RateLimiter fallback | Chờ review |
+| #135 | `fix/p7-a11y-ux` | Key collision 5 khoá | Chờ review |
 
 ### 6.4 Dở dang (đã đẩy lên nhánh, chưa có PR)
 
@@ -143,8 +148,9 @@ Thứ tự gộp: #114, #112, #113, #117, #119, #120, #118, rồi #116 (W0, gộ
 7. **P4** (sau P1, cùng sửa `_bootstrap.php`): #84, #102 (APCu, fallback không im lặng), #103, #96, #95, giới hạn tần suất "Send-test", và CSRF cho logout.
 8. **P8** (sau P1): #90 kích thước `data.php`.
 9. **P7b**: chuẩn hoá `dd/mm/yyyy` toàn web; #108 (tra cứu nhận dd/mm/yyyy, tạm chấp nhận mm/dd/yyyy cũ khi không mơ hồ); #111 (`parseDate` khi nhập Excel). Bước kiểm kê trước đó chưa hoàn tất, cần chạy lại.
-10. **P7** (làm cuối, chạm nhiều `views/*.php`): #109 (a11y), #122 (build lại `tailwind.css`, thiếu nhiều lớp đang dùng), #121 (khoá trùng giữa module JS, gồm `init` làm điểm danh ngoại tuyến không tự đồng bộ).
-11. **#124**: CI chưa chạy `tests/UnitTest.php` và e2e; 12 khối `<script>` trong 6 file PHP chưa lint; `eslint@9` chưa ghim; **branch protection chưa bật (hoãn theo chủ dự án)**.
+10. ~~**P7 (#121)**~~ ✅ PR #135. 5 khoá trùng: init→initCore, printReport→printClassReport, xoá hasActiveFilter/clearFilters (access), attendanceRate (dashboard).
+11. **P7 (2)**: #109 (a11y 1098 vi phạm tương phản), #122 (build lại tailwind.css thiếu lớp).
+12. **#124**: CI chưa chạy `tests/UnitTest.php` và e2e; 12 khối `<script>` trong 6 file PHP chưa lint; `eslint@9` chưa ghim; **branch protection chưa bật (hoãn theo chủ dự án)**.
 12. **#110** (action `attendance` của `export.php`, cột "Tỷ lệ"): cần chủ dự án quyết định giữ hay bỏ action (xem #106).
 13. Đề nghị chưa quyết: phân công đã kết thúc mất `class_id` khi xoá lớp (chỉ mở issue nếu chủ dự án muốn).
 
