@@ -35,7 +35,7 @@ def flush_cache():
         except OSError: pass
 
 
-EXTRA_PHONES = "'0911000007','0911000008','0911000009','0911000010','0911000011','0977200001','0977200099'"
+EXTRA_PHONES = "'0911000007','0911000008','0911000009','0911000010','0911000011','0911000099','0977200001','0977200099'"
 
 
 def cleanup():
@@ -292,10 +292,11 @@ s_adm, s_b2, s_bdh = snap(ADMIN_ID), snap(BDH2_ID), snap(BDH_ID)
 # để hoàn lại hồ sơ admin nếu mã cũ (master) để lọt thay đổi
 ADM_RESTORE = sql(f"SELECT CONCAT('holy_name=',QUOTE(holy_name),',full_name=',QUOTE(full_name),',phone=',QUOTE(phone),',title_id=',QUOTE(title_id)) FROM members WHERE id={ADMIN_ID}")
 rA = bdh.req("/api/org.php?action=saveMember", "POST", body(ADMIN_ID, role="admin"))
-rX = bdh.req("/api/org.php?action=saveMember", "POST", body(999999, role="glv"))
+unchanged = snap(ADMIN_ID) == s_adm
 lc, ljs = Client().login("0901000001", "tntt@2026")
 rec("STAFF-06a", "bdh saveMember id admin (đổi tên+SĐT) → 404, DB không đổi, admin vẫn đăng nhập bằng SĐT cũ",
-    rA[0] == 404 and snap(ADMIN_ID) == s_adm and lc == 200, f"{show(rA)} login={lc}")
+    rA[0] == 404 and unchanged and lc == 200, f"{show(rA)} DB không đổi={unchanged} login={lc}")
+s_adm = snap(ADMIN_ID)  # đăng nhập có thể nâng cấp password_hash (password_verify_upgrade)
 r = bdh.req("/api/org.php?action=saveMember", "POST", body(BDH2_ID, role="bdh", phone="0911000010"))
 rec("STAFF-06b", "bdh saveMember bdh khác → 403, DB không đổi", r[0] == 403 and snap(BDH2_ID) == s_b2, show(r))
 TITLE_Q = f"SELECT IFNULL(title_id,'-') FROM members WHERE id={BDH_ID}"
@@ -395,6 +396,9 @@ for m, path, b in EPS:
 rec("AUTH-05b", "must=1: profile KHÔNG đổi được SĐT/họ tên trước khi đổi mật khẩu",
     sql(f"SELECT phone FROM members WHERE id={MC_ID}") == '0911000009', sql(f"SELECT CONCAT(full_name,' ',phone) FROM members WHERE id={MC_ID}"))
 rec("AUTH-05b", "must=1: không tạo được push_subscriptions", sql(f"SELECT COUNT(*) FROM push_subscriptions WHERE member_id={MC_ID}") == '0', "")
+# nếu mã chưa chặn (master/giữa chừng) thì profile đã đổi SĐT — hoàn lại để các ca sau đăng nhập được
+sql(f"UPDATE members SET phone='0911000009', full_name='User T_MC9' WHERE id={MC_ID}")
+sql(f"DELETE FROM push_subscriptions WHERE member_id={MC_ID}")
 r = mc.req("/api/auth.php?action=me")
 rec("AUTH-05c", "must=1: auth.php?action=me → 200, user.mustChangePw == true",
     okj(r) and r[1]['user']['mustChangePw'] is True and r[1]['user']['phone'] == '0911000009', show(r)[:100])
