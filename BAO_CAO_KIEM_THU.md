@@ -49,13 +49,13 @@
 
 | Hạng mục | Lý do |
 |----------|-------|
-| Web Push (`push.php`, `sw.js`) | Cần khoá VAPID + trình duyệt đăng ký thật |
-| Passkey/WebAuthn (đăng nhập sinh trắc) | Cần authenticator thật; chỉ xác nhận `getLoginArgs` công khai theo thiết kế |
-| Quét QR bằng camera thật, tia sáng/độ nét thẻ | Kiểm thử ở mức API (`scan`) và PHPUnit, không có camera |
-| Trình duyệt iOS Safari/Android thật, chế độ cài PWA/offline | Chỉ có Chromium desktop giả lập viewport |
+| Web Push tới thiết bị thật (FCM/APNs) | Phía máy chủ và service worker đã kiểm ở mục 10; chưa gửi tới push service thật của Google/Apple |
+| Passkey với vân tay/Face ID thật | Đã kiểm bằng authenticator ảo (mục 10); chưa thử trên điện thoại thật |
+| Quét QR bằng camera vật lý (ánh sáng, độ nét thẻ in) | Đã kiểm với camera giả cung cấp video mã QR (mục 10); chưa thử thẻ in thật |
+| Safari iOS / Chrome Android trên thiết bị thật | Đã kiểm engine WebKit thật (WebKitGTK) và PWA trong Chromium (mục 10); Firefox/WebKit của Playwright không tải được vì chính sách mạng chặn `cdn.playwright.dev` |
 | Xoá thiếu nhi hàng loạt trên dữ liệu thật | Thao tác phá huỷ (đã kiểm phân quyền `bulk_delete`, không chạy trên dữ liệu thật) |
 | Lên lớp cuối năm, nhập Excel, chương trình, nhân sự, phân công, thư viện, đổi quà | **Đã kiểm ở đợt bổ sung, xem mục 8** |
-| Tải (load test), đồng thời (race condition) | Ngoài phạm vi |
+| Tải lớn (hàng nghìn người dùng đồng thời) | Đã đo tải cơ bản (mục 10); chưa thử tải thật trên hosting |
 | Cookie `Secure`/HSTS | `php -S` chạy HTTP; code có nhánh HTTPS nhưng không chạy |
 | Bố cục in ấn (phiếu liên lạc, thẻ QR) bằng mắt | Chỉ kiểm escape HTML, không xem bản in |
 
@@ -313,7 +313,7 @@ Bổ sung các phần ở mục 2 chưa làm. Chạy `tests/e2e/extra.py` trên 
 Chưa kiểm ở đợt này: Web Push, Passkey, camera QR thật, trình duyệt iOS/Android thật, tải/đồng thời ngoài đổi quà.
 
 ### Tương ứng issue trên GitHub
-F-01 #78 · F-02 #79 · F-03 #80 · F-04 #81 · F-05 #82 · F-06 #83 · F-07 #84 · F-08 #85 · F-09 #86 · F-10 #87 · F-11 #88 · F-12 #89 · F-13 #90 · F-14: #91 (khoá trùng), #92 (icon tìm kiếm), #93 (env `TNTT_DB_NAME`), #94 (admin thiếu phân công), #95 (CSP), #96 (độ trễ đăng nhập sai) · F-15 #97 · F-16 #98
+F-01 #78 · F-02 #79 · F-03 #80 · F-04 #81 · F-05 #82 · F-06 #83 · F-07 #84 · F-08 #85 · F-09 #86 · F-10 #87 · F-11 #88 · F-12 #109 (thay cho #89, số này không tồn tại trên GitHub) · F-13 #90 · F-14: #91 (khoá trùng), #92 (icon tìm kiếm), #93 (env `TNTT_DB_NAME`), #94 (admin thiếu phân công), #95 (CSP), #96 (độ trễ đăng nhập sai) · F-15 #97 · F-16 #98
 
 ---
 
@@ -344,3 +344,32 @@ NODE_PATH=<đường dẫn global node_modules> node tests/e2e/ui.js
 Ghi chú: các script giả định DB tên `tntt_e2e`, `mysql -uroot` không mật khẩu, và tạo 6 tài khoản thử có SĐT `09110000xx`; **chỉ chạy trên DB thử nghiệm**, không chạy trên dữ liệu thật.
 
 **Thay đổi trong repo do đợt kiểm thử này:** chỉ thêm `BAO_CAO_KIEM_THU.md` và thư mục `tests/e2e/`. Không sửa mã nguồn ứng dụng, không commit, không push.
+
+---
+
+## 10. Đợt kiểm thử mở rộng (30/09/2026): phần cứng giả lập, PWA, Excel, trang công khai, tải, WebKit
+
+Đã cài thêm công cụ từ các nguồn được phép: PHPStan (phar), axe-core (`@axe-core/playwright`), ApacheBench, `ffmpeg`, `xvfb`, `webkit2gtk-driver` + Selenium, `qrcode`, `openpyxl`, `cryptography`. **Không tải được** Firefox/WebKit của Playwright vì proxy chặn `cdn.playwright.dev` (chính sách tổ chức, không lách qua).
+
+| Hạng mục | Cách kiểm | Kết quả |
+|----------|-----------|---------|
+| **Quét QR bằng camera** | Chromium với camera giả phát video 3 mã: em A, mã lạ `ZZZ999`, em B; đường giải mã jsQR (đường dự phòng dùng cho Safari iOS) | ✅ Ghi đúng 2 em (`đi trễ`, phương thức `qr`), mã lạ bị từ chối, cộng Mộc đúng. ❌ lỗi console do iframe ẩn: [#105](https://github.com/josephvinh/glyphutrung/issues/105) |
+| **Passkey (WebAuthn)** | Authenticator ảo qua CDP | ✅ Đăng ký, lưu khoá, đăng nhập không mật khẩu, gỡ. ❌ không kiểm bộ đếm chữ ký, không bắt xác minh người dùng, lộ thông điệp exception: [#103](https://github.com/josephvinh/glyphutrung/issues/103) |
+| **Web Push (máy chủ)** | Push service giả bằng TLS cục bộ; xác minh JWT ES256 | ✅ Khoá công khai, đăng ký/huỷ, header VAPID đúng chuẩn và chữ ký hợp lệ, TTL, không gửi nội dung, xoá subscription chết khi 404/410, giữ khi 500, hàng đợi `pending` dùng một lần. ❌ SSRF mù [#99](https://github.com/josephvinh/glyphutrung/issues/99); gửi đồng bộ giữ request 6–10 s [#100](https://github.com/josephvinh/glyphutrung/issues/100); chiếm subscription trùng endpoint [#107](https://github.com/josephvinh/glyphutrung/issues/107) |
+| **PWA / Service worker** | Tên miền `tntt.localhost` (sw.js bỏ qua hẳn `localhost`), CDP `deliverPushMessage`, chế độ offline | ✅ Đăng ký SW, kho chỉ chứa tệp tĩnh (không chứa API), sự kiện push làm SW gọi `pending`, manifest không có lỗi cài đặt (Chromium). ⚠️ Mất mạng: trình duyệt hiện màn hình lỗi, chưa có trang offline (đúng thiết kế "dữ liệu luôn lấy từ mạng", chỉ ghi nhận) |
+| **Excel qua giao diện** | Tải mẫu → tạo file bằng `openpyxl` → nhập → xuất → đọc lại | ✅ 11/11: mẫu có sheet "Danh sách" + "Hướng dẫn", phông Times New Roman 13, nhập thêm đúng dòng hợp lệ, bỏ dòng lớp lạ, SĐT giữ số 0 và đổi +84 → 0, ngày sinh `dd/mm/yyyy` và `yyyy-mm-dd`, ngày sai không làm hỏng lô, xuất đủ số em, SĐT ở dạng văn bản |
+| **Trang công khai** (`tracuu`, `somoc`, `bxh`) | Gửi mã + mật mã, dò mã, chống XSS | ✅ 16/17: lỗi gộp không lộ mã có thật, khoá 5 lần sai theo mã, chặn theo IP, chỉ nhận POST, escape đúng. ⚠️ mật mã bắt buộc tháng-ngày-năm gây khó cho phụ huynh: [#108](https://github.com/josephvinh/glyphutrung/issues/108) |
+| **Thẻ QR tuỳ biến** | API sau khi chạy migration | ❌ Mọi action xem trước/xuất trả 403 kể cả admin (module `qrcard` chưa đăng ký); `delete_preset` lỗi 500: [#104](https://github.com/josephvinh/glyphutrung/issues/104) |
+| **Khả năng truy cập (axe-core, WCAG 2.1 AA)** | 22 màn × mobile/desktop | ❌ 1.098 vi phạm tương phản (chủ yếu `slate-400` 2,5:1), 14 `select` + 5 `input` + 4 nút thiếu nhãn: [#109](https://github.com/josephvinh/glyphutrung/issues/109) |
+| **Phân tích tĩnh PHP (PHPStan 2.2.16, level 1 và 4)** | Toàn bộ `public/`, `config/`, `src/`, `views/` | 28 lỗi level 1 phần lớn là dương tính giả (biến do `include`, thư viện WebAuthn nạp động). Phát hiện thật: `db_run()->rowCount()` ([#104](https://github.com/josephvinh/glyphutrung/issues/104)) và mã chết ([#106](https://github.com/josephvinh/glyphutrung/issues/106)) |
+| **Thư viện JS bên thứ ba** | Đối chiếu phiên bản | ✅ SheetJS 0.20.3 (bản đã vá), Alpine 3.15.0, jsQR 1.4.0, qrcode-generator 1.4.4: không thấy bản đã biết lỗ hổng |
+| **Giới hạn tần suất** | 75 request `data.php` liên tiếp | ❌ Không có tác dụng khi thiếu APCu; các hàm `enforce_*_limit` còn lại không được gọi: [#102](https://github.com/josephvinh/glyphutrung/issues/102) |
+| **Tải cơ bản (ApacheBench, PHP 8 worker, dữ liệu 600 em)** | c=20 | ✅ 0 request lỗi: trang khách ~11.000 req/s, `auth me` ~10.500 req/s, `tracuu` ~3.300 req/s (p99 18 ms), `data.php?part=core` ~490 req/s (p99 20 ms). Đây là máy thử, không thay cho đo trên hosting |
+| **Engine WebKit thật** | WebKitGTK 2.52 qua WebKitWebDriver + Xvfb (`tests/e2e/webkit.py`) | ✅ Đăng nhập và mở 6 module, không tràn ngang, hiển thị đúng (ảnh `tests/e2e/out/webkit-app.png`) |
+| **Triển khai** | Chạy ở chế độ production (host khác `localhost`) | ❌ Thiếu `login.min.js` (file build bị `.gitignore`) thì trang đăng nhập hỏng: [#101](https://github.com/josephvinh/glyphutrung/issues/101) |
+
+**Lưu ý phương pháp:** một số ô kiểm đầu tiên của đợt này dùng sai điều kiện (mật mã tra cứu tưởng là `dd/mm/yyyy`; ô công thức Excel bị `openpyxl` ghi thành công thức thật; kỳ vọng `aud` của JWT kèm cổng). Đã sửa hoặc loại bỏ trước khi ghi kết quả. Các mục hiển thị ✅ ở trên là kết quả sau khi sửa. Kịch bản PUSH-11 (`aud`) đã chỉnh kỳ vọng nhưng chưa chạy lại sau chỉnh.
+
+Kịch bản mới: `hw.js` (camera + Passkey), `push.py`, `pwa.js`, `excel.js`, `public.py`, `customqr.py`, `axe.js`, `webkit.py` trong `tests/e2e/`.
+
+**Số issue trên GitHub:** #78–#88, #90–#109 (không có #89). Riêng mục đăng ký lại issue a11y là #109.
