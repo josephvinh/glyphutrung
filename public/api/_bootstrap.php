@@ -267,11 +267,14 @@ function register_throttle(): void
     }
 }
 
-/** Ghi một lần đăng ký thành công để track */
+/** Ghi một lần đăng ký thành công để track — KHÔNG xoá để vẫn tính vào giới hạn */
 function register_ok(): void
 {
-    // Xóa các lần thử đăng ký từ IP này
-    db_run('DELETE FROM login_attempts WHERE phone LIKE ? AND ip = ?', ['reg:%', client_ip()]);
+    // Ghi thành công để tính vào giới hạn 3 lần/giờ/IP (#84)
+    // Không xoá record vì mỗi lần đăng ký (kể cả thành công) đều phải đếm
+    $trackingId = 'reg:' . substr(hash('sha256', client_ip()), 0, 16);
+    db_run('INSERT INTO login_attempts (phone, ip, tried_at) VALUES (?,?,NOW())',
+           [$trackingId, client_ip()]);
 }
 
 /** Ghi một lần đăng ký thất bại */

@@ -3,13 +3,12 @@
  * RATE LIMITER — giới hạn số request theo IP/user
  *
  * Dùng APCu để lưu trữ request counts (in-memory, nhanh).
- * Fallback: dùng file-based cache nếu không có APCu.
+ * Fallback: dùng file-based cache nếu không có APCu (#102).
  */
 
 class RateLimiter
 {
-    /** @var array<string, array{hits: int, reset_at: int}> */
-    private static array $cache = [];
+    private static string $cacheDir = __DIR__ . '/../cache';
 
     private string $key;
     private int $limit;
@@ -93,21 +92,48 @@ class RateLimiter
     /** Lấy dữ liệu từ cache */
     private function get(): ?array
     {
+        // Ưu tiên APCu
         if (function_exists('apcu_fetch')) {
             $data = @apcu_fetch($this->key, $success);
             return $success ? $data : null;
         }
-        return self::$cache[$this->key] ?? null;
+
+        // Fallback: file-based cache (#102)
+        $file = $this->cacheFile();
+        if (!file_exists($file)) return null;
+
+        $content = @file_get_contents($file);
+        if ($content === false) return null;
+
+        $data = @json_decode($content, true);
+        if (!is_array($data)) return null;
+
+        return $data;
     }
 
     /** Lưu dữ liệu vào cache */
     private function set(array $data): void
     {
+        // Ưu tiên APCu
         if (function_exists('apcu_store')) {
             @apcu_store($this->key, $data, $this->window + 10);
-        } else {
-            self::$cache[$this->key] = $data;
+            return;
         }
+
+        // Fallback: file-based cache (#102)
+        $file = $this->cacheFile();
+        $dir = dirname($file);
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0755, true);
+        }
+        @file_put_contents($file, json_encode($data), LOCK_EX);
+    }
+
+    /** Đường dẫn file cache cho key này */
+    private function cacheFile(): string
+    {
+        $hash = md5($this->key);
+        return self::$cacheDir . '/rl_' . substr($hash, 0, 2) . '/' . $hash . '.json';
     }
 }
 
