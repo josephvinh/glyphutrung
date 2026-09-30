@@ -468,7 +468,7 @@ function handleDeletePreset(): void
     $deleted = db_run(
         'DELETE FROM qr_card_presets WHERE id = ? AND member_id = ?',
         [$presetId, $me['id']]
-    ); // db_run() trả về số dòng bị xoá (int)
+    )->rowCount();
 
     if ($deleted === 0) {
         json_fail('Preset không tìm thấy hoặc bạn không có quyền xóa.', 404);

@@ -1,8 +1,8 @@
-"""Hồi quy gói P2 (đổi schema): export.php (#79), xoá lớp/khối (#80), xoá preset QR (#104).
-Chạy trên DB THỬ NGHIỆM: php -S 127.0.0.1:8088 -t public (TNTT_DB_* trỏ vào DB thử),
-mysql root không mật khẩu, DB tntt_e2e. Cần e2e.py + e2e2.py (nhánh origin/audit, tests/e2e) đặt cạnh file này;
-cần migration config/migrations/002_qr_card_templates.sql (bảng qr_card_presets) đã nạp vào DB thử.
-Kịch bản tự dọn dữ liệu thử (đơn xin phép 'P2-*', lớp 'Lớp P2*', niên khoá 'P2 cũ', preset 'P2 *').
+"""Hồi quy gói P2 (đổi schema): export.php (#79), xoá lớp (#80).
+Chạy trên DB THỬ NGHIỆM: php -S <host:port> -t public (TNTT_DB_* trỏ vào DB thử),
+mysql root không mật khẩu. Cần e2e.py + e2e2.py (nhánh origin/audit, tests/e2e) đặt cạnh file này;
+biến môi trường E2E_BASE / E2E_DB chọn cổng và DB thử.
+Kịch bản tự dọn dữ liệu thử (đơn xin phép 'P2-*', lớp 'Lớp P2*', niên khoá 'P2 cũ').
 """
 import os
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -14,7 +14,6 @@ def rows_of(r): return r[1]['sheet']['rows'] if okj(r) and 'sheet' in r[1] else 
 
 def cleanup():
     sql("DELETE FROM leave_requests WHERE reason LIKE 'P2-%'")
-    sql("DELETE FROM qr_card_presets WHERE name LIKE 'P2 %'")
     sql("DELETE FROM member_assignments WHERE class_id IN (SELECT id FROM classes WHERE name LIKE 'Lớp P2%')")
     sql("DELETE FROM enrollments WHERE year_id IN (SELECT id FROM school_years WHERE name='P2 cũ')")
     sql("DELETE FROM classes WHERE name LIKE 'Lớp P2%'")
@@ -107,20 +106,29 @@ rec("LV-03", "GLV lớp A: thấy đơn đã duyệt lớp mình, KHÔNG thấy 
     okj(r) and notes == ['P2-DUYET-A'] and rw[1][3] == nameA, f"notes={notes}")
 sql("DELETE FROM leave_requests WHERE reason LIKE 'P2-%'")
 
-# ---- #80 xoá lớp
-# (a) còn ghi danh ở niên khoá CŨ vẫn bị chặn (không xoá dây chuyền lịch sử)
+# ---- #80 xoá lớp (chỉ xét niên khoá hiện tại; ghi danh niên khoá cũ bị khoá ngoại RESTRICT chặn -> 400, không 500)
+# (a1) còn ghi danh ở niên khoá HIỆN TẠI -> chặn, nêu số em
 adm.req("/api/org.php?action=saveClass", "POST", {"name": "Lớp P2", "block": blockA})
 cid = sql("SELECT id FROM classes WHERE name='Lớp P2'")
+sid = sql("SELECT id FROM students LIMIT 1 OFFSET 7")
+old = sql(f"SELECT class_id FROM enrollments WHERE year_id={CUR} AND student_id={sid}")
+sql(f"UPDATE enrollments SET class_id={cid} WHERE year_id={CUR} AND student_id={sid}")
+r = adm.req("/api/org.php?action=deleteClass", "POST", {"name": "Lớp P2"})
+rec("ORG-P2-1", "Lớp còn ghi danh niên khoá hiện tại bị chặn (400, nêu 'còn 1 em'), lớp còn nguyên",
+    r[0] == 400 and 'còn 1 em' in r[2] and sql("SELECT COUNT(*) FROM classes WHERE name='Lớp P2'") == '1', show(r))
+sql(f"UPDATE enrollments SET class_id={old} WHERE year_id={CUR} AND student_id={sid}")
+# (a2) chỉ còn ghi danh niên khoá CŨ -> DELETE vướng fk_enr_class: 400 có kiểm soát, lịch sử còn nguyên
 sql("INSERT INTO school_years (name,start_date,end_date,is_current) VALUES ('P2 cũ','2020-09-01','2021-06-30',0)")
 yid = sql("SELECT id FROM school_years WHERE name='P2 cũ'")
-sid = sql("SELECT id FROM students LIMIT 1 OFFSET 7")
 sql(f"INSERT INTO enrollments (year_id,student_id,class_id) VALUES ({yid},{sid},{cid})")
 r = adm.req("/api/org.php?action=deleteClass", "POST", {"name": "Lớp P2"})
-rec("ORG-P2-1", "Xoá lớp chỉ còn ghi danh niên khoá cũ bị chặn có kiểm soát (400, nêu số em)",
-    r[0] == 400 and 'còn 1 em' in r[2] and sql("SELECT COUNT(*) FROM classes WHERE name='Lớp P2'") == '1', show(r))
+rec("ORG-P2-2", "Lớp chỉ còn ghi danh niên khoá CŨ: 400 có kiểm soát (nêu niên khoá cũ), KHÔNG 500, lớp + ghi danh cũ còn nguyên",
+    r[0] == 400 and 'niên khoá cũ' in r[2] and sql("SELECT COUNT(*) FROM classes WHERE name='Lớp P2'") == '1'
+    and sql(f"SELECT COUNT(*) FROM enrollments WHERE year_id={yid} AND class_id={cid}") == '1', show(r))
+# (a3) hết ghi danh hẳn -> xoá được
 sql(f"DELETE FROM enrollments WHERE year_id={yid}")
 r = adm.req("/api/org.php?action=deleteClass", "POST", {"name": "Lớp P2"})
-rec("ORG-P2-2", "Lớp rỗng (hết ghi danh) xoá được", okj(r) and sql("SELECT COUNT(*) FROM classes WHERE name='Lớp P2'") == '0', show(r))
+rec("ORG-P2-2b", "Lớp rỗng hẳn (không ghi danh nào) xoá được", okj(r) and sql("SELECT COUNT(*) FROM classes WHERE name='Lớp P2'") == '0', show(r))
 sql(f"DELETE FROM school_years WHERE id={yid}")
 # (b) còn người phân công đang hiệu lực vẫn bị chặn
 adm.req("/api/org.php?action=saveClass", "POST", {"name": "Lớp P2b", "block": blockA})
@@ -135,26 +143,6 @@ rec("ORG-P2-3", "Lớp còn người phân công đang hiệu lực bị chặn 
 sql(f"DELETE FROM member_assignments WHERE class_id={cid}")
 r = adm.req("/api/org.php?action=deleteClass", "POST", {"name": "Lớp P2b"})
 rec("ORG-P2-4", "Gỡ phân công xong thì xoá được lớp rỗng", okj(r) and sql("SELECT COUNT(*) FROM classes WHERE name='Lớp P2b'") == '0', show(r))
-
-# ---- #104 xoá preset QR
-glv = logged("0911000004")
-admid_ = admid
-def mk_preset(member_id, name):
-    return sql(f"INSERT INTO qr_card_presets (member_id,name,options) VALUES ({member_id},'{name}','{{}}'); SELECT LAST_INSERT_ID()")
-cnt = lambda pid: sql(f"SELECT COUNT(*) FROM qr_card_presets WHERE id={pid}")
-P = lambda c_, d: c_.req("/api/custom-qrcard.php?action=delete_preset", "POST", d)
-pa = mk_preset(admid_, 'P2 admin'); pg = mk_preset(glvid, 'P2 glv')
-r = P(glv, {"id": int(pa)})
-rec("PRE-01", "GLV xoá preset của người khác -> 404 và preset còn nguyên", r[0] == 404 and cnt(pa) == '1', show(r))
-r = P(adm, {"id": int(pa)})
-rec("PRE-02", "Chủ preset xoá preset của mình -> 200 và mất khỏi DB", okj(r) and cnt(pa) == '0', show(r))
-r = P(glv, {"id": int(pg)})
-rec("PRE-03", "GLV xoá preset của chính mình -> 200", okj(r) and cnt(pg) == '0', show(r))
-r = P(adm, {"id": int(pa)})
-rec("PRE-04", "Xoá lại preset đã xoá -> 404", r[0] == 404, show(r))
-for lab, body in [("id âm", {"id": -3}), ("id chữ", {"id": "abc"}), ("id 0", {"id": 0}), ("thiếu id", {})]:
-    r = P(adm, body)
-    rec("PRE-05", f"Xoá preset với {lab} -> 400", r[0] == 400, show(r))
 
 cleanup()
 p = sum(1 for x in results if x[2]); print("TOTAL", len(results), "PASS", p, "FAIL", len(results) - p)

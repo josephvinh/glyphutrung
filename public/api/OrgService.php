@@ -235,11 +235,12 @@ class OrgService
         }
 
         // Ghi danh theo niên khoá nằm ở enrollments (students không còn class_id).
-        // Chặn nếu còn BẤT KỲ dòng ghi danh nào, kể cả niên khoá cũ — enrollments.class_id
-        // là khoá ngoại RESTRICT nên xoá lớp sẽ mất lịch sử hoặc lỗi FK.
-        $n = (int) db_one('SELECT COUNT(DISTINCT student_id) n FROM enrollments WHERE class_id=?', [$cls['id']])['n'];
+        // Chỉ xét niên khoá HIỆN TẠI; ghi danh niên khoá cũ được chặn bởi khoá ngoại
+        // RESTRICT fk_enr_class (xem lệnh DELETE bên dưới) để không xoá dây chuyền lịch sử.
+        $n = (int) db_one('SELECT COUNT(DISTINCT student_id) n FROM enrollments WHERE class_id=? AND year_id=?',
+                          [$cls['id'], $this->yid])['n'];
         if ($n > 0) {
-            return ['ok' => false, 'error' => 'Lớp "' . $name . '" còn ' . $n . ' em có ghi danh (kể cả các niên khoá trước). Hãy chuyển hoặc xóa hết em trước.'];
+            return ['ok' => false, 'error' => 'Lớp "' . $name . '" còn ' . $n . ' em đang ghi danh trong niên khoá hiện tại. Hãy chuyển hoặc xóa hết em trước.'];
         }
 
         // Khớp với giao diện: còn người phụ trách (chủ nhiệm, GLV, Dự Bị) thì
@@ -251,7 +252,15 @@ class OrgService
             return ['ok' => false, 'error' => 'Lớp "' . $name . '" còn ' . $glv . ' người được phân công (GLV/Dự Bị). Hãy gỡ hoặc chuyển họ sang lớp khác trước.'];
         }
 
-        db_run('DELETE FROM classes WHERE id=?', [$cls['id']]);
+        try {
+            db_run('DELETE FROM classes WHERE id=?', [$cls['id']]);
+        } catch (PDOException $e) {
+            // 23000 = vi phạm khoá ngoại: lớp còn ghi danh của niên khoá cũ (fk_enr_class RESTRICT).
+            if ($e->getCode() === '23000') {
+                return ['ok' => false, 'error' => 'Lớp "' . $name . '" còn dữ liệu ghi danh của các niên khoá cũ nên không xóa được (để giữ lịch sử).'];
+            }
+            throw $e;
+        }
         log_action('xoa', 'org', 'Xóa lớp ' . $name, '');
         Cache::flush();
         return ['ok' => true];
