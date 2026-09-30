@@ -63,14 +63,31 @@ function db(): PDO
  * HTTP 500 trắng — không có manh mối nào để lần.
  *
  * Bắt riêng lỗi đó ra và nói thẳng phải làm gì.
+ *
+ * CHỈ báo "chưa cài đặt" khi bảng lõi `members` thật sự không có trong DB.
+ * Lỗi thiếu một bảng phụ (thiếu migration, đổi tên nhầm...) KHÔNG phải là
+ * "chưa dựng CSDL": hàm này trả về để lỗi đi tiếp như lỗi thường (API trả
+ * JSON 500 và ghi log, không trả trang HTML).
  */
 function db_bao_chua_cai_dat(Throwable $e): void
 {
     $msg = $e->getMessage();
     $chuaCoBang = str_contains($msg, 'Base table or view not found')
-               || str_contains($msg, 'doesn${q}t exist')
+               || str_contains($msg, "doesn't exist")
                || str_contains($msg, '42S02');
     if (!$chuaCoBang) return;
+
+    // Có bảng lõi rồi thì đây là thiếu bảng phụ -> để ExceptionHandler xử lý.
+    // Không xác minh được (lỗi kết nối...) cũng coi như lỗi thường, không đoán bừa.
+    try {
+        $coBangLoi = (int) db()->query(
+            "SELECT COUNT(*) FROM information_schema.tables
+              WHERE table_schema = DATABASE() AND table_name = 'members'"
+        )->fetchColumn() > 0;
+    } catch (Throwable $e2) {
+        return;
+    }
+    if ($coBangLoi) return;
 
     if (PHP_SAPI === 'cli') {
         exit("Cơ sở dữ liệu chưa có bảng nào. Hãy chạy:  php config/install.php
