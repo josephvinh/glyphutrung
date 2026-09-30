@@ -150,7 +150,7 @@ Thứ tự gộp: #114, #112, #113, #117, #119, #120, #118, rồi #116 (W0, gộ
 8. **P8** (sau P1): #90 kích thước `data.php`.
 9. **P7b**: chuẩn hoá `dd/mm/yyyy` toàn web; #108 (tra cứu nhận dd/mm/yyyy, tạm chấp nhận mm/dd/yyyy cũ khi không mơ hồ); #111 (`parseDate` khi nhập Excel). Bước kiểm kê trước đó chưa hoàn tất, cần chạy lại.
 10. ~~**P7 (#121)**~~ ✅ PR #135. 5 khoá trùng: init→initCore, printReport→printClassReport, xoá hasActiveFilter/clearFilters (access), attendanceRate (dashboard).
-11. **P7 (2)**: #109 (a11y 1098 vi phạm tương phản), #122 (build lại tailwind.css thiếu lớp).
+11. ~~**P7 (2)**~~ ✅ ĐÃ GỘP #136. #109 (slate-400→slate-500 30 files), #122 (tailwind.config.js, @tailwind directives, minify.cjs).
 12. ~~**#124**~~ ✅ PR #137. Đã ghim eslint, tạo eslint.config.js, thêm CI kiểm tra test ngoài tests/unit/, cảnh báo inline JS. **Branch protection chưa bật (hoãn)**.
 12. **#110** (action `attendance` của `export.php`, cột "Tỷ lệ"): cần chủ dự án quyết định giữ hay bỏ action (xem #106).
 13. Đề nghị chưa quyết: phân công đã kết thúc mất `class_id` khi xoá lớp (chỉ mở issue nếu chủ dự án muốn).
