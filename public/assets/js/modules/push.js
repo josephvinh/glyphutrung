@@ -25,6 +25,8 @@ window.TNTT.push = {
     tbCanCaiApp: false,  // iPhone chưa thêm vào màn hình chính
     tbDangChay: false,
     tbSoMay: 0,
+    tbLoiGui: null,      // mã lỗi của lần gửi gần nhất tới máy này (null = không lỗi)
+    _epHienTai: '',
     _swReg: null,
 
     /** Gọi trong init(). Không hỏi quyền, chỉ dò xem đang ở tình trạng nào. */
@@ -60,6 +62,8 @@ window.TNTT.push = {
             const d = await res.json();
             if (!d.ok) return;
             this.tbSoMay = d.devices || 0;
+            this._epHienTai = endpoint;
+            this.tbLoiGui = (typeof d.lastFailCode === 'number') ? d.lastFailCode : null;
             if (!d.available) { this.tbHoTro = false; return; }   // máy chủ chưa cấu hình khoá
             // Máy chủ mới là nguồn sự thật: đăng ký còn trong trình duyệt
             // nhưng máy chủ đã xoá (gỡ app, đổi khoá) thì coi như chưa bật.
@@ -131,8 +135,18 @@ window.TNTT.push = {
         if (!this.tbDaBat) { window.TNTT.toast.warning('Bật thông báo trên máy này trước đã.'); return; }
         const r = await this.api('push', 'test', {});
         if (!r.ok) { window.TNTT.toast.error(r.error || 'Không gửi được.'); return; }
-        window.TNTT.toast.success('Đã gửi tới ' + r.devices + ' máy.\n\n'
-            + 'Thông báo có thể chậm vài giây. Thử khoá màn hình rồi chờ xem.');
+        window.TNTT.toast.success('Đã xếp hàng gửi tới ' + r.devices + ' máy.\n\n'
+            + 'Nếu sau khoảng 30 giây vẫn không thấy, mở lại mục này để xem trạng thái.');
+        // Vài giây sau hỏi lại để hiện lỗi (nếu có) của lần gửi vừa rồi
+        setTimeout(() => {
+            this._pushDongBo(this._epHienTai || '').then(() => {
+                if (this.tbLoiGui !== null) {
+                    window.TNTT.toast.warning('Lần gửi gần nhất bị lỗi ('
+                        + (this.tbLoiGui === 0 ? 'không kết nối được' : 'mã ' + this.tbLoiGui) + ').\n\n'
+                        + 'Tắt rồi bật lại thông báo trên máy này, hoặc thử lại sau.');
+                }
+            });
+        }, 6000);
     },
 
     /** Khoá VAPID là base64 kiểu URL; PushManager đòi Uint8Array */

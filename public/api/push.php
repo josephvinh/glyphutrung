@@ -4,10 +4,10 @@
  *
  *   GET  api/push.php?action=key       — khoá công khai để trình duyệt đăng ký
  *   POST api/push.php?action=pending { endpoint } — service worker gọi lấy nội dung mới nhất (không cần đăng nhập)
- *   GET  api/push.php?action=status    — máy này đã bật chưa, cả đoàn bao nhiêu máy
+ *   GET  api/push.php?action=status    — máy này đã bật chưa, cả đoàn bao nhiêu máy, lần gửi gần nhất
  *   POST api/push.php?action=subscribe { endpoint }
  *   POST api/push.php?action=unsubscribe { endpoint }
- *   POST api/push.php?action=test      — tự gửi cho mình một cái để thử
+ *   POST api/push.php?action=test      — xếp hàng gửi cho mình một cái để thử (gửi sau khi trả phản hồi)
  */
 
 require __DIR__ . '/_bootstrap.php';
@@ -61,10 +61,17 @@ switch ($action) {
         $me  = require_login();
         $cfg = app_config('push');
         $ep  = (string) ($_GET['endpoint'] ?? '');
+        $may = $ep !== '' ? db_one(
+            'SELECT id, last_ok_at, last_fail_code FROM push_subscriptions WHERE member_id = ? AND endpoint = ?',
+            [$me['id'], $ep]) : null;
+        // Xả hàng đợi cơ hội: app gọi status mỗi lần mở, nhân dịp đó rung nốt
+        // những máy còn tồn (sau khi đã trả phản hồi) nên không cần cron.
+        push_hen_sau_phan_hoi();
         json_out(['ok' => true,
             'available' => !empty($cfg['public']),
-            'onThisDevice' => $ep !== '' && (bool) db_one(
-                'SELECT id FROM push_subscriptions WHERE member_id = ? AND endpoint = ?', [$me['id'], $ep]),
+            'onThisDevice' => (bool) $may,
+            'lastOkAt' => $may['last_ok_at'] ?? null,
+            'lastFailCode' => isset($may['last_fail_code']) ? (int) $may['last_fail_code'] : null,
             'devices' => (int) (db_one('SELECT COUNT(*) c FROM push_subscriptions WHERE member_id = ?',
                                        [$me['id']])['c'] ?? 0),
         ]);
@@ -113,8 +120,9 @@ switch ($action) {
         $n  = push_bao([$me['id']], 'Thử thông báo',
                        'Nếu thấy dòng này thì máy của bạn nhận thông báo được rồi.',
                        '/', 'tntt-thu');
-        if ($n === 0) json_fail('Chưa rung được máy nào. Kiểm tra: đã bật thông báo chưa, máy có mạng không.', 409);
-        json_out(['ok' => true, 'devices' => $n]);
+        if ($n === 0) json_fail('Chưa xếp hàng gửi được cho máy nào. Kiểm tra: đã bật thông báo chưa, máy chủ đã có khoá thông báo chưa.', 409);
+        // Việc gửi diễn ra SAU khi trả phản hồi này (không giữ request chờ push service)
+        json_out(['ok' => true, 'devices' => $n, 'queued' => true]);
 
     // -------------------------------------------------------------
     default:
