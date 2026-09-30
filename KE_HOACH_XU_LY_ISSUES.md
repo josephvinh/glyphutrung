@@ -102,13 +102,13 @@ Toàn bộ agent nền đã dừng. Chưa merge PR nào; chưa đóng issue nào
 | P2 | `fix/p2-schema-regressions` | Đã duyệt độc lập (Opus), chấp nhận | #112 | Closes #79, #80. Lỗi "Tỷ lệ" phát hiện thêm → #110. Test: `tests/e2e/p2_regress.py` (27 ca) |
 | P3 | `fix/p3-input-validation` | Đã duyệt độc lập (Opus), chấp nhận sau khi sửa điều kiện (bỏ qua qua `scan`) | #113 | Closes #85, #86. Test: `tests/e2e/p3_regress.py` (101 ca). #98 (SĐT nhân sự) chưa làm, chờ P1 |
 | P6 | `fix/p6-deploy-cleanup` | Đã duyệt độc lập (Opus), chấp nhận (Apache 2.4; gộp với W0: PHPUnit 207/207) | #114 | Closes #81, #101, #87, #93, #94, #104; tham chiếu #106 |
-| W0 | `fix/w0-ci-that` | Đã viết, PHPUnit 207 test/736 assertion xanh cục bộ. **Chưa qua duyệt độc lập** (phiên duyệt bị dừng giữa chừng) | chưa mở | #82 |
+| W0 | `fix/w0-ci-that` | Đã duyệt độc lập (Opus): chấp nhận có điều kiện. Điều kiện 2 (sàn ≥ 200 test, báo lỗi khi thiếu junit.xml) đã làm ở commit `0e3f4cd`. Còn: chạy `workflow_dispatch` trên PHP 8.2 thật; gỡ phần tạo phân công admin trong fixture sau khi #114 merge; `no-dupe-keys` về mức lỗi sau #91 | #116 | Closes #82. Khoảng trống độ phủ (ExportTest không chạy export.php, thiếu test từ chối quyền lớp) → #115 |
 | P1 | `fix/p1-scope-authz` | **Dở dang**, đã commit WIP `9d55496` và đẩy lên; chưa chạy đủ kịch bản, chưa duyệt | chưa mở | #78, #97, #83. Thiết kế: `docs/audit/P1_design.md` |
 | P5 | `fix/p5-web-push` | **Dở dang**, 5 commit đã đẩy (lược đồ token + hàng đợi, allowlist SSRF, gửi sau phản hồi, token subscription, chuông sau commit); còn thiếu unit test, kịch bản `push.py` nghiệm thu, duyệt | chưa mở | #99, #100, #107. Thiết kế: `docs/audit/P5_design.md` |
 
 ### 6.2 Chưa làm (làm tiếp theo thứ tự)
 
-1. **W0**: chạy lại duyệt độc lập (Opus): đọc diff, kiểm test không bị làm yếu, fixture trung thực, `ci.yml` hợp lệ (PHP/PHPUnit tương thích, bước đếm testcase làm CI đỏ đúng lúc, lint không còn `|| true`), phá code cố ý ≥3 chỗ để chứng minh test bắt được, chạy trên DB `tntt_w0`. Sau đó mở PR.
+1. **W0**: đã duyệt và mở PR #116. Còn lại: chạy `workflow_dispatch` một lần; xử lý #115 (viết lại ExportTest, test `accessible_class_ids` cho người bị giới hạn) — nên làm cùng hoặc ngay sau P1.
 2. **P1**: hoàn tất cài đặt theo `docs/audit/P1_design.md`; chạy `e2e2.py` (SCOPE-01…03), `extra.py` (STAFF-06), `e2e.py` (AUTH-05) và `p1_regress.py`; duyệt độc lập; mở PR. Mặc định đã chốt: quản trị viên mới xem `logs`; BĐH không sửa BĐH khác nhưng sửa được định danh của mình; GLV không thấy tài khoản chờ duyệt; danh bạ SĐT giữ cho vai có quyền `staff` (GLV có).
 3. **P5**: hoàn tất unit test và nghiệm thu bằng `push.py` (PUSH-20, 21, 22); duyệt độc lập; mở PR. Mặc định đã chốt: gửi bất đồng bộ, chỉ 4 dịch vụ push, tự xoá subscription lỗi, quá độ 30 ngày, giới hạn "Send-test" để P4.
 4. **P4** (chưa bắt đầu): #84, #102 (APCu, fallback không im lặng), #88, #103, #96, #95, giới hạn tần suất "Send-test". Làm sau P1 vì cùng sửa `_bootstrap.php`.
