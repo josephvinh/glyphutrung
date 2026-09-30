@@ -130,12 +130,12 @@ Thứ tự gộp: #114, #112, #113, #117, #119, #120, #118, rồi #116 (W0, gộ
 |-----|-------|-----------|-------|
 | P1 rò rỉ dữ liệu, phân quyền | `fix/p1-scope-authz` | Commit WIP `9d55496`; chưa chạy đủ kịch bản, chưa duyệt. Thiết kế: `docs/audit/P1_design.md`. Nhánh cần merge lại `master` mới (có P2/P3/P6/W0) | #78, #97, #83 |
 | P5 Web Push | `fix/p5-web-push` | 5 commit (lược đồ token + hàng đợi, allowlist SSRF, gửi sau phản hồi, token subscription, chuông sau commit); còn thiếu unit test, nghiệm thu `push.py`, duyệt. Thiết kế: `docs/audit/P5_design.md`. Cũng cần merge lại `master` | #99, #100, #107 |
-| #115 test export | `audit` | Đã viết `tests/unit/ExportApiTest.php` (11 tests). Phát hiện bugs mới: #129 (attendance 503), #130 (attendance-detail 500) | #115, #129, #130 |
+| #115 test export | `audit` | PR #131. 11 tests, 5 pass, 6 fail. Bugs mới: #129, #130 | #115, #129, #130 |
 
 ### 6.5 Chưa làm / Đang làm (thứ tự đề nghị)
 
 1. ~~**Gộp #125**~~ ✅ ĐÃ GỘP.
-2. **#115** (ĐANG LÀM): viết lại `ExportTest` → `tests/unit/ExportApiTest.php` (11 tests). Phát hiện bugs mới: #129 (attendance trả 503), #130 (attendance-detail trả 500 thay vì 403/400).
+2. ~~**#115**~~ ✅ PR #131. Viết `ExportApiTest.php` (11 tests). Bugs: #129, #130.
 3. **#123**: bật `failOnRisky`/`failOnWarning` trong `phpunit.xml`; nâng `min_tests` sát 208 và thêm sàn assertion; kiểm từng file có testcase.
 4. **P1**: hoàn tất theo `docs/audit/P1_design.md`; chạy `e2e2.py` (SCOPE-01…03), `extra.py` (STAFF-06), `e2e.py` (AUTH-05), `p1_regress.py`; duyệt độc lập bằng phiên khác phiên viết; mở PR. Mặc định đã chốt: chỉ quản trị viên xem `logs`; BĐH không sửa BĐH khác nhưng sửa được định danh của mình; GLV không thấy tài khoản chờ duyệt; danh bạ SĐT giữ cho vai có quyền `staff` (GLV có).
 5. **P5**: hoàn tất unit test, nghiệm thu `push.py` (PUSH-20, 21, 22); duyệt độc lập; mở PR. Mặc định đã chốt: gửi bất đồng bộ, chỉ 4 dịch vụ push, tự xoá subscription lỗi, quá độ 30 ngày, giới hạn "Send-test" để P4.
