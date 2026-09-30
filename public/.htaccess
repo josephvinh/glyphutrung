@@ -24,6 +24,10 @@
     <FilesMatch "\.(sql|gz|tar|tgz|zip|bak|log|ini|env|md)$">
         Require all denied
     </FilesMatch>
+    # `error_log` không có đuôi nên lọt luật trên
+    <FilesMatch "^error_log$">
+        Require all denied
+    </FilesMatch>
     <FilesMatch "^\.">
         Require all denied
     </FilesMatch>
@@ -33,6 +37,10 @@
 <IfModule !mod_authz_core.c>
     <IfModule mod_authz_host.c>
         <FilesMatch "\.(sql|gz|tar|tgz|zip|bak|log|ini|env|md)$">
+            Order allow,deny
+            Deny from all
+        </FilesMatch>
+        <FilesMatch "^error_log$">
             Order allow,deny
             Deny from all
         </FilesMatch>

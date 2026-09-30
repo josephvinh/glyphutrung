@@ -71,7 +71,11 @@ function clean_student(array $s): array
         'holyName'    => $holyName,
         'name'        => $name,
         'gender'      => (int) ($s['gender'] ?? 1) === 0 ? 0 : 1,
-        'birthDate'   => ($s['birthDate'] ?? '') ?: null,
+        // Rỗng = chưa biết ngày sinh (NULL). Có giá trị thì để nguyên chuỗi
+        // đã cắt khoảng trắng — student_error() sẽ kiểm ngay sau đó.
+        'birthDate'   => is_scalar($s['birthDate'] ?? '')
+                            ? (trim((string) ($s['birthDate'] ?? '')) ?: null)
+                            : '?',
         'address'     => $address,
         'fatherName'  => $fatherName,
         'fatherPhone' => $clean_phone((string) ($s['fatherPhone'] ?? '')),
@@ -80,6 +84,50 @@ function clean_student(array $s): array
         'className'   => trim((string) ($s['className'] ?? '')),
         'status'      => trim((string) ($s['status'] ?? 'đang sinh hoạt')),
     ];
+}
+
+/**
+ * Kiểm hợp lệ một bản ghi ĐÃ chuẩn hoá bởi clean_student(); dùng chung cho
+ * save và import. Trả về thông báo lỗi tiếng Việt (nêu rõ trường sai) hoặc
+ * null nếu hợp lệ. Độ dài tính theo ký tự UTF-8 và khớp cột trong students.
+ */
+function student_error(array $s): ?string
+{
+    // Ngày sinh: rỗng thì bỏ qua; có giá trị thì phải là ngày thật, không ở
+    // tương lai (giờ Việt Nam, app đã set múi giờ), không quá 100 năm trước.
+    $bd = $s['birthDate'];
+    if ($bd !== null) {
+        $ok = preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $bd, $m)
+              && checkdate((int) $m[2], (int) $m[3], (int) $m[1]);
+        if (!$ok) {
+            return 'Ngày sinh không hợp lệ (cần dạng năm-tháng-ngày, ví dụ 2015-05-20).';
+        }
+        $today = new DateTimeImmutable('today');
+        if ($bd > $today->format('Y-m-d')) {
+            return 'Ngày sinh không hợp lệ: không được ở tương lai.';
+        }
+        if ($bd < $today->modify('-100 years')->format('Y-m-d')) {
+            return 'Ngày sinh không hợp lệ: quá 100 năm về trước.';
+        }
+    }
+
+    // Giới hạn theo cột trong config/schema.sql (bảng students)
+    $gioiHan = [
+        'code'        => ['Mã số', 32],
+        'holyName'    => ['Tên thánh', 64],
+        'name'        => ['Họ tên', 128],
+        'address'     => ['Địa chỉ', 255],
+        'fatherName'  => ['Tên cha', 128],
+        'fatherPhone' => ['SĐT cha', 20],
+        'motherName'  => ['Tên mẹ', 128],
+        'motherPhone' => ['SĐT mẹ', 20],
+    ];
+    foreach ($gioiHan as $k => [$nhan, $max]) {
+        if (mb_strlen((string) $s[$k], 'UTF-8') > $max) {
+            return $nhan . ' quá dài (tối đa ' . $max . ' ký tự).';
+        }
+    }
+    return null;
 }
 
 /**
@@ -125,6 +173,7 @@ switch ($action) {
         $s = clean_student($in);
         if ($s['name'] === '') json_fail('Thiếu họ tên.');
         if ($s['className'] === '') json_fail('Vui lòng chọn lớp cho em.');
+        if ($loi = student_error($s)) json_fail($loi, 400);
 
         // Thêm mới: MÁY CHỦ tự cấp mã (GDGLPT + năm nhập + số thứ tự) — không
         // tin mã do client gửi, để chắc chắn duy nhất toàn đoàn, hết đụng độ.
@@ -235,6 +284,12 @@ switch ($action) {
         foreach ($rows as $i => $raw) {
             $s = clean_student($raw);
             if ($s['name'] === '') { $skipped++; continue; }
+            // Ngày sinh sai / trường quá dài: bỏ qua dòng, KHÔNG lưu NULL âm thầm
+            if ($loi = student_error($s)) {
+                $skipped++;
+                $errors[] = 'Dòng ' . ($i + 2) . ': ' . $loi;
+                continue;
+            }
             if ($s['code'] === '') {
                 $s['code'] = $prefix . sprintf('%04d', $nextNum);
                 $nextNum++;
