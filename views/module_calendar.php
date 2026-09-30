@@ -9,7 +9,7 @@
             </button>
             <h2 class="text-xl font-black text-slate-800 tracking-tight">Lịch Trình</h2>
         </div>
-        <div class="text-micro font-bold text-slate-400" x-text="programs.length + ' chương trình'"></div>
+        <div class="text-micro font-bold text-slate-500" x-text="programs.length + ' chương trình'"></div>
     </div>
 
     <!-- 2. ĐIỀU HƯỚNG THÁNG -->
@@ -19,7 +19,7 @@
                 <i data-lucide="chevron-left" class="w-5 h-5"></i>
             </button>
             <div class="flex-1 text-center">
-                <p class="text-micro font-bold text-slate-400 uppercase tracking-wide">Lịch</p>
+                <p class="text-micro font-bold text-slate-500 uppercase tracking-wide">Lịch</p>
                 <p class="text-lg font-black text-slate-800 leading-tight" x-text="calendarMonthLabel"></p>
             </div>
             <button aria-label="Tháng sau" @click="nextMonth()" class="w-10 h-10 shrink-0 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-center text-slate-500 active:scale-90 transition-transform hover:bg-slate-100">
@@ -68,7 +68,7 @@
                             </button>
                         </template>
                         <!-- Sự kiện ẩn -->
-                        <div x-show="date.events.length > 3" class="text-micro text-slate-400 font-medium text-center">
+                        <div x-show="date.events.length > 3" class="text-micro text-slate-500 font-medium text-center">
                             +<span x-text="date.events.length - 3"></span> khác
                         </div>
                     </div>
@@ -98,7 +98,7 @@
                     <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300 shrink-0"></i>
                 </button>
             </template>
-            <div x-show="programsInMonth.length === 0" class="text-center py-6 text-slate-400 text-sm">
+            <div x-show="programsInMonth.length === 0" class="text-center py-6 text-slate-500 text-sm">
                 <i data-lucide="calendar-x" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
                 Không có chương trình trong tháng này
             </div>
@@ -135,28 +135,28 @@
 
                 <div class="space-y-3">
                     <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
-                        <i data-lucide="repeat" class="w-5 h-5 text-slate-400 shrink-0"></i>
+                        <i data-lucide="repeat" class="w-5 h-5 text-slate-500 shrink-0"></i>
                         <div>
                             <p class="text-micro font-semibold text-slate-500">Lịch trình</p>
                             <p class="text-sm font-bold text-slate-800" x-text="selectedEvent ? programSchedule(selectedEvent) : ''"></p>
                         </div>
                     </div>
                     <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
-                        <i data-lucide="clock" class="w-5 h-5 text-slate-400 shrink-0"></i>
+                        <i data-lucide="clock" class="w-5 h-5 text-slate-500 shrink-0"></i>
                         <div>
                             <p class="text-micro font-semibold text-slate-500">Giờ bắt đầu</p>
                             <p class="text-sm font-bold text-slate-800" x-text="selectedEvent?.startTime"></p>
                         </div>
                     </div>
                     <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
-                        <i data-lucide="alarm-clock" class="w-5 h-5 text-slate-400 shrink-0"></i>
+                        <i data-lucide="alarm-clock" class="w-5 h-5 text-slate-500 shrink-0"></i>
                         <div>
                             <p class="text-micro font-bold text-slate-500 uppercase tracking-wide">Chốt điểm danh</p>
                             <p class="text-sm font-bold text-rose-500" x-text="selectedEvent?.cutoffTime || (selectedEvent?.startTime ? addMinutes(selectedEvent.startTime, CUTOFF_MINUTES) : '--:--')"></p>
                         </div>
                     </div>
                     <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
-                        <i data-lucide="check-circle" class="w-5 h-5 text-slate-400 shrink-0"></i>
+                        <i data-lucide="check-circle" class="w-5 h-5 text-slate-500 shrink-0"></i>
                         <div>
                             <p class="text-micro font-semibold text-slate-500">Tính điểm Chuyên cần</p>
                             <p class="text-sm font-bold" :class="selectedEvent?.countForAttendance ? 'text-emerald-600' : 'text-slate-500'" x-text="selectedEvent?.countForAttendance ? 'Có' : 'Không'"></p>

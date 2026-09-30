@@ -9,7 +9,7 @@
         </button>
         <div class="flex-1 min-w-0">
             <h2 class="text-lg font-black text-slate-800">Thư viện &amp; Sổ tay</h2>
-            <p class="text-micro text-slate-400">Tài liệu để tải · bài viết tra cứu nhanh</p>
+            <p class="text-micro text-slate-500">Tài liệu để tải · bài viết tra cứu nhanh</p>
         </div>
         <!-- Quản chủ đề: chỉ người duyệt được mới thấy -->
         <button x-show="libCanEdit" style="display:none" @click="openCatManager()" aria-label="Quản chủ đề"
@@ -40,7 +40,7 @@
     <div x-show="lib.tab==='all'">
         <!-- Tìm + lọc chủ đề -->
         <div class="relative mb-3">
-            <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+            <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
             <input x-model="lib.q" @input.debounce.400ms="libRefresh()" type="text" placeholder="Tìm theo tiêu đề hoặc nội dung..."
                    class="w-full bg-white border border-slate-200 rounded-field py-3 pl-11 pr-4 text-sm font-medium text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
         </div>
@@ -54,14 +54,14 @@
         </div>
 
         <!-- Đang tải -->
-        <div x-show="lib.loading" style="display:none" class="text-center py-12 text-slate-400 text-sm">Đang tải…</div>
+        <div x-show="lib.loading" style="display:none" class="text-center py-12 text-slate-500 text-sm">Đang tải…</div>
 
         <!-- Rỗng -->
         <div x-show="!lib.loading && lib.items.length===0" style="display:none"
              class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
             <i data-lucide="folder-open" class="w-12 h-12 mx-auto text-slate-300 mb-3"></i>
             <p class="text-slate-600 font-semibold">Chưa có gì ở đây</p>
-            <p class="text-slate-400 text-sm">Bấm "Soạn" để viết bài tra cứu hoặc đăng tệp đầu tiên.</p>
+            <p class="text-slate-500 text-sm">Bấm "Soạn" để viết bài tra cứu hoặc đăng tệp đầu tiên.</p>
         </div>
 
         <!-- Lưới thẻ -->
@@ -84,11 +84,11 @@
     <!-- ================= TAB: CỦA TÔI ================= -->
     <div x-show="lib.tab==='mine'" style="display:none">
         <div class="relative mb-3">
-            <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+            <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
             <input x-model="lib.mineQ" @input.debounce.400ms="libLoadMine()" type="text" placeholder="Tìm trong tài liệu của tôi..."
                    class="w-full bg-white border border-slate-200 rounded-field py-3 pl-11 pr-4 text-sm font-medium text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
         </div>
-        <div x-show="lib.mineItems.length===0" style="display:none" class="text-center py-12 text-slate-400 text-sm"
+        <div x-show="lib.mineItems.length===0" style="display:none" class="text-center py-12 text-slate-500 text-sm"
              x-text="lib.mineQ ? 'Không tìm thấy tài liệu nào khớp.' : 'Bạn chưa đăng tài liệu nào.'"></div>
         <div class="space-y-3">
             <template x-for="it in lib.mineItems" :key="it.id">
@@ -98,7 +98,7 @@
                     </div>
                     <div class="flex-1 min-w-0" style="max-width:100%;overflow:hidden">
                         <p class="text-sm font-bold text-slate-800 truncate" x-text="it.title"></p>
-                        <p x-show="it.type==='file' && it.originalName" style="display:none" class="text-micro text-slate-400 truncate" x-text="it.originalName"></p>
+                        <p x-show="it.type==='file' && it.originalName" style="display:none" class="text-micro text-slate-500 truncate" x-text="it.originalName"></p>
                         <span class="inline-block mt-1 text-micro font-bold px-2 py-0.5 rounded-full"
                               :class="it.status==='da_duyet' ? 'bg-emerald-50 text-emerald-600' : (it.status==='cho_duyet' ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-rose-600')"
                               x-text="libStatusLabel(it.status)"></span>
@@ -122,11 +122,11 @@
     <!-- ================= TAB: CHỜ DUYỆT (BĐH) ================= -->
     <div x-show="lib.tab==='pending'" style="display:none">
         <div class="relative mb-3">
-            <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+            <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
             <input x-model="lib.pendingQ" @input.debounce.400ms="libLoadPending()" type="text" placeholder="Tìm trong hàng chờ duyệt..."
                    class="w-full bg-white border border-slate-200 rounded-field py-3 pl-11 pr-4 text-sm font-medium text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
         </div>
-        <div x-show="lib.pending.length===0" style="display:none" class="text-center py-12 text-slate-400 text-sm"
+        <div x-show="lib.pending.length===0" style="display:none" class="text-center py-12 text-slate-500 text-sm"
              x-text="lib.pendingQ ? 'Không có mục nào khớp.' : 'Không có tài liệu nào chờ duyệt. 🎉'"></div>
         <div class="space-y-3">
             <template x-for="it in lib.pending" :key="it.id">
@@ -137,8 +137,8 @@
                         </div>
                         <div class="flex-1 min-w-0" style="max-width:100%;overflow:hidden">
                             <p class="text-sm font-bold text-slate-800 truncate" x-text="it.title"></p>
-                            <p class="text-micro text-slate-400 truncate" x-text="(it.categoryName ? it.categoryName + ' · ' : '') + (it.type==='article' ? 'Sổ tay' : it.ext.toUpperCase() + ' · ' + libSizeLabel(it.sizeKb))"></p>
-                            <p class="text-micro text-slate-400 truncate" x-show="it.uploaderName" x-text="'Đăng bởi ' + it.uploaderName"></p>
+                            <p class="text-micro text-slate-500 truncate" x-text="(it.categoryName ? it.categoryName + ' · ' : '') + (it.type==='article' ? 'Sổ tay' : it.ext.toUpperCase() + ' · ' + libSizeLabel(it.sizeKb))"></p>
+                            <p class="text-micro text-slate-500 truncate" x-show="it.uploaderName" x-text="'Đăng bởi ' + it.uploaderName"></p>
                             <p x-show="(it.description || it.body)" style="display:none;max-width:100%" class="text-xs text-slate-500 mt-1 truncate" x-text="it.body || it.description"></p>
                         </div>
                         <button @click="openLibItem(it)" class="shrink-0 text-xs font-bold text-blue-600 px-2 py-1">Xem trước</button>

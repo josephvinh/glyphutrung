@@ -15,7 +15,7 @@
             <!-- 1. TRANG CHỦ — luôn hiện -->
             <button @click="changeModule('dashboard')" type="button"
                     class="flex-1 flex flex-col items-center gap-1 py-2 rounded-2xl active:scale-90 transition-transform"
-                    :class="currentModule === 'dashboard' ? 'text-blue-600' : 'text-slate-400'">
+                    :class="currentModule === 'dashboard' ? 'text-blue-600' : 'text-slate-500'">
                 <span class="w-10 h-8 rounded-xl flex items-center justify-center transition-colors"
                       :class="currentModule === 'dashboard' ? 'bg-blue-50' : 'bg-transparent'">
                     <i data-lucide="home" class="w-5 h-5 pointer-events-none"></i>
@@ -26,7 +26,7 @@
             <!-- 2. THIẾU NHI — chỉ ai có quyền students mới thấy -->
             <button x-show="canAccess('students')" @click="changeModule('students')" type="button"
                     class="flex-1 flex flex-col items-center gap-1 py-2 rounded-2xl active:scale-90 transition-transform"
-                    :class="(currentModule === 'students' || currentModule === 'student_profile') ? 'text-blue-600' : 'text-slate-400'"
+                    :class="(currentModule === 'students' || currentModule === 'student_profile') ? 'text-blue-600' : 'text-slate-500'"
                     style="display: none;">
                 <span class="w-10 h-8 rounded-xl flex items-center justify-center transition-colors"
                       :class="(currentModule === 'students' || currentModule === 'student_profile') ? 'bg-blue-50' : 'bg-transparent'">
@@ -38,7 +38,7 @@
             <!-- 3. ĐIỂM DANH — chỉ ai có quyền attendance mới thấy -->
             <button x-show="canAccess('attendance')" @click="openAttendance()" type="button"
                     class="flex-1 flex flex-col items-center gap-1 py-2 rounded-2xl active:scale-90 transition-transform"
-                    :class="currentModule === 'attendance' ? 'text-blue-600' : 'text-slate-400'"
+                    :class="currentModule === 'attendance' ? 'text-blue-600' : 'text-slate-500'"
                     style="display: none;">
                 <span class="w-10 h-8 rounded-xl flex items-center justify-center transition-colors"
                       :class="currentModule === 'attendance' ? 'bg-blue-50' : 'bg-transparent'">
@@ -50,7 +50,7 @@
             <!-- 4. THÔNG BÁO — ai cũng thấy; chấm đỏ khi có thông báo chưa đọc -->
             <button @click="openAnnouncements()" type="button"
                     class="flex-1 flex flex-col items-center gap-1 py-2 rounded-2xl active:scale-90 transition-transform"
-                    :class="currentModule === 'announcements' ? 'text-blue-600' : 'text-slate-400'">
+                    :class="currentModule === 'announcements' ? 'text-blue-600' : 'text-slate-500'">
                 <span class="w-10 h-8 rounded-xl flex items-center justify-center transition-colors"
                       :class="currentModule === 'announcements' ? 'bg-blue-50' : 'bg-transparent'">
                     <span class="relative inline-flex">
@@ -66,7 +66,7 @@
             <!-- 5. CÁ NHÂN — luôn hiện; chấm đỏ khi có việc cần làm hoặc bảo trì -->
             <button @click="openSettings('profile')" type="button"
                     class="flex-1 flex flex-col items-center gap-1 py-2 rounded-2xl active:scale-90 transition-transform"
-                    :class="currentModule === 'settings' ? 'text-blue-600' : 'text-slate-400'">
+                    :class="currentModule === 'settings' ? 'text-blue-600' : 'text-slate-500'">
                 <span class="w-10 h-8 rounded-xl flex items-center justify-center transition-colors"
                       :class="currentModule === 'settings' ? 'bg-blue-50' : 'bg-transparent'">
                     <span class="relative inline-flex">

@@ -201,7 +201,7 @@
                     <!-- Giờ bắt đầu & giờ chốt -->
                     <div class="bg-slate-50 rounded-2xl p-3.5 flex items-center justify-between mb-4">
                         <div class="flex items-center">
-                            <i data-lucide="play" class="w-4 h-4 text-slate-400 mr-2"></i>
+                            <i data-lucide="play" class="w-4 h-4 text-slate-500 mr-2"></i>
                             <div>
                                 <p class="text-micro font-bold text-slate-500 uppercase tracking-wide">Bắt đầu</p>
                                 <p class="text-sm font-black text-slate-700" x-text="prog.startTime"></p>
@@ -209,7 +209,7 @@
                         </div>
                         <div class="w-px h-8 bg-slate-200"></div>
                         <div class="flex items-center">
-                            <i data-lucide="lock" class="w-4 h-4 text-slate-400 mr-2"></i>
+                            <i data-lucide="lock" class="w-4 h-4 text-slate-500 mr-2"></i>
                             <div>
                                 <p class="text-micro font-bold text-slate-500 uppercase tracking-wide">Chốt sổ</p>
                                 <p class="text-sm font-black text-rose-500" x-text="cutoffOf(prog)"></p>
@@ -217,11 +217,11 @@
                         </div>
                         <div class="w-px h-8 bg-slate-200"></div>
                         <div class="flex items-center">
-                            <i data-lucide="user-check" class="w-4 h-4 text-slate-400 mr-2"></i>
+                            <i data-lucide="user-check" class="w-4 h-4 text-slate-500 mr-2"></i>
                             <div>
                                 <p class="text-micro font-bold text-slate-500 uppercase tracking-wide">Đã ghi</p>
                                 <p class="text-sm font-black text-blue-600">
-                                    <span x-text="sessionProgress(prog).done"></span><span class="text-slate-400 font-medium">/<span x-text="sessionProgress(prog).total"></span></span>
+                                    <span x-text="sessionProgress(prog).done"></span><span class="text-slate-500 font-medium">/<span x-text="sessionProgress(prog).total"></span></span>
                                 </p>
                             </div>
                         </div>
@@ -249,7 +249,7 @@
                             Buổi sẽ mở lúc <span class="font-black text-slate-700" x-text="prog.startTime"></span>
                         </p>
                     </div>
-                    <p class="text-micro text-slate-400 mt-2 leading-relaxed">Buổi chỉ mở để điểm danh khi tới giờ bắt đầu, tránh quét nhầm sang buổi khác.</p>
+                    <p class="text-micro text-slate-500 mt-2 leading-relaxed">Buổi chỉ mở để điểm danh khi tới giờ bắt đầu, tránh quét nhầm sang buổi khác.</p>
                 </div>
             </template>
 
@@ -257,7 +257,7 @@
             <div x-show="programsOnDate.length === 0 && pendingProgramsOnDate.length === 0" style="display: none;" class="text-center py-12 px-6 bg-white rounded-card border border-slate-100 border-dashed">
                 <i data-lucide="calendar-x" class="w-12 h-12 mx-auto text-slate-300 mb-4"></i>
                 <p class="text-slate-600 font-semibold text-base mb-1">Ngày này không có chương trình nào</p>
-                <p class="text-slate-400 text-sm mb-4">Hầu hết chương trình rơi vào Chúa Nhật</p>
+                <p class="text-slate-500 text-sm mb-4">Hầu hết chương trình rơi vào Chúa Nhật</p>
                 <button @click="goToNearestSunday()" type="button" class="px-5 py-2.5 bg-blue-50 text-blue-600 rounded-full font-bold text-xs active:scale-95 transition-transform border border-blue-100 hover:bg-blue-100">
                     Xem Chúa Nhật gần nhất
                 </button>
@@ -331,7 +331,7 @@
                 <p class="text-micro font-bold text-slate-500 uppercase tracking-wide">Đi trễ</p>
             </div>
             <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-100 text-center">
-                <p class="text-2xl font-black text-slate-400" x-text="sessionStats.absent"></p>
+                <p class="text-2xl font-black text-slate-500" x-text="sessionStats.absent"></p>
                 <p class="text-micro font-bold text-slate-500 uppercase tracking-wide">Vắng</p>
             </div>
         </div>
@@ -359,7 +359,7 @@
         <div x-show="attendanceClass === '' && attendanceSearch === ''" style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
             <i data-lucide="filter" class="w-12 h-12 mx-auto text-slate-300 mb-4"></i>
             <p class="text-slate-600 font-semibold text-base mb-1">Chọn lớp để điểm danh</p>
-            <p class="text-slate-400 text-sm">Bấm nút lọc <i data-lucide="filter" class="inline w-3.5 h-3.5 -mt-0.5"></i> để chọn lớp, hoặc gõ tên để tìm nhanh. Quét QR thì không cần chọn lớp.</p>
+            <p class="text-slate-500 text-sm">Bấm nút lọc <i data-lucide="filter" class="inline w-3.5 h-3.5 -mt-0.5"></i> để chọn lớp, hoặc gõ tên để tìm nhanh. Quét QR thì không cần chọn lớp.</p>
         </div>
 
         <!-- DANH SÁCH ĐIỂM DANH: chạm 1 phát là đổi trạng thái -->
@@ -396,8 +396,8 @@
                     <div class="flex-1 min-w-0">
                         <p class="text-micro font-bold text-blue-600 leading-tight">
                             <span x-text="student.code"></span>
-                            <span class="text-slate-400 mx-1">•</span>
-                            <span class="text-slate-400 font-medium" x-text="student.className"></span>
+                            <span class="text-slate-500 mx-1">•</span>
+                            <span class="text-slate-500 font-medium" x-text="student.className"></span>
                         </p>
                         <p class="text-sm font-black text-slate-800 leading-snug">
                             <span class="font-normal text-slate-500" x-text="student.holyName"></span>
@@ -418,7 +418,7 @@
             <div x-show="sessionStudents.length === 0 && !(attendanceClass === '' && attendanceSearch === '')" style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
                 <i data-lucide="users-x" class="w-12 h-12 mx-auto text-slate-300 mb-4"></i>
                 <p class="text-slate-600 font-semibold text-base mb-1">Không có em nào phù hợp</p>
-                <p class="text-slate-400 text-sm">Hãy kiểm tra lại phạm vi điểm danh hoặc danh sách lớp</p>
+                <p class="text-slate-500 text-sm">Hãy kiểm tra lại phạm vi điểm danh hoặc danh sách lớp</p>
             </div>
         </div>
 
@@ -496,10 +496,10 @@
         <!-- Số đếm + vài em gần nhất -->
         <div class="flex-1 min-h-0 overflow-y-auto px-4 py-3 max-h-48">
             <div class="flex items-center justify-between mb-2">
-                <p class="text-micro font-bold text-slate-400 uppercase tracking-wider">Đã quét</p>
+                <p class="text-micro font-bold text-slate-500 uppercase tracking-wider">Đã quét</p>
                 <div class="flex items-baseline gap-1.5">
                     <span class="text-2xl font-black text-emerald-600" x-text="qrDaQuet"></span>
-                    <span class="text-micro font-semibold text-slate-400">em</span>
+                    <span class="text-micro font-semibold text-slate-500">em</span>
                     <span x-show="qrDangGui > 0" style="display: none;"
                           class="ml-1 text-micro font-bold text-amber-600"
                           x-text="'· đang gửi ' + qrDangGui"></span>
@@ -512,18 +512,18 @@
                         <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-600 shrink-0"></i>
                         <span class="flex-1 min-w-0 truncate">
                             <span class="text-xs font-bold text-slate-700" x-text="v.ten"></span>
-                            <span class="text-micro font-semibold text-slate-400" x-text="v.lop ? ' · ' + v.lop : ''"></span>
+                            <span class="text-micro font-semibold text-slate-500" x-text="v.lop ? ' · ' + v.lop : ''"></span>
                         </span>
-                        <span class="shrink-0 text-micro font-semibold text-slate-400" x-text="v.luc"></span>
+                        <span class="shrink-0 text-micro font-semibold text-slate-500" x-text="v.luc"></span>
                     </div>
                 </template>
             </div>
-            <p x-show="qrVuaGhi.length === 0" class="text-center text-slate-400 text-micro font-semibold py-3">
+            <p x-show="qrVuaGhi.length === 0" class="text-center text-slate-500 text-micro font-semibold py-3">
                 Đưa thẻ của em vào khung
             </p>
             <!-- Thông số camera (tạm thời) để biết máy nào đen hình vì sao -->
             <p x-show="qrChanDoan" style="display: none; font-size: 10px;" x-text="qrChanDoan"
-               class="mt-2 text-center text-slate-400"></p>
+               class="mt-2 text-center text-slate-500"></p>
         </div>
 
         <!-- Kết thúc -->

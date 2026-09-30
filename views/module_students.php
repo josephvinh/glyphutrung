@@ -10,9 +10,9 @@
          class="mb-4 sticky top-0 z-10 bg-slate-50/95 backdrop-blur-sm -mx-4 px-4 pt-2 pb-3 sm:bg-transparent sm:backdrop-blur-none sm:-mx-0 sm:px-0 sm:pt-0 sm:pb-0 sm:static sm:z-auto">
         <div class="relative flex gap-2">
             <div class="relative flex-1 min-w-0">
-                <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
                 <input x-model="searchQuery" type="text" placeholder="Tìm tên, mã số..." class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-11 pr-10 text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder:font-normal">
-                <button aria-label="Xóa ô tìm kiếm" x-show="searchQuery !== ''" @click="searchQuery = ''" style="display: none;" class="tap-safe absolute right-1 top-1/2 -translate-y-1/2 p-2 flex items-center justify-center text-slate-400 active:scale-90 transition-transform">
+                <button aria-label="Xóa ô tìm kiếm" x-show="searchQuery !== ''" @click="searchQuery = ''" style="display: none;" class="tap-safe absolute right-1 top-1/2 -translate-y-1/2 p-2 flex items-center justify-center text-slate-500 active:scale-90 transition-transform">
                     <div class="w-6 h-6 bg-slate-100 rounded-full flex items-center justify-center">
                         <i data-lucide="x" class="w-3.5 h-3.5"></i>
                     </div>
@@ -32,7 +32,7 @@
                     <i data-lucide="filter" class="w-4 h-4 text-blue-600"></i> Bộ lọc
                 </div>
                 <button @click="showFilter = false" type="button" aria-label="Đóng bộ lọc"
-                        class="tap-safe w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
+                        class="tap-safe w-8 h-8 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors">
                     <i data-lucide="x" class="w-4 h-4"></i>
                 </button>
             </div>
@@ -151,12 +151,12 @@
                         <div>
                             <button @click="exportPdf('list'); showExportMenu = false" type="button"
                                     class="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 rounded-lg flex items-center gap-2">
-                                <i data-lucide="list" class="w-4 h-4 text-slate-400"></i>
+                                <i data-lucide="list" class="w-4 h-4 text-slate-500"></i>
                                 In danh sách lớp (PDF)
                             </button>
                             <button @click="exportPdf('cards'); showExportMenu = false" type="button"
                                     class="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 rounded-lg flex items-center gap-2">
-                                <i data-lucide="id-card" class="w-4 h-4 text-slate-400"></i>
+                                <i data-lucide="id-card" class="w-4 h-4 text-slate-500"></i>
                                 In thẻ từng em (PDF)
                             </button>
                         </div>
@@ -220,7 +220,7 @@
                                 <span class="font-normal text-slate-500" x-text="student.holyName"></span>
                                 <span x-text="student.name"></span>
                             </p>
-                            <p class="text-micro text-slate-400 mt-1 truncate">
+                            <p class="text-micro text-slate-500 mt-1 truncate">
                                 <span class="font-bold uppercase tracking-wider" :class="{'text-emerald-600': student.status === 'đang sinh hoạt', 'text-rose-600': student.status === 'dừng sinh hoạt', 'text-slate-500': student.status === 'chuyển xứ'}" x-text="student.status"></span>
                             </p>
                         </button>
@@ -340,7 +340,7 @@
              style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
             <i data-lucide="filter" class="w-12 h-12 mx-auto text-slate-300 mb-4"></i>
             <p class="text-slate-600 font-semibold text-base mb-1">Chọn khối hoặc lớp để xem</p>
-            <p class="text-slate-400 text-sm">Đoàn đông nên danh sách chỉ hiện khi bạn lọc theo khối/lớp, hoặc gõ tìm tên/mã.</p>
+            <p class="text-slate-500 text-sm">Đoàn đông nên danh sách chỉ hiện khi bạn lọc theo khối/lớp, hoặc gõ tìm tên/mã.</p>
         </div>
 
         <!-- Đã lọc/tìm nhưng không ra kết quả -->
@@ -348,7 +348,7 @@
              style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
             <i data-lucide="search-x" class="w-12 h-12 mx-auto text-slate-300 mb-4"></i>
             <p class="text-slate-600 font-semibold text-base mb-1">Không tìm thấy dữ liệu phù hợp</p>
-            <p class="text-slate-400 text-sm">Thử thay đổi từ khóa tìm kiếm hoặc xóa bộ lọc</p>
+            <p class="text-slate-500 text-sm">Thử thay đổi từ khóa tìm kiếm hoặc xóa bộ lọc</p>
         </div>
     </div>
 
@@ -415,7 +415,7 @@
                 <div class="max-h-40 overflow-y-auto bg-slate-50 rounded-xl p-3 space-y-1">
                     <template x-for="sid in selectedStudents" :key="sid">
                         <div class="flex items-center gap-2 text-sm text-slate-700">
-                            <i data-lucide="user" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
+                            <i data-lucide="user" class="w-3.5 h-3.5 text-slate-500 shrink-0"></i>
                             <span x-text="studentIndex && studentIndex.get(sid) ? studentIndex.get(sid).name : '#' + sid"></span>
                         </div>
                     </template>
