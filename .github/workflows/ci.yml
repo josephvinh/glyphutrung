@@ -5,11 +5,39 @@ on:
     branches: [ master, main ]
   pull_request:
     branches: [ master, main ]
+  workflow_dispatch:
 
 jobs:
   php-unit:
     name: PHPUnit Tests
     runs-on: ubuntu-latest
+
+    # 21/22 file test cần DB đã cài + nạp dữ liệu mẫu (#82) — trước đây job này
+    # không có DB nên chưa từng chạy được test nào. Dùng MariaDB 10.11 (khớp môi
+    # trường đã kiểm chứng trên máy dev/hosting).
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: tntt_test
+          MARIADB_USER: tntt
+          MARIADB_PASSWORD: tntt
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot --silent"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    # config/db.php ghi đè cấu hình DB bằng các biến TNTT_DB_* nếu có.
+    env:
+      TNTT_DB_HOST: 127.0.0.1
+      TNTT_DB_PORT: '3306'
+      TNTT_DB_NAME: tntt_test
+      TNTT_DB_USER: tntt
+      TNTT_DB_PASS: tntt
 
     steps:
       - name: Checkout
@@ -19,15 +47,52 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
-          extensions: pdo_mysql
+          extensions: pdo_mysql, mbstring, intl, gd, curl, openssl
 
       - name: Download PHPUnit PHAR
         run: |
-          curl -sL https://phar.phpunit.de/phpunit-10.phar -o phpunit10.phar
+          curl -fsSL --retry 3 https://phar.phpunit.de/phpunit-10.phar -o phpunit10.phar
           chmod +x phpunit10.phar
+          php phpunit10.phar --version
 
+      - name: Wait for database (utf8mb4)
+        run: |
+          php -r '
+            for ($i = 0; $i < 30; $i++) {
+              try {
+                $p = new PDO("mysql:host=127.0.0.1;port=3306;dbname=tntt_test;charset=utf8mb4", "tntt", "tntt");
+                $p->exec("ALTER DATABASE tntt_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+                echo "DB sẵn sàng\n";
+                exit(0);
+              } catch (Throwable $e) { sleep(2); }
+            }
+            fwrite(STDERR, "Không kết nối được DB\n");
+            exit(1);
+          '
+
+      - name: Install schema
+        run: php config/install.php
+
+      # Ngoài install.php không cần migrate nào khác: schema.sql đã gồm mọi bảng
+      # mà test dùng (config/migrate_*.php chỉ để nâng cấp DB cũ).
+      - name: Seed test fixture
+        run: php tests/fixtures/ci_seed.php
+
+      # PHPUnit thoát mã ≠ 0 khi có test lỗi/failure/error => step (và job) đỏ.
+      # Lớp bảo vệ thứ hai: bắt buộc phải THẬT SỰ chạy test. Lỗi gốc của #82 là một
+      # file test gọi exit(0) lúc nạp, giết PHPUnit trước khi chạy test nào mà vẫn
+      # thoát mã 0. Nếu tiến trình chết sớm thì không có junit.xml / số testcase
+      # ít hơn số file test -> step đỏ.
       - name: Run PHPUnit
-        run: php phpunit10.phar --testsuite "TNTT Unit Tests"
+        run: |
+          php phpunit10.phar --testsuite "TNTT Unit Tests" --log-junit junit.xml
+          tests=$(grep -c '<testcase ' junit.xml)
+          files=$(ls tests/unit/*Test.php | wc -l)
+          echo "Đã chạy $tests test từ $files file test"
+          if [ "$tests" -lt "$files" ]; then
+            echo "::error::Số test đã chạy ($tests) ít hơn số file test ($files) — có file làm tiến trình thoát sớm?"
+            exit 1
+          fi
 
   php-syntax:
     name: PHP Syntax Check
@@ -42,10 +107,21 @@ jobs:
         with:
           php-version: '8.2'
 
+      # Trước đây lọc bằng grep và kết thúc `|| true` nên không bao giờ đỏ (#82).
+      # Nay: lỗi cú pháp ở bất kỳ file nào -> exit 1.
       - name: Check PHP Syntax
         run: |
-          find . -name "*.php" -not -path "./vendor/*" -exec php -l {} \; 2>&1 | grep -v "No syntax errors" || true
-          echo "Syntax check completed"
+          status=0
+          count=0
+          while IFS= read -r -d '' f; do
+            count=$((count + 1))
+            if ! out=$(php -l "$f" 2>&1); then
+              echo "::error file=$f::$out"
+              status=1
+            fi
+          done < <(find . -name '*.php' -not -path './vendor/*' -not -path './node_modules/*' -not -path './.claude/*' -print0)
+          echo "Đã kiểm $count file PHP"
+          exit $status
 
   js-lint:
     name: JavaScript Lint
@@ -60,8 +136,8 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install ESLint
-        run: npm install eslint --save-dev
-
+      # Cấu hình ở eslint.config.js (không cần cài thêm gói nào ngoài eslint).
+      # Trước đây `|| true` nên không bao giờ đỏ (#82). Nay mức "error" -> exit 1;
+      # mức "warn" (ví dụ no-dupe-keys, xem #91) không làm đỏ.
       - name: Run ESLint
-        run: npx eslint public/assets/js/ || true
+        run: npx --yes eslint@9 public/assets/js/ public/sw.js
