@@ -10,8 +10,8 @@
          class="mb-4 sticky top-0 z-10 bg-slate-50/95 backdrop-blur-sm -mx-4 px-4 pt-2 pb-3 sm:bg-transparent sm:backdrop-blur-none sm:-mx-0 sm:px-0 sm:pt-0 sm:pb-0 sm:static sm:z-auto">
         <div class="relative flex gap-2">
             <div class="relative flex-1 min-w-0">
-                <i data-lucide="search" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
-                <input x-model="searchQuery" type="text" placeholder="Tìm tên, mã số..." class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-10 pr-10 text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder:font-normal">
+                <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                <input x-model="searchQuery" type="text" placeholder="Tìm tên, mã số..." class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-11 pr-10 text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder:font-normal">
                 <button aria-label="Xóa ô tìm kiếm" x-show="searchQuery !== ''" @click="searchQuery = ''" style="display: none;" class="tap-safe absolute right-1 top-1/2 -translate-y-1/2 p-2 flex items-center justify-center text-slate-400 active:scale-90 transition-transform">
                     <div class="w-6 h-6 bg-slate-100 rounded-full flex items-center justify-center">
                         <i data-lucide="x" class="w-3.5 h-3.5"></i>
@@ -19,10 +19,8 @@
                 </button>
             </div>
 
-            <button @click="showFilter = !showFilter" type="button" aria-label="Mở bộ lọc danh sách" :aria-expanded="showFilter ? 'true' : 'false'" :class="showFilter || hasActiveFilter ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-500 border-slate-200'" class="w-12 shrink-0 rounded-field border shadow-sm flex items-center justify-center active:scale-90 transition-all relative">
+            <button @click="showFilter = !showFilter" type="button" aria-label="Mở bộ lọc danh sách" :aria-expanded="showFilter ? 'true' : 'false'" :class="showFilter ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-500 border-slate-200'" class="w-12 shrink-0 rounded-field border shadow-sm flex items-center justify-center active:scale-90 transition-all relative">
                 <i data-lucide="filter" class="w-5 h-5"></i>
-                <!-- Chấm đỏ báo đang có bộ lọc bật, kể cả khi bảng lọc đã đóng lại -->
-                <span x-show="hasActiveFilter && !showFilter" style="display: none;" class="absolute -top-1 -right-1 w-3 h-3 bg-rose-500 rounded-full border-2 border-slate-50"></span>
             </button>
         </div>
 
