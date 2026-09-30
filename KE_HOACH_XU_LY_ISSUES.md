@@ -91,9 +91,19 @@ Kịch bản dùng để nghiệm thu từng gói (trong `tests/e2e/`):
 - Chưa kiểm được: gửi push tới máy chủ thật của Google/Apple, Passkey với vân tay/Face ID thật, thẻ QR in thật, tải lớn trên hosting thật. Nên có bước kiểm thủ công trên thiết bị thật sau P4, P5.
 - Mọi issue liên quan có liên kết chéo trong nội dung issue (ví dụ #79 ↔ #87, #81 ↔ #101, #87 ↔ #104).
 
-## 6. Tiến độ (cập nhật 30/09/2026, tạm dừng theo yêu cầu chủ dự án)
+## 6. Tiến độ (cập nhật 30/09/2026)
 
-Toàn bộ agent nền đã dừng. Chưa merge PR nào; chưa đóng issue nào (chỉ đóng khi PR được merge kèm bằng chứng).
+### 6.0 Đã gộp vào `master` (theo yêu cầu chủ dự án, sau duyệt độc lập)
+
+Thứ tự gộp: #114 (P6), #112 (P2), #113 (P3), #117 (#91), #119 (#105), #120 (#88), #118 (#92), #116 (W0, gộp cuối để CI thật chạy trên `master` đã có mọi bản sửa). Các issue có `Closes` trong PR tự đóng khi gộp: #79, #80, #81, #82, #85, #86, #87, #88, #91, #92, #93, #94, #101, #104, #105.
+
+Phát hiện khi gộp thử W0 lên `master` mới: 7 test của `QrScanApiTest` đỏ vì dùng "Chúa Nhật tuần sau" để quét, trong khi P3 (#85) nay từ chối buổi tương lai. Đã sửa test dùng buổi hôm nay / cùng thứ tuần trước, thêm `test_scan_rejects_future_date` (xác nhận đỏ khi tắt kiểm ngày tương lai): 208 test xanh cục bộ trước khi gộp. Test chỉ đúng nếu không chạy sát nửa đêm (chương trình thử bắt đầu 23:59).
+
+Còn phải làm cho W0: xem CI của commit gộp `7c115a6` trên GitHub (lần đầu CI chạy thật, PHP 8.2 chưa thử); gỡ phần tạo phân công admin trong `ci_seed.php` (#114 đã sửa gốc); đổi `no-dupe-keys` lên mức lỗi (PR riêng, #117 đã gộp); #115.
+
+Issue mới mở: #121 (khoá trùng giữa các module JS, gồm `init` làm điểm danh ngoại tuyến không tự đồng bộ), #122 (`tailwind.css` biên dịch sẵn đã cũ, thiếu nhiều lớp đang dùng; gộp vào P7).
+
+Bảng 6.1 dưới đây là trạng thái lúc tạm dừng; các dòng P2, P3, P6, W0 và các issue nhẹ nay đã gộp.
 
 ### 6.1 Đã làm
 
