@@ -23,6 +23,9 @@ if (!$me && !isset($_GET['dangnhap'])) {
     exit;
 }
 if (!$me || $me['must_change_pw']) {
+    // Đang buộc đổi mật khẩu (vd tải lại trang giữa chừng): vào thẳng bước đổi
+    // mật khẩu, kèm CSRF token để gọi được auth.php?action=password.
+    if ($me) { $__mustChangePw = true; $__csrf = csrf_token(); }
     include __DIR__ . '/../views/layout_login.php';
     exit;
 }
