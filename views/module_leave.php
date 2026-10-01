@@ -82,9 +82,9 @@
 
                 <!-- Tìm kiếm -->
                 <div x-show="!isLeaveExpired" style="display: none;" class="relative mb-4">
-                    <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
+                    <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500"></i>
                     <input x-model="leaveSearch" type="text" placeholder="Tìm tên em cần xin phép..." class="w-full bg-white border border-slate-200 rounded-field py-3.5 pl-12 pr-10 text-sm font-medium text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
-                    <button aria-label="Xóa ô tìm kiếm" x-show="leaveSearch !== ''" @click="leaveSearch = ''" style="display: none;" class="absolute right-1 top-1/2 -translate-y-1/2 p-2 flex items-center justify-center text-slate-400 active:scale-90 transition-transform">
+                    <button aria-label="Xóa ô tìm kiếm" x-show="leaveSearch !== ''" @click="leaveSearch = ''" style="display: none;" class="absolute right-1 top-1/2 -translate-y-1/2 p-2 flex items-center justify-center text-slate-500 active:scale-90 transition-transform">
                         <div class="w-6 h-6 bg-slate-100 rounded-full flex items-center justify-center">
                             <i data-lucide="x" class="w-3.5 h-3.5"></i>
                         </div>
@@ -97,14 +97,14 @@
                         <button @click="openLeaveForm(student)" type="button"
                                 style="content-visibility: auto; contain-intrinsic-size: auto 84px;"
                                 class="w-full text-left bg-white rounded-field p-3.5 shadow-sm border border-slate-100 flex items-center gap-3 active:scale-[0.98] transition-all">
-                            <div class="w-11 h-11 shrink-0 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-400">
+                            <div class="w-11 h-11 shrink-0 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-500">
                                 <i data-lucide="file-plus" class="w-5 h-5"></i>
                             </div>
                             <div class="flex-1 min-w-0">
                                 <p class="text-micro font-bold text-blue-600 leading-tight">
                                     <span x-text="student.code"></span>
                                     <span class="text-slate-300 mx-1">•</span>
-                                    <span class="text-slate-400 font-medium" x-text="student.className"></span>
+                                    <span class="text-slate-500 font-medium" x-text="student.className"></span>
                                 </p>
                                 <p class="text-sm font-black text-slate-800 leading-snug">
                                     <span class="font-normal text-slate-500" x-text="student.holyName"></span>
@@ -169,7 +169,7 @@
                             <p class="text-micro font-bold text-blue-600 leading-tight">
                                 <span x-text="studentById(req.studentId) ? studentById(req.studentId).code : ''"></span>
                                 <span class="text-slate-300 mx-1">•</span>
-                                <span class="text-slate-400 font-medium" x-text="studentById(req.studentId) ? studentById(req.studentId).className : ''"></span>
+                                <span class="text-slate-500 font-medium" x-text="studentById(req.studentId) ? studentById(req.studentId).className : ''"></span>
                             </p>
                             <h3 class="text-base font-black text-slate-800 leading-snug">
                                 <span class="font-normal text-slate-500" x-text="studentById(req.studentId) ? studentById(req.studentId).holyName : ''"></span>
@@ -183,16 +183,16 @@
                     <!-- Buổi xin nghỉ -->
                     <div class="bg-slate-50 rounded-2xl p-3.5 mb-3 space-y-2">
                         <div class="flex items-center text-sm">
-                            <i data-lucide="calendar" class="w-4 h-4 text-slate-400 mr-2.5 shrink-0"></i>
+                            <i data-lucide="calendar" class="w-4 h-4 text-slate-500 mr-2.5 shrink-0"></i>
                             <span class="text-slate-600 font-medium" x-text="formatFullDate(req.date)"></span>
                         </div>
                         <div class="flex items-center text-sm">
-                            <i data-lucide="clock" class="w-4 h-4 text-slate-400 mr-2.5 shrink-0"></i>
+                            <i data-lucide="clock" class="w-4 h-4 text-slate-500 mr-2.5 shrink-0"></i>
                             <span class="text-slate-600 font-medium"
                                   x-text="programById(req.programId) ? programById(req.programId).name + ' (' + programById(req.programId).startTime + ')' : ''"></span>
                         </div>
                         <div class="flex items-start text-sm">
-                            <i data-lucide="message-square" class="w-4 h-4 text-slate-400 mr-2.5 mt-0.5 shrink-0"></i>
+                            <i data-lucide="message-square" class="w-4 h-4 text-slate-500 mr-2.5 mt-0.5 shrink-0"></i>
                             <span class="text-slate-700 font-semibold leading-snug" x-text="req.reason"></span>
                         </div>
                     </div>

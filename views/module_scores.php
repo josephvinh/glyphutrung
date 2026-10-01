@@ -33,7 +33,7 @@
     <div x-show="scoreClass === ''" style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
         <i data-lucide="filter" class="w-12 h-12 mx-auto text-slate-300 mb-4"></i>
         <p class="text-slate-600 font-semibold text-base mb-1">Chọn lớp để xem điểm</p>
-        <p class="text-slate-400 text-sm">Điểm số xem theo từng lớp — bấm nút lọc <i data-lucide="filter" class="inline w-3.5 h-3.5 -mt-0.5"></i> phía trên rồi chọn lớp.</p>
+        <p class="text-slate-500 text-sm">Điểm số xem theo từng lớp — bấm nút lọc <i data-lucide="filter" class="inline w-3.5 h-3.5 -mt-0.5"></i> phía trên rồi chọn lớp.</p>
     </div>
 
     <!-- 3. HAI TAB -->
@@ -126,7 +126,7 @@
             <div x-show="scoreStudents.length === 0 && !syncing" style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
                 <i data-lucide="users-x" class="w-12 h-12 mx-auto text-slate-300 mb-4"></i>
                 <p class="text-slate-600 font-semibold text-base mb-1">Lớp này chưa có em nào</p>
-                <p class="text-slate-400 text-sm">Hãy kiểm tra lớp đã chọn hoặc thêm thiếu nhi vào lớp</p>
+                <p class="text-slate-500 text-sm">Hãy kiểm tra lớp đã chọn hoặc thêm thiếu nhi vào lớp</p>
             </div>
         </div>
 
@@ -178,7 +178,7 @@
         </div>
 
         <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100 mt-4">
-            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Cách tính điểm trung bình</h3>
+            <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Cách tính điểm trung bình</h3>
             <p class="text-xs text-slate-600 leading-relaxed">
                 Cộng điểm nhân hệ số rồi chia tổng hệ số:
                 <span class="font-bold text-slate-800">Miệng ×1 · 15 phút ×1 · Giữa kỳ ×2 · Cuối kỳ ×3</span>.

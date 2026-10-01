@@ -23,7 +23,7 @@
             <div>
                 <h3 class="text-xs font-black text-slate-500 uppercase tracking-wider mb-2.5 px-1 flex items-center gap-2">
                     <span x-text="g.label"></span>
-                    <span class="text-micro font-medium text-slate-400" x-text="formatFullDate(g.day)"></span>
+                    <span class="text-micro font-medium text-slate-500" x-text="formatFullDate(g.day)"></span>
                 </h3>
                 <div class="space-y-2.5">
                     <template x-for="it in g.items" :key="it.kind + '-' + it.id">
@@ -38,7 +38,7 @@
                                        :class="it.kind === 'meeting' ? 'text-blue-600' : (isItemOverdue(it) ? 'text-rose-500' : 'text-blue-600')"
                                        x-text="itemTime(it)"></p>
                                     <p class="text-micro font-bold uppercase tracking-wide mt-1"
-                                       :class="it.kind === 'meeting' ? 'text-blue-500' : 'text-slate-400'"
+                                       :class="it.kind === 'meeting' ? 'text-blue-500' : 'text-slate-500'"
                                        x-text="it.kind === 'meeting' ? 'Họp' : 'Việc'"></p>
                                 </div>
 
@@ -47,7 +47,7 @@
                                 <!-- Nội dung -->
                                 <div class="flex-1 min-w-0">
                                     <p class="text-sm font-black text-slate-800 leading-snug"
-                                       :class="it.kind === 'note' && it.done ? 'line-through text-slate-400' : ''"
+                                       :class="it.kind === 'note' && it.done ? 'line-through text-slate-500' : ''"
                                        x-text="it.title"></p>
                                     <p x-show="it.desc" style="display:none" class="text-micro text-slate-500 mt-0.5 leading-snug" x-text="it.desc"></p>
 
@@ -108,7 +108,7 @@
         <div x-show="notesByDay.length === 0" style="display: none;" class="text-center py-16 bg-white rounded-card border border-slate-100 border-dashed">
             <i data-lucide="calendar-check" class="w-12 h-12 mx-auto text-slate-300 mb-4"></i>
             <p class="text-slate-600 font-semibold text-base mb-1">Chưa có việc nào</p>
-            <p class="text-slate-400 text-sm mb-4">Ghi lại việc cần nhớ, hệ thống sẽ nhắc khi gần tới.</p>
+            <p class="text-slate-500 text-sm mb-4">Ghi lại việc cần nhớ, hệ thống sẽ nhắc khi gần tới.</p>
             <button @click="openCreateNote()" type="button"
                     class="px-5 py-2.5 bg-blue-50 text-blue-600 rounded-full font-bold text-xs active:scale-95 transition-transform border border-blue-100 hover:bg-blue-100">
                 Thêm việc đầu tiên

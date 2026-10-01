@@ -31,23 +31,30 @@ class RewardsSchemaTest extends TestCase
     {
         $this->assertNotNull(db_one("SELECT 1 FROM roles WHERE code='thu_thu'"));
         $this->assertSame('edit', db_one("SELECT level FROM permissions WHERE module_key='rewards' AND role_code='thu_thu'")['level']);
-        $this->assertNull(db_one("SELECT 1 FROM permissions WHERE module_key='rewards' AND role_code='glv'"));
+        // install.php nay seed rewards/gifts cho MỌI vai (level 'none' cho vai không có quyền),
+        // không còn bỏ trống hàng. Quyền hiệu lực: không có hàng hoặc 'none' đều là không quyền.
+        $this->assertSame('none', $this->effectiveLevel('rewards', 'glv'));
         $this->assertSame('edit', db_one("SELECT level FROM permissions WHERE module_key='gifts' AND role_code='bdh'")['level']);
     }
 
     public function test_permissions_default_to_none_for_other_roles(): void
     {
-        // Các role còn lại không được seed hàng nào cho gifts/rewards → mặc định 'none'.
+        // Các role còn lại có quyền hiệu lực 'none' với gifts/rewards. install.php seed hàng
+        // level 'none' cho từng vai (không còn để trống hàng), nên so quyền hiệu lực chứ
+        // không so "không có hàng".
         foreach (['glv_chu_nhiem', 'truong_khoi', 'du_bi'] as $role) {
-            $this->assertNull(
-                db_one("SELECT 1 FROM permissions WHERE module_key='rewards' AND role_code=?", [$role]),
-                "rewards không được seed cho role $role"
-            );
-            $this->assertNull(
-                db_one("SELECT 1 FROM permissions WHERE module_key='gifts' AND role_code=?", [$role]),
-                "gifts không được seed cho role $role"
-            );
+            $this->assertSame('none', $this->effectiveLevel('rewards', $role),
+                "rewards phải là none cho role $role");
+            $this->assertSame('none', $this->effectiveLevel('gifts', $role),
+                "gifts phải là none cho role $role");
         }
+    }
+
+    /** Quyền hiệu lực của vai trên module: thiếu hàng được coi là 'none'. */
+    private function effectiveLevel(string $module, string $role): string
+    {
+        $row = db_one("SELECT level FROM permissions WHERE module_key=? AND role_code=?", [$module, $role]);
+        return $row['level'] ?? 'none';
     }
 
     public function test_modules_seeded(): void

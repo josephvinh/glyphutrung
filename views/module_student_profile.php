@@ -73,7 +73,7 @@
             <div class="border-t border-slate-100 pt-3">
                 <p class="text-micro font-bold text-slate-500 uppercase tracking-wide mb-2">Giao dịch gần đây</p>
                 <template x-if="profileStampSummary.recent_transactions.length === 0">
-                    <p class="text-sm text-slate-400 text-center py-3">Chưa có giao dịch Mộc nào.</p>
+                    <p class="text-sm text-slate-500 text-center py-3">Chưa có giao dịch Mộc nào.</p>
                 </template>
                 <div class="space-y-1.5">
                     <template x-for="(tx, txIdx) in profileStampSummary.recent_transactions.slice(0, 5)" :key="txIdx + '-' + tx.created_at + '-' + tx.amount + '-' + tx.description">
@@ -143,7 +143,7 @@
          ============================================================ -->
     <div x-show="profileTab === 'scores'" style="display: none;">
         <template x-if="!profileStudent">
-            <div class="text-center py-8 text-slate-400">
+            <div class="text-center py-8 text-slate-500">
                 <i data-lucide="loader-2" class="w-8 h-8 mx-auto animate-spin mb-2"></i>
                 <p class="text-sm">Đang tải...</p>
             </div>
@@ -189,7 +189,7 @@
                                         <td class="text-center px-3 py-3 font-medium text-slate-600"
                                             x-text="scoreOf(profileStudent.id, 'cuoiky', t.id)"></td>
                                         <td class="text-center px-3 py-3 font-bold"
-                                            :class="termAverage(profileStudent.id, t.id) !== null ? (termAverage(profileStudent.id, t.id) >= 5 ? 'text-emerald-600' : 'text-rose-500') : 'text-slate-400'"
+                                            :class="termAverage(profileStudent.id, t.id) !== null ? (termAverage(profileStudent.id, t.id) >= 5 ? 'text-emerald-600' : 'text-rose-500') : 'text-slate-500'"
                                             x-text="termAverage(profileStudent.id, t.id) !== null ? termAverage(profileStudent.id, t.id).toFixed(1) : '-'"></td>
                                     </tr>
                                 </template>
@@ -199,7 +199,7 @@
                                     <td class="px-4 py-3 font-bold text-slate-700">Cả năm</td>
                                     <td colspan="4"></td>
                                     <td class="text-center px-3 py-3 font-black text-lg"
-                                        :class="yearAverage(profileStudent.id) !== null ? (yearAverage(profileStudent.id) >= 5 ? 'text-emerald-600' : 'text-rose-500') : 'text-slate-400'"
+                                        :class="yearAverage(profileStudent.id) !== null ? (yearAverage(profileStudent.id) >= 5 ? 'text-emerald-600' : 'text-rose-500') : 'text-slate-500'"
                                         x-text="yearAverage(profileStudent.id) !== null ? yearAverage(profileStudent.id).toFixed(1) : '-'"></td>
                                 </tr>
                             </tfoot>
@@ -224,7 +224,7 @@
          ============================================================ -->
     <div x-show="profileTab === 'report'" style="display: none;">
         <template x-if="!profileStudent">
-            <div class="text-center py-8 text-slate-400">
+            <div class="text-center py-8 text-slate-500">
                 <i data-lucide="loader-2" class="w-8 h-8 mx-auto animate-spin mb-2"></i>
                 <p class="text-sm">Đang tải...</p>
             </div>
@@ -236,7 +236,7 @@
                     <div class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
                         <i data-lucide="clipboard-x" class="w-12 h-12 mx-auto text-slate-300 mb-4"></i>
                         <p class="text-slate-600 font-semibold mb-1">Chưa có phiếu liên lạc</p>
-                        <p class="text-slate-400 text-sm">Phiếu sẽ xuất hiện khi được tạo từ module Phiếu liên lạc</p>
+                        <p class="text-slate-500 text-sm">Phiếu sẽ xuất hiện khi được tạo từ module Phiếu liên lạc</p>
                     </div>
                 </template>
 
@@ -302,7 +302,7 @@
          ============================================================ -->
     <div x-show="profileTab === 'attendance'" style="display: none;">
         <template x-if="!profileStudent">
-            <div class="text-center py-8 text-slate-400">
+            <div class="text-center py-8 text-slate-500">
                 <i data-lucide="loader-2" class="w-8 h-8 mx-auto animate-spin mb-2"></i>
                 <p class="text-sm">Đang tải...</p>
             </div>
@@ -350,7 +350,7 @@
                             <tbody>
                                 <template x-if="attendances.filter(a => a.studentId === profileStudent.id).length === 0">
                                     <tr>
-                                        <td colspan="5" class="px-4 py-8 text-center text-slate-400">
+                                        <td colspan="5" class="px-4 py-8 text-center text-slate-500">
                                             <i data-lucide="calendar-x" class="w-8 h-8 mx-auto mb-2"></i>
                                             <p class="text-sm">Chưa có dữ liệu điểm danh</p>
                                         </td>
@@ -382,7 +382,7 @@
          ============================================================ -->
     <div x-show="profileTab === 'qrcard'" style="display: none;">
         <template x-if="!profileStudent">
-            <div class="text-center py-8 text-slate-400">
+            <div class="text-center py-8 text-slate-500">
                 <i data-lucide="loader-2" class="w-8 h-8 mx-auto animate-spin mb-2"></i>
                 <p class="text-sm">Đang tải...</p>
             </div>
@@ -397,7 +397,7 @@
                          Nhắc qrReady trong biểu thức để Alpine vẽ lại khi nạp xong. -->
                     <div class="w-48 h-48 mx-auto bg-white rounded-2xl border-4 border-slate-200 flex items-center justify-center mb-4 overflow-hidden">
                         <div x-show="qrReady" x-html="qrReady && profileStudent ? qrSvg(profileStudent.code) : ''" class="w-full h-full flex items-center justify-center"></div>
-                        <span x-show="!qrReady" style="display: none;" class="text-xs text-slate-400">Đang tải mã QR…</span>
+                        <span x-show="!qrReady" style="display: none;" class="text-xs text-slate-500">Đang tải mã QR…</span>
                     </div>
 
                     <h3 class="text-lg font-black text-slate-800 mb-1">

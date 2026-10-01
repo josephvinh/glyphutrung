@@ -17,7 +17,7 @@
 const esbuild = require('esbuild');
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
+const { execSync, execFileSync } = require('child_process');
 
 const ROOT = path.resolve(__dirname, '..');
 const PHP = process.env.PHP_BIN
@@ -48,6 +48,37 @@ const cssFiles = manifest.css.map(c => path.join(cssBase, c + '.css'));
 const read = f => fs.existsSync(f) ? fs.readFileSync(f, 'utf8') : '';
 const kb   = n => Math.round(n / 1024) + 'KB';
 
+// Tailwind CSS build: tạo tailwind.css đầy đủ từ views/
+// Tạo template file với @tailwind directives
+const tailwindTemplate = path.join(ROOT, 'tailwind-build.css');
+fs.writeFileSync(tailwindTemplate, '@tailwind base;\n@tailwind components;\n@tailwind utilities;\n');
+
+function buildTailwind() {
+    const twCli = path.join(ROOT, 'node_modules', 'tailwindcss', 'lib', 'cli.js');
+    const twOut = path.join(cssBase, 'tailwind.css');
+    const twConfig = path.join(ROOT, 'tailwind.config.js');
+
+    try {
+        // Build Tailwind CSS với @tailwind directives
+        execFileSync('node', [
+            twCli,
+            '-c', twConfig,
+            '-i', tailwindTemplate,
+            '-o', twOut,
+            '--minify',
+        ], { stdio: 'inherit' });
+        const twStat = fs.statSync(twOut);
+        console.log('TW  : Tailwind CSS rebuilt', kb(twStat.size));
+    } catch (e) {
+        console.warn('Tailwind CSS rebuild failed:', e.message);
+    } finally {
+        // Cleanup template
+        if (fs.existsSync(tailwindTemplate)) {
+            fs.unlinkSync(tailwindTemplate);
+        }
+    }
+}
+
 (async () => {
     // JS: nối bằng ";\n" như bundle.php (phòng thiếu ; cuối tệp) rồi nén.
     const jsRaw = jsFiles.map(read).join('\n;\n');
@@ -55,7 +86,10 @@ const kb   = n => Math.round(n / 1024) + 'KB';
     fs.writeFileSync(path.join(jsBase, 'bundle.min.js'), jsMin.code);
     console.log('JS  :', kb(jsRaw.length), '->', kb(jsMin.code.length));
 
-    // CSS
+    // Tailwind CSS build
+    buildTailwind();
+
+    // Bundle + minify CSS (sau khi Tailwind đã được build)
     const cssRaw = cssFiles.map(read).join('\n');
     const cssMin = await esbuild.transform(cssRaw, { loader: 'css', minify: true, legalComments: 'none' });
     fs.writeFileSync(path.join(cssBase, 'bundle.min.css'), cssMin.code);

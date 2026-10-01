@@ -17,12 +17,12 @@
 
     <!-- Ô TÌM NHANH — lọc theo tiêu đề/nội dung, dùng chung cho cả hai khung -->
     <div class="relative mb-4">
-        <i data-lucide="search" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+        <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
         <input x-model="announcementSearch" type="text" placeholder="Tìm thông báo theo tiêu đề, nội dung..."
                aria-label="Tìm thông báo"
-               class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-10 pr-10 text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder:font-normal">
+               class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-11 pr-10 text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder:font-normal">
         <button aria-label="Xóa ô tìm kiếm" x-show="announcementSearch !== ''" @click="announcementSearch = ''" style="display: none;"
-                class="tap-safe absolute right-1 top-1/2 -translate-y-1/2 p-2 flex items-center justify-center text-slate-400 active:scale-90 transition-transform">
+                class="tap-safe absolute right-1 top-1/2 -translate-y-1/2 p-2 flex items-center justify-center text-slate-500 active:scale-90 transition-transform">
             <div class="w-6 h-6 bg-slate-100 rounded-full flex items-center justify-center">
                 <i data-lucide="x" class="w-3.5 h-3.5"></i>
             </div>
@@ -99,7 +99,7 @@
             <div x-show="filteredAnnouncements.length === 0" style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
                 <i data-lucide="bell-ring" class="w-12 h-12 mx-auto text-slate-300 mb-4"></i>
                 <p class="text-slate-600 font-semibold text-base mb-1" x-text="announcementSearch ? 'Không tìm thấy thông báo phù hợp' : 'Chưa có thông báo nào'"></p>
-                <p class="text-slate-400 text-sm" x-text="announcementSearch ? 'Thử từ khóa khác hoặc xóa ô tìm' : 'Thông báo mới sẽ xuất hiện ở đây'"></p>
+                <p class="text-slate-500 text-sm" x-text="announcementSearch ? 'Thử từ khóa khác hoặc xóa ô tìm' : 'Thông báo mới sẽ xuất hiện ở đây'"></p>
             </div>
         </div>
     </div>
@@ -132,7 +132,7 @@
                         </div>
 
                         <div x-show="canEditAnnouncement(a)" class="flex flex-col gap-2 shrink-0">
-                            <button aria-label="Sửa thông báo" @click="openEditAnnouncement(a)" class="tap-safe w-8 h-8 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 active:scale-90 border border-slate-200">
+                            <button aria-label="Sửa thông báo" @click="openEditAnnouncement(a)" class="tap-safe w-8 h-8 bg-slate-50 rounded-full flex items-center justify-center text-slate-500 active:scale-90 border border-slate-200">
                                 <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
                             </button>
                             <button aria-label="Xóa thông báo" @click="deleteAnnouncement(a.id)" class="tap-safe w-8 h-8 bg-rose-50 rounded-full flex items-center justify-center text-rose-400 active:scale-90 border border-rose-100">
@@ -215,7 +215,7 @@
                         <template x-for="lv in announcementLevels" :key="lv">
                             <button @click="announcementForm.level = lv" type="button"
                                     class="py-2.5 rounded-xl font-bold text-xs border transition-colors capitalize"
-                                    :class="announcementForm.level === lv ? announcementLevelClass(lv) + ' ring-2 ring-offset-1 ring-slate-300' : 'bg-slate-50 text-slate-400 border-slate-200'"
+                                    :class="announcementForm.level === lv ? announcementLevelClass(lv) + ' ring-2 ring-offset-1 ring-slate-300' : 'bg-slate-50 text-slate-500 border-slate-200'"
                                     x-text="lv"></button>
                         </template>
                     </div>
@@ -256,7 +256,7 @@
                     <label class="flex items-center gap-2.5 cursor-pointer select-none">
                         <input x-model="announcementForm.isMeeting" type="checkbox" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
                         <span class="text-sm font-bold text-slate-700">Đây là buổi họp</span>
-                        <span class="text-micro text-slate-400">(tự vào lịch + hỏi tham gia)</span>
+                        <span class="text-micro text-slate-500">(tự vào lịch + hỏi tham gia)</span>
                     </label>
                     <div x-show="announcementForm.isMeeting" x-collapse style="display: none;" class="mt-3 space-y-3">
                         <div>
@@ -321,13 +321,13 @@
                     <p class="text-micro font-bold text-rose-400 uppercase tracking-wide">Không</p>
                 </div>
                 <div class="bg-slate-50 rounded-2xl p-3 text-center border border-slate-200">
-                    <p class="text-2xl font-black text-slate-400" x-text="meetingResult.pending"></p>
-                    <p class="text-micro font-bold text-slate-400 uppercase tracking-wide">Chưa trả lời</p>
+                    <p class="text-2xl font-black text-slate-500" x-text="meetingResult.pending"></p>
+                    <p class="text-micro font-bold text-slate-500 uppercase tracking-wide">Chưa trả lời</p>
                 </div>
             </div>
 
             <div class="flex-1 overflow-y-auto px-5 pb-6">
-                <div x-show="meetingResultBusy" style="display: none;" class="text-center py-8 text-slate-400 text-sm">Đang tải…</div>
+                <div x-show="meetingResultBusy" style="display: none;" class="text-center py-8 text-slate-500 text-sm">Đang tải…</div>
                 <div class="divide-y divide-slate-100">
                     <template x-for="r in meetingResult.rows" :key="r.name">
                         <div class="flex items-center justify-between py-2.5">
@@ -336,7 +336,7 @@
                         </div>
                     </template>
                 </div>
-                <div x-show="!meetingResultBusy && meetingResult.rows.length === 0" style="display: none;" class="text-center py-8 text-slate-400 text-sm">
+                <div x-show="!meetingResultBusy && meetingResult.rows.length === 0" style="display: none;" class="text-center py-8 text-slate-500 text-sm">
                     Chưa có ai trong phạm vi để hiển thị.
                 </div>
             </div>

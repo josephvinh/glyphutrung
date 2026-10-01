@@ -12,13 +12,11 @@
 
 require __DIR__ . '/db.php';
 
-$dbName = app_config('db')['name'];
-
 /** Cột đã tồn tại trong library_items chưa? */
 $coCot = fn(string $col): bool => (bool) db_one(
     'SELECT 1 FROM information_schema.COLUMNS
-      WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ?',
-    [$dbName, 'library_items', $col]);
+      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?',
+    ['library_items', $col]);
 
 // ---------------------------------------------------------------- 1. Bảng
 db_run('CREATE TABLE IF NOT EXISTS library_categories (

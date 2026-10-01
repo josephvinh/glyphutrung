@@ -13,7 +13,7 @@
 
                 <!-- Phạm vi in -->
                 <div class="bg-white rounded-card p-4 shadow-sm border border-slate-100">
-                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Phạm vi in</h3>
+                    <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Phạm vi in</h3>
                     <div class="flex gap-1.5 mb-3">
                         <template x-for="opt in [{v:'class',t:'Theo lớp'},{v:'block',t:'Theo khối'},{v:'all',t:'Tất cả'}]" :key="opt.v">
                             <button type="button" @click="qrScopeType = opt.v; qrOnScopeType()"
@@ -57,14 +57,14 @@
                                     </div>
                                 </label>
                             </template>
-                            <div x-show="qrScopeStudents.length === 0" class="text-center py-4 text-xs text-slate-400 font-medium">Không có em nào trong phạm vi này.</div>
+                            <div x-show="qrScopeStudents.length === 0" class="text-center py-4 text-xs text-slate-500 font-medium">Không có em nào trong phạm vi này.</div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Thông tin trên thẻ -->
                 <div class="bg-white rounded-card p-4 shadow-sm border border-slate-100">
-                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Thông tin trên thẻ</h3>
+                    <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Thông tin trên thẻ</h3>
                     <div class="grid grid-cols-2 gap-2">
                         <template x-for="f in [{k:'code',t:'Mã số'},{k:'holyName',t:'Tên thánh'},{k:'name',t:'Họ tên'},{k:'className',t:'Lớp'},{k:'block',t:'Khối'},{k:'birthDate',t:'Ngày sinh'}]" :key="f.k">
                             <label class="flex items-center gap-2 text-sm text-slate-700 bg-slate-50 rounded-xl px-3 py-2 cursor-pointer">
@@ -80,7 +80,7 @@
 
                 <!-- Kiểu thẻ & bố cục -->
                 <div class="bg-white rounded-card p-4 shadow-sm border border-slate-100">
-                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Kiểu thẻ &amp; bố cục</h3>
+                    <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Kiểu thẻ &amp; bố cục</h3>
                     <div class="flex gap-1.5 mb-3">
                         <button type="button" @click="qrTemplate='compact'"
                                 class="flex-1 px-3 py-2 rounded-xl font-bold text-xs border transition-colors"
@@ -121,7 +121,7 @@
 
             <!-- CỘT PHẢI: XEM TRƯỚC -->
             <div class="bg-white rounded-card p-4 shadow-sm border border-slate-100">
-                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Xem trước <span class="text-slate-400 normal-case font-medium">(tối đa 6 thẻ)</span></h3>
+                <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Xem trước <span class="text-slate-500 normal-case font-medium">(tối đa 6 thẻ)</span></h3>
                 <div class="bg-slate-50 rounded-2xl p-3 overflow-x-auto" x-html="qrPreviewHtml"></div>
             </div>
         </div>
