@@ -317,7 +317,7 @@ function require_post(): void
 }
 
 /**
- * Cổng chung cho MỌI hành động GHI: bắt buộc POST + CSRF token hợp lệ.
+ * Cổng chung cho MỌI hành động GHI: bắt buộc POST + CSRF token hợp lệ + rate limit.
  * Gộp cặp require_post()+require_csrf() vốn lặp ở hàng chục endpoint.
  * (require_login/require_permission vẫn gọi riêng vì mỗi endpoint có
  *  mức quyền khác nhau — cố ý không nhét vào đây.)
@@ -326,6 +326,7 @@ function require_write(): void
 {
     require_post();
     require_csrf();
+    enforce_api_write_limit();
 }
 
 /**

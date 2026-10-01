@@ -209,8 +209,8 @@ switch ($action) {
         // Xoá cache để Admin/BĐH thấy ngay hồ sơ mới mà không phải chờ 5 phút
         Cache::flush();
 
-        // Xóa track đăng ký để IP đó được đăng ký tiếp
-        register_ok();
+        // KHÔNG xóa track đăng ký - giới hạn 3 lần/giờ/IP kể cả thành công
+        // để chặn spam hàng đợi "chờ duyệt"
 
         json_out(['ok' => true, 'code' => $code]);
 
