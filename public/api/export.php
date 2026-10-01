@@ -258,7 +258,7 @@ switch ($action) {
             $params);
 
         // Get approved leave requests for the same period/class
-        $lrParams = [$year['id'], $fromDate, $toDate];
+        $lrParams = [$year['id'], $fromDate, $toDate, 'đã duyệt'];
         $lrDk = 'lr.year_id = ? AND lr.session_date BETWEEN ? AND ? AND lr.status = ?';
 
         if ($classId !== null) {
