@@ -175,3 +175,24 @@ Cột "Duyệt" là điều ghi trong bản kế hoạch do phiên trước ghi;
 - Môi trường dựng lại: MariaDB 10.11 cục bộ, `php -S` kèm router; công cụ đã dùng: Playwright, axe-core, PHPStan phar, PHPUnit 11, openpyxl, ffmpeg (camera giả).
 - Hai bản thiết kế nằm trong repo: `docs/audit/P1_design.md`, `docs/audit/P5_design.md`.
 - Phiên này bị chặn xoá nhánh và không đọc được cài đặt repo; việc cần quyền admin hoặc xoá nhánh phải do chủ dự án làm.
+
+## CI Fixes Applied to RED PRs (2026-10-01)
+
+### PR #134 (fix/p4-security)
+- **Issue**: `current_member(false)` called with incorrect argument
+- **Fix**: Changed to `current_member()` since function doesn't accept parameters
+- **File**: src/RateLimiter.php line 32
+- **Commit**: 51f9ec1
+
+### PR #132 (fix/p8-data-performance) 
+- **Issue**: `http()` method missing `$data` parameter for POST requests
+- **Fix**: Added optional `?array $data` parameter and CURLOPT_POSTFIELDS handling
+- **File**: tests/unit/DataApiTest.php line 87
+- **Commit**: 207f287
+
+### PR #133 (fix/p7b-date-format)
+- **Status**: Implementation reviewed, appears correct
+- **Logic**: 
+  - Prioritizes dd/mm/yyyy Vietnam format when first number > 12
+  - Falls back to mm/dd/yyyy for ambiguous cases
+- **Tests**: TracuuDobTest.php covers all scenarios
