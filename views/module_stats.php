@@ -18,15 +18,15 @@
                 </button>
                 <div x-show="exportOpen" @click.outside="exportOpen = false" x-transition style="display:none"
                      class="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-200 p-2 z-30">
-                    <p class="px-2 pt-1 pb-1.5 text-micro text-slate-400 leading-snug">Chọn mảng báo cáo và định dạng để xuất:</p>
+                    <p class="px-2 pt-1 pb-1.5 text-micro text-slate-500 leading-snug">Chọn mảng báo cáo và định dạng để xuất:</p>
                     <template x-for="c in [{k:'chuyen_can',l:'Chuyên cần'},{k:'thi_dua',l:'Thi đua đi lễ'}]" :key="c.k">
                         <div class="mb-1 last:mb-0 border-t border-slate-100 first:border-0 pt-1 first:pt-0">
                             <p class="px-2 pt-1.5 pb-0.5 text-micro font-black text-slate-500 uppercase tracking-wide" x-text="c.l"></p>
                             <button @click="exportAttendanceGridXLS(c.k); exportOpen = false" type="button" class="w-full flex items-center gap-2 px-2 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 active:scale-[0.98] transition">
-                                <i data-lucide="table-2" class="w-4 h-4"></i> Sổ điểm danh <span class="text-slate-400 font-normal">(.xls)</span>
+                                <i data-lucide="table-2" class="w-4 h-4"></i> Sổ điểm danh <span class="text-slate-500 font-normal">(.xls)</span>
                             </button>
                             <button @click="exportStatsExcel(c.k); exportOpen = false" type="button" class="w-full flex items-center gap-2 px-2 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-700 active:scale-[0.98] transition">
-                                <i data-lucide="file-text" class="w-4 h-4"></i> Bảng tổng kết <span class="text-slate-400 font-normal">(.xlsx)</span>
+                                <i data-lucide="file-text" class="w-4 h-4"></i> Bảng tổng kết <span class="text-slate-500 font-normal">(.xlsx)</span>
                             </button>
                         </div>
                     </template>
@@ -39,7 +39,7 @@
             <button @click="shiftStatMonth(-1)" class="tap-safe w-10 h-10 shrink-0 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-50 active:scale-90 transition-transform"><i data-lucide="chevron-left" class="w-5 h-5"></i></button>
             <div class="text-center">
                 <span class="text-sm font-black text-slate-800 uppercase tracking-wide" x-text="statMonthLabel"></span>
-                <p class="text-[10px] text-slate-400 leading-none mt-0.5">Chỉ tính các buổi đã qua giờ chốt</p>
+                <p class="text-[10px] text-slate-500 leading-none mt-0.5">Chỉ tính các buổi đã qua giờ chốt</p>
             </div>
             <button @click="shiftStatMonth(1)" class="tap-safe w-10 h-10 shrink-0 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-50 active:scale-90 transition-transform"><i data-lucide="chevron-right" class="w-5 h-5"></i></button>
         </div>
@@ -54,7 +54,7 @@
                     <i data-lucide="trophy" class="w-4 h-4"></i> Thi đua đi lễ
                 </button>
             </div>
-            <p class="text-[10px] text-slate-400 leading-snug mt-1.5 px-1"
+            <p class="text-[10px] text-slate-500 leading-snug mt-1.5 px-1"
                x-text="statCategory === 'thi_dua' ? 'Chỉ tính các buổi được đánh dấu “tính thi đua đi lễ”.' : 'Chỉ tính các buổi được đánh dấu “tính chuyên cần”.'"></p>
         </div>
     </div>
@@ -156,7 +156,7 @@
         <div x-show="statSummary.countedSessions === 0" style="display: none;" class="text-center py-12 px-6 bg-white rounded-card border border-slate-100 border-dashed mb-5">
             <i data-lucide="bar-chart-3" class="w-10 h-10 mx-auto text-slate-300 mb-3"></i>
             <p class="text-slate-500 font-medium text-sm mb-1">Tháng này chưa có số liệu điểm danh.</p>
-            <p class="text-slate-400 text-xs"
+            <p class="text-slate-500 text-xs"
                x-text="statSummary.untakenSessions > 0 ? 'Các buổi trong tháng đều chưa được điểm danh.' : 'Chọn tháng khác để xem số liệu.'"></p>
         </div>
 
@@ -165,7 +165,7 @@
                 <!-- 4. CƠ CẤU CHUYÊN CẦN -->
                 <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100 mb-5">
                     <div class="flex justify-between items-baseline mb-4">
-                        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider" x-text="'Cơ cấu ' + statCategoryLabel.toLowerCase()"></h3>
+                        <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider" x-text="'Cơ cấu ' + statCategoryLabel.toLowerCase()"></h3>
                         <span class="text-micro font-bold text-slate-500">
                             <span x-text="statSummary.total.total"></span> lượt
                         </span>
@@ -191,7 +191,7 @@
                                 <span class="text-micro font-bold text-slate-500 uppercase tracking-wide mb-1" x-text="row.l"></span>
                                 <div class="flex items-end justify-between">
                                     <span class="text-xl font-black leading-none" :class="row.c" x-text="statSummary.total[row.k]"></span>
-                                    <span class="text-xs font-bold text-slate-400" x-text="percent(statSummary.total[row.k], statSummary.total.total) + '%'"></span>
+                                    <span class="text-xs font-bold text-slate-500" x-text="percent(statSummary.total[row.k], statSummary.total.total) + '%'"></span>
                                 </div>
                             </div>
                         </template>
@@ -205,7 +205,7 @@
 
                 <!-- 8. ĐƠN XIN PHÉP TRONG KỲ -->
                 <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100 mb-5">
-                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Đơn xin phép trong kỳ</h3>
+                    <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4">Đơn xin phép trong kỳ</h3>
                     <div class="grid grid-cols-3 gap-3">
                         <div class="text-center">
                             <p class="text-2xl font-black text-amber-700" x-text="statLeaveCounts.pending"></p>
@@ -224,7 +224,7 @@
 
                 <!-- 9. CƠ CẤU SĨ SỐ -->
                 <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100 mb-5">
-                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Cơ cấu sĩ số</h3>
+                    <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4">Cơ cấu sĩ số</h3>
 
                     <div class="flex items-center gap-3 mb-4">
                         <div class="flex-1 bg-blue-50 rounded-2xl p-3 text-center border border-blue-100">
@@ -262,7 +262,7 @@
             <div>
                 <!-- 5. SO SÁNH THEO KHỐI — chỉ Ban Điều Hành -->
                 <div x-show="showBlockComparison" style="display: none;" class="bg-white rounded-card p-5 shadow-sm border border-slate-100 mb-5">
-                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">So sánh theo khối (Tỷ lệ có mặt)</h3>
+                    <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4">So sánh theo khối (Tỷ lệ có mặt)</h3>
                     <div class="space-y-4">
                         <template x-for="row in statSummary.byBlock" :key="row.name">
                             <div>
@@ -280,7 +280,7 @@
 
                 <!-- 6. SO SÁNH THEO LỚP — Ban Điều Hành và Trưởng khối -->
                 <div x-show="showClassComparison" style="display: none;" class="bg-white rounded-card p-5 shadow-sm border border-slate-100 mb-5">
-                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">So sánh theo lớp (Tỷ lệ có mặt)</h3>
+                    <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4">So sánh theo lớp (Tỷ lệ có mặt)</h3>
                     <div class="space-y-4">
                         <template x-for="row in statSummary.byClass" :key="row.name">
                             <div>
@@ -303,7 +303,7 @@
 
                 <!-- 7. EM CẦN QUAN TÂM -->
                 <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100 mb-5">
-                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Em cần quan tâm</h3>
+                    <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Em cần quan tâm</h3>
                     <p class="text-micro text-slate-500 mb-4 leading-snug">Nghỉ không phép nhiều nhất trong kỳ — nên gọi hỏi thăm phụ huynh.</p>
 
                     <div class="space-y-3">
@@ -341,7 +341,7 @@
         <div x-show="statSummary.countedSessions === 0" style="display: none;" class="text-center py-12 px-6 bg-white rounded-card border border-slate-100 border-dashed mb-5">
             <i data-lucide="bar-chart-3" class="w-10 h-10 mx-auto text-slate-300 mb-3"></i>
             <p class="text-slate-500 font-medium text-sm mb-1">Chưa có số liệu để so sánh</p>
-            <p class="text-slate-400 text-xs" x-text="'Mảng ' + statCategoryLabel.toLowerCase() + ' chưa có buổi nào trong tháng này.'"></p>
+            <p class="text-slate-500 text-xs" x-text="'Mảng ' + statCategoryLabel.toLowerCase() + ' chưa có buổi nào trong tháng này.'"></p>
         </div>
     </div>
 </div>

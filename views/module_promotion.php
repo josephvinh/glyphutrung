@@ -40,7 +40,7 @@
     <div x-show="promoteBlock === ''" style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
         <i data-lucide="filter" class="w-12 h-12 mx-auto text-slate-300 mb-4"></i>
         <p class="text-slate-600 font-semibold text-base mb-1">Chọn khối để xét lên lớp</p>
-        <p class="text-slate-400 text-sm">Việc xét lên lớp làm theo từng khối — bấm nút lọc <i data-lucide="filter" class="inline w-3.5 h-3.5 -mt-0.5"></i> phía trên rồi chọn khối.</p>
+        <p class="text-slate-500 text-sm">Việc xét lên lớp làm theo từng khối — bấm nút lọc <i data-lucide="filter" class="inline w-3.5 h-3.5 -mt-0.5"></i> phía trên rồi chọn khối.</p>
     </div>
 
     <!-- 3. BA BƯỚC -->
@@ -110,7 +110,7 @@
                         <p class="text-micro font-bold text-blue-600 leading-tight">
                             <span x-text="s.code"></span>
                             <span class="text-slate-300 mx-1">•</span>
-                            <span class="text-slate-400 font-medium" x-text="s.className"></span>
+                            <span class="text-slate-500 font-medium" x-text="s.className"></span>
                         </p>
                         <p class="text-sm font-black text-slate-800 leading-snug">
                             <span class="font-normal text-slate-500" x-text="s.holyName"></span>
@@ -194,7 +194,7 @@
     <div x-show="promoteBlock !== '' && promoteTab === 'run'" style="display: none;">
 
         <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100 mb-4">
-            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Sắp thực hiện</h3>
+            <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4">Sắp thực hiện</h3>
 
             <div class="space-y-3">
                 <div class="flex items-center justify-between">

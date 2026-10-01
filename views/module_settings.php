@@ -75,7 +75,7 @@
         <div x-show="settingsTab === 'logs'">
 
             <div class="relative mb-3">
-                <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
+                <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500"></i>
                 <input x-model="logSearch" type="text" placeholder="Tìm theo người hoặc nội dung..." class="w-full bg-white border border-slate-200 rounded-field py-3.5 pl-12 pr-4 text-sm font-medium text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
             </div>
 
@@ -136,7 +136,7 @@
                 <div x-show="filteredLogs.length === 0" style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
                     <i data-lucide="scroll-text" class="w-10 h-10 mx-auto text-slate-300 mb-3"></i>
                     <p class="text-slate-500 font-medium text-sm mb-1" x-text="logs.length === 0 ? 'Chưa có thao tác nào được ghi.' : 'Không tìm thấy thao tác phù hợp.'"></p>
-                    <p x-show="logs.length === 0" style="display: none;" class="text-slate-400 text-xs px-8 leading-snug">
+                    <p x-show="logs.length === 0" style="display: none;" class="text-slate-500 text-xs px-8 leading-snug">
                         Nhật ký ghi việc tạo, sửa, xóa, duyệt đơn, phát thông báo, đổi phân quyền — và việc sửa điểm danh sau giờ chốt.
                     </p>
                 </div>
@@ -185,7 +185,7 @@
                             <template x-for="lv in ['none', 'view', 'edit']" :key="lv">
                                 <button @click="setPermission(m.key, permRoleTab, lv)" type="button"
                                         class="py-2.5 rounded-xl font-bold text-micro border transition-colors"
-                                        :class="permissions[m.key][permRoleTab] === lv ? permChipClass(lv) + ' ring-2 ring-offset-1 ring-slate-300' : 'bg-slate-50 text-slate-400 border-slate-200'"
+                                        :class="permissions[m.key][permRoleTab] === lv ? permChipClass(lv) + ' ring-2 ring-offset-1 ring-slate-300' : 'bg-slate-50 text-slate-500 border-slate-200'"
                                         x-text="permLabel(lv)"></button>
                             </template>
                         </div>
@@ -217,15 +217,15 @@
                          :class="moduleEnabled[m.key] ? 'border-slate-100' : 'border-slate-300 border-dashed'">
 
                         <div class="w-10 h-10 shrink-0 rounded-2xl flex items-center justify-center border"
-                             :class="moduleEnabled[m.key] ? 'bg-slate-50 border-slate-100 text-slate-500' : 'bg-slate-100 border-slate-200 text-slate-400'">
+                             :class="moduleEnabled[m.key] ? 'bg-slate-50 border-slate-100 text-slate-500' : 'bg-slate-100 border-slate-200 text-slate-500'">
                             <i :data-lucide="m.icon" class="w-5 h-5"></i>
                         </div>
 
                         <div class="flex-1 min-w-0">
                             <p class="text-sm font-black leading-snug"
-                               :class="moduleEnabled[m.key] ? 'text-slate-800' : 'text-slate-400'" x-text="m.label"></p>
+                               :class="moduleEnabled[m.key] ? 'text-slate-800' : 'text-slate-500'" x-text="m.label"></p>
                             <p class="text-micro font-medium"
-                               :class="moduleEnabled[m.key] ? 'text-emerald-600' : 'text-slate-400'"
+                               :class="moduleEnabled[m.key] ? 'text-emerald-600' : 'text-slate-500'"
                                x-text="moduleEnabled[m.key] ? 'Đang hoạt động' : 'Đang bảo trì'"></p>
                         </div>
 

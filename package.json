@@ -30,8 +30,11 @@
   "homepage": "https://github.com/josephvinh/glyphutrung#readme",
   "devDependencies": {
     "@types/node": "^26.6.2",
+    "autoprefixer": "^10.4.16",
     "esbuild": "^0.28.2",
+    "postcss": "^8.4.31",
     "sharp": "^0.33.5",
+    "tailwindcss": "^3.2.7",
     "typescript": "^7.0.2"
   },
   "dependencies": {

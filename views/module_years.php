@@ -53,7 +53,7 @@
                                       x-text="y.status"></span>
                             </div>
                             <h3 class="text-base font-black leading-snug"
-                                :class="y.status === 'đã khóa' ? 'text-slate-400' : 'text-slate-800'" x-text="y.name"></h3>
+                                :class="y.status === 'đã khóa' ? 'text-slate-500' : 'text-slate-800'" x-text="y.name"></h3>
                             <p class="text-micro font-medium text-slate-500 mt-0.5"
                                x-text="formatDate(y.startDate) + ' → ' + formatDate(y.endDate)"></p>
                         </div>

@@ -30,17 +30,17 @@ $__nhan   = $__blockMode ? 'khối' : 'lớp';
         <?php if ($__q !== ''): ?>
         <!-- Ô tìm nhanh (giống Danh sách) -->
         <div class="relative flex-1">
-            <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
+            <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500"></i>
             <input x-model="<?= $__q ?>" type="text" placeholder="Tìm tên, tên thánh, mã số..." class="w-full bg-white border border-slate-200 rounded-field py-3.5 pl-12 pr-10 text-sm font-medium text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
-            <button aria-label="Xóa ô tìm kiếm" x-show="<?= $__q ?> !== ''" @click="<?= $__q ?> = ''" style="display: none;" class="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 active:scale-90 transition-transform">
+            <button aria-label="Xóa ô tìm kiếm" x-show="<?= $__q ?> !== ''" @click="<?= $__q ?> = ''" style="display: none;" class="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-slate-100 rounded-full flex items-center justify-center text-slate-500 active:scale-90 transition-transform">
                 <i data-lucide="x" class="w-3.5 h-3.5"></i>
             </button>
         </div>
         <?php else: ?>
         <!-- Không có ô tìm: thanh cho biết đang chọn gì -->
         <div class="flex-1 flex items-center h-[50px] px-4 rounded-field bg-white border border-slate-200 shadow-sm">
-            <i data-lucide="layers" class="w-4 h-4 text-slate-400 mr-2.5 shrink-0"></i>
-            <span class="text-sm font-semibold truncate" :class="<?= $__blockMode ? $__blk : $__cls ?> === '' ? 'text-slate-400' : 'text-slate-700'"
+            <i data-lucide="layers" class="w-4 h-4 text-slate-500 mr-2.5 shrink-0"></i>
+            <span class="text-sm font-semibold truncate" :class="<?= $__blockMode ? $__blk : $__cls ?> === '' ? 'text-slate-500' : 'text-slate-700'"
                   x-text="<?= $__blockMode ? $__blk : $__cls ?> === '' ? 'Chưa chọn <?= $__nhan ?>' : <?= $__blockMode ? $__blk : $__cls ?>"></span>
         </div>
         <?php endif; ?>
