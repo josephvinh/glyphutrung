@@ -66,14 +66,15 @@ window.TNTT.shell = {
         return 1;
     },
 
-    // Nhận cả 15/05/2017 lẫn 2017-05-15, luôn trả về dạng chuẩn yyyy-mm-dd để lưu
+    // Chuẩn hoá ngày hợp lệ sang yyyy-mm-dd; giữ nguyên chuỗi sai để máy chủ
+    // báo lỗi cụ thể "Dòng N: ngày sinh không hợp lệ" (#111)
     parseDate(value) {
         if (!value) return '';
         const dmy = value.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/);
         if (dmy) return dmy[3] + '-' + dmy[2].padStart(2, '0') + '-' + dmy[1].padStart(2, '0');
         const ymd = value.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
         if (ymd) return ymd[1] + '-' + ymd[2].padStart(2, '0') + '-' + ymd[3].padStart(2, '0');
-        return '';
+        return value; // Giữ nguyên chuỗi sai để server báo lỗi
     },
 
     formatDate(dateStr) {
@@ -260,6 +261,11 @@ window.TNTT.shell = {
         this.changeModule('dashboard');
 
         this.initIconWatcher();
+
+        // Gọi initCore() để khởi tạo dark mode và điểm danh ngoại tuyến (#121)
+        if (typeof this.initCore === 'function') {
+            this.initCore();
+        }
 
         // Dò tình trạng thông báo đẩy của máy này. Không hỏi quyền ở đây —
         // trình duyệt chỉ cho hỏi khi người dùng chạm vào nút, và hỏi ngay

@@ -17,7 +17,7 @@
      - Background sync cho offline actions
    ========================================================== */
 
-const PHIEN_BAN = 'tntt-sw-9';
+const PHIEN_BAN = 'tntt-sw-10';
 const KHO      = 'tntt-tinh-' + PHIEN_BAN;
 
 // Critical resources cần preload khi có network
@@ -140,14 +140,23 @@ self.addEventListener('push', (e) => {
 
         // Cú chuông rỗng -> tự đi hỏi có việc gì
         try {
-            // Gửi kèm endpoint để máy chủ nhận ra máy này kể cả khi đã đăng xuất
-            const dk = await self.registration.pushManager.getSubscription();
+            // Gửi kèm TOKEN máy (do máy chủ cấp lúc đăng ký, lưu trong Cache Storage)
+            // để máy chủ nhận ra máy này kể cả khi đã đăng xuất. Chưa có token
+            // (đăng ký từ bản cũ, chưa mở app lại) thì gửi endpoint như trước —
+            // máy chủ chỉ chấp nhận trong thời hạn chuyển tiếp.
+            const khoa = new URL('__tntt_push_token', self.registration.scope).href;
+            let token = '';
+            try {
+                const luu = await (await caches.open('tntt-push')).match(khoa);
+                if (luu) token = (await luu.text()).trim();
+            } catch (err) { /* không đọc được kho thì dùng đường endpoint/phiên */ }
+            const dk = token ? null : await self.registration.pushManager.getSubscription();
             const r = await fetch('/api/push.php?action=pending', {
                 method: 'POST',
                 credentials: 'include',
                 cache: 'no-store',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ endpoint: dk ? dk.endpoint : '' })
+                body: JSON.stringify(token ? { token } : { endpoint: dk ? dk.endpoint : '' })
             });
             if (r.ok) {
                 const d = await r.json();

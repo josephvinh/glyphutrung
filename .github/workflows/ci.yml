@@ -156,7 +156,11 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install --ignore-scripts
 
       # Cấu hình ở eslint.config.js (không cần cài thêm gói nào ngoài eslint).
       # Phiên bản eslint được ghim chính xác (9.39.5) để một bản 9.x mới không đổi luật ngoài ý muốn (#124).
@@ -164,3 +168,13 @@ jobs:
       # mức "warn" không làm đỏ (hiện không luật nào để warn; no-dupe-keys là error sau #91).
       - name: Run ESLint
         run: npx --yes eslint@9.39.5 public/assets/js/ public/sw.js
+
+      # Warn nếu có test files ngoài tests/unit (#124)
+      - name: Check for unmanaged test files
+        run: |
+          FOUND=$(find . -name "*Test.php" -not -path "./tests/unit/*" -not -path "./vendor/*" 2>/dev/null | head -20)
+          if [ -n "$FOUND" ]; then
+            echo "::warning::Các file test nằm ngoài tests/unit/ và KHÔNG được CI chạy:"
+            echo "$FOUND"
+            echo "Di chuyển vào tests/unit/ hoặc cập nhật CI."
+          fi

@@ -32,7 +32,7 @@
                             :class="it.kind === 'meeting' ? 'bg-blue-50/50 border-blue-100' : 'bg-slate-50 border-slate-100'">
                         <div class="w-12 shrink-0 text-center">
                             <p class="text-micro font-black leading-none" :class="it.kind === 'meeting' ? 'text-blue-600' : 'text-blue-600'" x-text="itemTime(it)"></p>
-                            <p class="text-micro font-medium text-slate-400 mt-0.5" x-text="dayLabel(it.at.slice(0,10))"></p>
+                            <p class="text-micro font-medium text-slate-500 mt-0.5" x-text="dayLabel(it.at.slice(0,10))"></p>
                         </div>
                         <div class="w-px self-stretch bg-slate-200"></div>
                         <div class="min-w-0 flex-1">
@@ -43,7 +43,7 @@
                 </template>
                 <div x-show="homeUpcoming.length === 0" style="display: none;" class="h-full flex flex-col items-center justify-center text-center py-6">
                     <i data-lucide="calendar-check" class="w-8 h-8 text-slate-300 mb-2"></i>
-                    <p class="text-micro text-slate-400">Không có việc nào sắp tới.</p>
+                    <p class="text-micro text-slate-500">Không có việc nào sắp tới.</p>
                 </div>
             </div>
         </div>
@@ -75,7 +75,7 @@
                 </template>
                 <div x-show="visibleAnnouncements.length === 0" style="display: none;" class="h-full flex flex-col items-center justify-center text-center py-6">
                     <i data-lucide="bell-ring" class="w-8 h-8 text-slate-300 mb-2"></i>
-                    <p class="text-micro text-slate-400">Chưa có thông báo nào.</p>
+                    <p class="text-micro text-slate-500">Chưa có thông báo nào.</p>
                 </div>
             </div>
         </div>
@@ -91,7 +91,7 @@
                         :class="[isUnderMaintenance(m.key) ? 'opacity-40' : '',
                                  ['students', 'attendance', 'announcements'].includes(m.key) ? 'hidden md:flex' : 'flex']">
                     <div class="w-14 h-14 bg-slate-50 rounded-field shadow-sm border border-slate-100 flex items-center justify-center mb-2 relative"
-                         :class="isUnderMaintenance(m.key) ? 'text-slate-400' : m.color">
+                         :class="isUnderMaintenance(m.key) ? 'text-slate-500' : m.color">
                         <i :data-lucide="m.icon" class="w-6 h-6"></i>
 
                         <!-- Chấm đỏ nhắc việc -->
@@ -106,7 +106,7 @@
                         </span>
                     </div>
                     <span class="text-micro font-semibold text-center leading-tight"
-                          :class="isUnderMaintenance(m.key) ? 'text-slate-400' : 'text-slate-600'"
+                          :class="isUnderMaintenance(m.key) ? 'text-slate-500' : 'text-slate-600'"
                           x-text="m.label"></span>
                 </button>
             </template>

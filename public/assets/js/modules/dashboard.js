@@ -49,12 +49,8 @@ window.TNTT.dashboard = {
         return this.visibleAnnouncements.filter(a => !this.readAnnouncements.includes(a.id)).length;
     },
 
-    // Compute attendance rate
-    get attendanceRate() {
-        const total = this.todayAttendance.total || 1;
-        const present = this.todayAttendance.present || 0;
-        return Math.round((present / total) * 100);
-    },
+    // NOTE: attendanceRate was removed - it conflicted with analytics.attendanceRate
+    // Dashboard doesn't use attendance rate in its UI
 
     // Recent logs for admin dashboard
     get recentLogs() {

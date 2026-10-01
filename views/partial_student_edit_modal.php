@@ -23,10 +23,10 @@
                 <input type="hidden" name="_csrf" :value="window.TNTT.csrfToken">
                 <!-- Mã số: máy chủ tự cấp, không sửa được -->
                 <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
-                    <i data-lucide="hash" class="w-4 h-4 text-slate-400 shrink-0"></i>
+                    <i data-lucide="hash" class="w-4 h-4 text-slate-500 shrink-0"></i>
                     <span class="text-micro font-bold text-slate-500 uppercase">Mã số</span>
                     <span class="ml-auto text-sm font-black text-blue-600 tracking-wide" x-text="editData.code"></span>
-                    <span x-show="editData.isNew" style="display: none;" class="text-micro text-slate-400">(tự cấp)</span>
+                    <span x-show="editData.isNew" style="display: none;" class="text-micro text-slate-500">(tự cấp)</span>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div><label class="block text-micro font-bold text-slate-500 uppercase mb-1">Tên Thánh</label><input x-model="editData.holyName" type="text" autocomplete="off" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"></div>

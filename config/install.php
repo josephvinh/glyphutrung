@@ -103,7 +103,14 @@ $migrations = [
         ua VARCHAR(255) NULL,
         created_at DATETIME NOT NULL,
         last_ok_at DATETIME NULL,
+        token_hash CHAR(64) NULL,
+        ring_seq INT UNSIGNED NOT NULL DEFAULT 0,
+        ring_done INT UNSIGNED NOT NULL DEFAULT 0,
+        ring_lock_until DATETIME NULL,
+        ring_tries TINYINT UNSIGNED NOT NULL DEFAULT 0,
+        last_fail_code SMALLINT NULL,
         UNIQUE KEY uq_push (endpoint(255)),
+        UNIQUE KEY uq_push_token (token_hash),
         KEY idx_push_member (member_id),
         CONSTRAINT fk_push_member FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
@@ -137,13 +144,22 @@ $migrations = [
     "ALTER TABLE programs ADD COLUMN color VARCHAR(48) NULL",
     "ALTER TABLE programs ADD COLUMN icon VARCHAR(48) NULL",
     "ALTER TABLE programs ADD COLUMN sort_order TINYINT NOT NULL DEFAULT 1",
+    // Web Push: token máy (băm SHA-256) + hàng đợi chuông bền (#100, #107)
+    "ALTER TABLE push_subscriptions ADD COLUMN token_hash CHAR(64) NULL",
+    "ALTER TABLE push_subscriptions ADD UNIQUE KEY uq_push_token (token_hash)",
+    "ALTER TABLE push_subscriptions ADD COLUMN ring_seq INT UNSIGNED NOT NULL DEFAULT 0",
+    "ALTER TABLE push_subscriptions ADD COLUMN ring_done INT UNSIGNED NOT NULL DEFAULT 0",
+    "ALTER TABLE push_subscriptions ADD COLUMN ring_lock_until DATETIME NULL",
+    "ALTER TABLE push_subscriptions ADD COLUMN ring_tries TINYINT UNSIGNED NOT NULL DEFAULT 0",
+    "ALTER TABLE push_subscriptions ADD COLUMN last_fail_code SMALLINT NULL",
 ];
 $mig = 0;
 foreach ($migrations as $sqlMig) {
     try { $pdo->exec($sqlMig); $mig++; }
     catch (PDOException $e) {
         $msg = strtolower($e->getMessage());
-        if (!str_contains($msg, 'duplicate column name') && !str_contains($msg, 'already exists')) {
+        if (!str_contains($msg, 'duplicate column name') && !str_contains($msg, 'already exists')
+            && !str_contains($msg, 'duplicate key name')) {
             say('LỖI nâng cấp: ' . $e->getMessage());
             exit(1);
         }

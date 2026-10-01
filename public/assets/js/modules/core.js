@@ -97,7 +97,8 @@ window.TNTT.core = {
         return false;
     })(),
 
-    init() {
+    // Đổi tên thành initCore để tránh trùng với shell.init (#121)
+    initCore() {
         this.applyDarkMode();
         if (typeof this.initOfflineAttendance === 'function') {
             this.initOfflineAttendance();

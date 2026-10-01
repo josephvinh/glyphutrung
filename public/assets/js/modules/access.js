@@ -141,13 +141,10 @@ window.TNTT.access = {
         return age;
     },
 
-    get hasActiveFilter() {
-        return this.filterStatus !== '' || this.filterBlock !== '' || this.filterClass !== ''
-            || this.filterGender !== '' || this.filterAgeFrom !== '' || this.filterAgeTo !== ''
-            || this.filterAddress !== '';
-    },
+    // hasActiveFilter và clearFilters đã có trong students.js - không dùng ở đây
+    // để tránh trùng khoá (#121)
 
-    clearFilters() {
+    clearAllFilters() {
         this.filterBlock = '';
         this.filterClass = '';
         this.filterStatus = '';

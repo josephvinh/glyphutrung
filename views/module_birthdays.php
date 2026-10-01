@@ -79,7 +79,7 @@
 
     <!-- 3. SẮP TỚI TRONG 7 NGÀY -->
     <div x-show="upcomingBirthdays.length > 0" style="display: none;" class="bg-white rounded-card p-5 shadow-sm border border-slate-100 mb-5">
-        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Sắp tới trong 7 ngày</h3>
+        <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Sắp tới trong 7 ngày</h3>
         <div class="space-y-2.5 xl:space-y-0 xl:grid xl:grid-cols-2 xl:gap-2.5 xl:items-start">
             <template x-for="item in upcomingBirthdays" :key="item.student.key">
                 <div class="flex items-center gap-3">
