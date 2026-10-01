@@ -128,7 +128,9 @@ Thứ tự gộp: #114, #112, #113, #117, #119, #120, #118, rồi #116 (W0, gộ
 | #133 | `fix/p7b-date-format` | tracuu_norm_dob dd/mm/yyyy | Chờ review |
 | #134 | `fix/p4-security` | register_ok, RateLimiter fallback | Chờ review |
 | #135 | `fix/p7-a11y-ux` | Key collision 5 khoá | Chờ review |
-| #136 | `fix/p7b-a11y-tailwind` | Tailwind rebuild, contrast fixes | Chờ review |
+| #136 | `fix/p7b-a11y-tailwind` | Tailwind rebuild, contrast fixes | ✅ ĐÃ GỘP |
+| #137 | `fix/p9-ci-scope` | ghim eslint, cảnh báo test ngoài tests/unit/ | Chờ review |
+| #143 | `fix/p11-parseDate` | parseDate giữ chuỗi ngày sai | Chờ review |
 
 ### 6.4 Dở dang (đã đẩy lên nhánh, chưa có PR)
 
@@ -142,16 +144,16 @@ Thứ tự gộp: #114, #112, #113, #117, #119, #120, #118, rồi #116 (W0, gộ
 
 1. ~~**Gộp #125**~~ ✅ ĐÃ GỘP.
 2. ~~**#115**~~ ✅ PR #131. Viết `ExportApiTest.php` (11 tests). Bugs: #129, #130.
-3. **#123**: Bật `failOnRisky`/`failOnWarning`. Đã commit `ea2cdaf`. Sửa QrScanApiTest cho Windows.
+3. ~~**#123**~~ ✅ ĐÃ GỘP. Bật `failOnRisky`/`failOnWarning`.
 4. **P1**: hoàn tất theo `docs/audit/P1_design.md`; chạy `e2e2.py` (SCOPE-01…03), `extra.py` (STAFF-06), `e2e.py` (AUTH-05), `p1_regress.py`; duyệt độc lập bằng phiên khác phiên viết; mở PR. Mặc định đã chốt: chỉ quản trị viên xem `logs`; BĐH không sửa BĐH khác nhưng sửa được định danh của mình; GLV không thấy tài khoản chờ duyệt; danh bạ SĐT giữ cho vai có quyền `staff` (GLV có).
 5. **P5**: hoàn tất unit test, nghiệm thu `push.py` (PUSH-20, 21, 22); duyệt độc lập; mở PR. Mặc định đã chốt: gửi bất đồng bộ, chỉ 4 dịch vụ push, tự xoá subscription lỗi, quá độ 30 ngày, giới hạn "Send-test" để P4.
 6. **#98** (sau P1): kiểm tra SĐT trong `StaffService`.
 7. **P4** (sau P1, cùng sửa `_bootstrap.php`): #84, #102 (APCu, fallback không im lặng), #103, #96, #95, giới hạn tần suất "Send-test", và CSRF cho logout.
 8. **P8** (sau P1): #90 kích thước `data.php`.
-9. **P7b**: chuẩn hoá `dd/mm/yyyy` toàn web; #108 (tra cứu nhận dd/mm/yyyy, tạm chấp nhận mm/dd/yyyy cũ khi không mơ hồ); #111 (`parseDate` khi nhập Excel). Bước kiểm kê trước đó chưa hoàn tất, cần chạy lại.
+9. **P7b**: chuẩn hoá `dd/mm/yyyy` toàn web; #108 (tra cứu nhận dd/mm/yyyy, tạm chấp nhận mm/dd/yyyy cũ khi không mơ hồ); #111 (parseDate giữ chuỗi ngày sai → server báo lỗi). Phần hiển thị danh sách lỗi + đánh số dòng Excel chưa làm.
 10. ~~**P7 (#121)**~~ ✅ PR #135. 5 khoá trùng: init→initCore, printReport→printClassReport, xoá hasActiveFilter/clearFilters (access), attendanceRate (dashboard).
-11. ~~**P7 (2)**~~ ✅ PR #136. #122: quy trình build Tailwind (tailwind.config.js, @tailwind directives), fix left-3.5→left-4, pl-10→pl-11; #109: đổi text-slate-400→text-slate-500 (1.000 vi phạm tương phản).
-12. **#124**: CI chưa chạy `tests/UnitTest.php` và e2e; 12 khối `<script>` trong 6 file PHP chưa lint; `eslint@9` chưa ghim; **branch protection chưa bật (hoãn theo chủ dự án)**.
+11. ~~**P7 (2)**~~ ✅ ĐÃ GỘP #136. #122: quy trình build Tailwind (tailwind.config.js, @tailwind directives), fix left-3.5→left-4, pl-10→pl-11; #109: đổi text-slate-400→text-slate-500 (1.000 vi phạm tương phản).
+12. ~~**#124**~~ ✅ PR #137. Ghim eslint, tạo eslint.config.js, thêm CI kiểm tra test ngoài tests/unit/, cảnh báo inline JS. **Branch protection chưa bật (hoãn)**.
 12. **#110** (action `attendance` của `export.php`, cột "Tỷ lệ"): cần chủ dự án quyết định giữ hay bỏ action (xem #106).
 13. Đề nghị chưa quyết: phân công đã kết thúc mất `class_id` khi xoá lớp (chỉ mở issue nếu chủ dự án muốn).
 
