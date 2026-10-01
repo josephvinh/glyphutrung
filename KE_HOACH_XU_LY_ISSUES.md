@@ -134,6 +134,7 @@ Các PR trước đó (#131–#134, #137) được tách từ nhánh `audit` nê
 | #144 | `fix/p12-phone-validation` | #98: validate phone 10 digits in StaffService | chưa | chưa |
 | #143 | `fix/p11-parseDate` | #111: parseDate giữ chuỗi ngày sai | chưa | chưa |
 | #137 | `fix/p9-ci-scope` | #124: ghim eslint, cảnh báo test ngoài tests/unit | chưa | chưa |
+| #145 | `fix/p4-security` | P4: Rate limiting, APCu fallback (#84, #102) | chưa | chưa |
 
 Nhánh đã đẩy nhưng **chưa mở PR** (chờ duyệt độc lập):
 - `fix/p7b-date-v2` (#108, ngày/tháng/năm): 227 test, 765 assertion, 0 lỗi, 0 skip (đã cập nhật 3 test `TracuuTest` cũ). Rủi ro cần xem: ngày mơ hồ (vd 03/05) đọc là ngày/tháng, phụ huynh quen tháng/ngày bị từ chối và dồn vào khoá 5 lần/15 phút.
