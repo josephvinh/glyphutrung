@@ -84,7 +84,7 @@ class DataApiTest extends TestCase
 
     // ==================== HTTP helpers ====================
 
-    private function http(string $method, string $path, bool $csrf = true): array
+    private function http(string $method, string $path, ?array $data = null, bool $csrf = true): array
     {
         $ch = curl_init(self::$base . $path);
         $headers = ['Content-Type: application/json'];
@@ -95,6 +95,9 @@ class DataApiTest extends TestCase
             CURLOPT_HTTPHEADER     => $headers,
             CURLOPT_TIMEOUT        => 30,
         ]);
+        if ($data !== null) {
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+        }
         curl_setopt($ch, CURLOPT_COOKIEJAR, $this->cookieJar);
         curl_setopt($ch, CURLOPT_COOKIEFILE, $this->cookieJar);
         $body = curl_exec($ch);
