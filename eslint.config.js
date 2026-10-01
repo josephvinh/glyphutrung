@@ -1,11 +1,11 @@
-// ESLint (flat config, ESLint 9) — CẤU HÌNH TỐI THIỂU cho CI (#82).
+// ESLint (flat config, ESLint 9) — CẤU HÌNH TỐI THIỂU cho CI (#124).
 //
-// Mục tiêu: chỉ bắt LỖI LOGIC THẬT (biến không khai báo, khoá trùng, khai báo
-// lại, gán vào const...), KHÔNG ép phong cách. Job js-lint trong
-// .github/workflows/ci.yml chạy `eslint public/assets/js/` và PHẢI đỏ khi có
+// Mục tiêu: chỉ bắt LỖI LOGIC THẬT (biến không khai báo, khoá trùng,
+// khai báo lại, gán vào const...), KHÔNG ép phong cách. Job js-lint trong
+// .github/workflows/ci.yml chạy `npx eslint public/assets/js/` và PHẢI đỏ khi có
 // mức "error" (trước đây `|| true` nên không bao giờ đỏ).
 //
-// Không nạp gói ngoài (kể cả `globals`) để CI chỉ cần `npx eslint@9`.
+// Không nạp gói ngoài (kể cả `globals`) để CI chỉ cần `npm ci`.
 // Mã ở đây là script cổ điển nạp bằng <script> (không phải ES module), nên
 // sourceType = "script" và các hàm/biến toàn cục dùng chéo giữa các file
 // (bundle.php nối chúng lại) được coi là cùng một phạm vi toàn cục.
