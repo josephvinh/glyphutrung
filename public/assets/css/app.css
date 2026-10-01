@@ -223,10 +223,24 @@ body {
     .xl\:space-y-0 > :not([hidden]) ~ :not([hidden]) { margin-top: 0; }
 }
 
-/* Chống iOS tự phóng to khi chạm vào ô nhập.
-   Safari auto-zoom nếu font-size < 16px -> nâng lên 16px cho đỡ nhảy màn. */
+/* iOS auto-zoom prevention: font-size 16px minimum
+   Không dùng !important để không override custom sizes.
+   Áp dụng bằng cách thêm class .no-ios-zoom vào input cần giữ nguyên. */
 @media (max-width: 639px) {
-    input, select, textarea { font-size: 16px !important; }
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="search"],
+    input[type="tel"],
+    input[type="url"],
+    input[type="number"],
+    textarea {
+        font-size: 16px;
+    }
+    /* Inputs có class này sẽ không bị ảnh hưởng */
+    .no-ios-zoom {
+        font-size: inherit !important;
+    }
 }
 
 /* ==========================================================
