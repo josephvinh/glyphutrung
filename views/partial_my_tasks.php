@@ -1,6 +1,6 @@
 <!-- VIỆC CẦN LÀM — dùng chung Trang chủ + Cá nhân -->
 <div x-show="myTasks.length > 0" style="display:none" class="mb-5">
-    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-1">Việc cần làm</h3>
+    <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 px-1">Việc cần làm</h3>
     <div class="space-y-2.5">
         <template x-for="t in myTasks" :key="t.key">
             <button @click="openModule(t.go)" type="button"

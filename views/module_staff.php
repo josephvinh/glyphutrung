@@ -69,7 +69,7 @@
 
                     <div x-show="m.registerNote" style="display: none;"
                          class="bg-slate-50 rounded-xl p-3 mb-3 flex items-start gap-2">
-                        <i data-lucide="message-square" class="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5"></i>
+                        <i data-lucide="message-square" class="w-3.5 h-3.5 text-slate-500 shrink-0 mt-0.5"></i>
                         <p class="text-xs text-slate-600 leading-snug italic" x-text="m.registerNote"></p>
                     </div>
 
@@ -90,7 +90,7 @@
 
     <!-- Tìm kiếm -->
     <div class="relative mb-3">
-        <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
+        <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500"></i>
         <input x-model="memberSearch" type="text" placeholder="Tìm tên hoặc lớp..." class="w-full bg-white border border-slate-200 rounded-field py-3.5 pl-12 pr-4 text-sm font-medium text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
     </div>
 
@@ -143,7 +143,7 @@
 
                 <div class="flex flex-col gap-1.5 shrink-0 items-end">
                     <button aria-label="Sửa thành viên" x-show="canManageOrg" @click="openEditMember(m)" style="display: none;"
-                            class="tap-safe w-8 h-8 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 active:scale-90 border border-slate-200">
+                            class="tap-safe w-8 h-8 bg-slate-50 rounded-full flex items-center justify-center text-slate-500 active:scale-90 border border-slate-200">
                         <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
                     </button>
                     <!-- Cấp lại mật khẩu: hiện mật khẩu tạm MỘT LẦN để BĐH đọc cho GLV -->
@@ -165,7 +165,7 @@
 
     <!-- Bảng giải thích hệ thống vai trò -->
     <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100 mt-5">
-        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Hệ thống vai trò</h3>
+        <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Hệ thống vai trò</h3>
         <p class="text-micro text-slate-500 mb-4 leading-snug">
             <span class="font-bold text-slate-500">Vai trò</span> quyết định quyền trong hệ thống.
             <span class="font-bold text-slate-500">Chức danh</span> chỉ để hiển thị, không sinh ra quyền.

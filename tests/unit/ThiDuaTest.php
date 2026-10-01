@@ -44,9 +44,14 @@ class ThiDuaTest extends TestCase
 
     public function test_ty_le_co_mat(): void
     {
-        // (7 có mặt + 1 đi trễ) / 10 buổi = 80%
-        $this->assertSame(80.0, td_ty_le_co_mat(7, 1, 10));
-        $this->assertSame(0.0, td_ty_le_co_mat(0, 0, 0));
+        // td_ty_le_co_mat($coMat, $diTre, $coPhep, $tongBuoiDaDiemDanh):
+        // có mặt = 1 buổi, đi trễ = 0.6, có phép = 0.3 (xem config/thi_dua.php)
+        // (7 có mặt + 1 đi trễ * 0.6) / 10 buổi = 76%
+        $this->assertSame(76.0, td_ty_le_co_mat(7, 1, 0, 10));
+        // (7 + 1 * 0.6 + 2 * 0.3) / 10 = 82%
+        $this->assertSame(82.0, td_ty_le_co_mat(7, 1, 2, 10));
+        // chưa điểm danh buổi nào -> 0, không chia cho 0
+        $this->assertSame(0.0, td_ty_le_co_mat(0, 0, 0, 0));
     }
 
     public function test_xep_hang_sap_giam_va_gan_huy_chuong(): void

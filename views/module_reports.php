@@ -44,7 +44,7 @@
     <div x-show="reportClass === ''" style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
         <i data-lucide="filter" class="w-12 h-12 mx-auto text-slate-300 mb-4"></i>
         <p class="text-slate-600 font-semibold text-base mb-1">Chọn lớp để xem phiếu</p>
-        <p class="text-slate-400 text-sm">Phiếu liên lạc lập theo từng lớp — bấm nút lọc <i data-lucide="filter" class="inline w-3.5 h-3.5 -mt-0.5"></i> phía trên rồi chọn lớp.</p>
+        <p class="text-slate-500 text-sm">Phiếu liên lạc lập theo từng lớp — bấm nút lọc <i data-lucide="filter" class="inline w-3.5 h-3.5 -mt-0.5"></i> phía trên rồi chọn lớp.</p>
     </div>
 
     <!-- 3. TIẾN ĐỘ LẬP PHIẾU -->
@@ -58,7 +58,7 @@
             <p class="text-micro font-bold text-slate-500 uppercase tracking-wide">Nháp</p>
         </div>
         <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-100 text-center">
-            <p class="text-2xl font-black text-slate-400" x-text="reportProgress.missing"></p>
+            <p class="text-2xl font-black text-slate-500" x-text="reportProgress.missing"></p>
             <p class="text-micro font-bold text-slate-500 uppercase tracking-wide">Chưa lập</p>
         </div>
     </div>
@@ -224,7 +224,7 @@
                         <template x-for="rk in rankOptions" :key="rk">
                             <button @click="canWriteReports && (reportForm.rank = rk)" type="button"
                                     class="py-2.5 rounded-xl font-bold text-xs border transition-colors"
-                                    :class="reportForm.rank === rk ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-200' : 'bg-slate-50 text-slate-400 border-slate-200'"
+                                    :class="reportForm.rank === rk ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-200' : 'bg-slate-50 text-slate-500 border-slate-200'"
                                     x-text="rk"></button>
                         </template>
                     </div>
@@ -279,10 +279,10 @@
                         </div>
 
                         <div class="space-y-1.5 text-sm">
-                            <div class="flex"><span class="w-24 shrink-0 text-slate-400">Họ và tên</span><span class="font-black text-slate-800" x-text="previewStudent.holyName + ' ' + previewStudent.name"></span></div>
-                            <div class="flex"><span class="w-24 shrink-0 text-slate-400">Mã số</span><span class="font-semibold text-slate-700" x-text="previewStudent.code"></span></div>
-                            <div class="flex"><span class="w-24 shrink-0 text-slate-400">Lớp</span><span class="font-semibold text-slate-700" x-text="previewStudent.className"></span></div>
-                            <div class="flex"><span class="w-24 shrink-0 text-slate-400">Ngày sinh</span><span class="font-semibold text-slate-700" x-text="formatDate(previewStudent.birthDate)"></span></div>
+                            <div class="flex"><span class="w-24 shrink-0 text-slate-500">Họ và tên</span><span class="font-black text-slate-800" x-text="previewStudent.holyName + ' ' + previewStudent.name"></span></div>
+                            <div class="flex"><span class="w-24 shrink-0 text-slate-500">Mã số</span><span class="font-semibold text-slate-700" x-text="previewStudent.code"></span></div>
+                            <div class="flex"><span class="w-24 shrink-0 text-slate-500">Lớp</span><span class="font-semibold text-slate-700" x-text="previewStudent.className"></span></div>
+                            <div class="flex"><span class="w-24 shrink-0 text-slate-500">Ngày sinh</span><span class="font-semibold text-slate-700" x-text="formatDate(previewStudent.birthDate)"></span></div>
                         </div>
 
                         <div class="bg-slate-50 rounded-xl p-4 space-y-2">

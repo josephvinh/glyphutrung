@@ -23,7 +23,7 @@
         <!-- BAN ĐIỀU HÀNH: luôn khóa, chỉ xem -->
         <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100 mb-4">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Ban Điều Hành</h3>
+                <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Ban Điều Hành</h3>
                 <span class="flex items-center gap-1 text-micro font-bold text-slate-500">
                     <i data-lucide="lock" class="w-3 h-3"></i> Không sửa được vai trò
                 </span>
@@ -70,8 +70,8 @@
                                          đã bị gỡ, đổi mấy cũng không ăn. Cách chạy được là đặt
                                          sẵn cả hai thẻ tĩnh rồi bật tắt bằng x-show — lucide chép
                                          thuộc tính sang <svg> và Alpine nhận lại binding. -->
-                                    <span x-show="expandedBlock === b" class="inline-flex items-center justify-center"><i data-lucide="chevron-up" class="w-4 h-4 text-slate-400"></i></span>
-                                    <span x-show="expandedBlock !== b" class="inline-flex items-center justify-center"><i data-lucide="chevron-down" class="w-4 h-4 text-slate-400"></i></span>
+                                    <span x-show="expandedBlock === b" class="inline-flex items-center justify-center"><i data-lucide="chevron-up" class="w-4 h-4 text-slate-500"></i></span>
+                                    <span x-show="expandedBlock !== b" class="inline-flex items-center justify-center"><i data-lucide="chevron-down" class="w-4 h-4 text-slate-500"></i></span>
                                 </h3>
                                 <p class="text-micro font-medium text-slate-500 mt-0.5">
                                     <span x-text="classesInBlock(b).length"></span> lớp
@@ -81,7 +81,7 @@
                             </button>
 
                             <div x-show="canManageOrg" style="display: none;" class="flex gap-2 shrink-0">
-                                <button aria-label="Sửa tên khối" @click="openEditBlock(b)" :disabled="busyBlock" class="tap-safe w-8 h-8 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 active:scale-90 border border-slate-200 disabled:opacity-50">
+                                <button aria-label="Sửa tên khối" @click="openEditBlock(b)" :disabled="busyBlock" class="tap-safe w-8 h-8 bg-slate-50 rounded-full flex items-center justify-center text-slate-500 active:scale-90 border border-slate-200 disabled:opacity-50">
                                     <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
                                 </button>
                                 <button aria-label="Xóa khối" @click="deleteBlock(b)" :disabled="busyBlock" class="tap-safe w-8 h-8 bg-rose-50 rounded-full flex items-center justify-center text-rose-400 active:scale-90 border border-rose-100 disabled:opacity-50">
@@ -125,7 +125,7 @@
                                             </p>
                                         </div>
                                         <div x-show="canManageOrg" style="display: none;" class="flex gap-2 shrink-0">
-                                            <button aria-label="Sửa lớp" @click="openEditClass(cls)" :disabled="busyClass" class="tap-safe w-7 h-7 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 active:scale-90 border border-slate-200 disabled:opacity-50">
+                                            <button aria-label="Sửa lớp" @click="openEditClass(cls)" :disabled="busyClass" class="tap-safe w-7 h-7 bg-slate-50 rounded-full flex items-center justify-center text-slate-500 active:scale-90 border border-slate-200 disabled:opacity-50">
                                                 <i data-lucide="pencil" class="w-3 h-3"></i>
                                             </button>
                                             <button aria-label="Xóa lớp" @click="deleteClass(cls)" :disabled="busyClass" class="tap-safe w-7 h-7 bg-rose-50 rounded-full flex items-center justify-center text-rose-400 active:scale-90 border border-rose-100 disabled:opacity-50">
@@ -159,7 +159,7 @@
                                                         :class="canManageOrg ? 'active:scale-[0.98] transition-transform' : 'cursor-default'">
                                                     <div class="flex-1 min-w-0">
                                                         <p class="text-sm font-bold text-slate-700 leading-snug truncate">
-                                                            <span class="font-normal text-slate-400" x-text="m.holyName"></span>
+                                                            <span class="font-normal text-slate-500" x-text="m.holyName"></span>
                                                             <span x-text="m.fullName"></span>
                                                         </p>
                                                         <p class="text-micro font-medium text-slate-500" x-text="titleFor(m)"></p>
