@@ -83,6 +83,15 @@ jobs:
       # file test gọi exit(0) lúc nạp, giết PHPUnit trước khi chạy test nào mà vẫn
       # thoát mã 0. Nếu tiến trình chết sớm thì không có junit.xml / số testcase
       # ít hơn số file test -> step đỏ.
+      # Test nằm ngoài tests/unit/ không được PHPUnit của CI chạy cũng không được đếm (#124).
+      # Chỉ cảnh báo (không làm đỏ): tests/UnitTest.php là script cũ còn dùng src/Router.php (#106).
+      - name: Cảnh báo test nằm ngoài tests/unit
+        run: |
+          stray=$(find . -name '*Test.php' -not -path './tests/unit/*' -not -path './vendor/*' -not -path './node_modules/*')
+          if [ -n "$stray" ]; then
+            echo "$stray" | while read -r f; do echo "::warning file=$f::Test nằm ngoài tests/unit/ nên CI không chạy"; done
+          fi
+
       - name: Run PHPUnit
         run: |
           php phpunit10.phar --testsuite "TNTT Unit Tests" --log-junit junit.xml
@@ -150,7 +159,8 @@ jobs:
           node-version: '20'
 
       # Cấu hình ở eslint.config.js (không cần cài thêm gói nào ngoài eslint).
+      # Phiên bản eslint được ghim chính xác (9.39.5) để một bản 9.x mới không đổi luật ngoài ý muốn (#124).
       # Trước đây `|| true` nên không bao giờ đỏ (#82). Nay mức "error" -> exit 1;
       # mức "warn" không làm đỏ (hiện không luật nào để warn; no-dupe-keys là error sau #91).
       - name: Run ESLint
-        run: npx --yes eslint@9 public/assets/js/ public/sw.js
+        run: npx --yes eslint@9.39.5 public/assets/js/ public/sw.js
