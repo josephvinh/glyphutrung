@@ -15,6 +15,11 @@
     --safe-b: env(safe-area-inset-bottom, 0px);
 }
 
+/* ---------- Custom border-radius classes ---------- */
+.rounded-field { border-radius: var(--r-field); }
+.rounded-card  { border-radius: var(--r-card); }
+.rounded-panel { border-radius: var(--r-shell); }
+
 /* ---------- Alpine ---------- */
 [x-cloak] { display: none !important; }
 

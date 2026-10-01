@@ -95,9 +95,14 @@ body {
     color: var(--text-primary) !important;
 }
 
-.dark .text-slate-500,
-.dark .text-slate-400 {
+/* slate-500: medium gray - used for labels, descriptions, content text */
+.dark .text-slate-500 {
     color: var(--text-secondary) !important;
+}
+
+/* slate-400: lighter gray - used for subtle/placeholder text, icons, hints */
+.dark .text-slate-400 {
+    color: #64748b !important;
 }
 
 /* Chữ màu đậm (600/700) quá tối trên nền tối -> dùng tông sáng hơn */

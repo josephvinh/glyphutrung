@@ -24,7 +24,7 @@
 
             <div class="min-w-0">
                 <p class="text-sm font-black text-slate-800 leading-tight truncate">GLY PHÚ TRUNG</p>
-                <p class="text-micro font-semibold text-slate-500 truncate" x-text="year ? year.name : ''"></p>
+                <p class="text-micro font-semibold text-slate-400 truncate" x-text="year ? year.name : ''"></p>
             </div>
         </div>
     </button>
@@ -34,7 +34,7 @@
 
         <!-- Chức năng -->
         <div x-show="visibleModules('glv').length > 0">
-            <p class="px-3 pb-2 text-micro font-bold text-slate-500 uppercase tracking-wider">Chức năng</p>
+            <p class="px-3 pb-2 text-micro font-bold text-slate-400 uppercase tracking-wider">Chức năng</p>
             <div class="space-y-0.5">
                 <template x-for="m in visibleModules('glv')" :key="'sb-' + m.key">
                     <button @click="openModule(m.key)" type="button"
@@ -52,7 +52,7 @@
                               x-text="moduleBadgeLabel(m.key)"></span>
 
                         <!-- Đang bảo trì -->
-                        <span x-show="!moduleEnabled[m.key]" style="display: none;" class="inline-flex items-center justify-center"><i data-lucide="wrench" class="w-3.5 h-3.5 shrink-0 text-slate-500"></i></span>
+                        <span x-show="!moduleEnabled[m.key]" style="display: none;" class="inline-flex items-center justify-center"><i data-lucide="wrench" class="w-3.5 h-3.5 shrink-0 text-slate-400"></i></span>
                     </button>
                 </template>
             </div>
@@ -60,7 +60,7 @@
 
         <!-- Khu vực điều hành / quản lý khối -->
         <div x-show="visibleModules('bdh').length > 0" style="display: none;">
-            <p class="px-3 pb-2 text-micro font-bold text-slate-500 uppercase tracking-wider"
+            <p class="px-3 pb-2 text-micro font-bold text-slate-400 uppercase tracking-wider"
                x-text="['admin', 'bdh'].includes(user.role) ? 'Ban Điều Hành'
                       : (user.role === 'truong_khoi' ? 'Quản lý khối' : 'Thông tin chung')"></p>
             <div class="space-y-0.5">
@@ -73,7 +73,7 @@
                             <i :data-lucide="m.icon" class="w-[18px] h-[18px]"></i>
                         </span>
                         <span class="flex-1 text-left truncate" x-text="m.label"></span>
-                        <span x-show="!moduleEnabled[m.key]" style="display: none;" class="inline-flex items-center justify-center"><i data-lucide="wrench" class="w-3.5 h-3.5 shrink-0 text-slate-500"></i></span>
+                        <span x-show="!moduleEnabled[m.key]" style="display: none;" class="inline-flex items-center justify-center"><i data-lucide="wrench" class="w-3.5 h-3.5 shrink-0 text-slate-400"></i></span>
                     </button>
                 </template>
             </div>
@@ -89,7 +89,7 @@
             <span class="nav-ico"><i data-lucide="settings" class="w-[18px] h-[18px]"></i></span>
             <span class="flex-1 text-left truncate">
                 <span class="block leading-tight">Cài đặt</span>
-                <span class="block text-micro font-medium text-slate-500 truncate" x-text="user.fullName"></span>
+                <span class="block text-micro font-medium text-slate-400 truncate" x-text="user.fullName"></span>
             </span>
             <span x-show="myTasks.length > 0 || maintenanceCount > 0" style="display: none;"
                   class="shrink-0 w-2 h-2 rounded-full bg-rose-500"></span>

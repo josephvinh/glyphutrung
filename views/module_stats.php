@@ -23,10 +23,10 @@
                         <div class="mb-1 last:mb-0 border-t border-slate-100 first:border-0 pt-1 first:pt-0">
                             <p class="px-2 pt-1.5 pb-0.5 text-micro font-black text-slate-500 uppercase tracking-wide" x-text="c.l"></p>
                             <button @click="exportAttendanceGridXLS(c.k); exportOpen = false" type="button" class="w-full flex items-center gap-2 px-2 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 active:scale-[0.98] transition">
-                                <i data-lucide="table-2" class="w-4 h-4"></i> Sổ điểm danh <span class="text-slate-500 font-normal">(.xls)</span>
+                                <i data-lucide="table-2" class="w-4 h-4"></i> Sổ điểm danh <span class="text-slate-400 font-normal">(.xls)</span>
                             </button>
                             <button @click="exportStatsExcel(c.k); exportOpen = false" type="button" class="w-full flex items-center gap-2 px-2 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-700 active:scale-[0.98] transition">
-                                <i data-lucide="file-text" class="w-4 h-4"></i> Bảng tổng kết <span class="text-slate-500 font-normal">(.xlsx)</span>
+                                <i data-lucide="file-text" class="w-4 h-4"></i> Bảng tổng kết <span class="text-slate-400 font-normal">(.xlsx)</span>
                             </button>
                         </div>
                     </template>
@@ -39,7 +39,7 @@
             <button @click="shiftStatMonth(-1)" class="tap-safe w-10 h-10 shrink-0 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-50 active:scale-90 transition-transform"><i data-lucide="chevron-left" class="w-5 h-5"></i></button>
             <div class="text-center">
                 <span class="text-sm font-black text-slate-800 uppercase tracking-wide" x-text="statMonthLabel"></span>
-                <p class="text-[10px] text-slate-500 leading-none mt-0.5">Chỉ tính các buổi đã qua giờ chốt</p>
+                <p class="text-[10px] text-slate-400 leading-none mt-0.5">Chỉ tính các buổi đã qua giờ chốt</p>
             </div>
             <button @click="shiftStatMonth(1)" class="tap-safe w-10 h-10 shrink-0 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-50 active:scale-90 transition-transform"><i data-lucide="chevron-right" class="w-5 h-5"></i></button>
         </div>
@@ -54,7 +54,7 @@
                     <i data-lucide="trophy" class="w-4 h-4"></i> Thi đua đi lễ
                 </button>
             </div>
-            <p class="text-[10px] text-slate-500 leading-snug mt-1.5 px-1"
+            <p class="text-[10px] text-slate-400 leading-snug mt-1.5 px-1"
                x-text="statCategory === 'thi_dua' ? 'Chỉ tính các buổi được đánh dấu “tính thi đua đi lễ”.' : 'Chỉ tính các buổi được đánh dấu “tính chuyên cần”.'"></p>
         </div>
     </div>
@@ -156,7 +156,7 @@
         <div x-show="statSummary.countedSessions === 0" style="display: none;" class="text-center py-12 px-6 bg-white rounded-card border border-slate-100 border-dashed mb-5">
             <i data-lucide="bar-chart-3" class="w-10 h-10 mx-auto text-slate-300 mb-3"></i>
             <p class="text-slate-500 font-medium text-sm mb-1">Tháng này chưa có số liệu điểm danh.</p>
-            <p class="text-slate-500 text-xs"
+            <p class="text-slate-400 text-xs"
                x-text="statSummary.untakenSessions > 0 ? 'Các buổi trong tháng đều chưa được điểm danh.' : 'Chọn tháng khác để xem số liệu.'"></p>
         </div>
 
@@ -341,7 +341,7 @@
         <div x-show="statSummary.countedSessions === 0" style="display: none;" class="text-center py-12 px-6 bg-white rounded-card border border-slate-100 border-dashed mb-5">
             <i data-lucide="bar-chart-3" class="w-10 h-10 mx-auto text-slate-300 mb-3"></i>
             <p class="text-slate-500 font-medium text-sm mb-1">Chưa có số liệu để so sánh</p>
-            <p class="text-slate-500 text-xs" x-text="'Mảng ' + statCategoryLabel.toLowerCase() + ' chưa có buổi nào trong tháng này.'"></p>
+            <p class="text-slate-400 text-xs" x-text="'Mảng ' + statCategoryLabel.toLowerCase() + ' chưa có buổi nào trong tháng này.'"></p>
         </div>
     </div>
 </div>

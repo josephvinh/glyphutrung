@@ -55,11 +55,11 @@
                         </div>
                         <h3 class="text-base font-black text-slate-800 leading-tight" x-text="prog.name"></h3>
                         <p class="text-sm font-medium text-slate-500 mt-1 flex items-center">
-                            <i data-lucide="repeat" class="w-3.5 h-3.5 mr-1.5 text-slate-500 shrink-0"></i>
+                            <i data-lucide="repeat" class="w-3.5 h-3.5 mr-1.5 text-slate-400 shrink-0"></i>
                             <span class="text-slate-700 font-bold" x-text="programSchedule(prog)"></span>
                         </p>
                         <p class="text-sm font-medium text-slate-500 mt-0.5 flex items-center">
-                            <i data-lucide="clock" class="w-3.5 h-3.5 mr-1.5 text-slate-500 shrink-0"></i>
+                            <i data-lucide="clock" class="w-3.5 h-3.5 mr-1.5 text-slate-400 shrink-0"></i>
                             <span class="text-slate-700 font-bold" x-text="prog.startTime"></span>
                             <span class="text-slate-300 mx-1.5">•</span>
                             <span class="text-micro">chốt <span class="font-bold text-rose-500" x-text="prog.cutoffTime || addMinutes(prog.startTime, CUTOFF_MINUTES)"></span></span>
@@ -67,7 +67,7 @@
                     </div>
 
                     <div class="flex flex-col gap-2 shrink-0">
-                        <button aria-label="Sửa chương trình" @click="openEditProgram(prog)" class="tap-safe w-8 h-8 bg-slate-50 rounded-full flex items-center justify-center text-slate-500 active:scale-90 border border-slate-200">
+                        <button aria-label="Sửa chương trình" @click="openEditProgram(prog)" class="tap-safe w-8 h-8 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 active:scale-90 border border-slate-200">
                             <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
                         </button>
                         <button aria-label="Xóa chương trình" @click="deleteProgram(prog.id)" class="tap-safe w-8 h-8 bg-rose-50 rounded-full flex items-center justify-center text-rose-400 active:scale-90 border border-rose-100">
