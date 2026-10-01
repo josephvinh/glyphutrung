@@ -315,9 +315,10 @@ textarea:focus-visible:not(:disabled),
         min-height: calc(100dvh - 4rem);
         padding-inline: 1.5rem;
         /* Chốt bề rộng desktop ngay tại đây (không phụ thuộc class Tailwind
-           max-w-* có được build hay không). ~64rem: sidebar 16.5rem + nội dung
-           ~45rem là bề rộng đọc thoải mái, không kéo giãn thẻ. */
-        max-width: 68rem;
+           max-w-* có được build hay không).
+           - 80rem (~1280px): thoải mái đọc cho màn hình thường
+           - Bỏ max-width: auto để co giãn tự nhiên trên màn hình rộng */
+        max-width: 90rem;
     }
 
     /* Thanh bên bám theo khi cuộn.
@@ -387,7 +388,7 @@ textarea:focus-visible:not(:disabled),
     border-radius: 0.875rem;
     font-size: 13px;
     font-weight: 600;
-    color: #475569;
+    color: #475569;  /* slate-600: đảm bảo contrast ≥ 4.5:1 */
     transition: background-color .15s ease, color .15s ease;
 }
 .nav-item:hover { background-color: #f1f5f9; }

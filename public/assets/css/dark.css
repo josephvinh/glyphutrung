@@ -55,6 +55,11 @@ body {
     border-color: var(--border-color);
 }
 
+/* Bottom nav icons - dễ đọc hơn trong dark mode */
+.dark .app-bottomnav button:not(.nav-item-on) {
+    color: #94a3b8;
+}
+
 /* Cards and surfaces */
 .dark .bg-white,
 .dark .bg-slate-50,
@@ -104,7 +109,7 @@ body {
 
 /* Navigation items */
 .dark .nav-item {
-    color: var(--text-secondary);
+    color: #cbd5e1;  /* slate-300: dễ đọc hơn #94a98 trước đó */
 }
 
 .dark .nav-item:hover {
