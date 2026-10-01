@@ -93,9 +93,9 @@ Kịch bản dùng để nghiệm thu từng gói (trong `tests/e2e/`):
 - Chưa kiểm được: gửi push tới máy chủ thật của Google/Apple, Passkey với vân tay/Face ID thật, thẻ QR in thật, tải lớn trên hosting thật. Nên có bước kiểm thủ công trên thiết bị thật sau P4, P5.
 - Mọi issue liên quan có liên kết chéo trong nội dung issue (ví dụ #79 ↔ #87, #81 ↔ #101, #87 ↔ #104).
 
-## 6. Tiến độ (cập nhật 30/09/2026)
+## 6. Tiến độ (cập nhật 01/10/2026)
 
-Tóm tắt: 8 PR đã gộp vào `master` (W0, P2, P3, P6 và 4 issue nhẹ); CI giờ chạy test thật và đã kiểm là biết đỏ. Đang chờ: PR #125 (việc còn lại của W0). Dở dang: P1 và P5. Chưa bắt đầu: P4, P7, P7b, P8.
+Tóm tắt (01/10): 9 PR đã gộp vào `master` (W0 + #125, P2, P3, P6 và 4 issue nhẹ). Đang mở: #127 (P1) và #128 (P5) đang được duyệt độc lập; #135, #136, #138, #139, #140 chờ duyệt. Các PR của agent trước tách từ `audit` đã được làm lại từ `master` (xem 6.3); P8 bị đóng vì làm `data.php` trả 500.
 
 ### 6.1 Đã gộp vào `master` (sau duyệt độc lập)
 
@@ -118,42 +118,52 @@ Thứ tự gộp: #114, #112, #113, #117, #119, #120, #118, rồi #116 (W0, gộ
 - Kiểm CI có còn xanh giả không, bằng nhánh tạm phá cố ý (run #323, #324): lỗi cú pháp PHP + `const` khai báo lại + test assert sai → cả 3 job đỏ; file test gọi `exit(0)` lúc nạp (lỗi gốc #82) → PHPUnit đỏ với thông báo "Không có junit.xml — PHPUnit chết trước khi chạy xong?".
 - Kiểm branch protection (PR thử #126, đã đóng): CI đỏ nhưng trạng thái gộp là `unstable`, không phải `blocked`; `master` ghi `protected: false`. Kết luận: **chưa có quy tắc bảo vệ nhánh nào bắt buộc CI xanh** (có thể do quy tắc chưa lưu/chưa bật, hoặc gói repo không hỗ trợ). Chủ dự án hoãn việc này; xem #124.
 
-### 6.3 Đang chờ duyệt/gộp
+### 6.3 Đang chờ duyệt/gộp (kiểm lại trên GitHub và cục bộ ngày 01/10, sau khi tách lại nhánh)
 
-| PR | Nhánh | Nội dung | Trạng thái |
-|----|-------|----------|-----------|
-| #127 | `fix/p1-scope-authz` | Rò rỉ dữ liệu, phân quyền | Đã review: ACCEPT. Chờ merge |
-| #128 | `fix/p5-web-push` | Web Push SSRF, async, token | Đã review: ACCEPT. Chờ merge |
-| #132 | `fix/p8-data-performance` | data.php: attDays, scores scope, gzip | Chờ review |
-| #133 | `fix/p7b-date-format` | tracuu_norm_dob dd/mm/yyyy | Chờ review |
-| #134 | `fix/p4-security` | register_ok, RateLimiter fallback | Chờ review |
-| #135 | `fix/p7-a11y-ux` | Key collision 5 khoá | Chờ review |
-| #136 | `fix/p7b-a11y-tailwind` | Tailwind rebuild, contrast fixes | ✅ ĐÃ GỘP |
-| #137 | `fix/p9-ci-scope` | ghim eslint, cảnh báo test ngoài tests/unit/ | Chờ review |
-| #143 | `fix/p11-parseDate` | parseDate giữ chuỗi ngày sai | Chờ review |
+Các PR trước đó (#131–#134, #137) được tách từ nhánh `audit` nên chồng lên nhau và kéo theo tài liệu/mã không liên quan; đã đóng và làm lại từ `master`. Cột "Duyệt" ghi rõ cái nào đã được duyệt độc lập thật.
 
-### 6.4 Dở dang (đã đẩy lên nhánh, chưa có PR)
+| PR | Nhánh | Nội dung | CI/kiểm tra | Duyệt độc lập |
+|----|-------|----------|-------------|----------------|
+| #127 | `fix/p1-scope-authz` | P1: #78, #83, #97 | CI GitHub xanh; không xung đột | **Đang duyệt** (Opus, phiên mới); bản ghi "ACCEPT" của phiên trước chưa được xác minh |
+| #128 | `fix/p5-web-push` | P5: #99, #100, #107 | CI GitHub xanh; không xung đột | **Đang duyệt** (Opus, phiên mới); như trên |
+| #135 | `fix/p7-a11y-ux` | #121: 5 khoá trùng giữa module JS | CI xanh; tách từ `master` | chưa |
+| #136 | `fix/p7b-a11y-tailwind` | #122 + #109: dựng lại `tailwind.css`, `slate-400`→`slate-500` ở 30 view | chưa có CI; **xung đột với `master`**; tách từ `audit` | chưa; rủi ro hình ảnh lớn, cần chụp so sánh |
+| #138 | `fix/115-export-api-tests` | #115: `ExportApiTest` (11 test) | cục bộ: 219 test, 788 assertion, 0 skip | chưa (chỉ thêm test) |
+| #139 | `fix/123-fail-on-risky` | #123: `failOnRisky`/`failOnWarning` | cục bộ: 208 test; test không assertion: thoát 1 (master: 0) | chưa |
+| #140 | `fix/124-ci-scope-v2` | #124: ghim `eslint@9.39.5`, cảnh báo test ngoài `tests/unit` | YAML hợp lệ; CI chạy trên PR | chưa |
 
-| Gói | Nhánh | Tình trạng | Issue |
-|-----|-------|-----------|-------|
-| P1 rò rỉ dữ liệu, phân quyền | `fix/p1-scope-authz` | Commit WIP `9d55496`; chưa chạy đủ kịch bản, chưa duyệt. Thiết kế: `docs/audit/P1_design.md`. Nhánh cần merge lại `master` mới (có P2/P3/P6/W0) | #78, #97, #83 |
-| P5 Web Push | `fix/p5-web-push` | 5 commit (lược đồ token + hàng đợi, allowlist SSRF, gửi sau phản hồi, token subscription, chuông sau commit); còn thiếu unit test, nghiệm thu `push.py`, duyệt. Thiết kế: `docs/audit/P5_design.md`. Cũng cần merge lại `master` | #99, #100, #107 |
-| #115 test export | `audit` | PR #131. 11 tests, 5 pass, 6 fail. Bugs mới: #129, #130 | #115, #129, #130 |
+Nhánh đã đẩy nhưng **chưa mở PR** (chờ duyệt độc lập):
+- `fix/p7b-date-v2` (#108, ngày/tháng/năm): 227 test, 765 assertion, 0 lỗi, 0 skip (đã cập nhật 3 test `TracuuTest` cũ). Rủi ro cần xem: ngày mơ hồ (vd 03/05) đọc là ngày/tháng, phụ huynh quen tháng/ngày bị từ chối và dồn vào khoá 5 lần/15 phút.
+- `fix/p4-security-v2` (#84, #102): 208 test, 0 skip. Chưa có test riêng. Cần xem: khoá đếm đăng ký (`reg:<băm IP>`) có khớp `register_throttle`/`register_failed` không; fallback file của `RateLimiter` ghi vào `cache/` (quyền ghi trên hosting, race giữa đọc và ghi).
+
+**Đã đóng, không có bản thay thế:** #132 (P8, #90). Khi tách lại và cho `DataApiTest` chạy thật phát hiện bản sửa làm `data.php` trả 500 cho mọi người: biến `$studentDetails` không vào `use` của closure; truy vấn dùng cột `terms.status` không tồn tại; khoá cache không gồm tham số mới; mặc định đổi hành vi (attendance 30 ngày, điểm một học kỳ) ngược với mô tả. Bản `DataApiTest` cũ tự bỏ qua cả 10 test (tìm admin `must_change_pw=0` mà cài mới không có, nên CI "xanh" nếu không có chốt chặn skip). **P8 phải thiết kế lại sau P1** (cùng sửa `data.php`, khoá cache v2).
+
+**Đã đóng vì không phải lỗi thật:** #129, #130 (chỉ xuất hiện trên nhánh `audit` cũ; `master` đã được #112 sửa; 11 test của `ExportApiTest` đều đạt trên `master`).
+
+**Bài học cho phiên sau:** nhánh gói phải tách từ `origin/master`, không từ `audit`. Nhánh `audit` còn chứa vài thay đổi mã đã được tách ra các PR riêng (`ExportApiTest`, `phpunit.xml`, `QrScanApiTest`, bản sửa `export.php` cũ): đừng lấy mã từ `audit`, đặc biệt `export.php` (áp nguyên file sẽ hoàn tác #112). Mọi test mới phải được xác nhận **chạy thật** (không skip) trước khi tin là xanh.
+
+### 6.4 Dở dang
+
+| Việc | Tình trạng |
+|------|-----------|
+| P8 (#90) | Thiết kế lại sau P1 (xem trên) |
+| #124 phần còn lại | Lint JS trong PHP, chạy e2e trong CI, bảo vệ nhánh (hoãn) |
+| #123 phần còn lại | Nâng `min_tests` sát 208, sàn assertion |
 
 ### 6.5 Chưa làm / Đang làm (thứ tự đề nghị)
 
 1. ~~**Gộp #125**~~ ✅ ĐÃ GỘP.
 2. ~~**#115**~~ ✅ PR #131. Viết `ExportApiTest.php` (11 tests). Bugs: #129, #130.
-3. ~~**#123**~~ ✅ ĐÃ GỘP. Bật `failOnRisky`/`failOnWarning`.
+3. **#123**: `failOnRisky`/`failOnWarning` đã commit `ea2cdaf` nhưng đang nằm trong nhánh `audit` (PR #131) và các nhánh tách từ nó; cần đưa vào một PR riêng từ `master`. Còn thiếu: nâng `min_tests`, sàn assertion.
 4. **P1**: hoàn tất theo `docs/audit/P1_design.md`; chạy `e2e2.py` (SCOPE-01…03), `extra.py` (STAFF-06), `e2e.py` (AUTH-05), `p1_regress.py`; duyệt độc lập bằng phiên khác phiên viết; mở PR. Mặc định đã chốt: chỉ quản trị viên xem `logs`; BĐH không sửa BĐH khác nhưng sửa được định danh của mình; GLV không thấy tài khoản chờ duyệt; danh bạ SĐT giữ cho vai có quyền `staff` (GLV có).
 5. **P5**: hoàn tất unit test, nghiệm thu `push.py` (PUSH-20, 21, 22); duyệt độc lập; mở PR. Mặc định đã chốt: gửi bất đồng bộ, chỉ 4 dịch vụ push, tự xoá subscription lỗi, quá độ 30 ngày, giới hạn "Send-test" để P4.
 6. **#98** (sau P1): kiểm tra SĐT trong `StaffService`.
 7. **P4** (sau P1, cùng sửa `_bootstrap.php`): #84, #102 (APCu, fallback không im lặng), #103, #96, #95, giới hạn tần suất "Send-test", và CSRF cho logout.
 8. **P8** (sau P1): #90 kích thước `data.php`.
-9. **P7b**: chuẩn hoá `dd/mm/yyyy` toàn web; #108 (tra cứu nhận dd/mm/yyyy, tạm chấp nhận mm/dd/yyyy cũ khi không mơ hồ); #111 (parseDate giữ chuỗi ngày sai → server báo lỗi). Phần hiển thị danh sách lỗi + đánh số dòng Excel chưa làm.
+9. **P7b**: chuẩn hoá `dd/mm/yyyy` toàn web; #108 (tra cứu nhận dd/mm/yyyy, tạm chấp nhận mm/dd/yyyy cũ khi không mơ hồ); #111 (`parseDate` khi nhập Excel). Bước kiểm kê trước đó chưa hoàn tất, cần chạy lại.
 10. ~~**P7 (#121)**~~ ✅ PR #135. 5 khoá trùng: init→initCore, printReport→printClassReport, xoá hasActiveFilter/clearFilters (access), attendanceRate (dashboard).
-11. ~~**P7 (2)**~~ ✅ ĐÃ GỘP #136. #122: quy trình build Tailwind (tailwind.config.js, @tailwind directives), fix left-3.5→left-4, pl-10→pl-11; #109: đổi text-slate-400→text-slate-500 (1.000 vi phạm tương phản).
-12. ~~**#124**~~ ✅ PR #137. Ghim eslint, tạo eslint.config.js, thêm CI kiểm tra test ngoài tests/unit/, cảnh báo inline JS. **Branch protection chưa bật (hoãn)**.
+11. **P7 (2)**: #109 (a11y 1098 vi phạm tương phản), #122 (build lại tailwind.css thiếu lớp).
+12. **#124**: CI chưa chạy `tests/UnitTest.php` và e2e; 12 khối `<script>` trong 6 file PHP chưa lint; `eslint@9` chưa ghim; **branch protection chưa bật (hoãn theo chủ dự án)**.
 12. **#110** (action `attendance` của `export.php`, cột "Tỷ lệ"): cần chủ dự án quyết định giữ hay bỏ action (xem #106).
 13. Đề nghị chưa quyết: phân công đã kết thúc mất `class_id` khi xoá lớp (chỉ mở issue nếu chủ dự án muốn).
 
@@ -169,3 +179,24 @@ Thứ tự gộp: #114, #112, #113, #117, #119, #120, #118, rồi #116 (W0, gộ
 - Môi trường dựng lại: MariaDB 10.11 cục bộ, `php -S` kèm router; công cụ đã dùng: Playwright, axe-core, PHPStan phar, PHPUnit 11, openpyxl, ffmpeg (camera giả).
 - Hai bản thiết kế nằm trong repo: `docs/audit/P1_design.md`, `docs/audit/P5_design.md`.
 - Phiên này bị chặn xoá nhánh và không đọc được cài đặt repo; việc cần quyền admin hoặc xoá nhánh phải do chủ dự án làm.
+
+## CI Fixes Applied to RED PRs (2026-10-01)
+
+### PR #134 (fix/p4-security)
+- **Issue**: `current_member(false)` called with incorrect argument
+- **Fix**: Changed to `current_member()` since function doesn't accept parameters
+- **File**: src/RateLimiter.php line 32
+- **Commit**: 51f9ec1
+
+### PR #132 (fix/p8-data-performance) 
+- **Issue**: `http()` method missing `$data` parameter for POST requests
+- **Fix**: Added optional `?array $data` parameter and CURLOPT_POSTFIELDS handling
+- **File**: tests/unit/DataApiTest.php line 87
+- **Commit**: 207f287
+
+### PR #133 (fix/p7b-date-format)
+- **Status**: Implementation reviewed, appears correct
+- **Logic**: 
+  - Prioritizes dd/mm/yyyy Vietnam format when first number > 12
+  - Falls back to mm/dd/yyyy for ambiguous cases
+- **Tests**: TracuuDobTest.php covers all scenarios
