@@ -117,3 +117,16 @@
         Header set Cache-Control "no-cache, no-store, must-revalidate"
     </FilesMatch>
 </IfModule>
+
+# ============================================================
+#  LITESPEED: không giết PHP khi client đã đóng kết nối
+#  (cho phép gửi thông báo đẩy sau khi trả phản hồi)
+#
+#  LiteSpeed WS <= 5.x: khi nhận thấy client đã ngắt, nó gửi SIGTERM
+#  tới lsphp. Lệnh noabort bảo LSWS coi request này là "long-lived"
+#  và không gửi SIGTERM sớm — để push_xa_hang() kịp chạy xong.
+# ============================================================
+<IfModule LiteSpeed>
+    RewriteEngine On
+    RewriteRule ^api/ - [E=noabort:1]
+</IfModule>
