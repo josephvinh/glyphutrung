@@ -93,9 +93,9 @@ Kịch bản dùng để nghiệm thu từng gói (trong `tests/e2e/`):
 - Chưa kiểm được: gửi push tới máy chủ thật của Google/Apple, Passkey với vân tay/Face ID thật, thẻ QR in thật, tải lớn trên hosting thật. Nên có bước kiểm thủ công trên thiết bị thật sau P4, P5.
 - Mọi issue liên quan có liên kết chéo trong nội dung issue (ví dụ #79 ↔ #87, #81 ↔ #101, #87 ↔ #104).
 
-## 6. Tiến độ (cập nhật 30/09/2026)
+## 6. Tiến độ (cập nhật 01/10/2026)
 
-Tóm tắt: 8 PR đã gộp vào `master` (W0, P2, P3, P6 và 4 issue nhẹ); CI giờ chạy test thật và đã kiểm là biết đỏ. Đang chờ: PR #125 (việc còn lại của W0). Dở dang: P1 và P5. Chưa bắt đầu: P4, P7, P7b, P8.
+Tóm tắt (đã đối chiếu với GitHub ngày 01/10): 9 PR đã gộp vào `master` (W0 + #125, P2, P3, P6 và 4 issue nhẹ). **9 PR đang mở** (#127, #128, #131–#137), **chưa PR nào được chủ dự án gộp sau #125**. 3 PR có PHPUnit đỏ (#132, #133, #134), 2 PR chưa có CI (#136, #137). Nhiều nhánh được tách từ `audit` và chồng lên nhau, nên **không gộp độc lập được** (xem 6.3).
 
 ### 6.1 Đã gộp vào `master` (sau duyệt độc lập)
 
@@ -118,30 +118,39 @@ Thứ tự gộp: #114, #112, #113, #117, #119, #120, #118, rồi #116 (W0, gộ
 - Kiểm CI có còn xanh giả không, bằng nhánh tạm phá cố ý (run #323, #324): lỗi cú pháp PHP + `const` khai báo lại + test assert sai → cả 3 job đỏ; file test gọi `exit(0)` lúc nạp (lỗi gốc #82) → PHPUnit đỏ với thông báo "Không có junit.xml — PHPUnit chết trước khi chạy xong?".
 - Kiểm branch protection (PR thử #126, đã đóng): CI đỏ nhưng trạng thái gộp là `unstable`, không phải `blocked`; `master` ghi `protected: false`. Kết luận: **chưa có quy tắc bảo vệ nhánh nào bắt buộc CI xanh** (có thể do quy tắc chưa lưu/chưa bật, hoặc gói repo không hỗ trợ). Chủ dự án hoãn việc này; xem #124.
 
-### 6.3 Đang chờ duyệt/gộp
+### 6.3 Đang chờ duyệt/gộp (trạng thái kiểm trên GitHub ngày 01/10)
 
-| PR | Nhánh | Nội dung | Trạng thái |
-|----|-------|----------|-----------|
-| #127 | `fix/p1-scope-authz` | Rò rỉ dữ liệu, phân quyền | Đã review: ACCEPT. Chờ merge |
-| #128 | `fix/p5-web-push` | Web Push SSRF, async, token | Đã review: ACCEPT. Chờ merge |
-| #132 | `fix/p8-data-performance` | data.php: attDays, scores scope, gzip | Chờ review |
-| #133 | `fix/p7b-date-format` | tracuu_norm_dob dd/mm/yyyy | Chờ review |
-| #134 | `fix/p4-security` | register_ok, RateLimiter fallback | Chờ review |
-| #135 | `fix/p7-a11y-ux` | Key collision 5 khoá | Chờ review |
+Cột "Duyệt" là điều ghi trong bản kế hoạch do phiên trước ghi; phiên viết bản này **chưa xác minh** ai duyệt và duyệt độc lập tới đâu, nên chưa coi là "đã duyệt độc lập".
 
-### 6.4 Dở dang (đã đẩy lên nhánh, chưa có PR)
+| PR | Nhánh | Nội dung | CI (PHPUnit / Lint / Syntax) | Xung đột với `master` | Duyệt (theo ghi chú) |
+|----|-------|----------|------------------------------|----------------------|---------------------|
+| #127 | `fix/p1-scope-authz` | P1: #78, #83, #97 | xanh / xanh / xanh | không | ghi "ACCEPT" |
+| #128 | `fix/p5-web-push` | P5: #99, #100, #107 | xanh / xanh / xanh | không | ghi "ACCEPT" |
+| #131 | `audit` | #115: `ExportApiTest` (11 test; mô tả PR nói 6 test đỏ vì lỗi mới #129, #130) và #123 `failOnRisky` | xanh | không | chưa |
+| #132 | `fix/p8-data-performance` | P8 #90 | **PHPUnit đỏ** | không | chưa |
+| #133 | `fix/p7b-date-format` | P7b #108: `tracuu_norm_dob` dd/mm/yyyy | **PHPUnit đỏ** | không | chưa |
+| #134 | `fix/p4-security` | P4: #84, #102 | **PHPUnit đỏ** | không | chưa |
+| #135 | `fix/p7-a11y-ux` | #121: 5 khoá trùng giữa module JS | xanh | không | chưa |
+| #136 | `fix/p7b-a11y-tailwind` | #122 + #109: dựng lại `tailwind.css`, đổi `slate-400`→`slate-500` ở 30 view | chưa có CI | **có xung đột** | chưa |
+| #137 | `fix/p9-ci-scope` | #124: ghim eslint, cảnh báo test ngoài `tests/unit` | chưa có CI | **có xung đột** | chưa |
 
-| Gói | Nhánh | Tình trạng | Issue |
-|-----|-------|-----------|-------|
-| P1 rò rỉ dữ liệu, phân quyền | `fix/p1-scope-authz` | Commit WIP `9d55496`; chưa chạy đủ kịch bản, chưa duyệt. Thiết kế: `docs/audit/P1_design.md`. Nhánh cần merge lại `master` mới (có P2/P3/P6/W0) | #78, #97, #83 |
-| P5 Web Push | `fix/p5-web-push` | 5 commit (lược đồ token + hàng đợi, allowlist SSRF, gửi sau phản hồi, token subscription, chuông sau commit); còn thiếu unit test, nghiệm thu `push.py`, duyệt. Thiết kế: `docs/audit/P5_design.md`. Cũng cần merge lại `master` | #99, #100, #107 |
-| #115 test export | `audit` | PR #131. 11 tests, 5 pass, 6 fail. Bugs mới: #129, #130 | #115, #129, #130 |
+**Cảnh báo cấu trúc nhánh (quan trọng trước khi gộp):**
+- `fix/p8-data-performance`, `fix/p7b-date-format`, `fix/p4-security`, `fix/p7b-a11y-tailwind`, `fix/p9-ci-scope` được tách từ `audit` chứ không từ `master`. Mỗi nhánh mang theo 20+ commit gồm báo cáo, kịch bản e2e, các lần cập nhật kế hoạch, `ExportApiTest` (có test đỏ do #129/#130) và `failOnRisky` (#123). `fix/p4-security` còn chứa cả P8 và P7b (nhánh chồng nhau). Gộp một PR sẽ kéo theo toàn bộ phần này và có thể làm `master` đỏ.
+- PR #131 dùng chính nhánh `audit` làm nhánh nguồn: gộp sẽ đưa tài liệu kế hoạch/bàn giao vào `master`.
+- Đề nghị: tách lại từng gói từ `origin/master` (cherry-pick đúng commit của gói), mỗi PR một gói; sửa #129 và #130 trước hoặc cùng lúc với `ExportApiTest`; chạy lại CI; duyệt độc lập bằng phiên khác.
+
+### 6.4 Dở dang
+
+| Việc | Tình trạng |
+|------|-----------|
+| #129, #130 (lỗi `export.php` do `ExportApiTest` phát hiện) | Chưa sửa; đang chặn `ExportApiTest` xanh |
+| P1, P5 | Đã có PR #127, #128 (CI xanh); chờ duyệt độc lập đã xác minh và quyết định gộp |
 
 ### 6.5 Chưa làm / Đang làm (thứ tự đề nghị)
 
 1. ~~**Gộp #125**~~ ✅ ĐÃ GỘP.
 2. ~~**#115**~~ ✅ PR #131. Viết `ExportApiTest.php` (11 tests). Bugs: #129, #130.
-3. **#123**: Bật `failOnRisky`/`failOnWarning`. Đã commit `ea2cdaf`. Sửa QrScanApiTest cho Windows.
+3. **#123**: `failOnRisky`/`failOnWarning` đã commit `ea2cdaf` nhưng đang nằm trong nhánh `audit` (PR #131) và các nhánh tách từ nó; cần đưa vào một PR riêng từ `master`. Còn thiếu: nâng `min_tests`, sàn assertion.
 4. **P1**: hoàn tất theo `docs/audit/P1_design.md`; chạy `e2e2.py` (SCOPE-01…03), `extra.py` (STAFF-06), `e2e.py` (AUTH-05), `p1_regress.py`; duyệt độc lập bằng phiên khác phiên viết; mở PR. Mặc định đã chốt: chỉ quản trị viên xem `logs`; BĐH không sửa BĐH khác nhưng sửa được định danh của mình; GLV không thấy tài khoản chờ duyệt; danh bạ SĐT giữ cho vai có quyền `staff` (GLV có).
 5. **P5**: hoàn tất unit test, nghiệm thu `push.py` (PUSH-20, 21, 22); duyệt độc lập; mở PR. Mặc định đã chốt: gửi bất đồng bộ, chỉ 4 dịch vụ push, tự xoá subscription lỗi, quá độ 30 ngày, giới hạn "Send-test" để P4.
 6. **#98** (sau P1): kiểm tra SĐT trong `StaffService`.

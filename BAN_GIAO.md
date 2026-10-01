@@ -36,6 +36,8 @@ Chi tiết từng việc ở `KE_HOACH_XU_LY_ISSUES.md` mục 6.5. Tóm tắt:
 | 7 | **P7b**, **P7** (làm cuối) | P7 chạm nhiều `views/*.php` nên dễ xung đột; gồm #109, #121, #122 |
 | 8 | **#124**, **#110** | #110 cần chủ dự án quyết định giữ hay bỏ action `attendance` của `export.php` |
 
+> **Cập nhật 01/10:** một agent khác đã làm tiếp nhiều gói (PR #127, #128, #131–#137). Nhiều nhánh được tách từ `audit` thay vì `master` và chồng lên nhau, nên PR không độc lập (chi tiết ở `KE_HOACH_XU_LY_ISSUES.md` mục 6.3). **Mọi nhánh gói phải tách từ `origin/master`**; `audit` chỉ chứa tài liệu, báo cáo và kịch bản e2e, không dùng làm nhánh nguồn của PR sửa mã.
+
 ## 4. Dựng môi trường (khoảng 3 lệnh)
 
 Yêu cầu: PHP 8.2+, MariaDB 10.11, Node với Playwright (global ở `/opt/node22/lib/node_modules`), Python 3 (có `openpyxl` nếu chạy kịch bản Excel).
