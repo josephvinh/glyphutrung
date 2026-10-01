@@ -68,6 +68,10 @@ class StaffService
         if ($phone === '') {
             return ['ok' => false, 'error' => 'Vui lòng nhập số điện thoại.'];
         }
+        // SĐT Việt Nam: 10 số, bắt đầu bằng 0 (#98)
+        if (!preg_match('/^0\d{9}$/', $phone)) {
+            return ['ok' => false, 'error' => 'Số điện thoại không hợp lệ (cần 10 số bắt đầu bằng 0).'];
+        }
 
         $old = $id ? db_one('SELECT id, role_code, full_name FROM members WHERE id=?', [$id]) : null;
         if ($id && !$old) {
