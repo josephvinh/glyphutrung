@@ -120,7 +120,9 @@ switch ($action) {
         }
 
         try {
-            $WebAuthn->processGet($clientDataJSON, $authenticatorData, $signature, $passkey['public_key'], $challenge, null, false);
+            // Kiểm tra bộ đếm chữ ký để phát hiện khoá bị sao chép (#103)
+            $WebAuthn->processGet($clientDataJSON, $authenticatorData, $signature,
+                $passkey['public_key'], $challenge, $passkey['sign_count'] ?? 0, true);
 
             db_run("UPDATE member_passkeys SET sign_count = sign_count + 1, last_used_at = NOW() WHERE id = ?", [$passkey['id']]);
 
@@ -159,7 +161,9 @@ switch ($action) {
 
         } catch (\Throwable $ex) {
             passkey_failed($passkey['member_id'], $credentialIdBase64, client_ip());
-            json_fail('Lỗi xác thực vân tay: ' . $ex->getMessage());
+            // Trả thông báo chung, ghi chi tiết vào log (#103)
+            error_log('Passkey verification failed: ' . get_class($ex) . ': ' . $ex->getMessage());
+            json_fail('Xác thực sinh trắc học thất bại. Vui lòng thử lại.');
         }
         break;
 }

@@ -150,7 +150,9 @@ switch ($action) {
         require_post();
 
         // Rate limiting: giới hạn số lần đăng ký từ cùng một IP
+        // Dùng cả table-based (login_attempts) lẫn RateLimiter-based để defense in depth
         register_throttle();
+        enforce_register_rate_limit();
 
         $holy  = mb_convert_case(preg_replace('/\s+/', ' ', trim((string) ($in['holyName'] ?? ''))), MB_CASE_TITLE, 'UTF-8');
         $name  = mb_convert_case(preg_replace('/\s+/', ' ', trim((string) ($in['fullName'] ?? ''))), MB_CASE_TITLE, 'UTF-8');
@@ -210,6 +212,7 @@ switch ($action) {
         Cache::flush();
 
         // KHÔNG xóa track đăng ký - giới hạn 3 lần/giờ/IP kể cả thành công
+        // (dùng register_throttle table-based + enforce_register_rate_limit RateLimiter-based)
         // để chặn spam hàng đợi "chờ duyệt"
 
         json_out(['ok' => true, 'code' => $code]);
