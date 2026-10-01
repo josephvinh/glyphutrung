@@ -124,6 +124,13 @@ switch ($action) {
 
         if (!db_one('SELECT id FROM members WHERE id = ?', [$memberId]))
             json_fail('Không tìm thấy thành viên.', 404);
+
+        // Không phân công gì cho admin/bdh (#141)
+        $targetMember = db_one('SELECT role_code FROM members WHERE id=?', [$memberId]);
+        if ($targetMember && in_array($targetMember['role_code'], ['admin', 'bdh'], true)) {
+            json_fail('Không thể phân công cho tài khoản Quản trị hoặc Ban Điều Hành.', 403);
+        }
+
         if ($classId) {
             // Khối của phân công luôn lấy từ lớp — không tin block_id client gửi
             $cls = db_one('SELECT block_id FROM classes WHERE id = ?', [$classId]);
@@ -187,6 +194,13 @@ switch ($action) {
         $row = db_one('SELECT * FROM member_assignments WHERE id = ?', [$assignmentId]);
         if (!$row) json_fail('Không tìm thấy phân công.');
         if ($row['to_date'] !== null) json_fail('Phân công đã kết thúc trước đó.');
+
+        // Không kết thúc phân công của admin/bdh (#141)
+        $targetMember = db_one('SELECT role_code FROM members WHERE id=?', [(int) $row['member_id']]);
+        if ($targetMember && in_array($targetMember['role_code'], ['admin', 'bdh'], true)) {
+            json_fail('Không thể kết thúc phân công của tài khoản Quản trị hoặc Ban Điều Hành.', 403);
+        }
+
         if (!can_manage_assignment_scope($meEditor, $row['block_id'] ? (int) $row['block_id'] : null,
                                          $row['class_id'] ? (int) $row['class_id'] : null))
             json_fail('Bạn không có quyền kết thúc phân công này.', 403);

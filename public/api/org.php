@@ -195,6 +195,10 @@ switch ($action) {
         if ($memberId) {
             $m = db_one('SELECT id, role_code, full_name FROM members WHERE id=?', [$memberId]);
             if (!$m) json_fail('Không tìm thấy thành viên.', 404);
+            // Không phân công chủ nhiệm/trưởng khối cho admin/bdh (#141)
+            if (in_array($m['role_code'], ['admin', 'bdh'], true)) {
+                json_fail('Không thể phân công chủ nhiệm/trưởng khối cho tài khoản Quản trị hoặc Ban Điều Hành.', 403);
+            }
         }
 
         $roleCode = $isClass ? 'glv_chu_nhiem' : 'truong_khoi';
