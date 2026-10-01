@@ -519,7 +519,14 @@ CREATE TABLE IF NOT EXISTS push_subscriptions (
     ua          VARCHAR(255) NULL COMMENT 'để người dùng nhận ra máy nào',
     created_at  DATETIME     NOT NULL,
     last_ok_at  DATETIME     NULL,
+    token_hash      CHAR(64)          NULL COMMENT 'SHA-256 (hex) của token máy, NULL = dòng cũ trước bản vá',
+    ring_seq        INT UNSIGNED      NOT NULL DEFAULT 0 COMMENT 'tăng 1 mỗi lần cần rung máy này',
+    ring_done       INT UNSIGNED      NOT NULL DEFAULT 0 COMMENT 'giá trị ring_seq đã rung xong',
+    ring_lock_until DATETIME          NULL COMMENT 'đang có tiến trình giữ / chờ thử lại tới lúc này',
+    ring_tries      TINYINT UNSIGNED  NOT NULL DEFAULT 0,
+    last_fail_code  SMALLINT          NULL COMMENT 'mã HTTP lỗi gần nhất (0 = timeout/không kết nối)',
     UNIQUE KEY uq_push (endpoint(255)),
+    UNIQUE KEY uq_push_token (token_hash),
     KEY idx_push_member (member_id),
     CONSTRAINT fk_push_member FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

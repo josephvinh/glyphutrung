@@ -68,7 +68,7 @@ foreach ($dsCT as $ct) {
                   . ' — còn ' . $phut . ' phút',
                   '/#attendance', $tag);
 
-    echo "Nhắc {$ct['name']}: " . count($nguoi) . " người, rung được $n máy.\n";
+    echo "Nhắc {$ct['name']}: " . count($nguoi) . " người, xếp hàng rung $n máy.\n";
     $daNhac++;
 }
 
@@ -79,3 +79,16 @@ if ($daNhac === 0) echo "Chưa tới giờ nhắc.\n";
 // máy tắt cả tuần, mở lên vẫn nên thấy việc còn tồn.
 db_run('DELETE FROM push_outbox WHERE taken_at IS NOT NULL AND taken_at < DATE_SUB(NOW(), INTERVAL 7 DAY)');
 db_run('DELETE FROM push_outbox WHERE taken_at IS NULL AND created_at < DATE_SUB(NOW(), INTERVAL 30 DAY)');
+
+// Dọn đăng ký cũ có endpoint ngoài danh sách dịch vụ push được phép (#99).
+// Đã xoá lười lúc gửi, ở đây dọn chủ động cho sạch.
+foreach (db_all('SELECT id, endpoint FROM push_subscriptions') as $dk) {
+    if (!push_endpoint_hop_le((string) $dk['endpoint'])['ok']) {
+        db_run('DELETE FROM push_subscriptions WHERE id = ?', [$dk['id']]);
+    }
+}
+
+// Xả nốt hàng đợi chuông còn tồn (máy bị lỗi tạm ở các lượt trước, dòng bị
+// bỏ dở do tiến trình web bị ngắt...).
+$xa = push_xa_hang(200, 20.0);
+echo "Xả hàng đợi thông báo đẩy: rung {$xa['rung']} máy, lỗi {$xa['loi']}.\n";
