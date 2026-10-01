@@ -35,11 +35,6 @@ module.exports = {
       fontSize: {
         micro: ['11px', '1.35'],
       },
-      borderRadius: {
-        'field': '1.25rem',   // Input fields - pill shape
-        'card': '1rem',       // Card containers
-        'panel': '1.5rem',   // Panel containers
-      },
     },
   },
   plugins: [],
