@@ -37,7 +37,7 @@ if (!headers_sent()) {
          . "style-src 'self' 'unsafe-inline'; "
          . "img-src 'self' data: https: blob:; "
          . "font-src 'self'; connect-src 'self'; "
-         . "base-uri 'self'; form-action 'self'; frame-ancestors 'none';");
+         . "object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';");
     if (!empty($_SERVER['HTTPS'])) {
         header('Strict-Transport-Security: max-age=15552000');
     }

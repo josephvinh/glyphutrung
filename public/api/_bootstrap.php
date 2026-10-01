@@ -248,8 +248,16 @@ function login_failed(string $phone): void
     // Dọn rác: chỉ giữ lại phần còn trong cửa sổ xét
     db_run('DELETE FROM login_attempts WHERE tried_at < ?',
            [date('Y-m-d H:i:s', time() - DN_CUA_SO_PHUT * 60)]);
-    // Làm chậm với jitter để tránh timing attack
-    usleep(200000 + random_int(0, 200000)); // 200-400ms
+
+    // Chỉ làm chậm khi đã có >= 1 lần sai gần đây để tránh giữ worker khi brute-force
+    $recent = (int) db_one(
+        'SELECT COUNT(*) n FROM login_attempts WHERE phone = ? AND tried_at > ?',
+        [$phone, date('Y-m-d H:i:s', time() - 300)]
+    )['n'];
+    if ($recent > 1) {
+        $baseDelay = min(200000 * $recent, 1000000); // max 1s, tăng theo số lần sai
+        usleep($baseDelay + random_int(0, 100000)); // thêm jitter 0-100ms
+    }
 }
 
 /** Đăng nhập đúng thì xoá lịch sử sai của số đó, CHỈ login thường */
