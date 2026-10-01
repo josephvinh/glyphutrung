@@ -56,7 +56,7 @@
     <!-- 4. PHẠM VI PHỤ TRÁCH -->
     <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100 mb-5">
         <div class="flex items-center justify-between mb-4">
-            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider" x-text="myScopeLabel"></h3>
+            <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider" x-text="myScopeLabel"></h3>
             <button x-show="canAccess('students')" @click="openModule('students')" style="display: none;"
                     class="tap-safe text-micro font-bold text-blue-600 flex items-center gap-1 active:scale-95 transition-transform">
                 Xem danh sách <i data-lucide="chevron-right" class="w-3 h-3"></i>
@@ -82,7 +82,7 @@
 
     <!-- 5. HOẠT ĐỘNG CỦA TÔI -->
     <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100 mb-5">
-        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Hoạt động của tôi</h3>
+        <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4">Hoạt động của tôi</h3>
         <div class="flex items-center gap-4">
             <div class="w-11 h-11 shrink-0 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
                 <i data-lucide="activity" class="w-5 h-5"></i>
@@ -102,14 +102,14 @@
          thoại lẫn máy tính thì bật ở máy nào máy đó nhận. Vì vậy nút này
          luôn nói về "máy này", không nói về "tài khoản của bạn". -->
     <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100 mb-4">
-        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Thông báo</h3>
+        <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4">Thông báo</h3>
 
         <!-- Trường hợp bật được -->
         <div x-show="tbHoTro" style="display: none;">
             <button @click="pushGat()" :disabled="tbDangChay" type="button"
                     class="w-full flex items-center gap-3 text-left active:scale-[0.98] transition-transform disabled:opacity-50">
                 <div class="w-10 h-10 shrink-0 rounded-2xl flex items-center justify-center border transition-colors"
-                     :class="tbDaBat ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 'bg-slate-50 border-slate-200 text-slate-400'">
+                     :class="tbDaBat ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 'bg-slate-50 border-slate-200 text-slate-500'">
                     <i :data-lucide="tbDaBat ? 'bell-ring' : 'bell-off'" class="w-5 h-5"></i>
                 </div>
                 <div class="flex-1 min-w-0">
@@ -166,7 +166,7 @@
 
         <!-- Máy/trình duyệt không làm được -->
         <div x-show="!tbHoTro && !tbCanCaiApp && !tbBiChan" style="display: none;" class="flex items-start gap-3">
-            <div class="w-10 h-10 shrink-0 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-400">
+            <div class="w-10 h-10 shrink-0 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-500">
                 <i data-lucide="bell-off" class="w-5 h-5"></i>
             </div>
             <div class="flex-1 min-w-0">
@@ -181,7 +181,7 @@
 
     <!-- 8. PHÂN CÔNG CỦA BẠN -->
     <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100 mb-5">
-        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Phân công của bạn</h3>
+        <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Phân công của bạn</h3>
         <div class="space-y-2">
             <template x-for="a in assignments" :key="a.id">
                 <div class="flex items-center gap-2 bg-slate-50 rounded-xl px-3 py-2">
@@ -192,13 +192,13 @@
                     <span x-show="a.isPrimary" class="text-micro font-black text-amber-600">★</span>
                 </div>
             </template>
-            <p x-show="assignments.length === 0" class="text-sm text-slate-400 italic">Chưa có phân công nào.</p>
+            <p x-show="assignments.length === 0" class="text-sm text-slate-500 italic">Chưa có phân công nào.</p>
         </div>
     </div>
 
     <!-- 9. TÀI KHOẢN -->
     <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100">
-        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Tài khoản</h3>
+        <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4">Tài khoản</h3>
 
         <div class="space-y-3">
             <button @click="openChangePassword()" type="button"
@@ -285,7 +285,7 @@
                         <input x-model="profileForm.fullName" type="text" required aria-required="true"
                                aria-describedby="fullName-hint"
                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
-                        <p id="fullName-hint" class="text-micro text-slate-400 mt-1">Bắt buộc nhập</p>
+                        <p id="fullName-hint" class="text-micro text-slate-500 mt-1">Bắt buộc nhập</p>
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
@@ -375,7 +375,7 @@
                        autocomplete="new-password" aria-describedby="pw-strength"
                        class="w-full bg-slate-50 border border-slate-200 rounded-field px-3 py-3 text-sm font-semibold text-slate-800 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 transition-all">
                 <p id="pw-strength" class="text-micro mt-1.5" aria-live="polite"
-                   :class="pwForm.next.length === 0 ? 'text-slate-400'
+                   :class="pwForm.next.length === 0 ? 'text-slate-500'
                           : (pwForm.next.length < 6 ? 'text-rose-600' : 'text-emerald-600')"
                    x-text="pwForm.next.length === 0 ? 'Từ 6 ký tự trở lên'
                           : (pwForm.next.length < 6 ? 'Còn thiếu ' + (6 - pwForm.next.length) + ' ký tự'

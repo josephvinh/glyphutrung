@@ -9,7 +9,7 @@
             </button>
             <div class="min-w-0">
                 <h2 class="text-xl font-black text-slate-800 tracking-tight truncate">Trạm Đổi Quà</h2>
-                <p class="text-micro text-slate-400" x-text="rwMode==='pos' ? 'Quét thẻ · trừ Mộc · giao quà tại quầy' : 'Xác nhận đơn đặt trước online'"></p>
+                <p class="text-micro text-slate-500" x-text="rwMode==='pos' ? 'Quét thẻ · trừ Mộc · giao quà tại quầy' : 'Xác nhận đơn đặt trước online'"></p>
             </div>
         </div>
         <button x-show="(rwMode==='pos' && rwStep==='shop') || (rwMode==='confirm' && cfStep==='order')" style="display:none"
@@ -45,7 +45,7 @@
                 <i data-lucide="scan-line" class="w-8 h-8 text-blue-500"></i>
             </div>
             <p class="text-center text-sm font-bold text-slate-700 mb-1">Quét thẻ hoặc nhập mã thiếu nhi</p>
-            <p class="text-center text-micro text-slate-400 mb-5">Hệ thống sẽ hiện tên em và số Mộc khả dụng.</p>
+            <p class="text-center text-micro text-slate-500 mb-5">Hệ thống sẽ hiện tên em và số Mộc khả dụng.</p>
 
             <form @submit.prevent="rwSubmitCode()" class="flex gap-2 mb-3">
                 <input x-model="rwCode" type="text" inputmode="text" autocomplete="off" placeholder="VD: GDGLPT260001"
@@ -73,13 +73,13 @@
             </div>
             <div class="flex-1 min-w-0">
                 <p class="text-sm font-black text-slate-800 truncate" x-text="(rwStudent||{}).fullName || ''"></p>
-                <p class="text-micro text-slate-400" x-text="'Mã: ' + ((rwStudent||{}).code || '')"></p>
+                <p class="text-micro text-slate-500" x-text="'Mã: ' + ((rwStudent||{}).code || '')"></p>
             </div>
             <div class="text-right shrink-0">
                 <p class="text-lg font-black text-amber-600 flex items-center gap-1 justify-end">
                     <i data-lucide="stamp" class="w-4 h-4"></i><span x-text="rwAvailable"></span>
                 </p>
-                <p class="text-micro text-slate-400">Mộc khả dụng</p>
+                <p class="text-micro text-slate-500">Mộc khả dụng</p>
             </div>
         </div>
 
@@ -105,7 +105,7 @@
                     <p class="text-sm font-bold text-amber-600 flex items-center gap-1">
                         <i data-lucide="stamp" class="w-3.5 h-3.5"></i><span x-text="g.stampCost"></span> Mộc
                     </p>
-                    <p class="text-micro text-slate-400">Còn <span class="font-bold text-slate-600" x-text="rwStockLeft(g)"></span></p>
+                    <p class="text-micro text-slate-500">Còn <span class="font-bold text-slate-600" x-text="rwStockLeft(g)"></span></p>
 
                     <!-- Bộ đếm số lượng -->
                     <div x-show="rwCart[g.id]" style="display:none" class="flex items-center justify-between bg-blue-50 rounded-xl px-1 py-1">
@@ -129,7 +129,7 @@
         <div class="max-w-3xl mx-auto pointer-events-auto bg-white rounded-2xl shadow-2xl border border-slate-200 p-3 flex items-center gap-3">
             <div class="flex-1 min-w-0">
                 <p class="text-sm font-black text-slate-800"><span x-text="rwCartCount"></span> món · <span class="text-amber-600" x-text="rwCartTotal"></span> Mộc</p>
-                <p class="text-micro text-slate-400">Còn lại sau khi đổi: <span x-text="rwAvailable - rwCartTotal"></span> Mộc</p>
+                <p class="text-micro text-slate-500">Còn lại sau khi đổi: <span x-text="rwAvailable - rwCartTotal"></span> Mộc</p>
             </div>
             <button @click="rwClearCart()" type="button" class="shrink-0 text-xs font-bold text-slate-500 px-2 py-2">Xoá giỏ</button>
             <button @click="rwConfirm()" :disabled="rwBusy || rwCartTotal > rwAvailable" type="button"
@@ -154,7 +154,7 @@
                 <i data-lucide="package-check" class="w-8 h-8 text-blue-500"></i>
             </div>
             <p class="text-center text-sm font-bold text-slate-700 mb-1">Quét thẻ hoặc nhập mã thiếu nhi</p>
-            <p class="text-center text-micro text-slate-400 mb-5">Hệ thống sẽ hiện đơn đặt trước (nếu có) của em.</p>
+            <p class="text-center text-micro text-slate-500 mb-5">Hệ thống sẽ hiện đơn đặt trước (nếu có) của em.</p>
 
             <form @submit.prevent="cfSubmitCode()" class="flex gap-2 mb-3">
                 <input x-model="cfCode" type="text" inputmode="text" autocomplete="off" placeholder="VD: GDGLPT260001"
@@ -182,22 +182,22 @@
             </div>
             <div class="flex-1 min-w-0">
                 <p class="text-sm font-black text-slate-800 truncate" x-text="(cfStudent||{}).fullName || ''"></p>
-                <p class="text-micro text-slate-400" x-text="'Mã: ' + ((cfStudent||{}).code || '')"></p>
+                <p class="text-micro text-slate-500" x-text="'Mã: ' + ((cfStudent||{}).code || '')"></p>
             </div>
             <div class="text-right shrink-0">
-                <p class="text-micro text-slate-400">Đơn <span class="font-bold text-slate-600" x-text="'#' + (cfPending||{}).orderId"></span></p>
+                <p class="text-micro text-slate-500">Đơn <span class="font-bold text-slate-600" x-text="'#' + (cfPending||{}).orderId"></span></p>
                 <p class="text-micro text-rose-500 font-bold" x-text="'Hạn lấy: ' + cfFormatExpiry((cfPending||{}).expiresAt)"></p>
             </div>
         </div>
 
         <!-- Danh sách quà đã đặt -->
         <div class="bg-white rounded-card p-4 shadow-sm border border-slate-100 mb-4">
-            <p class="text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Quà đã đặt</p>
+            <p class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Quà đã đặt</p>
             <div class="divide-y divide-slate-100">
                 <template x-for="it in (cfPending||{}).items || []" :key="it.giftId">
                     <div class="py-2 flex items-center justify-between gap-3">
                         <p class="text-sm font-semibold text-slate-700 min-w-0 truncate">
-                            <span x-text="it.name"></span> <span class="text-slate-400">× </span><span x-text="it.qty"></span>
+                            <span x-text="it.name"></span> <span class="text-slate-500">× </span><span x-text="it.qty"></span>
                         </p>
                         <p class="text-sm font-bold text-amber-600 shrink-0" x-text="it.lineCost + ' Mộc'"></p>
                     </div>
@@ -213,7 +213,7 @@
 
         <!-- Nhập mật mã đổi quà + xác nhận giao -->
         <div class="bg-white rounded-card p-4 shadow-sm border border-slate-100 mb-4">
-            <label class="text-xs font-bold text-slate-400 uppercase tracking-wide mb-2 block">Mật mã đổi quà của em</label>
+            <label class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2 block">Mật mã đổi quà của em</label>
             <form @submit.prevent="cfConfirm()" class="flex gap-2">
                 <input x-model="cfPassword" type="password" autocomplete="off" placeholder="Nhập mật mã em đã đặt"
                        class="flex-1 min-w-0 bg-slate-50 border border-slate-200 rounded-field py-3 px-4 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
