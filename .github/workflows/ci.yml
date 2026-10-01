@@ -93,8 +93,8 @@ jobs:
           tests=$(grep -c '<testcase ' junit.xml || true)
           files=$(ls tests/unit/*Test.php | wc -l)
           echo "Đã chạy $tests test từ $files file test"
-          # Sàn số test: hiện có 208. Nâng dần khi thêm test; hạ chỉ khi chủ ý xoá test.
-          min_tests=200
+          # Sàn số test: hiện có 219. Nâng dần khi thêm test; hạ chỉ khi chủ ý xoá test.
+          min_tests=205
           # Test bị skip/incomplete là test không được kiểm: không cho âm thầm tăng.
           skipped=$(grep -c '<skipped' junit.xml || true)
           max_skipped=0
@@ -102,10 +102,21 @@ jobs:
             echo "::error::Có $skipped test bị skip (tối đa cho phép $max_skipped). Sửa test, hoặc nâng max_skipped một cách có chủ ý."
             exit 1
           fi
-          if [ "$tests" -lt "$min_tests" ] || [ "$tests" -lt "$files" ]; then
-            echo "::error::Số test đã chạy ($tests) thấp hơn sàn $min_tests hoặc ít hơn số file test ($files) — mất test hoặc có file làm tiến trình thoát sớm?"
+          if [ "$tests" -lt "$min_tests" ]; then
+            echo "::error::Số test đã chạy ($tests) thấp hơn sàn $min_tests — mất test hoặc có file làm tiến trình thoát sớm?"
             exit 1
           fi
+          # Kiểm tra mỗi file test có ít nhất 1 testcase trong junit.xml
+          while IFS= read -r -d '' tf; do
+            base=$(basename "$tf" .php)
+            # junit đặt class= như "Project\Namespace\TestClass" hoặc "TestClass"
+            # lấy phần cuối sau \ hoặc /
+            if ! grep -E "class=.*[^a-zA-Z]${base}(\"|'| )" junit.xml >/dev/null 2>&1; then
+              echo "::error::File $base.php không có testcase nào trong junit.xml — file có vấn đề hoặc test đã exit sớm?"
+              status=1
+            fi
+          done < <(find tests/unit -name '*Test.php' -print0)
+          if [ -n "$status" ]; then exit 1; fi
 
   php-syntax:
     name: PHP Syntax Check
