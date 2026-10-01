@@ -103,6 +103,8 @@ switch ($action) {
 
     // -------------------------------------------------------------
     case 'logout':
+        // Chỉ POST: GET cho phép trang ngoài đăng xuất người dùng bằng <img src=...> (#88).
+        require_post();
         if (current_member()) log_action('xoa', 'auth', 'Đăng xuất', '');
         $_SESSION = [];
         session_destroy();

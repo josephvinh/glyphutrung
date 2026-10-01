@@ -1,3 +1,5 @@
+-- LƯU Ý: module custom-qrcard đã bị gỡ khỏi mã nguồn; giữ tệp này để lịch sử migration nhất quán.
+-- Bảng qr_card_* vẫn còn trong DB (không xoá).
 -- Migration: 002_qr_card_templates.sql
 -- Description: Thêm bảng templates và presets cho Custom QR Card
 -- Created: 2026-09-21
