@@ -477,12 +477,12 @@ function build_attendance_rows(array $students, array $sessions, array $year): a
     $sessionCols = [];
     foreach ($sessions as $s) {
         if ($s['session_date']) {
-            $headers[] = date('d/m', strtotime($s['session_date']));
+            // Thêm tên chương trình vào tiêu đề để phân biệt các buổi cùng ngày
+            $shortName = mb_substr($s['name'] ?? 'CT', 0, 3);
+            $headers[] = $shortName . ' ' . date('d/m', strtotime($s['session_date']));
             $sessionCols[] = $s;
         }
     }
-    $headers[] = 'Tỷ lệ';
-
     $rows = [$headers];
     foreach ($students as $st) {
         $row = [
@@ -490,17 +490,12 @@ function build_attendance_rows(array $students, array $sessions, array $year): a
             trim(($st['holy_name'] ?? '') . ' ' . ($st['full_name'] ?? '')),
             (string) ($st['class_name'] ?? ''),
         ];
-        $present = 0;
-        $total = 0;
         foreach ($sessionCols as $sc) {
             $status = $attIndex[$st['id'] . '|' . $sc['program_id'] . '|' . $sc['session_date']] ?? null;
             if ($status === null) { $row[] = '-'; continue; }
-            $total++;
-            if ($status === 'có mặt' || $status === 'đi trễ') $present++;
             // P=có mặt, L=trễ, E=vắng có phép, A=vắng không phép
             $row[] = $status === 'có mặt' ? 'P' : ($status === 'đi trễ' ? 'L' : ($status === 'vắng có phép' ? 'E' : 'A'));
         }
-        $row[] = ($total > 0 ? round($present / $total * 100) : 0) . '%';
         $rows[] = $row;
     }
     return $rows;
