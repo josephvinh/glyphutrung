@@ -95,7 +95,7 @@ Kịch bản dùng để nghiệm thu từng gói (trong `tests/e2e/`):
 
 ## 6. Tiến độ (cập nhật 01/10/2026)
 
-Tóm tắt (đã đối chiếu với GitHub ngày 01/10): 9 PR đã gộp vào `master` (W0 + #125, P2, P3, P6 và 4 issue nhẹ). **9 PR đang mở** (#127, #128, #131–#137), **chưa PR nào được chủ dự án gộp sau #125**. 3 PR có PHPUnit đỏ (#132, #133, #134), 2 PR chưa có CI (#136, #137). Nhiều nhánh được tách từ `audit` và chồng lên nhau, nên **không gộp độc lập được** (xem 6.3).
+Tóm tắt (01/10): 9 PR đã gộp vào `master` (W0 + #125, P2, P3, P6 và 4 issue nhẹ). Đang mở: #127 (P1) và #128 (P5) đang được duyệt độc lập; #135, #136, #138, #139, #140 chờ duyệt. Các PR của agent trước tách từ `audit` đã được làm lại từ `master` (xem 6.3); P8 bị đóng vì làm `data.php` trả 500.
 
 ### 6.1 Đã gộp vào `master` (sau duyệt độc lập)
 
@@ -118,33 +118,37 @@ Thứ tự gộp: #114, #112, #113, #117, #119, #120, #118, rồi #116 (W0, gộ
 - Kiểm CI có còn xanh giả không, bằng nhánh tạm phá cố ý (run #323, #324): lỗi cú pháp PHP + `const` khai báo lại + test assert sai → cả 3 job đỏ; file test gọi `exit(0)` lúc nạp (lỗi gốc #82) → PHPUnit đỏ với thông báo "Không có junit.xml — PHPUnit chết trước khi chạy xong?".
 - Kiểm branch protection (PR thử #126, đã đóng): CI đỏ nhưng trạng thái gộp là `unstable`, không phải `blocked`; `master` ghi `protected: false`. Kết luận: **chưa có quy tắc bảo vệ nhánh nào bắt buộc CI xanh** (có thể do quy tắc chưa lưu/chưa bật, hoặc gói repo không hỗ trợ). Chủ dự án hoãn việc này; xem #124.
 
-### 6.3 Đang chờ duyệt/gộp (trạng thái kiểm trên GitHub ngày 01/10)
+### 6.3 Đang chờ duyệt/gộp (kiểm lại trên GitHub và cục bộ ngày 01/10, sau khi tách lại nhánh)
 
-Cột "Duyệt" là điều ghi trong bản kế hoạch do phiên trước ghi; phiên viết bản này **chưa xác minh** ai duyệt và duyệt độc lập tới đâu, nên chưa coi là "đã duyệt độc lập".
+Các PR trước đó (#131–#134, #137) được tách từ nhánh `audit` nên chồng lên nhau và kéo theo tài liệu/mã không liên quan; đã đóng và làm lại từ `master`. Cột "Duyệt" ghi rõ cái nào đã được duyệt độc lập thật.
 
-| PR | Nhánh | Nội dung | CI (PHPUnit / Lint / Syntax) | Xung đột với `master` | Duyệt (theo ghi chú) |
-|----|-------|----------|------------------------------|----------------------|---------------------|
-| #127 | `fix/p1-scope-authz` | P1: #78, #83, #97 | xanh / xanh / xanh | không | ghi "ACCEPT" |
-| #128 | `fix/p5-web-push` | P5: #99, #100, #107 | xanh / xanh / xanh | không | ghi "ACCEPT" |
-| #131 | `audit` | #115: `ExportApiTest` (11 test; mô tả PR nói 6 test đỏ vì lỗi mới #129, #130) và #123 `failOnRisky` | xanh | không | chưa |
-| #132 | `fix/p8-data-performance` | P8 #90 | **PHPUnit đỏ** | không | chưa |
-| #133 | `fix/p7b-date-format` | P7b #108: `tracuu_norm_dob` dd/mm/yyyy | **PHPUnit đỏ** | không | chưa |
-| #134 | `fix/p4-security` | P4: #84, #102 | **PHPUnit đỏ** | không | chưa |
-| #135 | `fix/p7-a11y-ux` | #121: 5 khoá trùng giữa module JS | xanh | không | chưa |
-| #136 | `fix/p7b-a11y-tailwind` | #122 + #109: dựng lại `tailwind.css`, đổi `slate-400`→`slate-500` ở 30 view | chưa có CI | **có xung đột** | chưa |
-| #137 | `fix/p9-ci-scope` | #124: ghim eslint, cảnh báo test ngoài `tests/unit` | chưa có CI | **có xung đột** | chưa |
+| PR | Nhánh | Nội dung | CI/kiểm tra | Duyệt độc lập |
+|----|-------|----------|-------------|----------------|
+| #127 | `fix/p1-scope-authz` | P1: #78, #83, #97 | CI GitHub xanh; không xung đột | **Đang duyệt** (Opus, phiên mới); bản ghi "ACCEPT" của phiên trước chưa được xác minh |
+| #128 | `fix/p5-web-push` | P5: #99, #100, #107 | CI GitHub xanh; không xung đột | **Đang duyệt** (Opus, phiên mới); như trên |
+| #135 | `fix/p7-a11y-ux` | #121: 5 khoá trùng giữa module JS | CI xanh; tách từ `master` | chưa |
+| #136 | `fix/p7b-a11y-tailwind` | #122 + #109: dựng lại `tailwind.css`, `slate-400`→`slate-500` ở 30 view | chưa có CI; **xung đột với `master`**; tách từ `audit` | chưa; rủi ro hình ảnh lớn, cần chụp so sánh |
+| #138 | `fix/115-export-api-tests` | #115: `ExportApiTest` (11 test) | cục bộ: 219 test, 788 assertion, 0 skip | chưa (chỉ thêm test) |
+| #139 | `fix/123-fail-on-risky` | #123: `failOnRisky`/`failOnWarning` | cục bộ: 208 test; test không assertion: thoát 1 (master: 0) | chưa |
+| #140 | `fix/124-ci-scope-v2` | #124: ghim `eslint@9.39.5`, cảnh báo test ngoài `tests/unit` | YAML hợp lệ; CI chạy trên PR | chưa |
 
-**Cảnh báo cấu trúc nhánh (quan trọng trước khi gộp):**
-- `fix/p8-data-performance`, `fix/p7b-date-format`, `fix/p4-security`, `fix/p7b-a11y-tailwind`, `fix/p9-ci-scope` được tách từ `audit` chứ không từ `master`. Mỗi nhánh mang theo 20+ commit gồm báo cáo, kịch bản e2e, các lần cập nhật kế hoạch, `ExportApiTest` (có test đỏ do #129/#130) và `failOnRisky` (#123). `fix/p4-security` còn chứa cả P8 và P7b (nhánh chồng nhau). Gộp một PR sẽ kéo theo toàn bộ phần này và có thể làm `master` đỏ.
-- PR #131 dùng chính nhánh `audit` làm nhánh nguồn: gộp sẽ đưa tài liệu kế hoạch/bàn giao vào `master`.
-- Đề nghị: tách lại từng gói từ `origin/master` (cherry-pick đúng commit của gói), mỗi PR một gói; sửa #129 và #130 trước hoặc cùng lúc với `ExportApiTest`; chạy lại CI; duyệt độc lập bằng phiên khác.
+Nhánh đã đẩy nhưng **chưa mở PR** (chờ duyệt độc lập):
+- `fix/p7b-date-v2` (#108, ngày/tháng/năm): 227 test, 765 assertion, 0 lỗi, 0 skip (đã cập nhật 3 test `TracuuTest` cũ). Rủi ro cần xem: ngày mơ hồ (vd 03/05) đọc là ngày/tháng, phụ huynh quen tháng/ngày bị từ chối và dồn vào khoá 5 lần/15 phút.
+- `fix/p4-security-v2` (#84, #102): 208 test, 0 skip. Chưa có test riêng. Cần xem: khoá đếm đăng ký (`reg:<băm IP>`) có khớp `register_throttle`/`register_failed` không; fallback file của `RateLimiter` ghi vào `cache/` (quyền ghi trên hosting, race giữa đọc và ghi).
+
+**Đã đóng, không có bản thay thế:** #132 (P8, #90). Khi tách lại và cho `DataApiTest` chạy thật phát hiện bản sửa làm `data.php` trả 500 cho mọi người: biến `$studentDetails` không vào `use` của closure; truy vấn dùng cột `terms.status` không tồn tại; khoá cache không gồm tham số mới; mặc định đổi hành vi (attendance 30 ngày, điểm một học kỳ) ngược với mô tả. Bản `DataApiTest` cũ tự bỏ qua cả 10 test (tìm admin `must_change_pw=0` mà cài mới không có, nên CI "xanh" nếu không có chốt chặn skip). **P8 phải thiết kế lại sau P1** (cùng sửa `data.php`, khoá cache v2).
+
+**Đã đóng vì không phải lỗi thật:** #129, #130 (chỉ xuất hiện trên nhánh `audit` cũ; `master` đã được #112 sửa; 11 test của `ExportApiTest` đều đạt trên `master`).
+
+**Bài học cho phiên sau:** nhánh gói phải tách từ `origin/master`, không từ `audit`. Nhánh `audit` còn chứa vài thay đổi mã đã được tách ra các PR riêng (`ExportApiTest`, `phpunit.xml`, `QrScanApiTest`, bản sửa `export.php` cũ): đừng lấy mã từ `audit`, đặc biệt `export.php` (áp nguyên file sẽ hoàn tác #112). Mọi test mới phải được xác nhận **chạy thật** (không skip) trước khi tin là xanh.
 
 ### 6.4 Dở dang
 
 | Việc | Tình trạng |
 |------|-----------|
-| #129, #130 (lỗi `export.php` do `ExportApiTest` phát hiện) | Chưa sửa; đang chặn `ExportApiTest` xanh |
-| P1, P5 | Đã có PR #127, #128 (CI xanh); chờ duyệt độc lập đã xác minh và quyết định gộp |
+| P8 (#90) | Thiết kế lại sau P1 (xem trên) |
+| #124 phần còn lại | Lint JS trong PHP, chạy e2e trong CI, bảo vệ nhánh (hoãn) |
+| #123 phần còn lại | Nâng `min_tests` sát 208, sàn assertion |
 
 ### 6.5 Chưa làm / Đang làm (thứ tự đề nghị)
 
