@@ -141,6 +141,12 @@ switch ($action) {
                 passkey_failed($passkey['member_id'], $credentialIdBase64, client_ip());
                 json_fail('Tài khoản bị khóa hoặc không tồn tại.');
             }
+            // Đang buộc đổi mật khẩu (#83): KHÔNG mở phiên — màn đổi mật khẩu cần
+            // mật khẩu hiện tại. Không tính là lần thử sai.
+            if (!empty($m['must_change_pw'])) {
+                json_out(['ok' => false, 'code' => 'must_change_pw',
+                          'error' => 'Tài khoản cần đổi mật khẩu. Vui lòng đăng nhập bằng số điện thoại và mật khẩu (tạm) để đổi.'], 403);
+            }
 
             login_ok($m['phone']);
             session_regenerate_id(true);

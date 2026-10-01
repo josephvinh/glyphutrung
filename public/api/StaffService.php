@@ -24,9 +24,55 @@ class StaffService
         return trim((string) ($this->in[$key] ?? $default));
     }
 
+    /**
+     * Người "được bảo vệ": vai gốc admin/bdh HOẶC đang có phân công hiệu lực vai
+     * admin/bdh (phòng thủ theo chiều sâu — assignments.php cho gán bdh qua phân công).
+     */
     public function isProtected(array $member): bool
     {
-        return in_array($member['role_code'], ['admin', 'bdh'], true);
+        return in_array($member['role_code'], ['admin', 'bdh'], true)
+            || has_active_role((int) $member['id'], 'bdh')
+            || has_active_role((int) $member['id'], 'admin');
+    }
+
+    /**
+     * Người gọi có được thao tác $op ('edit'|'delete'|'reset'|'approve') trên $target không (#97).
+     * Trả null nếu được; ngược lại ['ok'=>false,'error'=>…,'code'=>404|403|400].
+     * $target cần có id, role_code. Không đọc $this->in (kiểm thử đơn vị được).
+     *
+     *  - Mục tiêu là admin, người gọi không phải admin: 404 GIỐNG HỆT id không tồn tại
+     *    (nhất quán F9 — không cho dò ra tài khoản Quản trị qua API).
+     *  - Mục tiêu được bảo vệ (BĐH), người gọi không phải admin: 403 — trừ BĐH tự sửa
+     *    danh tính của chính mình (saveMember giữ nguyên chức danh).
+     *  - Không ai tự xoá chính mình (400).
+     *  - Admin xoá người được bảo vệ: giữ thông điệp cũ (400).
+     */
+    public function guardTarget(array $target, string $op): ?array
+    {
+        $callerIsAdmin = ($this->me['role_code'] ?? '') === 'admin';
+        $self          = (int) $target['id'] === (int) ($this->me['id'] ?? 0);
+
+        if (!$callerIsAdmin
+            && ($target['role_code'] === 'admin' || has_active_role((int) $target['id'], 'admin'))) {
+            return ['ok' => false, 'error' => 'Không tìm thấy thành viên.', 'code' => 404];
+        }
+        if (!$callerIsAdmin && $this->isProtected($target)) {
+            if ($op === 'edit' && $self) return null;
+            $msg = [
+                'edit'    => 'Chỉ Quản Trị Hệ Thống mới sửa được hồ sơ thành viên Ban Điều Hành.',
+                'delete'  => 'Chỉ Quản Trị Hệ Thống mới xoá được hồ sơ thành viên Ban Điều Hành.',
+                'reset'   => 'Chỉ Quản Trị Hệ Thống mới cấp lại mật khẩu cho Ban Điều Hành.',
+                'approve' => 'Chỉ Quản Trị Hệ Thống mới duyệt được hồ sơ thành viên Ban Điều Hành.',
+            ][$op] ?? 'Chỉ Quản Trị Hệ Thống mới thao tác được với thành viên Ban Điều Hành.';
+            return ['ok' => false, 'error' => $msg, 'code' => 403];
+        }
+        if ($op === 'delete' && $self) {
+            return ['ok' => false, 'error' => 'Không thể tự xoá tài khoản của chính mình.', 'code' => 400];
+        }
+        if ($op === 'delete' && $this->isProtected($target)) {
+            return ['ok' => false, 'error' => 'Không thể xóa tài khoản Quản trị hoặc Ban Điều Hành.', 'code' => 400];
+        }
+        return null;
     }
 
     /**
@@ -73,9 +119,12 @@ class StaffService
             return ['ok' => false, 'error' => 'Số điện thoại không hợp lệ (cần 10 số bắt đầu bằng 0).'];
         }
 
-        $old = $id ? db_one('SELECT id, role_code, full_name FROM members WHERE id=?', [$id]) : null;
+        $old = $id ? db_one('SELECT id, role_code, full_name, title_id FROM members WHERE id=?', [$id]) : null;
         if ($id && !$old) {
             return ['ok' => false, 'error' => 'Không tìm thấy thành viên.', 'code' => 404];
+        }
+        if ($old && ($deny = $this->guardTarget($old, 'edit'))) {
+            return $deny;
         }
 
         // Có phân công đang hiệu lực? (kiêm nhiệm). Dùng cho hai việc:
@@ -163,6 +212,11 @@ class StaffService
 
         $t = db_one('SELECT id FROM titles WHERE role_code=? AND label=?', [$role, $this->in('title')]);
         $titleId = $t['id'] ?? db_one('SELECT id FROM titles WHERE role_code=? ORDER BY sort_order LIMIT 1', [$role])['id'] ?? null;
+        // Người không phải admin sửa hồ sơ được bảo vệ (chỉ còn trường hợp BĐH tự sửa
+        // mình — guardTarget đã chặn phần còn lại): chỉ danh tính, giữ nguyên chức danh.
+        if ($old && !$callerIsAdmin && $this->isProtected($old)) {
+            $titleId = $old['title_id'];
+        }
 
         $dup = db_one('SELECT id FROM members WHERE phone=? AND id <> ?', [$phone, $id]);
         if ($dup) {
@@ -223,8 +277,8 @@ class StaffService
             return ['ok' => false, 'error' => 'Không tìm thấy thành viên.', 'code' => 404];
         }
 
-        if ($this->isProtected($m)) {
-            return ['ok' => false, 'error' => 'Không thể xóa tài khoản Quản trị hoặc Ban Điều Hành.'];
+        if ($deny = $this->guardTarget($m, 'delete')) {
+            return $deny;
         }
 
         // Xóa phân công
