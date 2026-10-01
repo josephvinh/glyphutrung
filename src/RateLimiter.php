@@ -29,7 +29,7 @@ class RateLimiter
     /** Lấy identifier: ưu tiên user_id nếu đăng nhập, không thì IP */
     private function getIdentifier(): string
     {
-        $me = current_member(false);
+        $me = current_member();
         if ($me) return 'u_' . $me['id'];
         return 'ip_' . $this->getClientIp();
     }
