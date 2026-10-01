@@ -131,6 +131,9 @@ Các PR trước đó (#131–#134, #137) được tách từ nhánh `audit` nê
 | #138 | `fix/115-export-api-tests` | #115: `ExportApiTest` (11 test) | cục bộ: 219 test, 788 assertion, 0 skip | chưa (chỉ thêm test) |
 | #139 | `fix/123-fail-on-risky` | #123: `failOnRisky`/`failOnWarning` | cục bộ: 208 test; test không assertion: thoát 1 (master: 0) | chưa |
 | #140 | `fix/124-ci-scope-v2` | #124: ghim `eslint@9.39.5`, cảnh báo test ngoài `tests/unit` | YAML hợp lệ; CI chạy trên PR | chưa |
+| #144 | `fix/p12-phone-validation` | #98: validate phone 10 digits in StaffService | chưa | chưa |
+| #143 | `fix/p11-parseDate` | #111: parseDate giữ chuỗi ngày sai | chưa | chưa |
+| #137 | `fix/p9-ci-scope` | #124: ghim eslint, cảnh báo test ngoài tests/unit | chưa | chưa |
 
 Nhánh đã đẩy nhưng **chưa mở PR** (chờ duyệt độc lập):
 - `fix/p7b-date-v2` (#108, ngày/tháng/năm): 227 test, 765 assertion, 0 lỗi, 0 skip (đã cập nhật 3 test `TracuuTest` cũ). Rủi ro cần xem: ngày mơ hồ (vd 03/05) đọc là ngày/tháng, phụ huynh quen tháng/ngày bị từ chối và dồn vào khoá 5 lần/15 phút.
@@ -157,7 +160,7 @@ Nhánh đã đẩy nhưng **chưa mở PR** (chờ duyệt độc lập):
 3. **#123**: `failOnRisky`/`failOnWarning` đã commit `ea2cdaf` nhưng đang nằm trong nhánh `audit` (PR #131) và các nhánh tách từ nó; cần đưa vào một PR riêng từ `master`. Còn thiếu: nâng `min_tests`, sàn assertion.
 4. **P1**: hoàn tất theo `docs/audit/P1_design.md`; chạy `e2e2.py` (SCOPE-01…03), `extra.py` (STAFF-06), `e2e.py` (AUTH-05), `p1_regress.py`; duyệt độc lập bằng phiên khác phiên viết; mở PR. Mặc định đã chốt: chỉ quản trị viên xem `logs`; BĐH không sửa BĐH khác nhưng sửa được định danh của mình; GLV không thấy tài khoản chờ duyệt; danh bạ SĐT giữ cho vai có quyền `staff` (GLV có).
 5. **P5**: hoàn tất unit test, nghiệm thu `push.py` (PUSH-20, 21, 22); duyệt độc lập; mở PR. Mặc định đã chốt: gửi bất đồng bộ, chỉ 4 dịch vụ push, tự xoá subscription lỗi, quá độ 30 ngày, giới hạn "Send-test" để P4.
-6. **#98** (sau P1): kiểm tra SĐT trong `StaffService`.
+6. ~~**#98**~~ ✅ PR #144. Validate phone 10 digits trong `StaffService`.
 7. **P4** (sau P1, cùng sửa `_bootstrap.php`): #84, #102 (APCu, fallback không im lặng), #103, #96, #95, giới hạn tần suất "Send-test", và CSRF cho logout.
 8. **P8** (sau P1): #90 kích thước `data.php`.
 9. **P7b**: chuẩn hoá `dd/mm/yyyy` toàn web; #108 (tra cứu nhận dd/mm/yyyy, tạm chấp nhận mm/dd/yyyy cũ khi không mơ hồ); #111 (`parseDate` khi nhập Excel). Bước kiểm kê trước đó chưa hoàn tất, cần chạy lại.
