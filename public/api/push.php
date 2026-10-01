@@ -34,13 +34,16 @@ switch ($action) {
         // nhận diện bằng TOKEN do máy chủ cấp lúc đăng ký (chỉ lưu băm).
         // Token sai/đã xoay/không có thì rơi xuống phiên đăng nhập → 401 nếu
         // không có phiên, không phân biệt "token sai" với "không có token".
-        $token = (string) ($in['token'] ?? '');
-        $ep    = trim((string) ($in['endpoint'] ?? ''));
+        // Chỉ nhận chuỗi: mảng/số/null thì coi như không có (không ép kiểu → không Warning).
+        $token = push_chuoi($in['token'] ?? null);
+        $ep    = trim(push_chuoi($in['endpoint'] ?? null));
         $me    = null;
+        // Chỉ thành viên đang phục vụ / tạm nghỉ mới nhận nội dung. 'chờ duyệt' (chưa được
+        // duyệt vào đoàn) và 'đã nghỉ' bị loại như nhau: rơi xuống require_login() → 401.
         if (push_token_dung_dinh_dang($token)) {
             $sub = db_one("SELECT s.member_id FROM push_subscriptions s
                              JOIN members m ON m.id = s.member_id
-                            WHERE s.token_hash = ? AND m.status <> 'đã nghỉ'",
+                            WHERE s.token_hash = ? AND m.status IN ('đang phục vụ','tạm nghỉ')",
                           [push_bam_token($token)]);
             if ($sub) $me = ['id' => (int) $sub['member_id']];
         }
@@ -49,7 +52,8 @@ switch ($action) {
         if (!$me && $ep !== '' && push_con_nhan_endpoint_cu()) {
             $sub = db_one("SELECT s.member_id FROM push_subscriptions s
                              JOIN members m ON m.id = s.member_id
-                            WHERE s.endpoint = ? AND s.token_hash IS NULL AND m.status <> 'đã nghỉ'", [$ep]);
+                            WHERE s.endpoint = ? AND s.token_hash IS NULL
+                              AND m.status IN ('đang phục vụ','tạm nghỉ')", [$ep]);
             if ($sub) $me = ['id' => (int) $sub['member_id']];
         }
         if (!$me) $me = require_login();
@@ -73,7 +77,7 @@ switch ($action) {
     case 'status':
         $me  = require_login();
         $cfg = app_config('push');
-        $ep  = (string) ($_GET['endpoint'] ?? '');
+        $ep  = push_chuoi($_GET['endpoint'] ?? null);
         $may = $ep !== '' ? db_one(
             'SELECT id, last_ok_at, last_fail_code, (token_hash IS NULL) AS chua_token
                FROM push_subscriptions WHERE member_id = ? AND endpoint = ?',
@@ -97,8 +101,11 @@ switch ($action) {
         require_write();
         $me = require_login();
         // KHÔNG trim: khoảng trắng/CRLF ở đuôi phải bị từ chối chứ không được "sửa hộ".
-        $ep = (string) ($in['endpoint'] ?? '');
-        if ($ep === '') json_fail('Đăng ký không hợp lệ.');
+        $epRaw = $in['endpoint'] ?? '';
+        if ($epRaw === null || $epRaw === '') json_fail('Đăng ký không hợp lệ.');
+        // Mảng/số/bool không phải endpoint: từ chối cùng thông điệp như host lạ, không ép kiểu.
+        if (!is_string($epRaw)) json_fail('Trình duyệt này dùng máy chủ thông báo chưa được hỗ trợ.', 422);
+        $ep = $epRaw;
         // Chống SSRF (#99): chỉ nhận endpoint của các dịch vụ push thật.
         // Thông điệp chung, không phản chiếu lại dữ liệu người gửi.
         if (!push_endpoint_hop_le($ep)['ok']) {
@@ -142,7 +149,7 @@ switch ($action) {
     case 'unsubscribe':
         require_write();
         $me = require_login();
-        $ep = trim((string) ($in['endpoint'] ?? ''));
+        $ep = trim(push_chuoi($in['endpoint'] ?? null));
         db_run('DELETE FROM push_subscriptions WHERE member_id = ? AND endpoint = ?', [$me['id'], $ep]);
         json_out(['ok' => true]);
 

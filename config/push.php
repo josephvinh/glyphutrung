@@ -238,6 +238,12 @@ function push_con_nhan_endpoint_cu(): bool
     return date('Y-m-d') <= $han;
 }
 
+/** Giá trị từ request → chuỗi; không phải chuỗi (mảng, số, null...) thì '' (không ép kiểu, không Warning) */
+function push_chuoi($v): string
+{
+    return is_string($v) ? $v : '';
+}
+
 /** Token ngẫu nhiên 256 bit, base64url (43 ký tự) */
 function push_sinh_token(): string
 {
