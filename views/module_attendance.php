@@ -39,13 +39,13 @@
         </div>
 
         <!-- CHỌN NGÀY -->
-        <div class="bg-white rounded-card p-4 shadow-sm border border-slate-100 mb-5">
+        <div class="glass-card rounded-xl p-4 mb-5">
             <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-2">Ngày điểm danh</label>
             <div class="flex items-center gap-2">
                 <button aria-label="Lùi một ngày" @click="shiftAttendanceDate(-1)" class="w-10 h-10 shrink-0 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-center text-slate-500 active:scale-90 transition-transform">
                     <i data-lucide="chevron-left" class="w-4 h-4"></i>
                 </button>
-                <input x-model="attendanceDate" type="date" min="2000-01-01" max="2100-12-31" class="flex-1 min-w-0 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                <input x-model="attendanceDate" type="date" min="2000-01-01" max="2100-12-31" class="flex-1 min-w-0 bg-slate-50 input-glass border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                 <button aria-label="Tới một ngày" @click="shiftAttendanceDate(1)" class="w-10 h-10 shrink-0 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-center text-slate-500 active:scale-90 transition-transform">
                     <i data-lucide="chevron-right" class="w-4 h-4"></i>
                 </button>
@@ -54,7 +54,7 @@
         </div>
 
         <!-- XUẤT BÁO CÁO EXCEL -->
-        <div class="bg-white rounded-card p-4 shadow-sm border border-slate-100 mb-5">
+        <div class="glass-card rounded-xl p-4 mb-5">
             <div class="flex items-center justify-between">
                 <div>
                     <h3 class="text-sm font-bold text-slate-700">Xuất Báo Cáo Excel</h3>
@@ -187,7 +187,7 @@
         <!-- Actual program list -->
         <div x-show="!syncing || programs.length > 0" style="display: none;" class="space-y-4">
             <template x-for="prog in programsOnDate" :key="prog.id">
-                <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100">
+                <div class="glass-card rounded-xl p-5">
 
                     <div class="flex items-center gap-2 mb-1">
                         <span class="text-micro font-bold uppercase tracking-wider px-2 py-0.5 rounded-md"
@@ -227,7 +227,7 @@
                         </div>
                     </div>
 
-                    <button @click="startSession(prog)" type="button" :disabled="!heavyLoaded || !heavyFresh" :class="(!heavyLoaded || !heavyFresh) ? 'opacity-50' : ''" class="w-full bg-blue-600 text-white font-bold py-3 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-blue-200 flex justify-center items-center">
+                    <button @click="startSession(prog)" type="button" :disabled="!heavyLoaded || !heavyFresh" :class="(!heavyLoaded || !heavyFresh) ? 'opacity-50' : ''" class="w-full btn-glass text-white font-bold py-3 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-blue-200 flex justify-center items-center">
                         <i data-lucide="clipboard-check" class="w-5 h-5 mr-2"></i> Bắt đầu điểm danh
                     </button>
                 </div>
@@ -322,15 +322,15 @@
 
         <!-- Bảng số liệu -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-            <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-100 text-center">
+            <div class="glass-card rounded-2xl p-3 text-center">
                 <p class="text-2xl font-black text-emerald-600" x-text="sessionStats.present"></p>
                 <p class="text-micro font-bold text-slate-500 uppercase tracking-wide">Có mặt</p>
             </div>
-            <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-100 text-center">
+            <div class="glass-card rounded-2xl p-3 text-center">
                 <p class="text-2xl font-black text-amber-700" x-text="sessionStats.late"></p>
                 <p class="text-micro font-bold text-slate-500 uppercase tracking-wide">Đi trễ</p>
             </div>
-            <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-100 text-center">
+            <div class="glass-card rounded-2xl p-3 text-center">
                 <p class="text-2xl font-black text-slate-400" x-text="sessionStats.absent"></p>
                 <p class="text-micro font-bold text-slate-500 uppercase tracking-wide">Vắng</p>
             </div>
@@ -346,7 +346,7 @@
                 <i data-lucide="scan-line" class="w-4 h-4"></i> Quét QR
             </button>
             <button @click="attendanceMode = 'manual'" type="button" aria-current="page"
-                    class="flex items-center justify-center gap-2 py-3 bg-blue-600 rounded-2xl border border-blue-600 shadow-md shadow-blue-200 text-white font-bold text-xs">
+                    class="flex items-center justify-center gap-2 py-3 btn-glass rounded-2xl border border-blue-600 shadow-md shadow-blue-200 text-white font-bold text-xs">
                 <i data-lucide="hand" class="w-4 h-4"></i> Điểm danh tay
             </button>
         </div>
