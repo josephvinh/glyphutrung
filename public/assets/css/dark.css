@@ -24,6 +24,20 @@
     --text-secondary: #94a3b8;
     --border-color: #334155;
     --shadow-color: rgba(0, 0, 0, 0.4);
+
+    /* === LIQUID GLASS TOKENS - DARK MODE === */
+    --glass-blur: 24px;
+    --glass-saturate: 160%;
+    --glass-bg-primary: rgba(30, 41, 59, 0.75);
+    --glass-bg-secondary: rgba(30, 41, 59, 0.55);
+    --glass-bg-elevated: rgba(51, 65, 85, 0.8);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-border-subtle: rgba(255, 255, 255, 0.05);
+    --glass-highlight: rgba(255, 255, 255, 0.15);
+    --glass-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+    --glass-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.25);
+    --glass-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.35);
+    --refraction-accent: rgba(200, 32, 58, 0.12);
 }
 
 /* ---------- Smooth theme transitions ---------- */
@@ -51,8 +65,10 @@ body {
 
 /* Bottom navigation */
 .dark .app-bottomnav .nav-inner {
-    background-color: rgb(15 23 42 / 0.85);
-    border-color: var(--border-color);
+    background: var(--glass-bg-primary);
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    border: 1px solid var(--glass-border);
 }
 
 /* Cards and surfaces */
