@@ -121,8 +121,14 @@ $yid = (int) $year['id'];
 $part = $_GET['part'] ?? 'all';
 if (!in_array($part, ['core', 'heavy', 'all'], true)) $part = 'all';
 
+// Filter theo lớp/chương trình để giảm payload (P8 #90)
+// ?classId=X    -> chỉ tải dữ liệu của lớp X (admin/BĐH)
+// ?programId=X  -> chỉ tải điểm danh của chương trình X
+$filterClassId = isset($_GET['classId']) ? (int) $_GET['classId'] : null;
+$filterProgramId = isset($_GET['programId']) ? (int) $_GET['programId'] : null;
+
 // Check cache first — khoá theo part để 3 loại không đè lên nhau
-$cacheKey = "data_" . DATA_CACHE_VER . "_{$yid}_{$me['id']}_{$part}";
+$cacheKey = "data_" . DATA_CACHE_VER . "_{$yid}_{$me['id']}_{$part}_{$filterClassId}_{$filterProgramId}";
 if ($cached = Cache::get($cacheKey)) {
     data_out($cached);
 }
@@ -294,11 +300,57 @@ $programClasses = (object) $programClasses;
 // GIỚI HẠN theo phạm vi: chỉ gửi điểm danh của các em người này được xem.
 // Admin/BĐH (phạm vi null) vẫn nhận toàn đoàn (họ cần thống kê cả đoàn);
 // GLV/Trưởng khối chỉ nhận lớp/khối mình -> payload nhẹ hẳn.
+// Filter thêm theo classId/programId để giảm payload (P8 #90).
 // ---------------------------------------------------------------
 $attRows = [];
 if ($part !== 'core') {                          // bước 'core' bỏ qua điểm danh
-    $attScopeIds = allowed_class_ids($me);        // null = toàn đoàn
-    if ($attScopeIds === null) {
+    $attScopeIds = allowed_class_ids($me);      // null = toàn đoàn
+
+    // Filter theo programId: chỉ tải điểm danh của chương trình này
+    if ($filterProgramId !== null) {
+        $sql = 'SELECT a.*, m.full_name AS marked_by_name
+                FROM attendances a
+                LEFT JOIN members m ON m.id = a.marked_by
+                WHERE a.year_id = ? AND a.program_id = ?';
+        $params = [$yid, $filterProgramId];
+        // Nếu có phạm vi, lọc thêm theo lớp
+        if ($attScopeIds !== null && $attScopeIds !== []) {
+            $ph = implode(',', array_fill(0, count($attScopeIds), '?'));
+            $sql .= " AND a.student_id IN (SELECT student_id FROM enrollments WHERE year_id = ? AND class_id IN ($ph))";
+            $params = array_merge([$yid], $attScopeIds, [$filterProgramId]);
+            $sql = str_replace('a.year_id = ? AND a.program_id = ?', 'a.year_id = ? AND a.program_id = ?', $sql);
+            array_unshift($params, $yid);
+            $params = [$yid, $filterProgramId];
+            // Lấy studentIds trong phạm vi
+            $stuInScope = db_all('SELECT student_id FROM enrollments WHERE year_id = ? AND class_id IN (' . implode(',', array_fill(0, count($attScopeIds), '?')) . ')', array_merge([$yid], $attScopeIds));
+            $stuIds = array_column($stuInScope, 'student_id');
+            if ($stuIds) {
+                $ph = implode(',', array_fill(0, count($stuIds), '?'));
+                $attRows = db_all(
+                    "SELECT a.*, m.full_name AS marked_by_name
+                       FROM attendances a
+                       LEFT JOIN members m ON m.id = a.marked_by
+                      WHERE a.year_id = ? AND a.program_id = ? AND a.student_id IN ($ph)",
+                    array_merge([$yid, $filterProgramId], $stuIds));
+            }
+        } else {
+            $attRows = db_all($sql, $params);
+        }
+    } elseif ($filterClassId !== null) {
+        // Filter theo classId: chỉ tải điểm danh của lớp này
+        $stuInClass = db_all('SELECT student_id FROM enrollments WHERE year_id = ? AND class_id = ?', [$yid, $filterClassId]);
+        $stuIds = array_column($stuInClass, 'student_id');
+        if ($stuIds) {
+            $ph = implode(',', array_fill(0, count($stuIds), '?'));
+            $attRows = db_all(
+                "SELECT a.*, m.full_name AS marked_by_name
+                   FROM attendances a
+                   LEFT JOIN members m ON m.id = a.marked_by
+                  WHERE a.year_id = ? AND a.student_id IN ($ph)",
+                array_merge([$yid], $stuIds));
+        }
+    } elseif ($attScopeIds === null) {
+        // Không filter: tải toàn bộ (admin/BĐH)
         $attRows = db_all(
             'SELECT a.*, m.full_name AS marked_by_name
                FROM attendances a
@@ -306,9 +358,6 @@ if ($part !== 'core') {                          // bước 'core' bỏ qua đi�
               WHERE a.year_id = ?', [$yid]);
     } else {
         // Chỉ điểm danh của các em trong phạm vi (dùng lại danh sách $students).
-        // $students là cấu trúc phân trang ['data'=>[...], ...] (master #42) —
-        // lấy hàng em ở khoá 'data' (trước đây lặp thẳng $students khiến $stuIds
-        // = [0,0,...] và user không phải admin không nhận được điểm danh nào).
         $stuIds = array_map(fn($s) => (int) $s['id'], $students['data']);
         if ($stuIds) {
             $ph = implode(',', array_fill(0, count($stuIds), '?'));
