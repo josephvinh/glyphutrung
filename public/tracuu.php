@@ -91,15 +91,13 @@ body{font-family:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",Roboto,sans
 .hero p{opacity:.85;font-size:13px}
 .back-btn{position:absolute;top:16px;left:16px;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.15);
  color:#fff;display:flex;align-items:center;justify-content:center;text-decoration:none;font-size:20px}
-.card{background:#fff;border-radius:20px;box-shadow:0 12px 30px -18px rgba(15,23,42,.3);padding:18px;margin-bottom:14px}
+.card{background:var(--glass-bg,rgba(255,255,255,0.72));backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border:1px solid rgba(255,255,255,0.5);border-radius:20px;box-shadow:0 8px 32px rgba(0,0,0,0.1);padding:18px;margin-bottom:14px;position:relative;overflow:hidden}
 .login{margin-top:-30px;position:relative}
 .login label{display:block;font-size:12.5px;font-weight:800;color:var(--mut);margin:0 0 6px}
-.login input{width:100%;border:1px solid #e2e8f0;border-radius:14px;padding:13px 16px;font-size:16px;font-weight:700;
- background:#fff;color:var(--ink);margin-bottom:12px;font-family:inherit}
+.login input{width:100%;background:rgba(255,255,255,0.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.5);border-radius:14px;padding:13px 16px;font-size:16px;font-weight:700;color:var(--ink);margin-bottom:12px;font-family:inherit}
 .login input[name=ma]{text-transform:uppercase}
 .login input::placeholder{text-transform:none;font-weight:500;color:#94a3b8}
-.login button{width:100%;border:0;border-radius:14px;padding:14px;font-size:15px;font-weight:800;color:#fff;cursor:pointer;
- background:linear-gradient(135deg,var(--nen),var(--nen2));font-family:inherit}
+.login button{width:100%;border:0;border-radius:14px;padding:14px;font-size:15px;font-weight:800;color:#fff;cursor:pointer;background:linear-gradient(135deg,var(--nen),var(--nen2));font-family:inherit;box-shadow:0 4px 16px rgba(200,32,58,0.3)}
 .login .goi-y{font-size:12px;color:#94a3b8;margin-top:10px;text-align:center}
 .loi{background:#fff;border:2px dashed #fca5a5;color:#b91c1c;border-radius:16px;padding:14px;text-align:center;font-weight:700;margin-bottom:14px;font-size:14px}
 .hoso{display:flex;align-items:center;gap:12px}
@@ -107,8 +105,7 @@ body{font-family:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",Roboto,sans
  align-items:center;justify-content:center;font-weight:900;font-size:18px;flex:0 0 auto}
 .ten{font-weight:800;font-size:16px;line-height:1.25}.lop{font-size:12.5px;color:#94a3b8}
 .doi{margin-left:auto;font-size:12.5px;font-weight:800;color:var(--nen2);text-decoration:none;white-space:nowrap}
-.tabs{display:flex;background:#fff;border-radius:999px;padding:4px;box-shadow:0 8px 20px -12px rgba(15,23,42,.4);margin:0 0 14px;
- position:sticky;top:8px;z-index:5}
+.tabs{display:flex;background:rgba(255,255,255,0.72);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.5);border-radius:999px;padding:4px;box-shadow:0 8px 32px rgba(0,0,0,0.1);margin:0 0 14px;position:sticky;top:8px;z-index:5}
 .tabs button{flex:1;border:0;background:none;white-space:nowrap;padding:10px 6px;border-radius:999px;font-size:13px;font-weight:800;
  color:var(--mut);cursor:pointer;font-family:inherit}
 .tabs button[aria-selected=true]{background:var(--nen2);color:#fff}
