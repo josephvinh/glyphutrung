@@ -2,6 +2,7 @@
 **Ngày:** 02/10/2026
 **Người bàn giao:** Claude Code (Agent)
 **Repo:** josephvinh/glyphutrung
+**Cập nhật:** 02/10/2026 - P5 Web Push hoàn thành, PR #159
 
 ---
 
@@ -10,9 +11,9 @@
 Đợt kiểm thử (29-30/09/2026) đã xử lý 31 issues (#78-#109). Đến 02/10/2026, đã hoàn thành phần lớn công việc.
 
 ### Số liệu
-- **PR đã merge:** 15+ PRs vào master
-- **Issues đã đóng:** ~27 issues
-- **PR đang mở:** #155 (P4 Security)
+- **PR đã merge:** 16+ PRs vào master
+- **Issues đã đóng:** ~30 issues
+- **PR đang mở:** #155 (P4 Security), #159 (P5 .htaccess)
 - **Branch protection:** Đã bật
 
 ---
@@ -34,7 +35,13 @@
 | #83 | #142 | must_change_pw chặn API |
 | #78 | #142 | Rò rỉ dữ liệu - lọc theo phạm vi |
 | #88 | #120 | Logout chỉ nhận POST, GET trả 405 |
-| P5 | #128 | Web Push - SSRF, async, token |
+| P5 | #128, #159 | Web Push - SSRF (#99), async (#100), token (#107) |
+
+Chi tiết P5 Web Push:
+- **#99 SSRF**: Allowlist endpoint FCM/Mozilla/Apple/WNS, regex chặt, kiểm IP công khai
+- **#100 Async**: Hàng đợi bền (ring_seq/ring_done), gửi sau phản hồi, curl_multi
+- **#107 Token**: Token 256-bit, SHA-256 hash, chống chiếm endpoint
+- **PR #159**: LiteSpeed noabort rule cho async push trên AZDIGI
 | #84, #95, #96, #102, #103 | #155 | P4 Security: spam register, rate limiter, login delay, CSP, passkey |
 
 ### Input Validation
@@ -197,5 +204,5 @@ gh pr checks <PR-number> --repo josephvinh/glyphutrung
 
 ---
 
-**Ngày cập nhật:** 01/10/2026  
-**Phiên bản:** 1.0
+**Ngày cập nhật:** 02/10/2026
+**Phiên bản:** 1.1
