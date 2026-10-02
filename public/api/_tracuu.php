@@ -16,8 +16,8 @@ require_once __DIR__ . '/_somoc.php'; // db.php + tracuu_throttle()/tracuu_attem
 
 /**
  * Chuẩn hoá ngày sinh người dùng gõ về 'mmddyyyy' (THÁNG trước, NGÀY sau).
- * Nhận 03152014, 03/15/2014, 3-15-2014, 03.15.2014 (không đệm 0 — chỉ khi
- * tách được bằng dấu).
+ * Ưu tiên dd/mm/yyyy nếu không mơ hồ (ngày > 12), thử cả hai nếu mơ hồ (cả hai < 13).
+ * Nhận 03152014, 03/15/2014, 3-15-2014, 03.15.2014, 15/03/2014, 15-03-2014 (không đệm 0).
  * @return string|null null nếu không đọc ra ngày hợp lệ
  */
 function tracuu_norm_dob(string $raw): ?string
@@ -26,14 +26,34 @@ function tracuu_norm_dob(string $raw): ?string
     if ($raw === '') return null;
 
     if (preg_match('/^(\d{1,2})\D+(\d{1,2})\D+(\d{4})$/', $raw, $m)) {
-        [$mo, $d, $y] = [(int) $m[1], (int) $m[2], (int) $m[3]];
+        [$a, $b, $y] = [(int) $m[1], (int) $m[2], (int) $m[3]];
     } elseif (preg_match('/^(\d{2})(\d{2})(\d{4})$/', $raw, $m)) {
-        [$mo, $d, $y] = [(int) $m[1], (int) $m[2], (int) $m[3]];
+        [$a, $b, $y] = [(int) $m[1], (int) $m[2], (int) $m[3]];
     } else {
         return null;
     }
-    if (!checkdate($mo, $d, $y)) return null;
-    return sprintf('%02d%02d%04d', $mo, $d, $y);
+
+    // Ưu tiên dd/mm/yyyy nếu không mơ hồ (a > 12)
+    if ($a > 12 && $a <= 31) {
+        if (checkdate($b, $a, $y)) {
+            return sprintf('%02d%02d%04d', $b, $a, $y); // mmddyyyy
+        }
+        // Thử ngược lại (mm/dd)
+        if (checkdate($a, $b, $y)) {
+            return sprintf('%02d%02d%04d', $a, $b, $y);
+        }
+        return null;
+    }
+
+    // Mơ hồ (cả hai <= 12): thử mm/dd trước
+    if (checkdate($a, $b, $y)) {
+        return sprintf('%02d%02d%04d', $a, $b, $y); // mmddyyyy
+    }
+    // Thử dd/mm
+    if (checkdate($b, $a, $y)) {
+        return sprintf('%02d%02d%04d', $b, $a, $y); // mmddyyyy
+    }
+    return null;
 }
 
 /** 'Y-m-d' (students.birth_date) -> 'mmddyyyy' */
