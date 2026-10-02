@@ -81,22 +81,22 @@
         <!-- 3. BỐN Ô TỔNG QUAN -->
         <!-- Skeleton loading state -->
         <div x-show="syncing" style="display: none;" class="grid grid-cols-2 gap-3 mb-5">
-            <div class="bg-white rounded-card p-4 shadow-sm border border-slate-100">
+            <div class="glass-card rounded-card p-4 shadow-sm border border-slate-100">
                 <div class="w-9 h-9 rounded-xl bg-slate-100 mb-2"></div>
                 <div class="skeleton h-8 w-16 mb-2"></div>
                 <div class="skeleton h-4 w-24"></div>
             </div>
-            <div class="bg-white rounded-card p-4 shadow-sm border border-slate-100">
+            <div class="glass-card rounded-card p-4 shadow-sm border border-slate-100">
                 <div class="w-9 h-9 rounded-xl bg-slate-100 mb-2"></div>
                 <div class="skeleton h-8 w-16 mb-2"></div>
                 <div class="skeleton h-4 w-24"></div>
             </div>
-            <div class="bg-white rounded-card p-4 shadow-sm border border-slate-100">
+            <div class="glass-card rounded-card p-4 shadow-sm border border-slate-100">
                 <div class="w-9 h-9 rounded-xl bg-slate-100 mb-2"></div>
                 <div class="skeleton h-8 w-16 mb-2"></div>
                 <div class="skeleton h-4 w-24"></div>
             </div>
-            <div class="bg-white rounded-card p-4 shadow-sm border border-slate-100">
+            <div class="glass-card rounded-card p-4 shadow-sm border border-slate-100">
                 <div class="w-9 h-9 rounded-xl bg-slate-100 mb-2"></div>
                 <div class="skeleton h-8 w-16 mb-2"></div>
                 <div class="skeleton h-4 w-24"></div>
@@ -105,8 +105,8 @@
 
         <!-- Actual stat cards -->
         <div x-show="!syncing" style="display: none;" class="grid grid-cols-2 gap-3 mb-5">
-            
-            <div class="bg-white rounded-card p-4 shadow-sm border border-slate-100 flex flex-col justify-between">
+
+            <div class="glass-card rounded-card p-4 shadow-sm border border-slate-100 flex flex-col justify-between">
                 <div class="flex justify-between items-start mb-2">
                     <p class="text-3xl font-black text-slate-800 leading-none" x-text="statRoster.active"></p>
                     <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center shrink-0">
@@ -116,7 +116,7 @@
                 <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wide mt-1">Đang sinh hoạt</p>
             </div>
 
-            <div class="bg-white rounded-card p-4 shadow-sm border border-slate-100 flex flex-col justify-between">
+            <div class="glass-card rounded-card p-4 shadow-sm border border-slate-100 flex flex-col justify-between">
                 <div class="flex justify-between items-start mb-2">
                     <p class="text-3xl font-black text-slate-800 leading-none" x-text="statSummary.countedSessions"></p>
                     <div class="w-8 h-8 rounded-xl bg-slate-50 text-slate-500 flex items-center justify-center shrink-0">
@@ -126,7 +126,7 @@
                 <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wide mt-1">Buổi đã điểm danh</p>
             </div>
 
-            <div class="bg-white rounded-card p-4 shadow-sm border border-slate-100 flex flex-col justify-between">
+            <div class="glass-card rounded-card p-4 shadow-sm border border-slate-100 flex flex-col justify-between">
                 <div class="flex justify-between items-start mb-2">
                     <p class="text-3xl font-black leading-none"
                        :class="statSummary.rate >= 75 ? 'text-emerald-600' : (statSummary.rate >= 50 ? 'text-amber-500' : 'text-rose-500')">
@@ -140,9 +140,9 @@
                 <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wide mt-1">Tỷ lệ có mặt</p>
             </div>
 
-            <div class="bg-white rounded-card p-4 shadow-sm border border-slate-100 flex flex-col justify-between">
+            <div class="glass-card rounded-card p-4 shadow-sm border border-slate-100 flex flex-col justify-between">
                 <div class="flex justify-between items-start mb-2">
-                    <p class="text-3xl font-black text-slate-800 leading-none" x-text="statLeaveCounts.total"></p>
+                    <p class="text-3xl font-black leading-none" x-text="statLeaveCounts.total"></p>
                     <div class="w-8 h-8 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center shrink-0">
                         <i data-lucide="file-text" class="w-4 h-4"></i>
                     </div>
@@ -163,7 +163,7 @@
         <template x-if="statSummary.countedSessions > 0">
             <div>
                 <!-- 4. CƠ CẤU CHUYÊN CẦN -->
-                <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100 mb-5">
+                <div class="glass-card rounded-card p-5 shadow-sm border border-slate-100 mb-5">
                     <div class="flex justify-between items-baseline mb-4">
                         <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider" x-text="'Cơ cấu ' + statCategoryLabel.toLowerCase()"></h3>
                         <span class="text-micro font-bold text-slate-500">
@@ -204,7 +204,7 @@
                 </div>
 
                 <!-- 8. ĐƠN XIN PHÉP TRONG KỲ -->
-                <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100 mb-5">
+                <div class="glass-card rounded-card p-5 shadow-sm border border-slate-100 mb-5">
                     <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4">Đơn xin phép trong kỳ</h3>
                     <div class="grid grid-cols-3 gap-3">
                         <div class="text-center">
@@ -223,7 +223,7 @@
                 </div>
 
                 <!-- 9. CƠ CẤU SĨ SỐ -->
-                <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100 mb-5">
+                <div class="glass-card rounded-card p-5 shadow-sm border border-slate-100 mb-5">
                     <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4">Cơ cấu sĩ số</h3>
 
                     <div class="flex items-center gap-3 mb-4">
@@ -261,7 +261,7 @@
         <template x-if="statSummary.countedSessions > 0">
             <div>
                 <!-- 5. SO SÁNH THEO KHỐI — chỉ Ban Điều Hành -->
-                <div x-show="showBlockComparison" style="display: none;" class="bg-white rounded-card p-5 shadow-sm border border-slate-100 mb-5">
+                <div x-show="showBlockComparison" style="display: none;" class="glass-card rounded-card p-5 shadow-sm border border-slate-100 mb-5">
                     <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4">So sánh theo khối (Tỷ lệ có mặt)</h3>
                     <div class="space-y-4">
                         <template x-for="row in statSummary.byBlock" :key="row.name">
@@ -279,7 +279,7 @@
                 </div>
 
                 <!-- 6. SO SÁNH THEO LỚP — Ban Điều Hành và Trưởng khối -->
-                <div x-show="showClassComparison" style="display: none;" class="bg-white rounded-card p-5 shadow-sm border border-slate-100 mb-5">
+                <div x-show="showClassComparison" style="display: none;" class="glass-card rounded-card p-5 shadow-sm border border-slate-100 mb-5">
                     <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4">So sánh theo lớp (Tỷ lệ có mặt)</h3>
                     <div class="space-y-4">
                         <template x-for="row in statSummary.byClass" :key="row.name">

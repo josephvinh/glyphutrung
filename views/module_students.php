@@ -11,7 +11,7 @@
         <div class="relative flex gap-2">
             <div class="relative flex-1 min-w-0">
                 <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
-                <input x-model="searchQuery" type="text" placeholder="Tìm tên, mã số..." class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-11 pr-10 text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder:font-normal">
+                <input x-model="searchQuery" type="text" placeholder="Tìm tên, mã số..." class="w-full bg-slate-50 input-glass border border-slate-200 rounded-xl py-2.5 pl-11 pr-10 text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder:font-normal">
                 <button aria-label="Xóa ô tìm kiếm" x-show="searchQuery !== ''" @click="searchQuery = ''" style="display: none;" class="tap-safe absolute right-1 top-1/2 -translate-y-1/2 p-2 flex items-center justify-center text-slate-500 active:scale-90 transition-transform">
                     <div class="w-6 h-6 bg-slate-100 rounded-full flex items-center justify-center">
                         <i data-lucide="x" class="w-3.5 h-3.5"></i>
@@ -67,7 +67,7 @@
                 <!-- Địa chỉ — gộp chung lưới (đã bỏ Giới tính và Tuổi) -->
                 <div>
                     <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Địa chỉ</label>
-                    <input x-model="filterAddress" type="text" placeholder="Tìm theo địa chỉ..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                    <input x-model="filterAddress" type="text" placeholder="Tìm theo địa chỉ..." class="w-full bg-slate-50 input-glass border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                 </div>
             </div>
 
@@ -195,7 +195,7 @@
         <!-- ===== DANH SÁCH (chỉ còn dạng list, đã bỏ dạng card) =====
              Mobile để overflow hiện (sm:overflow-hidden) để menu Gọi ở dòng
              cuối không bị khung cắt; desktop vẫn clip cho bảng bo góc gọn. -->
-        <div class="bg-white rounded-card shadow-sm border border-slate-100 sm:overflow-hidden">
+        <div class="glass-card rounded-xl sm:overflow-hidden">
 
             <!-- ĐIỆN THOẠI: bảng nhiều cột cuộn ngang rất khó đọc, nên dưới 640px
                  hiển thị dạng THẺ gọn; từ 640px trở lên mới dùng bảng đầy đủ.

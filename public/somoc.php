@@ -157,19 +157,19 @@ body{font-family:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",Roboto,sans
 .back-btn{position:absolute;top:16px;left:16px;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;display:flex;align-items:center;justify-content:center;text-decoration:none;z-index:10;backdrop-filter:blur(4px)}
 .back-btn:active{background:rgba(255,255,255,.3);transform:scale(0.95)}
 
-.tabs{display:flex;background:#fff;border-radius:999px;padding:4px;box-shadow:0 8px 20px -12px rgba(15,23,42,.4);margin:-30px auto 16px;position:relative;z-index:2}
+.tabs{display:flex;background:rgba(255,255,255,0.72);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.5);border-radius:999px;padding:4px;box-shadow:0 8px 32px rgba(0,0,0,0.1);margin:-30px auto 16px;position:relative;z-index:2}
 .tabs a{flex:1;text-align:center;white-space:nowrap;padding:9px 8px;border-radius:999px;font-size:13.5px;font-weight:800;color:#64748b;text-decoration:none}
 .tabs a.on{background:var(--nen2);color:#fff}
 
 form.tra{display:flex;gap:8px;margin-bottom:16px}
-form.tra input[type=text]{flex:1;border:1px solid #e2e8f0;border-radius:14px;padding:13px 16px;font-size:16px;font-weight:700;letter-spacing:.5px;background:#fff;color:#0f172a;text-transform:uppercase}
+form.tra input[type=text]{flex:1;border:1px solid rgba(255,255,255,0.5);border-radius:14px;padding:13px 16px;font-size:16px;font-weight:700;letter-spacing:.5px;background:rgba(255,255,255,0.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:#0f172a;text-transform:uppercase}
 form.tra input[type=text]::placeholder{text-transform:none;font-weight:500;color:#94a3b8}
-form.tra button{border:0;border-radius:14px;padding:0 20px;font-size:14px;font-weight:800;background:linear-gradient(135deg,var(--nen),var(--nen2));color:#fff;cursor:pointer}
+form.tra button{border:0;border-radius:14px;padding:0 20px;font-size:14px;font-weight:800;background:linear-gradient(135deg,var(--nen),var(--nen2));color:#fff;cursor:pointer;box-shadow:0 4px 16px rgba(200,32,58,0.3)}
 form.tra button:active{transform:scale(.97)}
 
 .thongbao{background:#fff;border:2px dashed #fca5a5;color:#b91c1c;border-radius:16px;padding:16px;text-align:center;font-weight:700;margin-bottom:16px}
 
-.card{background:#fff;border-radius:20px;box-shadow:0 12px 30px -18px rgba(15,23,42,.3);padding:18px;margin-bottom:14px}
+.card{background:rgba(255,255,255,0.72);backdrop-filter:blur(16px) saturate(180%);-webkit-backdrop-filter:blur(16px) saturate(180%);border:1px solid rgba(255,255,255,0.5);border-radius:20px;box-shadow:0 8px 32px rgba(0,0,0,0.1);padding:18px;margin-bottom:14px}
 .hoso{display:flex;align-items:center;gap:12px;margin-bottom:14px}
 .hoso .ava{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#eef2ff,#e0e7ff);color:#3730a3;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:18px;flex:0 0 auto}
 .hoso .ten{font-weight:800;font-size:16px;line-height:1.25}

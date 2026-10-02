@@ -54,7 +54,7 @@ if (!$__dev) ob_start();
          FORM ĐĂNG NHẬP
          ========================================================== -->
     <form x-show="step === 'login'" @submit.prevent="submitLogin()"
-          class="bg-white rounded-panel p-6 shadow-lg border border-slate-100 space-y-4">
+          class="glass-card rounded-panel p-6 space-y-4">
 
         <div>
             <label class="block text-micro font-bold text-slate-500 uppercase mb-1.5">Số điện thoại</label>
@@ -62,7 +62,7 @@ if (!$__dev) ob_start();
                 <i data-lucide="phone" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
                 <input x-model="phone" type="tel" inputmode="numeric" autocomplete="username"
                        placeholder="09xxxxxxxx" required
-                       class="w-full bg-slate-50 border border-slate-200 rounded-field py-3.5 pl-11 pr-4 text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 transition-all">
+                       class="input-glass w-full py-3.5 pl-11 pr-4 text-sm font-semibold text-slate-800 dark:text-slate-100">
             </div>
         </div>
 
@@ -72,7 +72,7 @@ if (!$__dev) ob_start();
                 <i data-lucide="key-round" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
                 <input x-model="password" :type="showPw ? 'text' : 'password'" autocomplete="current-password"
                        placeholder="••••••••" required
-                       class="w-full bg-slate-50 border border-slate-200 rounded-field py-3.5 pl-11 pr-12 text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 transition-all">
+                       class="input-glass w-full py-3.5 pl-11 pr-12 text-sm font-semibold text-slate-800 dark:text-slate-100">
                 <button aria-label="Hiện hoặc ẩn mật khẩu" @click="showPw = !showPw" type="button"
                         class="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center text-slate-500 active:scale-90 transition-transform">
                     <svg x-show="!showPw" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -89,7 +89,7 @@ if (!$__dev) ob_start();
         </div>
 
         <button type="submit" :disabled="busy"
-                class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-blue-200 flex justify-center items-center disabled:opacity-50">
+                class="btn-glass w-full text-white font-bold py-3.5 rounded-2xl active:scale-[0.98] transition-transform flex justify-center items-center disabled:opacity-50">
             <span x-show="!busy" class="inline-flex items-center justify-center"><i data-lucide="log-in" class="w-5 h-5 mr-2"></i></span>
             <span x-text="busy ? 'Đang kiểm tra...' : 'Đăng nhập'"></span>
         </button>

@@ -10,7 +10,7 @@
             <h2 class="text-xl font-black text-slate-800 tracking-tight">Thông Báo</h2>
         </div>
 
-        <button x-show="canManageAnnouncements" @click="openCreateAnnouncement()" class="shrink-0 bg-blue-600 text-white px-4 py-2 rounded-xl font-bold text-sm shadow-md shadow-blue-200 flex items-center active:scale-95 transition-transform">
+        <button x-show="canManageAnnouncements" @click="openCreateAnnouncement()" class="shrink-0 btn-glass text-white px-4 py-2 rounded-xl font-bold text-sm shadow-md shadow-blue-200 flex items-center active:scale-95 transition-transform">
             <i data-lucide="plus" class="w-4 h-4 mr-1"></i> Phát mới
         </button>
     </div>
@@ -20,7 +20,7 @@
         <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
         <input x-model="announcementSearch" type="text" placeholder="Tìm thông báo theo tiêu đề, nội dung..."
                aria-label="Tìm thông báo"
-               class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-11 pr-10 text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder:font-normal">
+               class="input-glass w-full py-2.5 pl-11 pr-10 text-sm font-semibold text-slate-800 dark:text-slate-100 placeholder:font-normal">
         <button aria-label="Xóa ô tìm kiếm" x-show="announcementSearch !== ''" @click="announcementSearch = ''" style="display: none;"
                 class="tap-safe absolute right-1 top-1/2 -translate-y-1/2 p-2 flex items-center justify-center text-slate-500 active:scale-90 transition-transform">
             <div class="w-6 h-6 bg-slate-100 rounded-full flex items-center justify-center">
@@ -43,7 +43,7 @@
             <template x-for="a in filteredAnnouncements" :key="a.id">
                 <div @click="markAnnouncementRead(a)"
                      style="content-visibility: auto; contain-intrinsic-size: auto 180px;"
-                     class="bg-white rounded-card p-5 shadow-sm border transition-colors"
+                     class="glass-card rounded-card p-5 shadow-sm border transition-colors"
                      :class="readAnnouncements.includes(a.id) ? 'border-slate-100' : 'border-blue-200 border-l-4 border-l-blue-600'">
 
                     <div class="flex items-start gap-3 mb-3">
@@ -96,7 +96,7 @@
                 </div>
             </template>
 
-            <div x-show="filteredAnnouncements.length === 0" style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
+            <div x-show="filteredAnnouncements.length === 0" style="display: none;" class="text-center py-12 glass-card rounded-card border border-slate-100 border-dashed">
                 <i data-lucide="bell-ring" class="w-12 h-12 mx-auto text-slate-300 mb-4"></i>
                 <p class="text-slate-600 font-semibold text-base mb-1" x-text="announcementSearch ? 'Không tìm thấy thông báo phù hợp' : 'Chưa có thông báo nào'"></p>
                 <p class="text-slate-500 text-sm" x-text="announcementSearch ? 'Thử từ khóa khác hoặc xóa ô tìm' : 'Thông báo mới sẽ xuất hiện ở đây'"></p>
@@ -112,7 +112,7 @@
         <div class="space-y-4 xl:space-y-0 xl:grid xl:grid-cols-2 xl:gap-4 xl:items-start">
             <template x-for="a in filteredManageableAnnouncements" :key="a.id">
                 <div style="content-visibility: auto; contain-intrinsic-size: auto 240px;"
-                     class="bg-white rounded-card p-5 shadow-sm border"
+                     class="glass-card rounded-card p-5 shadow-sm border"
                      :class="a.status === 'nháp' ? 'border-slate-200 border-dashed' : 'border-slate-100'">
 
                     <div class="flex justify-between items-start gap-3 mb-3">
@@ -176,7 +176,7 @@
                 </div>
             </template>
 
-            <div x-show="filteredManageableAnnouncements.length === 0" style="display: none;" class="text-center py-12 bg-white rounded-card border border-slate-100 border-dashed">
+            <div x-show="filteredManageableAnnouncements.length === 0" style="display: none;" class="text-center py-12 glass-card rounded-card border border-slate-100 border-dashed">
                 <i data-lucide="megaphone" class="w-10 h-10 mx-auto text-slate-300 mb-3"></i>
                 <p class="text-slate-500 font-medium text-sm" x-text="announcementSearch ? 'Không tìm thấy thông báo phù hợp.' : 'Chưa có thông báo nào.'"></p>
             </div>
@@ -200,7 +200,7 @@
                 <input type="hidden" name="_csrf" :value="window.TNTT.csrfToken">
                 <div>
                     <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Tiêu đề</label>
-                    <input x-model="announcementForm.title" type="text" placeholder="VD: Họp GLV toàn đoàn..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                    <input x-model="announcementForm.title" type="text" placeholder="VD: Họp GLV toàn đoàn..." class="w-full bg-slate-50 input-glass border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                 </div>
 
                 <div>
@@ -287,7 +287,7 @@
             </div>
 
             <div class="p-4 border-t border-slate-100 bg-white">
-                <button @click="saveAnnouncement()" type="button" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-blue-200 flex justify-center items-center">
+                <button @click="saveAnnouncement()" type="button" class="w-full btn-glass text-white font-bold py-3.5 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-blue-200 flex justify-center items-center">
                     <i data-lucide="send" class="w-5 h-5 mr-2"></i>
                     <span x-text="announcementForm.status === 'nháp' ? 'Lưu nháp' : 'Phát thông báo'"></span>
                 </button>

@@ -16,8 +16,8 @@
             <button @click="changeModule('dashboard')" type="button"
                     class="flex-1 flex flex-col items-center gap-1 py-2 rounded-2xl active:scale-90 transition-transform"
                     :class="currentModule === 'dashboard' ? 'text-blue-600' : 'text-slate-400'">
-                <span class="w-10 h-8 rounded-xl flex items-center justify-center transition-colors"
-                      :class="currentModule === 'dashboard' ? 'bg-blue-50' : 'bg-transparent'">
+                <span class="w-10 h-8 rounded-lg flex items-center justify-center transition-colors backdrop-blur-sm"
+                      :class="currentModule === 'dashboard' ? 'bg-blue-500/20' : 'bg-transparent'">
                     <i data-lucide="home" class="w-5 h-5 pointer-events-none"></i>
                 </span>
                 <span class="text-micro font-bold leading-none">Trang chủ</span>
@@ -28,8 +28,8 @@
                     class="flex-1 flex flex-col items-center gap-1 py-2 rounded-2xl active:scale-90 transition-transform"
                     :class="(currentModule === 'students' || currentModule === 'student_profile') ? 'text-blue-600' : 'text-slate-400'"
                     style="display: none;">
-                <span class="w-10 h-8 rounded-xl flex items-center justify-center transition-colors"
-                      :class="(currentModule === 'students' || currentModule === 'student_profile') ? 'bg-blue-50' : 'bg-transparent'">
+                <span class="w-10 h-8 rounded-lg flex items-center justify-center transition-colors backdrop-blur-sm"
+                      :class="(currentModule === 'students' || currentModule === 'student_profile') ? 'bg-blue-500/20' : 'bg-transparent'">
                     <i data-lucide="users" class="w-5 h-5 pointer-events-none"></i>
                 </span>
                 <span class="text-micro font-bold leading-none">Thiếu Nhi</span>
@@ -40,8 +40,8 @@
                     class="flex-1 flex flex-col items-center gap-1 py-2 rounded-2xl active:scale-90 transition-transform"
                     :class="currentModule === 'attendance' ? 'text-blue-600' : 'text-slate-400'"
                     style="display: none;">
-                <span class="w-10 h-8 rounded-xl flex items-center justify-center transition-colors"
-                      :class="currentModule === 'attendance' ? 'bg-blue-50' : 'bg-transparent'">
+                <span class="w-10 h-8 rounded-lg flex items-center justify-center transition-colors backdrop-blur-sm"
+                      :class="currentModule === 'attendance' ? 'bg-blue-500/20' : 'bg-transparent'">
                     <i data-lucide="clipboard-check" class="w-5 h-5 pointer-events-none"></i>
                 </span>
                 <span class="text-micro font-bold leading-none">Điểm danh</span>
@@ -51,8 +51,8 @@
             <button @click="openAnnouncements()" type="button"
                     class="flex-1 flex flex-col items-center gap-1 py-2 rounded-2xl active:scale-90 transition-transform"
                     :class="currentModule === 'announcements' ? 'text-blue-600' : 'text-slate-400'">
-                <span class="w-10 h-8 rounded-xl flex items-center justify-center transition-colors"
-                      :class="currentModule === 'announcements' ? 'bg-blue-50' : 'bg-transparent'">
+                <span class="w-10 h-8 rounded-lg flex items-center justify-center transition-colors backdrop-blur-sm"
+                      :class="currentModule === 'announcements' ? 'bg-blue-500/20' : 'bg-transparent'">
                     <span class="relative inline-flex">
                         <i data-lucide="megaphone" class="w-5 h-5 pointer-events-none"></i>
                         <!-- Chấm đỏ: có thông báo chưa đọc — bám góc trên-phải của icon -->
@@ -67,8 +67,8 @@
             <button @click="openSettings('profile')" type="button"
                     class="flex-1 flex flex-col items-center gap-1 py-2 rounded-2xl active:scale-90 transition-transform"
                     :class="currentModule === 'settings' ? 'text-blue-600' : 'text-slate-400'">
-                <span class="w-10 h-8 rounded-xl flex items-center justify-center transition-colors"
-                      :class="currentModule === 'settings' ? 'bg-blue-50' : 'bg-transparent'">
+                <span class="w-10 h-8 rounded-lg flex items-center justify-center transition-colors backdrop-blur-sm"
+                      :class="currentModule === 'settings' ? 'bg-blue-500/20' : 'bg-transparent'">
                     <span class="relative inline-flex">
                         <i data-lucide="user" class="w-5 h-5 pointer-events-none"></i>
                         <!-- Chấm đỏ: việc cần làm hoặc chức năng đang bảo trì -->
