@@ -68,20 +68,22 @@
 
 /* Glass Button */
 .btn-glass {
-    background: var(--glass-bg-elevated);
+    background: linear-gradient(135deg, var(--accent-color), #a01830);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--glass-border);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: var(--r-field);
     box-shadow: var(--glass-shadow-sm),
                 inset 0 1px 0 var(--glass-highlight);
     transition: all 0.2s ease;
+    color: #fff;
 }
 
 .btn-glass:hover {
-    background: var(--glass-bg-primary);
+    background: linear-gradient(135deg, #d9203a, #b81a2e);
     transform: translateY(-1px);
     box-shadow: var(--glass-shadow-md);
+    color: #fff;
 }
 
 .btn-glass:active {
