@@ -107,9 +107,17 @@ body {
 }
 
 /* Text colors */
+.dark .text-slate-900,
 .dark .text-slate-800,
 .dark .text-slate-700,
 .dark .text-slate-600 {
+    color: var(--text-primary) !important;
+}
+
+.dark .text-gray-900,
+.dark .text-gray-800,
+.dark .text-gray-700,
+.dark .text-gray-600 {
     color: var(--text-primary) !important;
 }
 
@@ -132,6 +140,26 @@ body {
 .dark .text-amber-700   { color: #fcd34d !important; }
 .dark .text-rose-600,
 .dark .text-rose-700    { color: #fda4af !important; }
+
+/* Icon colors (500/400) - icons cần nổi bật hơn text thường */
+.dark .text-blue-500    { color: #60a5fa !important; }
+.dark .text-blue-400    { color: #93c5fd !important; }
+.dark .text-emerald-500 { color: #34d399 !important; }
+.dark .text-emerald-400 { color: #6ee7b7 !important; }
+.dark .text-amber-500   { color: #fbbf24 !important; }
+.dark .text-amber-400   { color: #fcd34d !important; }
+.dark .text-rose-500   { color: #fb7185 !important; }
+.dark .text-rose-400   { color: #fda4af !important; }
+
+/* Text trên gradient/ảnh (200, 300, 100) - cần rất sáng */
+.dark .text-blue-200    { color: #bfdbfe !important; }
+.dark .text-blue-300    { color: #93c5fd !important; }
+.dark .text-emerald-200 { color: #a7f3d0 !important; }
+.dark .text-emerald-300 { color: #6ee7b7 !important; }
+.dark .text-rose-200    { color: #fecdd3 !important; }
+.dark .text-rose-300    { color: #fda4af !important; }
+.dark .text-amber-200   { color: #fde68a !important; }
+.dark .text-amber-300   { color: #fcd34d !important; }
 
 /* Borders */
 .dark .border-slate-50,
@@ -238,9 +266,163 @@ body {
     background-color: var(--bg-card) !important;
 }
 
+/* Primary buttons (blue-600) */
+.dark .bg-blue-600 {
+    filter: brightness(1.1);
+}
+
+/* Button text on primary */
+.dark .bg-blue-600,
+.dark .bg-blue-500 {
+    color: #fff;
+}
+
+/* White/glass backgrounds with opacity (glass effect on dark) */
+.dark .bg-white\/20,
+.dark .bg-white\/15 {
+    background-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+/* White badges on gradient backgrounds */
+.dark .bg-white.text-rose-600,
+.dark .bg-white.text-blue-700 {
+    color: #0f172a !important; /* Giữ chữ đậm trên nền trắng */
+}
+
+/* Slate buttons */
+.dark .bg-slate-800 {
+    background-color: #1e293b !important;
+    color: #f8fafc;
+}
+
+.dark .bg-slate-50 {
+    background-color: rgba(51, 65, 85, 0.5) !important;
+}
+
+/* Active/selected tab states */
+.dark .bg-slate-800.text-white {
+    background-color: #1e293b !important;
+}
+
+/* Border white badges */
+.dark .border-white {
+    border-color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Shadow colors for buttons */
+.dark .shadow-blue-200,
+.dark .shadow-emerald-200,
+.dark .shadow-rose-200,
+.dark .shadow-amber-200 {
+    --tw-shadow-color: rgba(0, 0, 0, 0.2);
+}
+
 /* Status badges */
 .dark .bg-emerald-500,
 .dark .bg-rose-500,
 .dark .bg-amber-500 {
     filter: brightness(0.85);
+}
+
+/* Badge text colors */
+.dark .bg-rose-100.text-rose-700,
+.dark .bg-emerald-100.text-emerald-700,
+.dark .bg-amber-100.text-amber-600,
+.dark .bg-blue-100.text-blue-700 {
+    background-color: rgba(244, 63, 94, 0.2) !important;
+    color: #fda4af !important;
+}
+
+.dark .bg-emerald-100.text-emerald-700 {
+    background-color: rgba(16, 185, 129, 0.2) !important;
+    color: #6ee7b7 !important;
+}
+
+.dark .bg-amber-100.text-amber-600 {
+    background-color: rgba(245, 158, 11, 0.2) !important;
+    color: #fcd34d !important;
+}
+
+.dark .bg-blue-100.text-blue-700 {
+    background-color: rgba(59, 130, 246, 0.2) !important;
+    color: #93c5fd !important;
+}
+
+/* Analytics components */
+.dark .analytics-stat-card {
+    background-color: var(--bg-card) !important;
+}
+
+.dark .analytics-chart {
+    background-color: var(--bg-card) !important;
+}
+
+.dark .analytics-bar {
+    background-color: var(--bg-secondary);
+}
+
+.dark .analytics-bar-present { background-color: #34d399; }
+.dark .analytics-bar-excused  { background-color: #fbbf24; }
+.dark .analytics-bar-unexcused { background-color: #fb7185; }
+
+.dark .analytics-legend {
+    background-color: var(--bg-secondary);
+}
+
+.dark .analytics-legend-dot {
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.dark .analytics-progress {
+    background-color: var(--bg-secondary);
+}
+
+.dark .analytics-student-card {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color);
+}
+
+.dark .analytics-avatar {
+    background-color: var(--bg-secondary);
+    border-color: var(--border-color);
+}
+
+/* Table styles */
+.dark table {
+    background-color: var(--bg-card);
+    color: var(--text-primary);
+}
+
+.dark table th {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+.dark table td {
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+.dark table tbody tr:hover {
+    background-color: var(--bg-secondary);
+}
+
+/* Checkbox styling */
+.dark input[type="checkbox"] {
+    accent-color: #3b82f6;
+}
+
+/* Focus ring on inputs */
+.dark input:focus,
+.dark select:focus,
+.dark textarea:focus {
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+/* Modal overlay */
+.dark .modal-overlay,
+.dark [x-cloak] + * {
+    background-color: rgba(0, 0, 0, 0.7);
 }
