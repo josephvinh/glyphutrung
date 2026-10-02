@@ -347,3 +347,82 @@ body {
     background-color: rgba(59, 130, 246, 0.2) !important;
     color: #93c5fd !important;
 }
+
+/* Analytics components */
+.dark .analytics-stat-card {
+    background-color: var(--bg-card) !important;
+}
+
+.dark .analytics-chart {
+    background-color: var(--bg-card) !important;
+}
+
+.dark .analytics-bar {
+    background-color: var(--bg-secondary);
+}
+
+.dark .analytics-bar-present { background-color: #34d399; }
+.dark .analytics-bar-excused  { background-color: #fbbf24; }
+.dark .analytics-bar-unexcused { background-color: #fb7185; }
+
+.dark .analytics-legend {
+    background-color: var(--bg-secondary);
+}
+
+.dark .analytics-legend-dot {
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.dark .analytics-progress {
+    background-color: var(--bg-secondary);
+}
+
+.dark .analytics-student-card {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color);
+}
+
+.dark .analytics-avatar {
+    background-color: var(--bg-secondary);
+    border-color: var(--border-color);
+}
+
+/* Table styles */
+.dark table {
+    background-color: var(--bg-card);
+    color: var(--text-primary);
+}
+
+.dark table th {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+.dark table td {
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+.dark table tbody tr:hover {
+    background-color: var(--bg-secondary);
+}
+
+/* Checkbox styling */
+.dark input[type="checkbox"] {
+    accent-color: #3b82f6;
+}
+
+/* Focus ring on inputs */
+.dark input:focus,
+.dark select:focus,
+.dark textarea:focus {
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+/* Modal overlay */
+.dark .modal-overlay,
+.dark [x-cloak] + * {
+    background-color: rgba(0, 0, 0, 0.7);
+}
