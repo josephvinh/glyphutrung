@@ -28,18 +28,14 @@ $config = [
     'default_password' => 'tntt@2026',
 
     // Khoá để chạy install.php qua trình duyệt khi máy chủ không có
-    // Terminal. Đặt một chuỗi ngẫu nhiên dài. Để RỖNG (mặc định) nghĩa là
-    // CẤM hẳn, chỉ chạy trình cài đặt bằng dòng lệnh. Khai giá trị thật ở
-    // config.local.php nếu cần bật.
-    'setup_key' => '',
+    // Terminal. Đặt một chuỗi ngẫu nhiên dài. Để rỗng nghĩa là CẤM hẳn,
+    // chỉ chạy trình cài đặt bằng dòng lệnh.
+    'setup_key' => '123456789012120937867508',
 
-    // Khoá VAPID cho Web Push. KHÔNG để khoá thật ở đây (file này lên git).
-    // Khai public/private/subject trong config.local.php trên máy chủ.
-    // Tạo khoá: php -r 'require "config/push.php"; print_r(push_tao_khoa());'
     'push' => [
-        'public'  => '',
-        'private' => '',
-        'subject' => '',
+        'public'  => 'BI34XJuXSHfOCKAIgFTUSdmr4uqI-GUt9yPi8KJ87HpaIcuZJ3rPczdw8-neF0heejYE0VE9o0zwDzZxy4z1Bs',
+        'private' => 'E0wuL-lV0WULtShw2VBPn0a9UK-uh8WAfmb1AKytDDo',
+        'subject' => 'mailto:tuongngocvinh@gmail.com',
     ],
 
     // THƯ VIỆN TÀI LIỆU — nơi lưu file + giới hạn.

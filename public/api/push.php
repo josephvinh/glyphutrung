@@ -157,6 +157,13 @@ switch ($action) {
     case 'test':
         require_write();
         $me = require_login();
+        // Chống spam: mỗi máy chỉ thử được 1 lần/phút
+        $gan = db_one('SELECT created_at FROM push_outbox
+                       WHERE member_id = ? AND tag = ?
+                       ORDER BY id DESC LIMIT 1', [$me['id'], 'tntt-thu']);
+        if ($gan && strtotime($gan['created_at']) > time() - 60) {
+            json_fail('Thử lại sau ít nhất 1 phút.', 429);
+        }
         // Kiểm tra trước khi gửi: nếu chưa có máy nào đăng ký thì đừng
         // ghi vào hộp thư đi, kẻo để lại một dòng "Thử thông báo" treo ở
         // đó rồi bật lên lúc có việc thật.
