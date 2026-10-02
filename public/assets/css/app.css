@@ -19,8 +19,29 @@
     --text-primary: #0f172a;    /* slate-900 - light mode */
     --text-secondary: #475569;  /* slate-600 - light mode */
     --text-muted: #94a3b8;      /* slate-400 - light mode */
+    --icon-color: #334155;      /* slate-700 - light mode */
     --bg-page: #f8fafc;         /* slate-50 - light mode */
+}
 
+/* Explicit Light Mode Override */
+@media (prefers-color-scheme: light) {
+    :root {
+        --text-primary: #0f172a;
+        --text-secondary: #475569;
+        --text-muted: #94a3b8;
+        --icon-color: #334155;
+        --bg-page: #f8fafc;
+    }
+}
+.light-mode {
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+    --icon-color: #334155;
+    --bg-page: #f8fafc;
+}
+
+:root {
     /* === LIQUID GLASS TOKENS - LIGHT MODE === */
     --glass-blur: 20px;
     --glass-saturate: 180%;
@@ -42,6 +63,7 @@
     --text-primary: #f8fafc;
     --text-secondary: #cbd5e1;
     --text-muted: #94a3b8;
+    --icon-color: #cbd5e1;
     --bg-page: #0f172a;
 
     --glass-bg-primary: rgba(30, 41, 59, 0.85);
@@ -133,26 +155,17 @@
 }
 
 /* Dark mode overrides for glass elements */
-.dark .glass-card,
-.dark .glass-card * {
-    color: var(--text-primary);
-}
-.dark .glass-card h1,
-.dark .glass-card h2,
-.dark .glass-card h3,
-.dark .glass-card b,
-.dark .glass-card strong,
-.dark .glass-card p:not(.text-white):not(.text-rose-500):not(.text-red-500) {
-    color: var(--text-primary);
-}
-.dark .glass-card small,
-.dark .glass-card .text-muted {
-    color: var(--text-secondary);
-}
+/* Text colors are now handled by CSS variables, so we just let them inherit */
 
 /* Glass Card: chữ phải đậm theo light mode */
-.glass-card,
-.glass-card * {
+.glass-card {
+    color: var(--text-primary);
+}
+.glass-card h1,
+.glass-card h2,
+.glass-card h3,
+.glass-card b,
+.glass-card strong {
     color: var(--text-primary);
 }
 .glass-card small,
@@ -660,13 +673,13 @@ textarea:focus-visible:not(:disabled),
     border-radius: 0.875rem;
     font-size: 13px;
     font-weight: 600;
-    color: #475569;
+    color: var(--text-secondary);
     transition: background-color .15s ease, color .15s ease;
 }
-.nav-item:hover { background-color: #f1f5f9; }
+.nav-item:hover { background-color: var(--glass-highlight); }
 .nav-item-on {
-    background-color: #fdedef;
-    color: #e11d36;
+    background-color: var(--refraction-accent);
+    color: var(--accent-color);
 }
 .nav-item:active { transform: scale(0.97); }
 
@@ -675,13 +688,13 @@ textarea:focus-visible:not(:disabled),
     border-radius: 0.625rem;
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
-    background-color: #f8fafc;
-    border: 1px solid #f1f5f9;
+    background-color: var(--glass-bg-elevated);
+    border: 1px solid var(--glass-border-subtle);
 }
 .nav-item-on .nav-ico {
-    background-color: #fcdadf;
-    border-color: #f8b3bc;
-    color: #e11d36;
+    background-color: var(--refraction-accent);
+    border-color: rgba(200, 32, 58, 0.3);
+    color: var(--accent-color);
 }
 /* Module của Ban Điều Hành dùng nền đậm, khớp với lưới App Center */
 .nav-ico-dark {
@@ -889,8 +902,8 @@ a,
     background-color: #fff;                           /* khớp nền thẻ */
     box-shadow: 1px 0 0 #f1f5f9;
 }
-.dark .score-table-sticky thead th:first-child { background-color: var(--bg-secondary); }
-.dark .score-table-sticky tbody td:first-child { background-color: var(--bg-card); }
+.dark .score-table-sticky thead th:first-child { background-color: var(--glass-bg-secondary); box-shadow: 1px 0 0 var(--glass-border-subtle); }
+.dark .score-table-sticky tbody td:first-child { background-color: var(--glass-bg-primary); box-shadow: 1px 0 0 var(--glass-border-subtle); }
 
 /* ==========================================================
    BỔ SUNG UTILITY cho module Thư viện & Sổ tay.
