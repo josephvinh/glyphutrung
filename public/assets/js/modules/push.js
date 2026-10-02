@@ -108,7 +108,7 @@ window.TNTT.push = {
 
         const luu = await this.api('push', 'subscribe', { endpoint: dk.endpoint });
         if (!luu.ok) {
-            await dk.unsubscribe();                   // máy chủ không nhận thì đừng để lại rác
+            try { await dk.unsubscribe(); } catch (_) {}  // máy chủ không nhận thì đừng để lại rác
             window.TNTT.toast.error(luu.error || 'Không lưu được đăng ký.');
             return;
         }

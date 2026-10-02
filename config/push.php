@@ -184,16 +184,22 @@ function push_bao(array $memberIds, string $title, string $body,
         $dsMay = db_all("SELECT id, endpoint FROM push_subscriptions WHERE member_id IN ($chan)", $ids);
 
         $rung = 0;
+        $loi  = 0;
         foreach ($dsMay as $may) {
-            [$ok, $ma] = push_gui($may['endpoint']);
+            [$ok, $ma, $ghiChu] = push_gui($may['endpoint']);
             if ($ok) {
                 $rung++;
                 db_run('UPDATE push_subscriptions SET last_ok_at=? WHERE id=?', [$now, $may['id']]);
             } elseif ($ma === 404 || $ma === 410) {
                 // Máy đã gỡ app hoặc xoá đăng ký — dọn đi cho sạch
                 db_run('DELETE FROM push_subscriptions WHERE id=?', [$may['id']]);
+            } else {
+                // Lỗi khác (mạng, timeout, 500...) — giữ đăng ký, ghi log để dò
+                $loi++;
+                error_log("push_bao: endpoint {$may['id']} ma=$ma ghiChu=$ghiChu");
             }
         }
+        if ($loi > 0) error_log("push_bao: $rung thành công, $loi lỗi (mạng/timeout)");
         return $rung;
     } catch (Throwable $e) {
         error_log('push_bao: ' . $e->getMessage());

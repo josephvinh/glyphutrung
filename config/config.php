@@ -33,8 +33,8 @@ $config = [
     'setup_key' => '123456789012120937867508',
 
     'push' => [
-        'public'  => 'BKwJPh2CRLonC6WHGRXHifm1SUuwOhHOSgy6ZmkiAe3X8aLhNNIuJ58dgsu9yTlx2XuCPy_eHK60KDF68F9NDB8',
-        'private' => 't1m_pTScHFjS8Z2CQcNXUYOqJGKUw5vyTru_mT2UQac',
+        'public'  => 'BI34XJuXSHfOCKAIgFTUSdmr4uqI-GUt9yPi8KJ87HpaIcuZJ3rPczdw8-neF0heejYE0VE9o0zwDzZxy4z1Bs',
+        'private' => 'E0wuL-lV0WULtShw2VBPn0a9UK-uh8WAfmb1AKytDDo',
         'subject' => 'mailto:tuongngocvinh@gmail.com',
     ],
 
