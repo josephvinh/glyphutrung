@@ -8,7 +8,7 @@
      ========================================================== -->
 <nav class="app-bottomnav select-none">
     <!-- max-w khớp với app-shell trong public/index.php để thanh nav không lệch biên -->
-    <div class="nav-outer max-w-md sm:max-w-xl lg:max-w-6xl xl:max-w-7xl">
+    <div class="nav-outer max-w-md lg:max-w-xl xl:max-w-7xl">
     <div class="nav-inner">
         <div class="flex items-stretch justify-around px-1.5 py-2">
 

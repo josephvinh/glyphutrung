@@ -97,7 +97,15 @@ class RateLimiter
             $data = @apcu_fetch($this->key, $success);
             return $success ? $data : null;
         }
-        return self::$cache[$this->key] ?? null;
+        // Fallback: dùng session-based cache (chỉ hiệu quả cho dev/CI)
+        // Trên production nên bật APCu
+        static $warned = [];
+        $warnKey = $this->key;
+        if (!isset($warned[$warnKey])) {
+            error_log('RateLimiter: APCu không có, fallback sang session cache (không hiệu quả trên production)');
+            $warned[$warnKey] = true;
+        }
+        return $_SESSION['rate_cache'][$this->key] ?? null;
     }
 
     /** Lưu dữ liệu vào cache */
@@ -106,7 +114,8 @@ class RateLimiter
         if (function_exists('apcu_store')) {
             @apcu_store($this->key, $data, $this->window + 10);
         } else {
-            self::$cache[$this->key] = $data;
+            if (!isset($_SESSION['rate_cache'])) $_SESSION['rate_cache'] = [];
+            $_SESSION['rate_cache'][$this->key] = $data;
         }
     }
 }

@@ -68,7 +68,7 @@
     Header always set X-Frame-Options "SAMEORIGIN"
     Header always set X-XSS-Protection "1; mode=block"
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
-    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self'; connect-src 'self'; frame-ancestors 'none';"
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self'; connect-src 'self'; object-src 'none'; frame-ancestors 'none';"
     Header always set Permissions-Policy "camera=(self), microphone=(), geolocation=()"
 
     # Service worker phải luôn lấy bản mới. Nếu trình duyệt giữ bản cũ
@@ -116,4 +116,17 @@
     <FilesMatch "^sw\.js$">
         Header set Cache-Control "no-cache, no-store, must-revalidate"
     </FilesMatch>
+</IfModule>
+
+# ============================================================
+#  LITESPEED: không giết PHP khi client đã đóng kết nối
+#  (cho phép gửi thông báo đẩy sau khi trả phản hồi)
+#
+#  LiteSpeed WS <= 5.x: khi nhận thấy client đã ngắt, nó gửi SIGTERM
+#  tới lsphp. Lệnh noabort bảo LSWS coi request này là "long-lived"
+#  và không gửi SIGTERM sớm — để push_xa_hang() kịp chạy xong.
+# ============================================================
+<IfModule LiteSpeed>
+    RewriteEngine On
+    RewriteRule ^api/ - [E=noabort:1]
 </IfModule>

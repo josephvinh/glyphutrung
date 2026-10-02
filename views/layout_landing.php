@@ -31,11 +31,22 @@ $__links = [
         body{margin:0;min-height:100vh;background:#f8fafc;color:#1e293b;
              font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
         .wrap{max-width:560px;margin:0 auto;padding:40px 20px calc(32px + env(safe-area-inset-bottom))}
+        /* Tablet (640px+) */
+        @media (min-width: 640px) {
+            .wrap { max-width: 720px; padding: 60px 40px; }
+        }
+        /* Desktop (1024px+) */
+        @media (min-width: 1024px) {
+            .wrap { max-width: 800px; padding: 80px 40px; }
+        }
         .brand{text-align:center;margin-bottom:28px}
         .brand img{width:96px;height:96px;object-fit:contain;border-radius:24px}
         .brand h1{font-size:1.5rem;font-weight:900;letter-spacing:-.01em;margin:16px 0 4px}
         .brand p{margin:0;font-size:.875rem;color:#94a3b8}
         .grid{display:grid;gap:14px}
+        @media (min-width: 640px) {
+            .grid { gap: 18px; }
+        }
         /* Liquid Glass Cards */
         a.card{
             display:flex;

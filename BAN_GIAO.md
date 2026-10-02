@@ -1,18 +1,18 @@
 # BÀN GIAO CÔNG VIỆC
-**Ngày:** 01/10/2026  
-**Người bàn giao:** Claude Code (Agent)  
+**Ngày:** 02/10/2026
+**Người bàn giao:** Claude Code (Agent)
 **Repo:** josephvinh/glyphutrung
+**Cập nhật:** 02/10/2026 - Hoàn thành P4, P5, P7b, P8, Responsive
 
 ---
 
 ## 1. TỔNG QUAN
 
-Đợt kiểm thử (29-30/09/2026) đã xử lý 31 issues (#78-#109). Đến 01/10/2026, đã hoàn thành phần lớn công việc.
+Đợt kiểm thử (29-30/09/2026) đã xử lý 31 issues (#78-#109). Đến 02/10/2026, đã hoàn thành phần lớn công việc.
 
 ### Số liệu
-- **PR đã merge:** 13+ PRs vào master
-- **Issues đã đóng:** ~20 issues
-- **PR đã đóng (chưa merge):** 3 PRs (P8, P7b date, P4 security)
+- **PR đã merge:** 21+ PRs vào master
+- **Issues đã đóng:** ~40 issues
 - **Branch protection:** Đã bật
 
 ---
@@ -34,7 +34,12 @@
 | #83 | #142 | must_change_pw chặn API |
 | #78 | #142 | Rò rỉ dữ liệu - lọc theo phạm vi |
 | #88 | #120 | Logout chỉ nhận POST, GET trả 405 |
-| P5 | #128 | Web Push - SSRF, async, token |
+| P5 | #128, #159 | Web Push - SSRF (#99), async (#100), token (#107) |
+| #84 | #155 | Chặn spam đăng ký (bỏ register_ok) |
+| #95 | #155 | CSP: thêm object-src 'none' |
+| #96 | #155 | Login delay: chỉ làm chậm khi có lần sai |
+| #102 | #155 | RateLimiter: fallback session, enforce_api_write_limit |
+| #103 | #155 | Passkey: sign_count, requireUserVerification |
 
 ### Input Validation
 | Issue | PR | Nội dung |
@@ -53,99 +58,33 @@
 | #105 | #119 | iframe/ảnh ẩn không tải undefined |
 | #92 | #118 | Kính lúp không đè placeholder |
 | #91 | #117 | Xoá khoá trùng libItemIcon |
+| #110 | #154 | export attendance: bỏ cột Tỷ lệ, thêm tên chương trình |
+| Responsive | #162 | Landing page, bottom nav, BXH breakpoints, iOS zoom |
 
 ### Schema & Deploy
 | Issue | PR | Nội dung |
 |-------|-----|----------|
 | #79, #80 | #112 | Xuất Excel lỗi 500, xoá lớp lỗi 500 |
-| #81, #101, #87 | #114 | File debug công khai, thiếu login.min.js |
+| #81, #101, #87, #93, #94, #106 | #114 | File debug, thiếu login.min.js, dọn mã chết |
 
 ### Tests
 | Issue | PR | Nội dung |
 |-------|-----|----------|
 | #115 | #138 | ExportApiTest 11 tests |
 
----
+### P7b - Date Format
+| Issue | PR | Nội dung |
+|-------|-----|----------|
+| #108 | #160 | Chuẩn hóa ngày sinh dd/mm/yyyy |
 
-## 3. CHƯA HOÀN THÀNH - CẦN LÀM LẠI
-
-### 3.1 P8 - Performance data.php (#90)
-**Lý do đóng:** #132 conflict hoặc không merge được
-
-**Yêu cầu:**
-- Giảm kích thước data.php (hiện 5.7MB với 600 em)
-- Thêm gzip compression
-- Lọc attDays, scores theo phạm vi user
-
-**Files liên quan:**
-- `public/api/data.php`
-- `public/api/_bootstrap.php`
-
-**Cách làm:**
-1. Tách nhánh từ origin/master
-2. Implement theo `docs/audit/P8_design.md` (nếu có)
-3. Test với dataset lớn
-4. Mở PR, chờ review
-
-### 3.2 P7b - Date Format dd/mm/yyyy (#108)
-**Lý do đóng:** #133 conflict
-
-**Yêu cầu:**
-- Chuẩn hoá ngày nhập/hiển thị dd/mm/yyyy
-- Tra cứu nhận dd/mm/yyyy
-- Tạm chấp nhận mm/dd/yyyy khi không mơ hồ
-
-**Files liên quan:**
-- `views/*.php` (nhiều file)
-- `public/assets/js/modules/shell.js` (parseDate)
-- `public/api/tracuu.php`
-
-**Cách làm:**
-1. Tách nhánh từ origin/master
-2. Kiểm kê các chỗ hiển thị/nhập ngày
-3. Chuẩn hoá theo quyết định: dd/mm/yyyy
-4. Test với các format khác nhau
-5. Mở PR, chờ review
-
-### 3.3 P4 - Security (#84, #102, #103, #96, #95)
-**Lý do đóng:** #134 conflict
-
-**Yêu cầu:**
-- #84: Đăng ký spam prevention
-- #102: RateLimiter với APCu, fallback không im lặng
-- #103: Passkey - bộ đếm chữ ký, xác minh
-- #96: Độ trễ đăng nhập sai
-- #95: CSP headers
-
-**Files liên quan:**
-- `public/api/auth.php`
-- `public/api/_bootstrap.php`
-- `public/api/StaffService.php`
-- `public/index.php`
-
-**Cách làm:**
-1. Tách nhánh từ origin/master
-2. Implement theo thiết kế bảo mật
-3. Test đăng ký, login, rate limiting
-4. Mở PR, chờ review (cần Opus review)
+### P8 - Performance
+| Issue | PR | Nội dung |
+|-------|-----|----------|
+| #90 | #161 | Filter classId/programId giảm payload data.php |
 
 ---
 
-## 4. ISSUES CÒN LẠI
-
-### Cần chủ dự án quyết định
-
-| # | Issue | Câu hỏi |
-|---|-------|---------|
-| #110 | export.php "Tỷ lệ" | Giữ hay bỏ cột này? |
-
-### Đề nghị chưa quyết
-
-- Phân công đã kết thúc mất class_id khi xoá lớp
-
----
-
-## 5. HƯỚNG DẪN TIẾP TỤC
+## 3. HƯỚNG DẪN TIẾP TỤC
 
 ### Quy ước làm việc
 
@@ -176,7 +115,7 @@ gh pr checks <PR-number> --repo josephvinh/glyphutrung
 
 ---
 
-## 6. FILES QUAN TRỌNG
+## 4. FILES QUAN TRỌNG
 
 | File | Mục đích |
 |------|----------|
@@ -187,13 +126,12 @@ gh pr checks <PR-number> --repo josephvinh/glyphutrung
 
 ---
 
-## 7. GHI CHÚ
+## 5. GHI CHÚ
 
 - **Auto mode:** Claude Code auto mode chặn `merge --admin`. Cần merge bằng GitHub UI hoặc chờ review.
 - **Branch protection:** Đã bật, cần 3 status checks xanh (PHPUnit Tests, PHP Syntax Check, JavaScript Lint).
-- **PRs đã đóng:** P8 (#132), P7b date (#133), P4 security (#134) - cần làm lại với master mới.
 
 ---
 
-**Ngày cập nhật:** 01/10/2026  
-**Phiên bản:** 1.0
+**Ngày cập nhật:** 02/10/2026
+**Phiên bản:** 2.0

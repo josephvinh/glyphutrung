@@ -249,7 +249,9 @@ select{border:1px solid #e2e8f0;border-radius:999px;padding:8px 12px;font-size:1
 .row .main .t{font-weight:700;font-size:14px;line-height:1.25}
 .row .main .s{font-size:11px;color:#94a3b8}
 .row .bar{flex:0 0 56px;height:8px;background:#f1f5f9;border-radius:999px;overflow:hidden}
-@media(min-width:480px){.row .bar{flex-basis:120px}}
+@media (min-width: 640px) { /* sm breakpoint */
+    .row .bar{flex-basis:120px}
+}
 .row .bar>i{display:block;height:100%;background:linear-gradient(90deg,#6366f1,#22c55e);border-radius:999px}
 .row .dg{flex:0 0 auto;font-weight:900;font-size:15px;width:52px;text-align:right}
 .medalrow{font-size:16px;width:22px;text-align:center;flex:0 0 auto}
