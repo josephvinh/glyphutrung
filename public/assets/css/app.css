@@ -4,15 +4,31 @@
    ========================================================== */
 
 :root {
-    /* Bo góc theo cấp bậc */
-    --r-shell: 2.5rem;
-    --r-sheet: 1.75rem;
-    --r-card: 1.5rem;
-    --r-field: 1.25rem;
+    /* Bo góc theo cấp bậc - giảm kích thước cho Liquid Glass */
+    --r-shell: 1.5rem;
+    --r-sheet: 1.25rem;
+    --r-card: 1rem;
+    --r-field: 0.75rem;
+    --r-btn: 0.625rem;
 
     /* Chiều cao thanh điều hướng dưới + safe-area iPhone */
     --nav-h: 4.5rem;
     --safe-b: env(safe-area-inset-bottom, 0px);
+
+    /* === LIQUID GLASS TOKENS - LIGHT MODE === */
+    --glass-blur: 20px;
+    --glass-saturate: 180%;
+    --glass-bg-primary: rgba(255, 255, 255, 0.72);
+    --glass-bg-secondary: rgba(255, 255, 255, 0.55);
+    --glass-bg-elevated: rgba(255, 255, 255, 0.85);
+    --glass-border: rgba(255, 255, 255, 0.5);
+    --glass-border-subtle: rgba(255, 255, 255, 0.25);
+    --glass-highlight: rgba(255, 255, 255, 0.8);
+    --glass-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+    --glass-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+    --glass-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.1);
+    --refraction-accent: rgba(200, 32, 58, 0.08);
+    --accent-color: #c8203a;
 }
 
 /* ---------- Alpine ---------- */
