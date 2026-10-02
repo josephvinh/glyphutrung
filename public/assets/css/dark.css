@@ -266,9 +266,84 @@ body {
     background-color: var(--bg-card) !important;
 }
 
+/* Primary buttons (blue-600) */
+.dark .bg-blue-600 {
+    filter: brightness(1.1);
+}
+
+/* Button text on primary */
+.dark .bg-blue-600,
+.dark .bg-blue-500 {
+    color: #fff;
+}
+
+/* White/glass backgrounds with opacity (glass effect on dark) */
+.dark .bg-white\/20,
+.dark .bg-white\/15 {
+    background-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+/* White badges on gradient backgrounds */
+.dark .bg-white.text-rose-600,
+.dark .bg-white.text-blue-700 {
+    color: #0f172a !important; /* Giữ chữ đậm trên nền trắng */
+}
+
+/* Slate buttons */
+.dark .bg-slate-800 {
+    background-color: #1e293b !important;
+    color: #f8fafc;
+}
+
+.dark .bg-slate-50 {
+    background-color: rgba(51, 65, 85, 0.5) !important;
+}
+
+/* Active/selected tab states */
+.dark .bg-slate-800.text-white {
+    background-color: #1e293b !important;
+}
+
+/* Border white badges */
+.dark .border-white {
+    border-color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Shadow colors for buttons */
+.dark .shadow-blue-200,
+.dark .shadow-emerald-200,
+.dark .shadow-rose-200,
+.dark .shadow-amber-200 {
+    --tw-shadow-color: rgba(0, 0, 0, 0.2);
+}
+
 /* Status badges */
 .dark .bg-emerald-500,
 .dark .bg-rose-500,
 .dark .bg-amber-500 {
     filter: brightness(0.85);
+}
+
+/* Badge text colors */
+.dark .bg-rose-100.text-rose-700,
+.dark .bg-emerald-100.text-emerald-700,
+.dark .bg-amber-100.text-amber-600,
+.dark .bg-blue-100.text-blue-700 {
+    background-color: rgba(244, 63, 94, 0.2) !important;
+    color: #fda4af !important;
+}
+
+.dark .bg-emerald-100.text-emerald-700 {
+    background-color: rgba(16, 185, 129, 0.2) !important;
+    color: #6ee7b7 !important;
+}
+
+.dark .bg-amber-100.text-amber-600 {
+    background-color: rgba(245, 158, 11, 0.2) !important;
+    color: #fcd34d !important;
+}
+
+.dark .bg-blue-100.text-blue-700 {
+    background-color: rgba(59, 130, 246, 0.2) !important;
+    color: #93c5fd !important;
 }
