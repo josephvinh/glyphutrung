@@ -141,6 +141,26 @@ body {
 .dark .text-rose-600,
 .dark .text-rose-700    { color: #fda4af !important; }
 
+/* Icon colors (500/400) - icons cần nổi bật hơn text thường */
+.dark .text-blue-500    { color: #60a5fa !important; }
+.dark .text-blue-400    { color: #93c5fd !important; }
+.dark .text-emerald-500 { color: #34d399 !important; }
+.dark .text-emerald-400 { color: #6ee7b7 !important; }
+.dark .text-amber-500   { color: #fbbf24 !important; }
+.dark .text-amber-400   { color: #fcd34d !important; }
+.dark .text-rose-500   { color: #fb7185 !important; }
+.dark .text-rose-400   { color: #fda4af !important; }
+
+/* Text trên gradient/ảnh (200, 300, 100) - cần rất sáng */
+.dark .text-blue-200    { color: #bfdbfe !important; }
+.dark .text-blue-300    { color: #93c5fd !important; }
+.dark .text-emerald-200 { color: #a7f3d0 !important; }
+.dark .text-emerald-300 { color: #6ee7b7 !important; }
+.dark .text-rose-200    { color: #fecdd3 !important; }
+.dark .text-rose-300    { color: #fda4af !important; }
+.dark .text-amber-200   { color: #fde68a !important; }
+.dark .text-amber-300   { color: #fcd34d !important; }
+
 /* Borders */
 .dark .border-slate-50,
 .dark .border-slate-100,
