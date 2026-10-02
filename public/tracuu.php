@@ -148,6 +148,22 @@ h2{font-size:14px;font-weight:800;margin-bottom:10px}
 .luoi span{display:block;font-size:10.5px;color:var(--mut);font-weight:700}.luoi b{font-size:15px;font-weight:900;text-transform:capitalize}
 .nx{background:#fffbeb;border-left:4px solid #f6b100;border-radius:10px;padding:10px 12px;font-size:13.5px;line-height:1.55;white-space:pre-wrap}
 .foot{text-align:center;font-size:11px;color:#94a3b8;margin-top:16px}
+/* Dark Mode */
+@media(prefers-color-scheme:dark){
+ body{background:linear-gradient(160deg,#1e293b,#0f172a 40%)!important;color:#f8fafc}
+ .hero{background:linear-gradient(135deg,#b91c1c,#991b1b)}
+ .card{background:rgba(30,41,59,0.85);border-color:rgba(255,255,255,0.1);box-shadow:0 8px 32px rgba(0,0,0,0.4)}
+ .card::before{background:linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent)}
+ .login input{background:rgba(30,41,59,0.85);border-color:rgba(255,255,255,0.1);color:#f8fafc}
+ .login input::placeholder{color:#64748b}
+ .tabs{background:rgba(30,41,59,0.85);border-color:rgba(255,255,255,0.1)}
+ .tong div{background:rgba(30,41,59,0.8)}
+ .so-dd{background:rgba(30,41,59,0.8);border-color:rgba(255,255,255,0.1)}
+ .so-dd .thang{background:rgba(250,204,21,0.2);color:#fbbf24}
+ .hang{border-top-color:rgba(255,255,255,0.1)}
+ .luoi div{background:rgba(30,41,59,0.8)}
+ .phieu{border-color:rgba(255,255,255,0.1);background:rgba(30,41,59,0.85)}
+}
 </style>
 </head>
 <body>

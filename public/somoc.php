@@ -426,6 +426,18 @@ body.khung-don .moc-khac{margin-top:8px;padding:7px 9px;font-size:11px}
 
 .canh-bao-nho{background:#fef2f2;border:1px solid #fca5a5;color:#b91c1c;border-radius:14px;padding:12px;font-size:12.5px;margin-bottom:12px;line-height:1.5}
 .canh-bao-nho a{color:#b91c1c;font-weight:800;text-decoration:underline}
+/* Dark Mode */
+@media(prefers-color-scheme:dark){
+ body{background:linear-gradient(160deg,#1e293b,#0f172a 40%)!important;color:#f8fafc}
+ .hero{background:linear-gradient(135deg,#b91c1c,#991b1b)}
+ .card{background:rgba(30,41,59,0.85);border-color:rgba(255,255,255,0.1);box-shadow:0 8px 32px rgba(0,0,0,0.4)}
+ .card::before{background:linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent)}
+ form.tra input[type=text]{background:rgba(30,41,59,0.85);border-color:rgba(255,255,255,0.1);color:#f8fafc}
+ .o{background:rgba(30,41,59,0.8)}
+ .lichsu h3{color:#94a3b8}
+ .dong{border-top-color:rgba(255,255,255,0.1)}
+ .doi-qua-trong,.gioi-thieu{background:rgba(30,41,59,0.85);border-color:rgba(255,255,255,0.1)}
+}
 </style>
 </head>
 <body class="<?= ($tab === 'so-moc' && $ketQua && !$pendingOut) ? 'khung-don' : '' ?>">
