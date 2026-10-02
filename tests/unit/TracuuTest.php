@@ -23,9 +23,17 @@ class TracuuTest extends TestCase
 
     public function testNormDobRejectsInvalid(): void
     {
-        foreach (['', 'abc', '02312014', '00012014', '3152014', '03/15/14', '15032014'] as $bad) {
+        foreach (['', 'abc', '02312014', '00012014', '3152014', '03/15/14'] as $bad) {
             $this->assertNull(tracuu_norm_dob($bad), $bad);
         }
+    }
+
+    public function testNormDobAcceptsDdMmFormat(): void
+    {
+        // Ngày > 12 = rõ ràng dd/mm, chấp nhận
+        $this->assertSame('03152014', tracuu_norm_dob('15032014')); // 15/03/2014
+        $this->assertSame('12052014', tracuu_norm_dob('12/05/2014')); // 12/05/2014
+        $this->assertSame('01252014', tracuu_norm_dob('25-01-2014')); // 25/01/2014 = 01/25 mmddyyyy
     }
 
     public function testDobFromDb(): void
