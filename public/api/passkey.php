@@ -97,11 +97,6 @@ switch ($action) {
 
             json_out(['ok' => true]);
         } catch (\Throwable $ex) {
-            // Handle duplicate credential
-            if (strpos($ex->getMessage(), 'Duplicate entry') !== false
-                || strpos($ex->getMessage(), 'UNIQUE constraint failed') !== false) {
-                json_fail('Thiết bị này đã được đăng ký trước đó.');
-            }
             json_fail('Lỗi đăng ký vân tay: ' . $ex->getMessage());
         }
         break;
@@ -177,12 +172,8 @@ switch ($action) {
             // Sử dụng sign_count hiện tại để detect cloning
             $prevSignCount = (int) $passkey['sign_count'];
             $WebAuthn->processGet($clientDataJSON, $authenticatorData, $signature, $passkey['public_key'], $challenge, $prevSignCount, false);
-
-            // Clone detection: nếu sign count tăng đột ngột, cảnh báo
+            // Library đã throw WebAuthnException::SIGNATURE_COUNTER nếu sign_count bất thường (chống clone)
             $newSignCount = $WebAuthn->getSignatureCounter();
-            if ($newSignCount !== null && ($newSignCount - $prevSignCount) > PASSKEY_MAX_SIGN_COUNT_JUMP) {
-                log_action('warn', 'security', 'Possible passkey clone detected - unusual sign count jump', $passkey['member_id']);
-            }
 
             db_run("UPDATE member_passkeys SET sign_count = ?, last_used_at = NOW() WHERE id = ?",
                 [$newSignCount ?? ($prevSignCount + 1), $passkey['id']]);
