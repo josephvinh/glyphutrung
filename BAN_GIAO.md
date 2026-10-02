@@ -1,18 +1,19 @@
 # BÀN GIAO CÔNG VIỆC
-**Ngày:** 01/10/2026  
-**Người bàn giao:** Claude Code (Agent)  
+**Ngày:** 02/10/2026
+**Người bàn giao:** Claude Code (Agent)
 **Repo:** josephvinh/glyphutrung
+**Cập nhật:** 02/10/2026 - P5 Web Push hoàn thành, PR #159
 
 ---
 
 ## 1. TỔNG QUAN
 
-Đợt kiểm thử (29-30/09/2026) đã xử lý 31 issues (#78-#109). Đến 01/10/2026, đã hoàn thành phần lớn công việc.
+Đợt kiểm thử (29-30/09/2026) đã xử lý 31 issues (#78-#109). Đến 02/10/2026, đã hoàn thành phần lớn công việc.
 
 ### Số liệu
-- **PR đã merge:** 13+ PRs vào master
-- **Issues đã đóng:** ~20 issues
-- **PR đã đóng (chưa merge):** 3 PRs (P8, P7b date, P4 security)
+- **PR đã merge:** 16+ PRs vào master
+- **Issues đã đóng:** ~30 issues
+- **PR đang mở:** #155 (P4 Security), #159 (P5 .htaccess)
 - **Branch protection:** Đã bật
 
 ---
@@ -34,7 +35,14 @@
 | #83 | #142 | must_change_pw chặn API |
 | #78 | #142 | Rò rỉ dữ liệu - lọc theo phạm vi |
 | #88 | #120 | Logout chỉ nhận POST, GET trả 405 |
-| P5 | #128 | Web Push - SSRF, async, token |
+| P5 | #128, #159 | Web Push - SSRF (#99), async (#100), token (#107) |
+
+Chi tiết P5 Web Push:
+- **#99 SSRF**: Allowlist endpoint FCM/Mozilla/Apple/WNS, regex chặt, kiểm IP công khai
+- **#100 Async**: Hàng đợi bền (ring_seq/ring_done), gửi sau phản hồi, curl_multi
+- **#107 Token**: Token 256-bit, SHA-256 hash, chống chiếm endpoint
+- **PR #159**: LiteSpeed noabort rule cho async push trên AZDIGI
+| #84, #95, #96, #102, #103 | #155 | P4 Security: spam register, rate limiter, login delay, CSP, passkey |
 
 ### Input Validation
 | Issue | PR | Nội dung |
@@ -53,12 +61,13 @@
 | #105 | #119 | iframe/ảnh ẩn không tải undefined |
 | #92 | #118 | Kính lúp không đè placeholder |
 | #91 | #117 | Xoá khoá trùng libItemIcon |
+| #110 | #154 | export attendance: bỏ cột Tỷ lệ, thêm tên chương trình |
 
 ### Schema & Deploy
 | Issue | PR | Nội dung |
 |-------|-----|----------|
 | #79, #80 | #112 | Xuất Excel lỗi 500, xoá lớp lỗi 500 |
-| #81, #101, #87 | #114 | File debug công khai, thiếu login.min.js |
+| #81, #101, #87, #93, #94, #106 | #114 | File debug, thiếu login.min.js, dọn mã chết |
 
 ### Tests
 | Issue | PR | Nội dung |
@@ -67,10 +76,10 @@
 
 ---
 
-## 3. CHƯA HOÀN THÀNH - CẦN LÀM LẠI
+## 3. CHƯA HOÀN THÀNH - CẦN LÀM
 
 ### 3.1 P8 - Performance data.php (#90)
-**Lý do đóng:** #132 conflict hoặc không merge được
+**Lý do đóng:** #132 conflict
 
 **Yêu cầu:**
 - Giảm kích thước data.php (hiện 5.7MB với 600 em)
@@ -195,5 +204,5 @@ gh pr checks <PR-number> --repo josephvinh/glyphutrung
 
 ---
 
-**Ngày cập nhật:** 01/10/2026  
-**Phiên bản:** 1.0
+**Ngày cập nhật:** 02/10/2026
+**Phiên bản:** 1.1
