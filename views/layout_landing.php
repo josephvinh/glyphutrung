@@ -36,20 +36,63 @@ $__links = [
         .brand h1{font-size:1.5rem;font-weight:900;letter-spacing:-.01em;margin:16px 0 4px}
         .brand p{margin:0;font-size:.875rem;color:#94a3b8}
         .grid{display:grid;gap:14px}
-        a.card{display:flex;align-items:center;gap:14px;padding:18px;border-radius:20px;background:#fff;
-               border:1px solid #e2e8f0;box-shadow:0 1px 2px rgba(0,0,0,.04);text-decoration:none;color:inherit;
-               transition:transform .12s}
+        /* Liquid Glass Cards */
+        a.card{
+            display:flex;
+            align-items:center;
+            gap:14px;
+            padding:18px;
+            border-radius:16px;
+            background:rgba(255,255,255,0.72);
+            backdrop-filter:blur(16px) saturate(180%);
+            -webkit-backdrop-filter:blur(16px) saturate(180%);
+            border:1px solid rgba(255,255,255,0.5);
+            box-shadow:0 8px 32px rgba(0,0,0,0.1);
+            text-decoration:none;color:inherit;
+            transition:transform .12s,box-shadow .12s;
+            position:relative;
+            overflow:hidden
+        }
+        a.card::before{
+            content:'';
+            position:absolute;
+            top:0;left:10%;right:10%;
+            height:1px;
+            background:linear-gradient(90deg,transparent,rgba(255,255,255,0.8),transparent)
+        }
+        a.card:hover{
+            transform:translateY(-2px);
+            box-shadow:0 12px 40px rgba(0,0,0,0.15)
+        }
         a.card:active{transform:scale(.99)}
-        a.card:focus-visible{outline:3px solid #2563eb;outline-offset:2px}
-        a.card .ic{flex:none;width:52px;height:52px;border-radius:16px;background:#f1f5f9;
+        a.card:focus-visible{outline:2px solid #c8203a;outline-offset:2px}
+        a.card .ic{flex:none;width:52px;height:52px;border-radius:12px;background:rgba(241,245,249,0.8);
                    display:flex;align-items:center;justify-content:center;font-size:1.6rem}
         a.card b{display:block;font-size:1rem;font-weight:900;line-height:1.25}
         a.card small{display:block;margin-top:2px;font-size:.78rem;line-height:1.35;color:#64748b}
         a.card .go{margin-left:auto;flex:none;color:#94a3b8;font-size:1.3rem}
-        a.card.primary{background:#c8203a;border-color:#c8203a;color:#fff}
-        a.card.primary .ic{background:rgba(255,255,255,.18)}
-        a.card.primary small{color:rgba(255,255,255,.85)}
-        a.card.primary .go{color:rgba(255,255,255,.8)}
+        /* Primary card - TNTT Red */
+        a.card.primary{
+            background:linear-gradient(145deg,rgba(200,32,58,0.85),rgba(200,32,58,0.72));
+            border-color:rgba(200,32,58,0.3);
+            box-shadow:0 8px 32px rgba(200,32,58,0.2);
+        }
+        a.card.primary::before{background:linear-gradient(90deg,transparent,rgba(255,255,255,0.4),transparent)}
+        a.card.primary .ic{background:rgba(255,255,255,0.2)}
+        a.card.primary small{color:rgba(255,255,255,0.85)}
+        a.card.primary .go{color:rgba(255,255,255,0.8)}
+        /* Dark mode */
+        @media (prefers-color-scheme: dark) {
+            body{background:#0f172a;color:#f8fafc}
+            a.card{background:rgba(30,41,59,0.75);border-color:rgba(255,255,255,0.1);box-shadow:0 8px 32px rgba(0,0,0,0.25)}
+            a.card .ic{background:rgba(51,65,85,0.8)}
+            a.card small{color:#94a3b8}
+            a.card .go{color:#64748b}
+        }
+        @media (prefers-reduced-transparency: reduce) {
+            a.card{background:#fff!important;backdrop-filter:none!important}
+            a.card.primary{background:#c8203a!important}
+        }
         footer{margin-top:28px;text-align:center;font-size:.75rem;color:#94a3b8}
     </style>
 </head>
