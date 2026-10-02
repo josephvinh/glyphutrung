@@ -15,20 +15,66 @@
     --nav-h: 4.5rem;
     --safe-b: env(safe-area-inset-bottom, 0px);
 
+    /* === TEXT COLOR TOKENS - quy ước theo chế độ === */
+    --text-primary: #0f172a;    /* slate-900 - light mode */
+    --text-secondary: #475569;  /* slate-600 - light mode */
+    --text-muted: #94a3b8;      /* slate-400 - light mode */
+    --icon-color: #334155;      /* slate-700 - light mode */
+    --bg-page: #f8fafc;         /* slate-50 - light mode */
+}
+
+/* Explicit Light Mode Override */
+@media (prefers-color-scheme: light) {
+    :root {
+        --text-primary: #0f172a;
+        --text-secondary: #475569;
+        --text-muted: #94a3b8;
+        --icon-color: #334155;
+        --bg-page: #f8fafc;
+    }
+}
+.light-mode {
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+    --icon-color: #334155;
+    --bg-page: #f8fafc;
+}
+
+:root {
     /* === LIQUID GLASS TOKENS - LIGHT MODE === */
     --glass-blur: 20px;
     --glass-saturate: 180%;
-    --glass-bg-primary: rgba(255, 255, 255, 0.72);
-    --glass-bg-secondary: rgba(255, 255, 255, 0.55);
-    --glass-bg-elevated: rgba(255, 255, 255, 0.85);
-    --glass-border: rgba(255, 255, 255, 0.5);
-    --glass-border-subtle: rgba(255, 255, 255, 0.25);
-    --glass-highlight: rgba(255, 255, 255, 0.8);
+    --glass-bg-primary: rgba(255, 255, 255, 0.92);
+    --glass-bg-secondary: rgba(255, 255, 255, 0.82);
+    --glass-bg-elevated: rgba(255, 255, 255, 0.96);
+    --glass-border: rgba(255, 255, 255, 0.6);
+    --glass-border-subtle: rgba(255, 255, 255, 0.3);
+    --glass-highlight: rgba(255, 255, 255, 0.9);
     --glass-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
     --glass-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
     --glass-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.1);
     --refraction-accent: rgba(200, 32, 58, 0.08);
     --accent-color: #c8203a;
+}
+
+/* Dark mode tokens */
+.dark {
+    --text-primary: #f8fafc;
+    --text-secondary: #cbd5e1;
+    --text-muted: #94a3b8;
+    --icon-color: #cbd5e1;
+    --bg-page: #0f172a;
+
+    --glass-bg-primary: rgba(30, 41, 59, 0.85);
+    --glass-bg-secondary: rgba(30, 41, 59, 0.75);
+    --glass-bg-elevated: rgba(30, 41, 59, 0.95);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-border-subtle: rgba(255, 255, 255, 0.05);
+    --glass-highlight: rgba(255, 255, 255, 0.15);
+    --glass-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+    --glass-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.3);
+    --glass-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
 /* ==========================================================
@@ -39,8 +85,8 @@
 .glass-card {
     background: linear-gradient(
         145deg,
-        var(--glass-bg-secondary) 0%,
-        var(--glass-bg-primary) 100%
+        var(--glass-bg-primary) 0%,
+        var(--glass-bg-elevated) 100%
     );
     backdrop-filter: blur(16px) saturate(var(--glass-saturate));
     -webkit-backdrop-filter: blur(16px) saturate(var(--glass-saturate));
@@ -49,6 +95,7 @@
     box-shadow: var(--glass-shadow-lg);
     position: relative;
     overflow: hidden;
+    color: var(--text-primary);
 }
 
 .glass-card::before {
@@ -105,6 +152,25 @@
     border-color: var(--refraction-accent);
     box-shadow: 0 0 0 3px var(--refraction-accent);
     outline: none;
+}
+
+/* Dark mode overrides for glass elements */
+/* Text colors are now handled by CSS variables, so we just let them inherit */
+
+/* Glass Card: chữ phải đậm theo light mode */
+.glass-card {
+    color: var(--text-primary);
+}
+.glass-card h1,
+.glass-card h2,
+.glass-card h3,
+.glass-card b,
+.glass-card strong {
+    color: var(--text-primary);
+}
+.glass-card small,
+.glass-card .text-muted {
+    color: var(--text-secondary);
 }
 
 /* Glass Modal/Sheet */
@@ -247,6 +313,15 @@ body {
 /* Header: chừa chỗ cho tai thỏ khi cài lên màn hình chính */
 .app-header {
     padding-top: calc(1.5rem + env(safe-area-inset-top, 0px));
+    position: relative;
+    z-index: 100;
+    isolation: isolate;
+}
+
+/* Main content cần padding-top để không bị header che */
+.app-content {
+    position: relative;
+    z-index: 1;
 }
 @media (min-width: 640px) {
     /* Trong khung thẻ nổi thì không còn tai thỏ */
@@ -598,13 +673,13 @@ textarea:focus-visible:not(:disabled),
     border-radius: 0.875rem;
     font-size: 13px;
     font-weight: 600;
-    color: #475569;
+    color: var(--text-secondary);
     transition: background-color .15s ease, color .15s ease;
 }
-.nav-item:hover { background-color: #f1f5f9; }
+.nav-item:hover { background-color: var(--glass-highlight); }
 .nav-item-on {
-    background-color: #fdedef;
-    color: #e11d36;
+    background-color: var(--refraction-accent);
+    color: var(--accent-color);
 }
 .nav-item:active { transform: scale(0.97); }
 
@@ -613,13 +688,13 @@ textarea:focus-visible:not(:disabled),
     border-radius: 0.625rem;
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
-    background-color: #f8fafc;
-    border: 1px solid #f1f5f9;
+    background-color: var(--glass-bg-elevated);
+    border: 1px solid var(--glass-border-subtle);
 }
 .nav-item-on .nav-ico {
-    background-color: #fcdadf;
-    border-color: #f8b3bc;
-    color: #e11d36;
+    background-color: var(--refraction-accent);
+    border-color: rgba(200, 32, 58, 0.3);
+    color: var(--accent-color);
 }
 /* Module của Ban Điều Hành dùng nền đậm, khớp với lưới App Center */
 .nav-ico-dark {
@@ -827,8 +902,8 @@ a,
     background-color: #fff;                           /* khớp nền thẻ */
     box-shadow: 1px 0 0 #f1f5f9;
 }
-.dark .score-table-sticky thead th:first-child { background-color: var(--bg-secondary); }
-.dark .score-table-sticky tbody td:first-child { background-color: var(--bg-card); }
+.dark .score-table-sticky thead th:first-child { background-color: var(--glass-bg-secondary); box-shadow: 1px 0 0 var(--glass-border-subtle); }
+.dark .score-table-sticky tbody td:first-child { background-color: var(--glass-bg-primary); box-shadow: 1px 0 0 var(--glass-border-subtle); }
 
 /* ==========================================================
    BỔ SUNG UTILITY cho module Thư viện & Sổ tay.

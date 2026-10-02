@@ -9,7 +9,8 @@
         --bg-secondary: #1e293b;
         --bg-card: #1e293b;
         --text-primary: #f8fafc;
-        --text-secondary: #94a3b8;
+        --text-secondary: #cbd5e1;
+        --icon-color: #cbd5e1;
         --border-color: #334155;
         --shadow-color: rgba(0, 0, 0, 0.3);
     }
@@ -21,22 +22,23 @@
     --bg-secondary: #1e293b;
     --bg-card: #1e293b;
     --text-primary: #f8fafc;
-    --text-secondary: #94a3b8;
+    --text-secondary: #cbd5e1;
+    --icon-color: #cbd5e1;
     --border-color: #334155;
     --shadow-color: rgba(0, 0, 0, 0.4);
 
     /* === LIQUID GLASS TOKENS - DARK MODE === */
     --glass-blur: 24px;
     --glass-saturate: 160%;
-    --glass-bg-primary: rgba(30, 41, 59, 0.75);
-    --glass-bg-secondary: rgba(30, 41, 59, 0.55);
-    --glass-bg-elevated: rgba(51, 65, 85, 0.8);
+    --glass-bg-primary: rgba(30, 41, 59, 0.85);
+    --glass-bg-secondary: rgba(30, 41, 59, 0.75);
+    --glass-bg-elevated: rgba(30, 41, 59, 0.95);
     --glass-border: rgba(255, 255, 255, 0.1);
     --glass-border-subtle: rgba(255, 255, 255, 0.05);
     --glass-highlight: rgba(255, 255, 255, 0.15);
     --glass-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
-    --glass-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.25);
-    --glass-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.35);
+    --glass-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.3);
+    --glass-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4);
     --refraction-accent: rgba(200, 32, 58, 0.12);
 }
 
