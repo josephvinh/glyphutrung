@@ -130,19 +130,17 @@
     box-shadow: var(--glass-shadow-sm);
 }
 
-/* Glass Input */
+/* Glass Input - Fixed for readability */
 .input-glass {
-    background: var(--glass-bg-secondary);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    background: var(--bg-primary, #ffffff);
     border: 1px solid var(--glass-border-subtle);
     border-radius: var(--r-field);
     transition: all 0.2s ease;
 }
 
 .input-glass:focus {
-    border-color: var(--refraction-accent);
-    box-shadow: 0 0 0 3px var(--refraction-accent);
+    border-color: var(--accent-color, #c8203a);
+    box-shadow: 0 0 0 3px rgba(200, 32, 58, 0.1);
     outline: none;
 }
 
