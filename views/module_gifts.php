@@ -34,7 +34,7 @@
 
                 <!-- Ảnh (nếu có) -->
                 <div class="w-full aspect-square rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden">
-                    <img x-show="g.imageUrl" :src="g.imageUrl" class="w-full h-full object-cover" alt="">
+                    <img x-show="g.imageUrl" :src="g.imageUrl" class="w-full h-full object-cover" alt="" loading="lazy" decoding="async">
                     <i x-show="!g.imageUrl" data-lucide="gift" class="w-8 h-8 text-slate-300"></i>
                 </div>
 

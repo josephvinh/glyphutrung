@@ -17,6 +17,7 @@ $files = array_merge(
 
 header('Content-Type: application/javascript; charset=utf-8');
 header('Cache-Control: public, max-age=31536000, immutable');
+header('Vary: Accept-Encoding');
 
 /* Bản NÉN (build/minify.cjs) — phục vụ nếu nó MỚI HƠN mọi tệp nguồn.
    Cũ hơn (quên build sau khi sửa code) thì rơi về nối thô bên dưới -> không
