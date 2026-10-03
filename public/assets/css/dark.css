@@ -3,9 +3,9 @@
    Updated: 2024-10-03 - Match THEME_COLORS.md guide
    ========================================================== */
 
-/* ---------- System preference (fallback) ---------- */
+/* ---------- System preference (fallback) - Only apply when .dark class is present ---------- */
 @media (prefers-color-scheme: dark) {
-    :root {
+    :root.dark {
         /* Background Colors - per THEME_COLORS.md */
         --bg-primary: #0f172a;      /* slate-900 */
         --bg-secondary: #1e293b;    /* slate-800 */
