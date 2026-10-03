@@ -20,8 +20,7 @@
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.75rem; margin-top: 1rem; }
         .item { padding: 0.75rem; background: #ffffff; border-radius: 0.5rem; text-align: center; border: 1px solid #e5e7eb; }
         body.dark .item { background: #334155; border-color: #475569; }
-        h2 { margin-bottom: 0.75rem; color: #0f172a; font-size: 1rem; }
-        body.dark h2 { color: #f8fafc; }
+        h2 { margin-bottom: 0.75rem; font-size: 1rem; }
         .toggle { position: fixed; top: 1rem; right: 1rem; padding: 0.5rem 1rem; border-radius: 9999px; font-weight: bold; font-size: 0.875rem; border: none; cursor: pointer; z-index: 9999; }
         .toggle-light { background: #e2e8f0; color: #1e293b; }
         .toggle-dark { background: #334155; color: #f8fafc; }
@@ -33,145 +32,135 @@
         <span x-text="dark ? '🌙 Dark' : '☀️ Light'"></span>
     </button>
 
-    <h1 style="font-size:1.5rem;font-weight:800;margin-bottom:1.5rem;" :class="dark ? 'text-white' : 'text-slate-900'">
-        Test Theme Visibility
-    </h1>
+    <h1 style="font-size:1.5rem;font-weight:800;margin-bottom:1.5rem;color:#0f172a;" class="dark-title">Test Theme Visibility</h1>
 
     <!-- 1. Header -->
     <div class="section">
-        <h2>1. HEADER - Tên User</h2>
+        <h2 style="color:#0f172a;">1. HEADER - Tên User</h2>
         <div class="item" style="text-align:left;">
-            <p class="text-xs uppercase tracking-wide" style="color:#64748b;">Chào ngày mới,</p>
-            <h1 class="text-lg font-bold" style="color:#0f172a;">Maria Nguyễn Thị A</h1>
-            <div class="inline-flex items-center mt-2 px-3 py-1 rounded-full" style="background:#e2e8f0;">
-                <i data-lucide="shield-check" class="w-3 h-3" style="color:#059669;margin-right:0.25rem;"></i>
-                <span class="text-xs font-medium" style="color:#334155;">GLV • Khối 1</span>
+            <p class="text-xs uppercase tracking-wide" style="color:#64748b;" :style="dark ? 'color:#94a3b8;' : 'color:#64748b;'">Chào ngày mới,</p>
+            <h1 class="text-lg font-bold" :style="dark ? 'color:#ffffff;' : 'color:#0f172a;'" x-text="dark ? 'Maria Nguyễn Thị A (Dark)' : 'Maria Nguyễn Thị A'">Maria Nguyễn Thị A</h1>
+            <div class="inline-flex items-center mt-2 px-3 py-1 rounded-full" :style="dark ? 'background:#475569;' : 'background:#e2e8f0;'">
+                <i data-lucide="shield-check" class="w-3 h-3" :style="dark ? 'color:#34d399;' : 'color:#059669;'" style="margin-right:0.25rem;"></i>
+                <span class="text-xs font-medium" :style="dark ? 'color:#e2e8f0;' : 'color:#334155;'">GLV • Khối 1</span>
             </div>
         </div>
     </div>
 
     <!-- 2. Login Icons -->
     <div class="section">
-        <h2>2. LOGIN - Icons</h2>
+        <h2 style="color:#0f172a;">2. LOGIN - Icons</h2>
         <div class="grid">
             <div class="item">
-                <i data-lucide="phone" class="w-5 h-5 text-slate-500 dark:text-slate-300 mx-auto"></i>
-                <p class="text-xs mt-1 text-slate-600 dark:text-slate-400">Phone icon</p>
+                <i data-lucide="phone" class="w-5 h-5" :style="dark ? 'color:#94a3b8;' : 'color:#64748b;'" style="display:block;margin:auto;"></i>
+                <p class="text-xs mt-1" :style="dark ? 'color:#94a3b8;' : 'color:#64748b;'">Phone icon</p>
             </div>
             <div class="item">
-                <i data-lucide="key-round" class="w-5 h-5 text-slate-500 dark:text-slate-300 mx-auto"></i>
-                <p class="text-xs mt-1 text-slate-600 dark:text-slate-400">Key icon</p>
+                <i data-lucide="key-round" class="w-5 h-5" :style="dark ? 'color:#94a3b8;' : 'color:#64748b;'" style="display:block;margin:auto;"></i>
+                <p class="text-xs mt-1" :style="dark ? 'color:#94a3b8;' : 'color:#64748b;'">Key icon</p>
             </div>
             <div class="item">
-                <i data-lucide="eye" class="w-5 h-5 text-slate-500 dark:text-slate-300 mx-auto"></i>
-                <p class="text-xs mt-1 text-slate-600 dark:text-slate-400">Eye icon</p>
+                <i data-lucide="eye" class="w-5 h-5" :style="dark ? 'color:#94a3b8;' : 'color:#64748b;'" style="display:block;margin:auto;"></i>
+                <p class="text-xs mt-1" :style="dark ? 'color:#94a3b8;' : 'color:#64748b;'">Eye icon</p>
             </div>
         </div>
     </div>
 
     <!-- 3. Student List -->
     <div class="section">
-        <h2>3. STUDENT LIST - Tên các em</h2>
+        <h2 style="color:#0f172a;">3. STUDENT LIST - Tên các em</h2>
         <div class="item" style="text-align:left;">
             <p>
-                <span class="font-bold" style="color:#2563eb;">GLV001</span>
-                <span style="color:#94a3b8;margin:0 0.25rem;">•</span>
-                <span class="font-medium" style="color:#475569;">Khai Tâm 1A</span>
+                <span class="font-bold" :style="dark ? 'color:#60a5fa;' : 'color:#2563eb;'">GLV001</span>
+                <span style="margin:0 0.25rem;" :style="dark ? 'color:#64748b;' : 'color:#94a3b8;'">•</span>
+                <span class="font-medium" :style="dark ? 'color:#94a3b8;' : 'color:#475569;'">Khai Tâm 1A</span>
             </p>
-            <p class="font-semibold mt-1" style="color:#0f172a;">
-                Lê Thị B <span class="font-normal" style="color:#64748b;">Maria</span>
+            <p class="font-semibold mt-1" :style="dark ? 'color:#ffffff;' : 'color:#0f172a;'">
+                Lê Thị B <span class="font-normal" :style="dark ? 'color:#94a3b8;' : 'color:#64748b;'">Maria</span>
             </p>
             <p class="mt-1">
-                <span class="px-2 py-0.5 rounded text-xs font-bold uppercase" style="background:#d1fae5;color:#047857;">đang sinh hoạt</span>
+                <span class="px-2 py-0.5 rounded text-xs font-bold uppercase" :style="dark ? 'background:#065f46;color:#6ee7b7;' : 'background:#d1fae5;color:#047857;'">đang sinh hoạt</span>
             </p>
         </div>
     </div>
 
     <!-- 4. Text Colors -->
     <div class="section">
-        <h2>4. TEXT COLORS</h2>
+        <h2 style="color:#0f172a;">4. TEXT COLORS</h2>
         <div class="grid">
             <div class="item">
-                <p class="font-semibold" style="color:#0f172a;">#0f172a (Đen)</p>
-                <p class="text-xs mt-1 text-slate-500">slate-900</p>
+                <p class="font-semibold" :style="dark ? 'color:#ffffff;' : 'color:#0f172a;'">#ffffff/#0f172a</p>
+                <p class="text-xs mt-1" :style="dark ? 'color:#94a3b8;' : 'color:#64748b;'">white/slate-900</p>
             </div>
             <div class="item">
-                <p class="font-semibold" style="color:#1e293b;">#1e293b (Đen đậm)</p>
-                <p class="text-xs mt-1 text-slate-500">slate-800</p>
+                <p class="font-semibold" :style="dark ? 'color:#f8fafc;' : 'color:#1e293b;'">#f8fafc/#1e293b</p>
+                <p class="text-xs mt-1" :style="dark ? 'color:#94a3b8;' : 'color:#64748b;'">slate-50/slate-800</p>
             </div>
             <div class="item">
-                <p class="font-semibold" style="color:#334155;">#334155 (Xám đậm)</p>
-                <p class="text-xs mt-1 text-slate-500">slate-700</p>
+                <p class="font-semibold" :style="dark ? 'color:#cbd5e1;' : 'color:#334155;'">#cbd5e1/#334155</p>
+                <p class="text-xs mt-1" :style="dark ? 'color:#94a3b8;' : 'color:#64748b;'">slate-300/slate-700</p>
             </div>
             <div class="item">
-                <p class="font-semibold" style="color:#475569;">#475569 (Xám)</p>
-                <p class="text-xs mt-1 text-slate-500">slate-600</p>
-            </div>
-            <div class="item">
-                <p class="font-semibold" style="color:#64748b;">#64748b (Xám nhạt)</p>
-                <p class="text-xs mt-1 text-slate-500">slate-500</p>
-            </div>
-            <div class="item">
-                <p class="font-semibold" style="color:#94a3b8;">#94a3b8 (Xám rất nhạt)</p>
-                <p class="text-xs mt-1 text-slate-500">slate-400</p>
+                <p class="font-semibold" :style="dark ? 'color:#94a3b8;' : 'color:#475569;'">#94a3b8/#475569</p>
+                <p class="text-xs mt-1" :style="dark ? 'color:#94a3b8;' : 'color:#64748b;'">slate-400/slate-600</p>
             </div>
         </div>
     </div>
 
     <!-- 5. Icon Colors -->
     <div class="section">
-        <h2>5. ICON COLORS</h2>
+        <h2 style="color:#0f172a;">5. ICON COLORS</h2>
         <div class="grid">
             <div class="item">
-                <i data-lucide="star" class="w-6 h-6 text-blue-500 dark:text-blue-400 mx-auto"></i>
-                <p class="text-xs mt-1">blue-500</p>
+                <i data-lucide="star" class="w-6 h-6" :style="dark ? 'color:#60a5fa;' : 'color:#3b82f6;'" style="display:block;margin:auto;"></i>
+                <p class="text-xs mt-1" :style="dark ? 'color:#94a3b8;' : 'color:#64748b;'">blue</p>
             </div>
             <div class="item">
-                <i data-lucide="check" class="w-6 h-6 text-emerald-500 dark:text-emerald-400 mx-auto"></i>
-                <p class="text-xs mt-1">emerald-500</p>
+                <i data-lucide="check" class="w-6 h-6" :style="dark ? 'color:#34d399;' : 'color:#10b981;'" style="display:block;margin:auto;"></i>
+                <p class="text-xs mt-1" :style="dark ? 'color:#94a3b8;' : 'color:#64748b;'">emerald</p>
             </div>
             <div class="item">
-                <i data-lucide="alert" class="w-6 h-6 text-amber-500 dark:text-amber-400 mx-auto"></i>
-                <p class="text-xs mt-1">amber-500</p>
+                <i data-lucide="alert" class="w-6 h-6" :style="dark ? 'color:#fbbf24;' : 'color:#f59e0b;'" style="display:block;margin:auto;"></i>
+                <p class="text-xs mt-1" :style="dark ? 'color:#94a3b8;' : 'color:#64748b;'">amber</p>
             </div>
             <div class="item">
-                <i data-lucide="x" class="w-6 h-6 text-rose-500 dark:text-rose-400 mx-auto"></i>
-                <p class="text-xs mt-1">rose-500</p>
+                <i data-lucide="x" class="w-6 h-6" :style="dark ? 'color:#fb7185;' : 'color:#ef4444;'" style="display:block;margin:auto;"></i>
+                <p class="text-xs mt-1" :style="dark ? 'color:#94a3b8;' : 'color:#64748b;'">rose</p>
             </div>
         </div>
     </div>
 
     <!-- 6. Buttons -->
     <div class="section">
-        <h2>6. BUTTONS</h2>
+        <h2 style="color:#0f172a;">6. BUTTONS</h2>
         <div class="grid">
             <div class="item">
-                <button class="w-full bg-blue-600 text-white rounded-lg py-2 px-3 font-bold text-sm">Primary</button>
+                <button class="w-full rounded-lg py-2 px-3 font-bold text-sm" :style="dark ? 'background:#3b82f6;color:#fff;' : 'background:#2563eb;color:#fff;'">Primary</button>
             </div>
             <div class="item">
-                <button class="w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg py-2 px-3 font-bold text-sm text-slate-800 dark:text-white">White</button>
+                <button class="w-full rounded-lg py-2 px-3 font-bold text-sm" :style="dark ? 'background:#475569;color:#f8fafc;border:1px solid #64748b;' : 'background:#fff;color:#1e293b;border:1px solid #e5e7eb;'">White</button>
             </div>
             <div class="item">
-                <button class="w-full bg-slate-800 dark:bg-slate-600 text-white rounded-lg py-2 px-3 font-bold text-sm">Slate-800</button>
+                <button class="w-full rounded-lg py-2 px-3 font-bold text-sm" :style="dark ? 'background:#1e293b;color:#f8fafc;' : 'background:#1e293b;color:#fff;'">Slate-800</button>
             </div>
         </div>
     </div>
 
     <!-- 7. Badges -->
     <div class="section">
-        <h2>7. BADGES</h2>
+        <h2 style="color:#0f172a;">7. BADGES</h2>
         <div class="grid">
             <div class="item">
-                <span class="px-2 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 font-bold text-xs">Active</span>
+                <span class="px-2 py-1 rounded-full font-bold text-xs" :style="dark ? 'background:#064e3b;color:#6ee7b7;' : 'background:#d1fae5;color:#047857;'">Active</span>
             </div>
             <div class="item">
-                <span class="px-2 py-1 rounded-full bg-rose-100 dark:bg-rose-900/50 text-rose-700 dark:text-rose-300 font-bold text-xs">Inactive</span>
+                <span class="px-2 py-1 rounded-full font-bold text-xs" :style="dark ? 'background:#9f1239;color:#fda4af;' : 'background:#ffe4e6;color:#be123c;'">Inactive</span>
             </div>
             <div class="item">
-                <span class="px-2 py-1 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 font-bold text-xs">Info</span>
+                <span class="px-2 py-1 rounded-full font-bold text-xs" :style="dark ? 'background:#1e3a8a;color:#93c5fd;' : 'background:#dbeafe;color:#1d4ed8;'">Info</span>
             </div>
             <div class="item">
-                <span class="px-2 py-1 rounded-full bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 font-bold text-xs">Warning</span>
+                <span class="px-2 py-1 rounded-full font-bold text-xs" :style="dark ? 'background:#78350f;color:#fcd34d;' : 'background:#fef3c7;color:#d97706;'">Warning</span>
             </div>
         </div>
     </div>
