@@ -88,34 +88,11 @@ window.TNTT.core = {
     assignments: window.TNTT.boot?.assignments || [],
     primaryAssignment: window.TNTT.boot?.primaryAssignment || null,
 
-    // Chế độ tối: chỉ bật khi người dùng tự chọn; mặc định SÁNG.
-    dark: (() => {
-        try {
-            const saved = localStorage.getItem('darkMode');
-            if (saved !== null) return saved === 'true';
-        } catch (e) { /* localStorage bị chặn — dùng mặc định */ }
-        return false;
-    })(),
-
     // Đổi tên thành initCore để tránh trùng với shell.init (#121)
     initCore() {
-        this.applyDarkMode();
         if (typeof this.initOfflineAttendance === 'function') {
             this.initOfflineAttendance();
         }
-    },
-
-    applyDarkMode() {
-        document.documentElement.classList.toggle('dark', this.dark);
-        const meta = document.querySelector('meta[name="theme-color"]');
-        if (meta) meta.setAttribute('content', this.dark ? '#0f172a' : '#c8203a');
-    },
-
-    toggleDark() {
-        this.dark = !this.dark;
-        this.applyDarkMode();
-        try { localStorage.setItem('darkMode', this.dark); } catch (e) { /* bỏ qua */ }
-        this.$nextTick(() => window.lucide && lucide.createIcons());
     },
 
     // ==========================================

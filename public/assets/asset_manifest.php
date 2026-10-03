@@ -24,7 +24,7 @@ return [
         'calendar', 'notes', 'passkey', 'library', 'gifts', 'rewards',
     ],
     // Thứ tự CSS = thứ tự cascade: tailwind (nền) trước, phần ghi đè sau.
-    'css' => ['tailwind', 'font', 'app', 'dark', 'skeleton', 'analytics', 'toast', 'brand'],
+    'css' => ['tailwind', 'font', 'app', 'skeleton', 'analytics', 'toast', 'brand'],
 
     // LAZY MODULES: Heavy modules loaded on demand
     // Usage: TNTT_LAZY.load('qrscan').then(m => m.init())
