@@ -135,6 +135,13 @@ window.TNTT.shell = {
         return p(d.getDate()) + '-' + p(d.getMonth() + 1) + '-' + d.getFullYear();
     },
 
+    // Kiểm tra module có đang active (bao gồm cả student_profile khi key là students)
+    isActiveModule(moduleKey) {
+        if (this.currentModule === moduleKey) return true;
+        if (moduleKey === 'students' && this.currentModule === 'student_profile') return true;
+        return false;
+    },
+
     changeModule(moduleName) {
         // Bấm vào tab đang mở -> cuộn vút lên đầu trang (UX Facebook/Tiktok)
         if (this.currentModule === moduleName) {
