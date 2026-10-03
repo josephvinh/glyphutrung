@@ -271,7 +271,7 @@ select{border:1px solid #e2e8f0;border-radius:999px;padding:8px 12px;font-size:1
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
   </a>
   <div class="spark" id="spark"></div>
-  <div class="cup">🏆</div>
+  <div class="cup"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg></div>
   <h1>BẢNG THI ĐUA</h1>
   <p>Đoàn Thiếu Nhi Thánh Thể · Giáo xứ Phú Trung</p>
   <div class="ky"><?= e_($tieuDeKy) ?></div>
@@ -319,10 +319,10 @@ select{border:1px solid #e2e8f0;border-radius:999px;padding:8px 12px;font-size:1
       if (isset($top[1])) $od[] = ['p'=>'p2','d'=>$top[1]];
       if (isset($top[0])) $od[] = ['p'=>'p1','d'=>$top[0]];
       if (isset($top[2])) $od[] = ['p'=>'p3','d'=>$top[2]];
-      $mej = ['vang'=>'🥇','bac'=>'🥈','dong'=>'🥉'];
+      $mej = ['vang'=>'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#f6b100" stroke="#b7860b" stroke-width="1"><circle cx="12" cy="12" r="10"/><text x="12" y="16" text-anchor="middle" font-size="12" fill="#fff">1</text></svg>','bac'=>'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#9aa7b4" stroke="#6b7280" stroke-width="1"><circle cx="12" cy="12" r="10"/><text x="12" y="16" text-anchor="middle" font-size="12" fill="#fff">2</text></svg>','dong'=>'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#c8813e" stroke="#92400e" stroke-width="1"><circle cx="12" cy="12" r="10"/><text x="12" y="16" text-anchor="middle" font-size="12" fill="#fff">3</text></svg>'];
     ?>
     <div class="podium">
-      <?php $medalBuc=['p1'=>'🥇','p2'=>'🥈','p3'=>'🥉']; foreach ($od as $o): $d=$o['d']; ?>
+      <?php $medalBuc=['p1'=>'<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="#f6b100" stroke="#b7860b" stroke-width="1"><circle cx="12" cy="12" r="10"/><text x="12" y="16" text-anchor="middle" font-size="12" font-weight="bold" fill="#fff">1</text></svg>','p2'=>'<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="#9aa7b4" stroke="#6b7280" stroke-width="1"><circle cx="12" cy="12" r="10"/><text x="12" y="16" text-anchor="middle" font-size="12" font-weight="bold" fill="#fff">2</text></svg>','p3'=>'<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="#c8813e" stroke="#92400e" stroke-width="1"><circle cx="12" cy="12" r="10"/><text x="12" y="16" text-anchor="middle" font-size="12" font-weight="bold" fill="#fff">3</text></svg>']; foreach ($od as $o): $d=$o['d']; ?>
         <div class="pod <?= $o['p'] ?>">
           <div class="medal"><?= $medalBuc[$o['p']] ?? '' ?></div>
           <div class="ava"><?= e_(chuDau($d['ten'])) ?></div>
@@ -335,7 +335,7 @@ select{border:1px solid #e2e8f0;border-radius:999px;padding:8px 12px;font-size:1
 
     <?php if (isset($top[0])): ?>
       <div class="champ"><?= e_($tenChampion) ?>: <b><?= e_($top[0]['ten']) ?></b>
-        <?= $type!=='lop' && $top[0]['class_name'] ? '('.e_($top[0]['class_name']).')' : '' ?> — <?= rtrim(rtrim(number_format($top[0]['diem'],1),'0'),'.') ?> điểm 🎉</div>
+        <?= $type!=='lop' && $top[0]['class_name'] ? '('.e_($top[0]['class_name']).')' : '' ?> — <?= rtrim(rtrim(number_format($top[0]['diem'],1),'0'),'.') ?> điểm <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2z"/></svg></div>
     <?php endif; ?>
 
     <?php $maxDiem = max(1, (float)($xh[0]['diem'] ?? 1)); ?>
