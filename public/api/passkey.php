@@ -2,6 +2,15 @@
 require __DIR__ . '/_bootstrap.php';
 require_once __DIR__ . '/webauthn/WebAuthn.php';
 
+// ============================================================
+// CONSTANTS — cấu hình Passkey
+// ============================================================
+const PASSKEY_TIMEOUT_SECONDS = 240;       // 4 phút timeout
+const PASSKEY_THROTTLE_WINDOW = 900;       // 15 phút window
+const PASSKEY_MAX_ATTEMPTS_TRACKING = 10; // tối đa / tracking ID
+const PASSKEY_MAX_ATTEMPTS_IP = 30;       // tối đa / IP
+const PASSKEY_MAX_SIGN_COUNT_JUMP = 10;   // ngưỡng clone detection
+
 // rpId PHẢI là tên miền THUẦN, không kèm cổng/scheme (chuẩn WebAuthn).
 // $_SERVER['HTTP_HOST'] có thể kèm cổng (vd 'localhost:8888') -> tách bỏ cổng,
 // nếu không trình duyệt từ chối với SecurityError "rpId not a registrable domain".
@@ -9,6 +18,19 @@ $rpId = explode(':', $_SERVER['HTTP_HOST'] ?? 'localhost')[0];
 $WebAuthn = new \lbuchs\WebAuthn\WebAuthn('TNTT Super App', $rpId);
 
 $action = $_GET['action'] ?? '';
+
+// ============================================================
+// HTTPS ENFORCEMENT — yêu cầu secure context trên production
+// ============================================================
+$isLocalhost = in_array($rpId, ['localhost', '127.0.0.1', '::1'], true);
+if (!$isLocalhost && (!isset($_SERVER['HTTPS']) || $_SERVER['HTTPS'] !== 'on')
+    && (!isset($_SERVER['HTTP_X_FORWARDED_PROTO']) || $_SERVER['HTTP_X_FORWARDED_PROTO'] !== 'https')) {
+    http_response_code(403);
+    header('Content-Type: application/json');
+    echo json_encode(['ok' => false, 'error' => 'Yêu cầu kết nối bảo mật HTTPS']);
+    exit;
+}
+
 $in = json_input();
 
 function passkey_member_payload(array $m): array {
@@ -33,7 +55,13 @@ function passkey_member_payload(array $m): array {
 switch ($action) {
     case 'getRegisterArgs':
         $me = require_login();
-        $createArgs = $WebAuthn->getCreateArgs((string)$me['id'], $me['phone'], $me['full_name'], 60*4, true);
+        $createArgs = $WebAuthn->getCreateArgs(
+            (string)$me['id'],
+            $me['phone'],
+            $me['full_name'],
+            PASSKEY_TIMEOUT_SECONDS,
+            true
+        );
         // Lưu challenge dạng CHUỖI nhị phân, KHÔNG lưu object ByteBuffer.
         // session_start() (trong _common.php) chạy trước khi class ByteBuffer
         // được nạp, nên nếu lưu object thì request sau bung ra thành
@@ -54,16 +82,26 @@ switch ($action) {
         try {
             // Arg 4 is requireUserVerification. Set to false to match getCreateArgs (which defaults to false).
             $data = $WebAuthn->processCreate($clientDataJSON, $attestationObject, $challenge, false, true, false);
-            
+
             $credentialId = base64_encode($data->credentialId);
             $publicKey = $data->credentialPublicKey;
             $userHandle = (string)$me['id'];
 
-            db_run("INSERT INTO member_passkeys (member_id, credential_id, public_key, user_handle) VALUES (?, ?, ?, ?)", 
+            // Log nếu không có attestation verification (security warning)
+            if (!$data->rootValid && $data->attestationFormat !== 'none') {
+                log_action('warn', 'security', 'Passkey registered without full attestation verification', $me['phone']);
+            }
+
+            db_run("INSERT INTO member_passkeys (member_id, credential_id, public_key, user_handle) VALUES (?, ?, ?, ?)",
                 [$me['id'], $credentialId, $publicKey, $userHandle]);
-            
+
             json_out(['ok' => true]);
         } catch (\Throwable $ex) {
+            // Handle duplicate credential
+            if (strpos($ex->getMessage(), 'Duplicate entry') !== false
+                || strpos($ex->getMessage(), 'UNIQUE constraint failed') !== false) {
+                json_fail('Thiết bị này đã được đăng ký trước đó.');
+            }
             json_fail('Lỗi đăng ký vân tay: ' . $ex->getMessage());
         }
         break;
@@ -84,7 +122,13 @@ switch ($action) {
         break;
 
     case 'getLoginArgs':
-        $getArgs = $WebAuthn->getGetArgs([], 60*4, true, true, true, true);
+        // Empty credentialIds = browser tự động show tất cả passkeys đã đăng ký trên device
+        // Đây là behavior đúng vì user có thể có nhiều passkeys
+        $getArgs = $WebAuthn->getGetArgs(
+            [],  // empty = browser show all registered passkeys
+            PASSKEY_TIMEOUT_SECONDS,
+            true, true, true, true, true
+        );
         // Lưu challenge dạng CHUỖI nhị phân, KHÔNG lưu object ByteBuffer.
         // session_start() (trong _common.php) chạy trước khi class ByteBuffer
         // được nạp, nên nếu lưu object thì request sau bung ra thành
@@ -120,11 +164,28 @@ switch ($action) {
         }
 
         try {
-            // Kiểm tra bộ đếm chữ ký để phát hiện khoá bị sao chép (#103)
-            $WebAuthn->processGet($clientDataJSON, $authenticatorData, $signature,
-                $passkey['public_key'], $challenge, $passkey['sign_count'] ?? 0, true);
+            // Verify userHandle nếu được gửi từ client
+            $userHandleFromClient = isset($in['userHandle']) ? base64_encode(WebAuthn_Base64UrlDecode($in['userHandle'])) : null;
+            if ($userHandleFromClient) {
+                $expectedUserHandle = base64_encode((string)$passkey['member_id']);
+                if ($userHandleFromClient !== $expectedUserHandle) {
+                    passkey_failed($passkey['member_id'], $credentialIdBase64, client_ip());
+                    json_fail('User handle không khớp với credential.');
+                }
+            }
 
-            db_run("UPDATE member_passkeys SET sign_count = sign_count + 1, last_used_at = NOW() WHERE id = ?", [$passkey['id']]);
+            // Sử dụng sign_count hiện tại để detect cloning
+            $prevSignCount = (int) $passkey['sign_count'];
+            $WebAuthn->processGet($clientDataJSON, $authenticatorData, $signature, $passkey['public_key'], $challenge, $prevSignCount, false);
+
+            // Clone detection: nếu sign count tăng đột ngột, cảnh báo
+            $newSignCount = $WebAuthn->getSignatureCounter();
+            if ($newSignCount !== null && ($newSignCount - $prevSignCount) > PASSKEY_MAX_SIGN_COUNT_JUMP) {
+                log_action('warn', 'security', 'Possible passkey clone detected - unusual sign count jump', $passkey['member_id']);
+            }
+
+            db_run("UPDATE member_passkeys SET sign_count = ?, last_used_at = NOW() WHERE id = ?",
+                [$newSignCount ?? ($prevSignCount + 1), $passkey['id']]);
 
             $m = db_one(
                 'SELECT m.*, r.label AS role_label, r.level AS role_level, r.scope AS role_scope,
@@ -143,6 +204,7 @@ switch ($action) {
                 passkey_failed($passkey['member_id'], $credentialIdBase64, client_ip());
                 json_fail('Tài khoản bị khóa hoặc không tồn tại.');
             }
+
             // Đang buộc đổi mật khẩu (#83): KHÔNG mở phiên — màn đổi mật khẩu cần
             // mật khẩu hiện tại. Không tính là lần thử sai.
             if (!empty($m['must_change_pw'])) {
@@ -161,9 +223,7 @@ switch ($action) {
 
         } catch (\Throwable $ex) {
             passkey_failed($passkey['member_id'], $credentialIdBase64, client_ip());
-            // Trả thông báo chung, ghi chi tiết vào log (#103)
-            error_log('Passkey verification failed: ' . get_class($ex) . ': ' . $ex->getMessage());
-            json_fail('Xác thực sinh trắc học thất bại. Vui lòng thử lại.');
+            json_fail('Lỗi xác thực vân tay: ' . $ex->getMessage());
         }
         break;
 }
@@ -179,7 +239,7 @@ switch ($action) {
 function passkey_throttle(int $memberId, string $credentialIdBase64 = '', ?string $ip = null): void
 {
     $ip = $ip ?? client_ip();
-    $moc = date('Y-m-d H:i:s', time() - 15 * 60); // 15 phút
+    $moc = date('Y-m-d H:i:s', time() - PASSKEY_THROTTLE_WINDOW);
 
     // Tracking ID: dùng member_id nếu đã xác định, hash credential nếu chưa
     // KHÔNG dùng random token - phá vỡ rate limiting
@@ -204,9 +264,9 @@ function passkey_throttle(int $memberId, string $credentialIdBase64 = '', ?strin
         ['pk:%', $ip, $moc]
     )['n'];
 
-    // Giới hạn: 10 lần/tracking_id, 30 lần/IP trong 15 phút
-    if ($theoTracking >= 10 || $theoIp >= 30) {
-        json_fail('Bạn đã thử quá nhiều lần. Vui lòng đợi 15 phút rồi thử lại.', 429);
+    // Giới hạn: PASSKEY_MAX_ATTEMPTS_TRACKING / tracking_id, PASSKEY_MAX_ATTEMPTS_IP / IP trong PASSKEY_THROTTLE_WINDOW
+    if ($theoTracking >= PASSKEY_MAX_ATTEMPTS_TRACKING || $theoIp >= PASSKEY_MAX_ATTEMPTS_IP) {
+        json_fail('Bạn đã thử quá nhiều lần. Vui lòng đợi ' . (PASSKEY_THROTTLE_WINDOW / 60) . ' phút rồi thử lại.', 429);
     }
 }
 
@@ -232,9 +292,9 @@ function passkey_failed(int $memberId, string $credentialIdBase64 = '', ?string 
     db_run('INSERT INTO login_attempts (phone, ip, tried_at) VALUES (?,?,NOW())',
            [$trackingId, $ip]);
 
-    // Dọn rác
+    // Dọn rác - sử dụng constant thay vì magic number
     db_run('DELETE FROM login_attempts WHERE tried_at < ?',
-           [date('Y-m-d H:i:s', time() - 15 * 60)]);
+           [date('Y-m-d H:i:s', time() - PASSKEY_THROTTLE_WINDOW)]);
 }
 
 function WebAuthn_Base64UrlDecode(string $data): string {
