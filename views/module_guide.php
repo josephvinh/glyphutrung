@@ -9,7 +9,7 @@
             <i data-lucide="chevron-left" class="w-6 h-6 text-slate-600"></i>
         </button>
         <div class="min-w-0">
-            <h2 class="text-xl font-black text-slate-800 dark:text-white tracking-tight leading-tight">Hướng dẫn sử dụng</h2>
+            <h2 class="text-xl font-black text-slate-800 tracking-tight leading-tight">Hướng dẫn sử dụng</h2>
             <p class="text-micro text-slate-500">Thao tác cơ bản theo từng vai</p>
         </div>
     </div>
@@ -26,8 +26,8 @@
         <h3 class="text-xs font-black text-slate-500 uppercase tracking-wider mb-3 px-1">Dùng chung cho mọi vai</h3>
         <div class="space-y-3 mb-6">
             <?php foreach ($HD['chung'] as $m): ?>
-            <div class="bg-white dark:bg-slate-700 rounded-card p-4 shadow-sm border border-slate-100 dark:border-slate-600">
-                <p class="text-sm font-black text-slate-800 dark:text-white mb-2 flex items-center gap-2">
+            <div class="bg-white rounded-card p-4 shadow-sm border border-slate-100">
+                <p class="text-sm font-black text-slate-800 mb-2 flex items-center gap-2">
                     <i data-lucide="check-circle" class="w-4 h-4 text-emerald-500 shrink-0"></i>
                     <?= htmlspecialchars($m['title']) ?>
                 </p>
@@ -64,8 +64,8 @@
                 <p class="text-micro text-white/80 mt-0.5"><?= htmlspecialchars($r['mo_ta']) ?></p>
             </div>
             <?php foreach ($r['items'] as $m): ?>
-            <div class="bg-white dark:bg-slate-700 rounded-card p-4 shadow-sm border border-slate-100 dark:border-slate-600">
-                <p class="text-sm font-black text-slate-800 dark:text-white mb-2 flex items-center gap-2">
+            <div class="bg-white rounded-card p-4 shadow-sm border border-slate-100">
+                <p class="text-sm font-black text-slate-800 mb-2 flex items-center gap-2">
                     <i data-lucide="chevron-right" class="w-4 h-4 text-blue-500 shrink-0"></i>
                     <?= htmlspecialchars($m['title']) ?>
                 </p>

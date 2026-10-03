@@ -16,25 +16,25 @@
          đúng thói quen trên web. Viền xanh cho biết đang ở Trang chủ. -->
     <button @click="changeModule('dashboard')" type="button"
             aria-label="Về trang chủ"
-            class="bg-white dark:bg-slate-700 rounded-card border border-slate-100 dark:border-slate-600 shadow-sm px-4 py-4 text-left transition-colors hover:bg-slate-50 dark:hover:bg-slate-600"
-            :class="currentModule === 'dashboard' ? 'border-blue-300 dark:border-blue-400 ring-2 ring-blue-100 dark:ring-blue-800' : 'border-slate-100 dark:border-slate-600'">
+            class="bg-white rounded-card border border-slate-100 shadow-sm px-4 py-4 text-left transition-colors hover:bg-slate-50"
+            :class="currentModule === 'dashboard' ? 'border-blue-300 ring-2 ring-blue-100' : 'border-slate-100'">
         <div class="flex items-center gap-3">
             <img src="assets/img/icon-192.png" alt="Logo Gia Đình Giáo Lý Phú Trung"
                  class="rounded-field shrink-0" style="width:40px;height:40px;object-fit:contain">
 
             <div class="min-w-0">
-                <p class="text-sm font-black text-slate-800 dark:text-white leading-tight truncate">GLY PHÚ TRUNG</p>
-                <p class="text-micro font-semibold text-slate-400 dark:text-slate-500 truncate" x-text="year ? year.name : ''"></p>
+                <p class="text-sm font-black text-slate-800 leading-tight truncate">GLY PHÚ TRUNG</p>
+                <p class="text-micro font-semibold text-slate-400 truncate" x-text="year ? year.name : ''"></p>
             </div>
         </div>
     </button>
 
     <!-- Điều hướng -->
-    <nav class="bg-white dark:bg-slate-700 rounded-card border border-slate-100 dark:border-slate-600 shadow-sm p-3 space-y-4">
+    <nav class="bg-white rounded-card border border-slate-100 shadow-sm p-3 space-y-4">
 
         <!-- Chức năng -->
         <div x-show="visibleModules('glv').length > 0">
-            <p class="px-3 pb-2 text-micro font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Chức năng</p>
+            <p class="px-3 pb-2 text-micro font-bold text-slate-400 uppercase tracking-wider">Chức năng</p>
             <div class="space-y-0.5">
                 <template x-for="m in visibleModules('glv')" :key="'sb-' + m.key">
                     <button @click="openModule(m.key)" type="button"
@@ -52,7 +52,7 @@
                               x-text="moduleBadgeLabel(m.key)"></span>
 
                         <!-- Đang bảo trì -->
-                        <span x-show="!moduleEnabled[m.key]" style="display: none;" class="inline-flex items-center justify-center"><i data-lucide="wrench" class="w-3.5 h-3.5 shrink-0 text-slate-400 dark:text-slate-500"></i></span>
+                        <span x-show="!moduleEnabled[m.key]" style="display: none;" class="inline-flex items-center justify-center"><i data-lucide="wrench" class="w-3.5 h-3.5 shrink-0 text-slate-400"></i></span>
                     </button>
                 </template>
             </div>
@@ -60,7 +60,7 @@
 
         <!-- Khu vực điều hành / quản lý khối -->
         <div x-show="visibleModules('bdh').length > 0" style="display: none;">
-            <p class="px-3 pb-2 text-micro font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider"
+            <p class="px-3 pb-2 text-micro font-bold text-slate-400 uppercase tracking-wider"
                x-text="['admin', 'bdh'].includes(user.role) ? 'Ban Điều Hành'
                       : (user.role === 'truong_khoi' ? 'Quản lý khối' : 'Thông tin chung')"></p>
             <div class="space-y-0.5">
@@ -73,7 +73,7 @@
                             <i :data-lucide="m.icon" class="w-[18px] h-[18px]"></i>
                         </span>
                         <span class="flex-1 text-left truncate" x-text="m.label"></span>
-                        <span x-show="!moduleEnabled[m.key]" style="display: none;" class="inline-flex items-center justify-center"><i data-lucide="wrench" class="w-3.5 h-3.5 shrink-0 text-slate-400 dark:text-slate-500"></i></span>
+                        <span x-show="!moduleEnabled[m.key]" style="display: none;" class="inline-flex items-center justify-center"><i data-lucide="wrench" class="w-3.5 h-3.5 shrink-0 text-slate-400"></i></span>
                     </button>
                 </template>
             </div>

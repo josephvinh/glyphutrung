@@ -8,7 +8,7 @@
                 <i data-lucide="chevron-left" class="w-6 h-6 text-slate-600"></i>
             </button>
             <div class="min-w-0">
-                <h2 class="text-xl font-black text-slate-800 dark:text-white tracking-tight truncate">Trạm Đổi Quà</h2>
+                <h2 class="text-xl font-black text-slate-800 tracking-tight truncate">Trạm Đổi Quà</h2>
                 <p class="text-micro text-slate-500" x-text="rwMode==='pos' ? 'Quét thẻ · trừ Mộc · giao quà tại quầy' : 'Xác nhận đơn đặt trước online'"></p>
             </div>
         </div>
@@ -67,12 +67,12 @@
     <div x-show="rwStep==='shop'" style="display:none">
 
         <!-- Thẻ thông tin em + số Mộc -->
-        <div class="bg-white dark:bg-slate-700 rounded-card p-4 shadow-sm border border-slate-100 dark:border-slate-600 mb-4 flex items-center gap-3">
+        <div class="bg-white rounded-card p-4 shadow-sm border border-slate-100 mb-4 flex items-center gap-3">
             <div class="w-12 h-12 shrink-0 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
                 <i data-lucide="user" class="w-6 h-6"></i>
             </div>
             <div class="flex-1 min-w-0">
-                <p class="text-sm font-black text-slate-800 dark:text-white truncate" x-text="(rwStudent||{}).fullName || ''"></p>
+                <p class="text-sm font-black text-slate-800 truncate" x-text="(rwStudent||{}).fullName || ''"></p>
                 <p class="text-micro text-slate-500" x-text="'Mã: ' + ((rwStudent||{}).code || '')"></p>
             </div>
             <div class="text-right shrink-0">
@@ -101,7 +101,7 @@
                         <img x-show="g.imageUrl" :src="g.imageUrl" class="w-full h-full object-cover" alt="" loading="lazy" decoding="async">
                         <i x-show="!g.imageUrl" data-lucide="gift" class="w-7 h-7 text-slate-300"></i>
                     </div>
-                    <h3 class="text-sm font-black text-slate-800 dark:text-white leading-tight truncate" x-text="g.name"></h3>
+                    <h3 class="text-sm font-black text-slate-800 leading-tight truncate" x-text="g.name"></h3>
                     <p class="text-sm font-bold text-amber-600 flex items-center gap-1">
                         <i data-lucide="stamp" class="w-3.5 h-3.5"></i><span x-text="g.stampCost"></span> Mộc
                     </p>
@@ -128,7 +128,7 @@
          class="fixed inset-x-0 bottom-0 z-[190] px-4 pb-4 pt-2 pointer-events-none">
         <div class="max-w-3xl mx-auto pointer-events-auto bg-white rounded-2xl shadow-2xl border border-slate-200 p-3 flex items-center gap-3">
             <div class="flex-1 min-w-0">
-                <p class="text-sm font-black text-slate-800 dark:text-white"><span x-text="rwCartCount"></span> món · <span class="text-amber-600" x-text="rwCartTotal"></span> Mộc</p>
+                <p class="text-sm font-black text-slate-800"><span x-text="rwCartCount"></span> món · <span class="text-amber-600" x-text="rwCartTotal"></span> Mộc</p>
                 <p class="text-micro text-slate-500">Còn lại sau khi đổi: <span x-text="rwAvailable - rwCartTotal"></span> Mộc</p>
             </div>
             <button @click="rwClearCart()" type="button" class="shrink-0 text-xs font-bold text-slate-500 px-2 py-2">Xoá giỏ</button>
@@ -176,12 +176,12 @@
     <div x-show="cfStep==='order' && cfPending" style="display:none">
 
         <!-- Thẻ thông tin em -->
-        <div class="bg-white dark:bg-slate-700 rounded-card p-4 shadow-sm border border-slate-100 dark:border-slate-600 mb-4 flex items-center gap-3">
+        <div class="bg-white rounded-card p-4 shadow-sm border border-slate-100 mb-4 flex items-center gap-3">
             <div class="w-12 h-12 shrink-0 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
                 <i data-lucide="user" class="w-6 h-6"></i>
             </div>
             <div class="flex-1 min-w-0">
-                <p class="text-sm font-black text-slate-800 dark:text-white truncate" x-text="(cfStudent||{}).fullName || ''"></p>
+                <p class="text-sm font-black text-slate-800 truncate" x-text="(cfStudent||{}).fullName || ''"></p>
                 <p class="text-micro text-slate-500" x-text="'Mã: ' + ((cfStudent||{}).code || '')"></p>
             </div>
             <div class="text-right shrink-0">
@@ -191,7 +191,7 @@
         </div>
 
         <!-- Danh sách quà đã đặt -->
-        <div class="bg-white dark:bg-slate-700 rounded-card p-4 shadow-sm border border-slate-100 dark:border-slate-600 mb-4">
+        <div class="bg-white rounded-card p-4 shadow-sm border border-slate-100 mb-4">
             <p class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Quà đã đặt</p>
             <div class="divide-y divide-slate-100">
                 <template x-for="it in (cfPending||{}).items || []" :key="it.giftId">
@@ -204,7 +204,7 @@
                 </template>
             </div>
             <div class="pt-3 mt-1 border-t border-slate-100 flex items-center justify-between">
-                <p class="text-sm font-black text-slate-800 dark:text-white">Tổng cộng</p>
+                <p class="text-sm font-black text-slate-800">Tổng cộng</p>
                 <p class="text-lg font-black text-amber-600 flex items-center gap-1">
                     <i data-lucide="stamp" class="w-4 h-4"></i><span x-text="(cfPending||{}).total"></span> Mộc
                 </p>
@@ -212,7 +212,7 @@
         </div>
 
         <!-- Nhập mật mã đổi quà + xác nhận giao -->
-        <div class="bg-white dark:bg-slate-700 rounded-card p-4 shadow-sm border border-slate-100 dark:border-slate-600 mb-4">
+        <div class="bg-white rounded-card p-4 shadow-sm border border-slate-100 mb-4">
             <label class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2 block">Mật mã đổi quà của em</label>
             <form @submit.prevent="cfConfirm()" class="flex gap-2">
                 <input x-model="cfPassword" type="password" autocomplete="off" placeholder="Nhập mật mã em đã đặt"

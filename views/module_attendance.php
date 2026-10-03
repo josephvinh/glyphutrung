@@ -8,10 +8,10 @@
     <div x-show="activeSession === null" style="display: none;">
 
         <div class="flex items-center mb-6">
-            <button aria-label="Quay lại trang chủ" @click="changeModule('dashboard')" class="w-10 h-10 bg-white dark:bg-slate-700 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-600 flex items-center justify-center active:scale-90 transition-transform mr-4">
-                <i data-lucide="chevron-left" class="w-6 h-6 text-slate-600 dark:text-slate-300"></i>
+            <button aria-label="Quay lại trang chủ" @click="changeModule('dashboard')" class="w-10 h-10 bg-white rounded-2xl shadow-sm border border-slate-200 flex items-center justify-center active:scale-90 transition-transform mr-4">
+                <i data-lucide="chevron-left" class="w-6 h-6 text-slate-600"></i>
             </button>
-            <h2 class="text-xl font-black text-slate-800 dark:text-white tracking-tight">Điểm Danh</h2>
+            <h2 class="text-xl font-black text-slate-800 tracking-tight">Điểm Danh</h2>
         </div>
 
         <!-- Thanh thông báo Ngoại tuyến & Hàng đợi đồng bộ -->
@@ -45,7 +45,7 @@
                 <button aria-label="Lùi một ngày" @click="shiftAttendanceDate(-1)" class="w-10 h-10 shrink-0 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-center text-slate-500 active:scale-90 transition-transform">
                     <i data-lucide="chevron-left" class="w-4 h-4"></i>
                 </button>
-                <input x-model="attendanceDate" type="date" min="2000-01-01" max="2100-12-31" class="input-glass flex-1 min-w-0 px-3 py-2.5 text-sm font-semibold text-slate-800 dark:text-white dark:bg-slate-800 dark:border-slate-600">
+                <input x-model="attendanceDate" type="date" min="2000-01-01" max="2100-12-31" class="input-glass flex-1 min-w-0 px-3 py-2.5 text-sm font-semibold text-slate-800">
                 <button aria-label="Tới một ngày" @click="shiftAttendanceDate(1)" class="w-10 h-10 shrink-0 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-center text-slate-500 active:scale-90 transition-transform">
                     <i data-lucide="chevron-right" class="w-4 h-4"></i>
                 </button>
@@ -57,7 +57,7 @@
         <div class="glass-card rounded-xl p-4 mb-5">
             <div class="flex items-center justify-between">
                 <div>
-                    <h3 class="text-sm font-bold text-slate-700 dark:text-white">Xuất Báo Cáo Excel</h3>
+                    <h3 class="text-sm font-bold text-slate-700">Xuất Báo Cáo Excel</h3>
                     <p class="text-xs text-slate-500 mt-0.5">Tải danh sách điểm danh theo lớp và khoảng thời gian</p>
                 </div>
                 <button @click="openExportModal()" type="button"
@@ -146,7 +146,7 @@
         <!-- Skeleton loading state -->
         <div x-show="syncing && programs.length === 0" style="display: none;" class="space-y-4">
             <template x-for="i in 3" :key="'sk-' + i">
-                <div class="bg-white dark:bg-slate-700 rounded-card p-5 shadow-sm border border-slate-100 dark:border-slate-600">
+                <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100">
                     <div class="flex items-center gap-2 mb-3">
                         <div class="skeleton skeleton-badge"></div>
                         <div class="skeleton skeleton-badge"></div>
@@ -196,7 +196,7 @@
                         <span x-show="!prog.countForAttendance" style="display: none;" class="text-micro font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-slate-100 text-slate-500">Không tính chuyên cần</span>
                     </div>
 
-                    <h3 class="text-base font-black text-slate-800 dark:text-white leading-tight mb-3" x-text="prog.name"></h3>
+                    <h3 class="text-base font-black text-slate-800 leading-tight mb-3" x-text="prog.name"></h3>
 
                     <!-- Giờ bắt đầu & giờ chốt -->
                     <div class="bg-slate-50 rounded-2xl p-3.5 flex items-center justify-between mb-4">
@@ -276,7 +276,7 @@
                 <i data-lucide="chevron-left" class="w-6 h-6 text-slate-600"></i>
             </button>
             <div class="min-w-0">
-                <h2 class="text-xl font-black text-slate-800 dark:text-white tracking-tight leading-tight truncate" x-text="sessionProgram ? sessionProgram.name : ''"></h2>
+                <h2 class="text-xl font-black text-slate-800 tracking-tight leading-tight truncate" x-text="sessionProgram ? sessionProgram.name : ''"></h2>
                 <p class="text-xs font-medium text-slate-500 mt-0.5" x-text="formatFullDate(activeSession ? activeSession.date : '')"></p>
             </div>
         </div>
@@ -399,7 +399,7 @@
                             <span class="text-slate-400 mx-1">•</span>
                             <span class="text-slate-400 font-medium" x-text="student.className"></span>
                         </p>
-                        <p class="text-sm font-black text-slate-800 dark:text-white leading-snug">
+                        <p class="text-sm font-black text-slate-800 leading-snug">
                             <span class="font-normal text-slate-500" x-text="student.holyName"></span>
                             <span x-text="student.name"></span>
                         </p>
