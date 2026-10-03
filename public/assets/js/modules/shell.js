@@ -262,7 +262,7 @@ window.TNTT.shell = {
 
         this.initIconWatcher();
 
-        // Gọi initCore() để khởi tạo dark mode và điểm danh ngoại tuyến (#121)
+        // Gọi initCore() để khởi tạo các tính năng core và điểm danh ngoại tuyến (#121)
         if (typeof this.initCore === 'function') {
             this.initCore();
         }
