@@ -231,7 +231,7 @@ select{border:1px solid #e2e8f0;border-radius:999px;padding:8px 12px;font-size:1
 .pod{background:#fff;border-radius:18px;padding:16px 8px 14px;text-align:center;box-shadow:0 12px 30px -16px rgba(15,23,42,.35);border:2px solid transparent}
 .pod .ava{width:60px;height:60px;border-radius:50%;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;color:#fff}
 .pod .medal{font-size:26px;margin-bottom:2px}
-.pod .ten{font-weight:800;font-size:14px;line-height:1.2}
+.pod .ten{font-weight:800;font-size:14px;line-height:1.2;color:#0f172a}
 .pod .lop{font-size:11px;color:#94a3b8}
 .pod .diem{font-size:20px;font-weight:900;margin-top:4px}
 .pod.p1{transform:translateY(-8px);border-color:var(--vang)} .pod.p1 .ava{background:linear-gradient(135deg,var(--vang),var(--vang2));width:74px;height:74px;font-size:30px} .pod.p1 .diem{color:#b7860b}
@@ -246,7 +246,7 @@ select{border:1px solid #e2e8f0;border-radius:999px;padding:8px 12px;font-size:1
 .row .rk{width:30px;text-align:center;font-weight:900;color:#94a3b8;flex:0 0 auto}
 .row .ava2{width:34px;height:34px;border-radius:50%;background:#eef2ff;color:#3730a3;display:flex;align-items:center;justify-content:center;font-weight:800;flex:0 0 auto}
 .row .main{flex:1;min-width:0}
-.row .main .t{font-weight:700;font-size:14px;line-height:1.25}
+.row .main .t{font-weight:700;font-size:14px;line-height:1.25;color:#0f172a}
 .row .main .s{font-size:11px;color:#94a3b8}
 .row .bar{flex:0 0 56px;height:8px;background:#f1f5f9;border-radius:999px;overflow:hidden}
 @media (min-width: 640px) { /* sm breakpoint */
@@ -270,7 +270,8 @@ select{border:1px solid #e2e8f0;border-radius:999px;padding:8px 12px;font-size:1
  .ct{background:rgba(30,41,59,0.85);border-color:rgba(255,255,255,0.1)}
  .ct b{color:#f8fafc}
  .empty{background:rgba(30,41,59,0.85);color:#94a3b8}
- .wrap{background:rgba(30,41,59,0.85);border-color:rgba(255,255,255,0.1)}
+ .pod .ten{color:#f8fafc}
+ .row .main .t{color:#f8fafc}
 }
 </style>
 </head>

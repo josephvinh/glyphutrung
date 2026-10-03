@@ -3,9 +3,9 @@
    Updated: 2024-10-03 - Match THEME_COLORS.md guide
    ========================================================== */
 
-/* ---------- System preference (fallback) ---------- */
+/* ---------- System preference (fallback) - Only apply when .dark class is present ---------- */
 @media (prefers-color-scheme: dark) {
-    :root {
+    :root.dark {
         /* Background Colors - per THEME_COLORS.md */
         --bg-primary: #0f172a;      /* slate-900 */
         --bg-secondary: #1e293b;    /* slate-800 */
@@ -372,6 +372,17 @@ body {
     background-color: #d97706 !important; /* amber-600 */
 }
 
+<<<<<<< HEAD
+/* Legacy support - keep for compatibility */
+.dark .bg-rose-100.text-rose-700,
+.dark .bg-emerald-100.text-emerald-700 {
+    background-color: rgba(244, 63, 94, 0.2) !important;
+    color: #fda4af !important;
+}
+
+
+=======
+>>>>>>> dc28f2d (fix: address code review findings)
 /* Analytics components */
 .dark .analytics-stat-card {
     background-color: var(--bg-card) !important;
