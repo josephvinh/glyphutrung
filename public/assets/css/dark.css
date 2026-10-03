@@ -128,7 +128,12 @@ body {
 
 /* slate-400: lighter gray - used for subtle/placeholder text, icons, hints */
 .dark .text-slate-400 {
-    color: #64748b !important;
+    color: var(--text-muted) !important;
+}
+
+/* White text - giữ nguyên white cho dark mode */
+.dark .text-white {
+    color: #ffffff !important;
 }
 
 /* Chữ màu đậm (600/700) quá tối trên nền tối -> dùng tông sáng hơn */
@@ -150,6 +155,30 @@ body {
 .dark .text-amber-400   { color: #fcd34d !important; }
 .dark .text-rose-500   { color: #fb7185 !important; }
 .dark .text-rose-400   { color: #fda4af !important; }
+
+/* Text-slate-600 cho icons input - dùng màu sáng hơn để nổi bật */
+.dark .text-slate-600 {
+    color: #cbd5e1 !important; /* slate-300 - sáng hơn trên dark */
+}
+
+/* bg-slate-200 cho input background icons */
+.dark .bg-slate-200\/50,
+.dark .bg-slate-200 {
+    background-color: rgba(203, 213, 225, 0.2) !important;
+}
+
+/* Border colors cho inputs */
+.dark input,
+.dark select,
+.dark textarea {
+    background-color: var(--bg-secondary) !important;
+    border-color: #475569 !important; /* slate-600 */
+    color: #f8fafc !important;
+}
+
+.dark input::placeholder {
+    color: #94a3b8 !important;
+}
 
 /* Text trên gradient/ảnh (200, 300, 100) - cần rất sáng */
 .dark .text-blue-200    { color: #bfdbfe !important; }
