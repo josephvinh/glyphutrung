@@ -98,7 +98,7 @@
                 <div class="bg-white rounded-card p-3 shadow-sm border border-slate-100 flex flex-col gap-2"
                      :class="rwGiftUnaffordable(g) ? 'opacity-60' : ''">
                     <div class="w-full aspect-square rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden">
-                        <img x-show="g.imageUrl" :src="g.imageUrl" class="w-full h-full object-cover" alt="">
+                        <img x-show="g.imageUrl" :src="g.imageUrl" class="w-full h-full object-cover" alt="" loading="lazy" decoding="async">
                         <i x-show="!g.imageUrl" data-lucide="gift" class="w-7 h-7 text-slate-300"></i>
                     </div>
                     <h3 class="text-sm font-black text-slate-800 dark:text-white leading-tight truncate" x-text="g.name"></h3>
