@@ -4,14 +4,14 @@
         
         <!-- Khối thông tin cá nhân -->
         <div class="flex-1">
-            <p class="text-xs text-slate-500 dark:text-slate-400 font-medium mb-1 tracking-wide uppercase">Chào ngày mới,</p>
-            <h1 class="text-xl font-bold tracking-tight mb-1 text-slate-900 dark:text-slate-100">
-                <span x-text="user.holyName" class="mr-1"></span> 
+            <p class="text-xs text-white/70 dark:text-slate-400 font-medium mb-1 tracking-wide uppercase">Chào ngày mới,</p>
+            <h1 class="text-xl font-bold tracking-tight mb-1 text-white drop-shadow-sm">
+                <span x-text="user.holyName" class="mr-1 opacity-90"></span>
                 <span x-text="user.fullName"></span>
             </h1>
-            <div class="inline-flex items-center bg-slate-200/50 dark:bg-slate-800/50 px-3 py-1 rounded-full backdrop-blur-sm">
-                <i data-lucide="shield-check" class="w-3 h-3 text-emerald-600 dark:text-emerald-400 mr-1.5"></i>
-                <p class="text-xs text-slate-700 dark:text-slate-300 font-medium">
+            <div class="inline-flex items-center bg-white/20 dark:bg-slate-800/50 px-3 py-1 rounded-full backdrop-blur-sm border border-white/20">
+                <i data-lucide="shield-check" class="w-3 h-3 text-white mr-1.5"></i>
+                <p class="text-xs text-white font-medium">
                     <!-- Chỉ hiện dấu • khi thật sự có lớp/khối đi kèm, nếu không
                          Quản Trị sẽ thấy "Quản trị viên •" với dấu chấm treo lơ lửng. -->
                     <span x-text="user.roleTitle"></span><span
