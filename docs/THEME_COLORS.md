@@ -120,3 +120,29 @@
 ## Cập nhật
 
 - **2024-10-03**: Tạo tài liệu màu sắc theme
+
+---
+
+## Implementation Status (2024-10-03)
+
+### ✅ Completed
+- app.css: CSS variables cho light mode
+- dark.css: CSS variables cho dark mode + all overrides  
+- Tất cả 25 module views với dark: variants
+- layout_hero.php, layout_sidebar.php
+
+### View Patterns
+
+```html
+<!-- Card -->
+<div class="bg-white dark:bg-slate-700 border border-slate-100 dark:border-slate-600">
+
+<!-- Input/Select -->
+<input class="bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-white border-slate-200 dark:border-slate-600">
+
+<!-- Text Heading -->
+<h2 class="text-slate-800 dark:text-white">
+
+<!-- Text Secondary -->
+<p class="text-slate-500 dark:text-slate-400">
+```

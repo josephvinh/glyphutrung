@@ -372,28 +372,6 @@ body {
     background-color: #d97706 !important; /* amber-600 */
 }
 
-/* Legacy support - keep for compatibility */
-.dark .bg-rose-100.text-rose-700,
-.dark .bg-emerald-100.text-emerald-700 {
-    background-color: rgba(244, 63, 94, 0.2) !important;
-    color: #fda4af !important;
-}
-
-.dark .bg-emerald-100.text-emerald-700 {
-    background-color: rgba(16, 185, 129, 0.2) !important;
-    color: #6ee7b7 !important;
-}
-
-.dark .bg-amber-100.text-amber-600 {
-    background-color: rgba(245, 158, 11, 0.2) !important;
-    color: #fcd34d !important;
-}
-
-.dark .bg-blue-100.text-blue-700 {
-    background-color: rgba(59, 130, 246, 0.2) !important;
-    color: #93c5fd !important;
-}
-
 /* Analytics components */
 .dark .analytics-stat-card {
     background-color: var(--bg-card) !important;
