@@ -213,15 +213,15 @@
                         <button type="button" @click="openStudentProfile(student)" class="flex-1 min-w-0 text-left">
                             <p class="text-micro font-bold text-blue-600 leading-tight truncate">
                                 <span x-text="student.code"></span>
-                                <span class="text-slate-300 mx-1">•</span>
-                                <span class="text-slate-500 font-medium" x-text="student.className"></span>
+                                <span class="text-slate-400 mx-1">•</span>
+                                <span class="text-slate-600 font-medium" x-text="student.className"></span>
                             </p>
                             <p class="text-sm font-bold text-slate-800 leading-snug truncate">
                                 <span class="font-normal text-slate-500" x-text="student.holyName"></span>
                                 <span x-text="student.name"></span>
                             </p>
                             <p class="text-micro text-slate-500 mt-1 truncate">
-                                <span class="font-bold uppercase tracking-wider" :class="{'text-emerald-600': student.status === 'đang sinh hoạt', 'text-rose-600': student.status === 'dừng sinh hoạt', 'text-slate-500': student.status === 'chuyển xứ'}" x-text="student.status"></span>
+                                <span class="font-bold uppercase tracking-wider" :class="{'text-emerald-600': student.status === 'đang sinh hoạt', 'text-rose-600': student.status === 'dừng sinh hoạt', 'text-slate-600': student.status === 'chuyển xứ'}" x-text="student.status"></span>
                             </p>
                         </button>
 
@@ -287,15 +287,15 @@
                                            @click="toggleStudentSelection(student.id)"
                                            class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
                                 </td>
-                                <td class="px-4 py-3 text-slate-500 font-medium" x-text="index + 1"></td>
-                                <td class="px-4 py-3 text-slate-600" x-text="student.holyName"></td>
+                                <td class="px-4 py-3 text-slate-600 font-medium" x-text="index + 1"></td>
+                                <td class="px-4 py-3 text-slate-700" x-text="student.holyName"></td>
                                 <td class="px-4 py-3 font-semibold text-slate-800 hover:text-blue-600 cursor-pointer" @click="openStudentProfile(student)" title="Xem hồ sơ em" x-text="student.name"></td>
-                                <td class="px-4 py-3 text-slate-600" x-text="student.className"></td>
+                                <td class="px-4 py-3 text-slate-700" x-text="student.className"></td>
                                 <td class="px-4 py-3">
-                                    <span class="text-micro font-bold uppercase tracking-wider px-2 py-0.5 rounded-md" :class="{'bg-emerald-50 text-emerald-600': student.status === 'đang sinh hoạt', 'bg-rose-50 text-rose-600': student.status === 'dừng sinh hoạt', 'bg-slate-100 text-slate-500': student.status === 'chuyển xứ'}" x-text="student.status"></span>
+                                    <span class="text-micro font-bold uppercase tracking-wider px-2 py-0.5 rounded-md" :class="{'bg-emerald-50 text-emerald-600': student.status === 'đang sinh hoạt', 'bg-rose-50 text-rose-600': student.status === 'dừng sinh hoạt', 'bg-slate-100 text-slate-600': student.status === 'chuyển xứ'}" x-text="student.status"></span>
                                 </td>
                                 <td class="px-4 py-3">
-                                    <span class="text-slate-600" x-text="student.fatherPhone || '—'"></span>
+                                    <span class="text-slate-700" x-text="student.fatherPhone || '—'"></span>
                                 </td>
                                 <td class="px-4 py-3">
                                     <span class="text-slate-600" x-text="student.motherPhone || '—'"></span>

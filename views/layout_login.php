@@ -59,7 +59,7 @@ if (!$__dev) ob_start();
         <div>
             <label class="block text-micro font-bold text-slate-500 uppercase mb-1.5">Số điện thoại</label>
             <div class="relative">
-                <i data-lucide="phone" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
+                <i data-lucide="phone" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600"></i>
                 <input x-model="phone" type="tel" inputmode="numeric" autocomplete="username"
                        placeholder="09xxxxxxxx" required
                        class="input-glass w-full py-3.5 pl-11 pr-4 text-sm font-semibold text-slate-800 dark:text-slate-100">
@@ -69,12 +69,12 @@ if (!$__dev) ob_start();
         <div>
             <label class="block text-micro font-bold text-slate-500 uppercase mb-1.5">Mật khẩu</label>
             <div class="relative">
-                <i data-lucide="key-round" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
+                <i data-lucide="key-round" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600"></i>
                 <input x-model="password" :type="showPw ? 'text' : 'password'" autocomplete="current-password"
                        placeholder="••••••••" required
                        class="input-glass w-full py-3.5 pl-11 pr-12 text-sm font-semibold text-slate-800 dark:text-slate-100">
                 <button aria-label="Hiện hoặc ẩn mật khẩu" @click="showPw = !showPw" type="button"
-                        class="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center text-slate-500 active:scale-90 transition-transform">
+                        class="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center text-slate-600 active:scale-90 transition-transform">
                     <svg x-show="!showPw" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
                     <svg x-show="showPw" style="display:none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
                 </button>
