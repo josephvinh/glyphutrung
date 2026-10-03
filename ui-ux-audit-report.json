@@ -1,0 +1,142 @@
+{
+  "timestamp": "2026-10-03T14:06:29.254Z",
+  "summary": {
+    "avgScore": 97,
+    "totalIssues": 5,
+    "criticalIssues": 0,
+    "majorIssues": 1
+  },
+  "pages": [
+    {
+      "name": "Landing Page",
+      "url": "/index.php",
+      "type": "public",
+      "scores": {
+        "accessibility": 100,
+        "performance": 100,
+        "responsive": 100,
+        "design": 100,
+        "overall": 100
+      },
+      "metrics": {
+        "loadTime": 15.199999928474426,
+        "domComplete": 15.199999928474426,
+        "domContentLoaded": 14.699999928474426,
+        "firstPaint": 68
+      },
+      "issues": []
+    },
+    {
+      "name": "Login Page",
+      "url": "/index.php?dangnhap=1",
+      "type": "public",
+      "scores": {
+        "accessibility": 88,
+        "performance": 100,
+        "responsive": 90,
+        "design": 100,
+        "overall": 95
+      },
+      "metrics": {
+        "loadTime": 122.70000004768372,
+        "domComplete": 122.60000002384186,
+        "domContentLoaded": 36.700000047683716,
+        "firstPaint": 112
+      },
+      "issues": [
+        {
+          "severity": "major",
+          "category": "a11y",
+          "selector": "input:not([aria-label])",
+          "message": "11 input(s) without label",
+          "wcag": "WCAG 2.1 - 1.3.1",
+          "suggestion": "Add <label> or aria-label"
+        },
+        {
+          "severity": "minor",
+          "category": "responsive",
+          "message": "1 touch target(s) < 44x44px",
+          "suggestion": "Ensure 44x44px minimum touch target"
+        }
+      ]
+    },
+    {
+      "name": "Tra Cuu",
+      "url": "/tracuu.php",
+      "type": "public",
+      "scores": {
+        "accessibility": 98,
+        "performance": 100,
+        "responsive": 90,
+        "design": 100,
+        "overall": 97
+      },
+      "metrics": {
+        "loadTime": 19.200000047683716,
+        "domComplete": 19.200000047683716,
+        "domContentLoaded": 14.399999976158142,
+        "firstPaint": 72
+      },
+      "issues": [
+        {
+          "severity": "minor",
+          "category": "responsive",
+          "message": "1 touch target(s) < 44x44px",
+          "suggestion": "Ensure 44x44px minimum touch target"
+        }
+      ]
+    },
+    {
+      "name": "So Moc",
+      "url": "/somoc.php",
+      "type": "public",
+      "scores": {
+        "accessibility": 98,
+        "performance": 100,
+        "responsive": 90,
+        "design": 100,
+        "overall": 97
+      },
+      "metrics": {
+        "loadTime": 43.199999928474426,
+        "domComplete": 43.199999928474426,
+        "domContentLoaded": 43.199999928474426,
+        "firstPaint": 56
+      },
+      "issues": [
+        {
+          "severity": "minor",
+          "category": "responsive",
+          "message": "3 touch target(s) < 44x44px",
+          "suggestion": "Ensure 44x44px minimum touch target"
+        }
+      ]
+    },
+    {
+      "name": "Bang Xep Hang",
+      "url": "/bxh.php",
+      "type": "public",
+      "scores": {
+        "accessibility": 98,
+        "performance": 100,
+        "responsive": 90,
+        "design": 100,
+        "overall": 97
+      },
+      "metrics": {
+        "loadTime": 103.89999997615814,
+        "domComplete": 103.89999997615814,
+        "domContentLoaded": 25.5,
+        "firstPaint": 120
+      },
+      "issues": [
+        {
+          "severity": "minor",
+          "category": "responsive",
+          "message": "5 touch target(s) < 44x44px",
+          "suggestion": "Ensure 44x44px minimum touch target"
+        }
+      ]
+    }
+  ]
+}

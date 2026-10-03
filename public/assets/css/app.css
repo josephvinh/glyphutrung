@@ -289,20 +289,37 @@ body {
 
 /* Header: chừa chỗ cho tai thỏ khi cài lên màn hình chính */
 .app-header {
-    padding-top: calc(1.5rem + env(safe-area-inset-top, 0px));
+    padding: 1rem 1.5rem;
     position: relative;
     z-index: 100;
-    isolation: isolate;
+    background: white;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+@media (max-width: 639px) {
+    .app-header {
+        padding: 0.75rem 1rem;
+    }
+}
+
+@media (min-width: 640px) {
+    /* Trong khung thẻ nổi thì không còn tai thỏ */
+    .app-header { padding: 1.25rem 1.5rem; }
+}
+
+@media (min-width: 1024px) {
+    /* Desktop: header trong sidebar layout */
+    .app-header {
+        background: transparent;
+        border-bottom: none;
+        padding: 1.5rem;
+    }
 }
 
 /* Main content cần padding-top để không bị header che */
 .app-content {
     position: relative;
     z-index: 1;
-}
-@media (min-width: 640px) {
-    /* Trong khung thẻ nổi thì không còn tai thỏ */
-    .app-header { padding-top: 2rem; }
 }
 
 /* ==========================================================
