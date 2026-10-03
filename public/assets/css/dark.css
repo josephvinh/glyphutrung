@@ -1,16 +1,23 @@
 /* ==========================================================
    DARK MODE — CSS Variables & Overrides
+   Updated: 2024-10-03 - Match THEME_COLORS.md guide
    ========================================================== */
 
 /* ---------- System preference (fallback) ---------- */
 @media (prefers-color-scheme: dark) {
     :root {
-        --bg-primary: #0f172a;
-        --bg-secondary: #1e293b;
-        --bg-card: #1e293b;
-        --text-primary: #f8fafc;
-        --text-secondary: #cbd5e1;
-        --icon-color: #cbd5e1;
+        /* Background Colors - per THEME_COLORS.md */
+        --bg-primary: #0f172a;      /* slate-900 */
+        --bg-secondary: #1e293b;    /* slate-800 */
+        --bg-card: #1e293b;         /* slate-800 */
+
+        /* Text Colors - per THEME_COLORS.md */
+        --text-primary: #ffffff;     /* white/slate-900 in dark */
+        --text-secondary: #cbd5e1;   /* slate-700 in dark */
+        --text-muted: #94a3b8;       /* slate-500 in dark */
+        --icon-color: #cbd5e1;       /* slate-700 in dark */
+
+        /* Other */
         --border-color: #334155;
         --shadow-color: rgba(0, 0, 0, 0.3);
     }
@@ -18,12 +25,18 @@
 
 /* ---------- Manual dark mode toggle ---------- */
 .dark {
-    --bg-primary: #0f172a;
-    --bg-secondary: #1e293b;
-    --bg-card: #1e293b;
-    --text-primary: #f8fafc;
-    --text-secondary: #cbd5e1;
-    --icon-color: #cbd5e1;
+    /* Background Colors - per THEME_COLORS.md */
+    --bg-primary: #0f172a;          /* slate-900 */
+    --bg-secondary: #1e293b;         /* slate-800 */
+    --bg-card: #334155;              /* slate-700 - matches bg-white in dark */
+
+    /* Text Colors - per THEME_COLORS.md */
+    --text-primary: #ffffff;         /* white */
+    --text-secondary: #cbd5e1;      /* slate-700 in dark mode */
+    --text-muted: #94a3b8;          /* slate-500 in dark mode */
+    --icon-color: #cbd5e1;          /* slate-700 in dark mode */
+
+    /* Other */
     --border-color: #334155;
     --shadow-color: rgba(0, 0, 0, 0.4);
 
@@ -73,15 +86,25 @@ body {
     border: 1px solid var(--glass-border);
 }
 
-/* Cards and surfaces */
-.dark .bg-white,
-.dark .bg-slate-50 {
-    background-color: var(--bg-card) !important;
+/* Cards and surfaces - per THEME_COLORS.md */
+.dark .bg-white {
+    background-color: #334155 !important; /* slate-700 in dark */
 }
 
-.dark .bg-slate-100,
+.dark .bg-slate-50 {
+    background-color: rgba(51, 65, 85, 0.5) !important; /* slate-700/50 in dark */
+}
+
+.dark .bg-slate-100 {
+    background-color: #1e293b !important; /* slate-800 in dark */
+}
+
 .dark .bg-slate-200 {
-    background-color: var(--bg-secondary) !important;
+    background-color: rgba(71, 85, 105, 0.5) !important; /* slate-600/50 in dark */
+}
+
+.dark .bg-slate-800 {
+    background-color: #1e293b !important; /* stays slate-800 in dark */
 }
 
 /* Ô nền nhạt có màu ngữ nghĩa (xanh/lục/vàng/đỏ): giữ sắc thái nhưng tối lại,
@@ -141,15 +164,17 @@ body {
 .dark .text-rose-600,
 .dark .text-rose-700    { color: #fda4af !important; }
 
-/* Icon colors (500/400) - icons cần nổi bật hơn text thường */
-.dark .text-blue-500    { color: #60a5fa !important; }
-.dark .text-blue-400    { color: #93c5fd !important; }
-.dark .text-emerald-500 { color: #34d399 !important; }
-.dark .text-emerald-400 { color: #6ee7b7 !important; }
-.dark .text-amber-500   { color: #fbbf24 !important; }
-.dark .text-amber-400   { color: #fcd34d !important; }
-.dark .text-rose-500   { color: #fb7185 !important; }
-.dark .text-rose-400   { color: #fda4af !important; }
+/* Icon colors - per THEME_COLORS.md */
+.dark .text-blue-500    { color: #60a5fa !important; } /* blue-400 */
+.dark .text-blue-400    { color: #93c5fd !important; } /* blue-300 */
+.dark .text-emerald-500 { color: #34d399 !important; } /* emerald-400 */
+.dark .text-emerald-400 { color: #6ee7b7 !important; } /* emerald-300 */
+.dark .text-amber-500   { color: #fbbf24 !important; } /* amber-400 */
+.dark .text-amber-400   { color: #fcd34d !important; } /* amber-300 */
+.dark .text-rose-500   { color: #fb7185 !important; } /* rose-400 */
+.dark .text-rose-400   { color: #fda4af !important; } /* rose-300 */
+.dark .text-slate-500   { color: #94a3b8 !important; } /* slate-500 stays the same */
+.dark .text-slate-600   { color: #94a3b8 !important; } /* slate-600 -> slate-400 */
 
 /* Text trên gradient/ảnh (200, 300, 100) - cần rất sáng */
 .dark .text-blue-200    { color: #bfdbfe !important; }
@@ -261,35 +286,20 @@ body {
     filter: brightness(0.9);
 }
 
-/* Buttons */
-.dark button.bg-white {
-    background-color: var(--bg-card) !important;
-}
-
-/* Primary buttons (blue-600) */
+/* Button Colors - per THEME_COLORS.md */
+/* Primary buttons */
 .dark .bg-blue-600 {
-    filter: brightness(1.1);
+    background-color: #3b82f6 !important; /* blue-500 in dark */
 }
 
-/* Button text on primary */
-.dark .bg-blue-600,
-.dark .bg-blue-500 {
-    color: #fff;
+/* White buttons - per THEME_COLORS.md */
+.dark button.bg-white {
+    background-color: #475569 !important; /* slate-600 */
+    border-color: #64748b !important;
+    color: #f8fafc !important;
 }
 
-/* White/glass backgrounds with opacity (glass effect on dark) */
-.dark .bg-white\/20,
-.dark .bg-white\/15 {
-    background-color: rgba(255, 255, 255, 0.15) !important;
-}
-
-/* White badges on gradient backgrounds */
-.dark .bg-white.text-rose-600,
-.dark .bg-white.text-blue-700 {
-    color: #0f172a !important; /* Giữ chữ đậm trên nền trắng */
-}
-
-/* Slate buttons */
+/* Slate-800 buttons - stays same in dark */
 .dark .bg-slate-800 {
     background-color: #1e293b !important;
     color: #f8fafc;
@@ -324,11 +334,47 @@ body {
     filter: brightness(0.85);
 }
 
-/* Badge text colors */
-.dark .bg-rose-100.text-rose-700,
-.dark .bg-emerald-100.text-emerald-700,
-.dark .bg-amber-100.text-amber-600,
+/* Badge/Status Colors - per THEME_COLORS.md */
+/* Active/Success badges */
+.dark .bg-emerald-100.text-emerald-700 {
+    background-color: #064e3b !important; /* emerald-900 */
+    color: #6ee7b7 !important; /* emerald-300 */
+}
+.dark .bg-emerald-500 {
+    background-color: #059669 !important; /* emerald-600 */
+}
+
+/* Inactive/Error badges */
+.dark .bg-rose-100.text-rose-700 {
+    background-color: #9f1239 !important; /* rose-900 */
+    color: #fda4af !important; /* rose-300 */
+}
+.dark .bg-rose-500 {
+    background-color: #e11d48 !important; /* rose-600 */
+}
+
+/* Info badges */
 .dark .bg-blue-100.text-blue-700 {
+    background-color: #1e3a8a !important; /* blue-900 */
+    color: #93c5fd !important; /* blue-300 */
+}
+.dark .bg-blue-500 {
+    background-color: #2563eb !important; /* blue-600 */
+}
+
+/* Warning badges */
+.dark .bg-amber-100.text-amber-600,
+.dark .bg-amber-100.text-amber-700 {
+    background-color: #78350f !important; /* amber-900 */
+    color: #fcd34d !important; /* amber-300 */
+}
+.dark .bg-amber-500 {
+    background-color: #d97706 !important; /* amber-600 */
+}
+
+/* Legacy support - keep for compatibility */
+.dark .bg-rose-100.text-rose-700,
+.dark .bg-emerald-100.text-emerald-700 {
     background-color: rgba(244, 63, 94, 0.2) !important;
     color: #fda4af !important;
 }

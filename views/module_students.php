@@ -11,7 +11,7 @@
         <div class="relative flex gap-2">
             <div class="relative flex-1 min-w-0">
                 <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
-                <input x-model="searchQuery" type="text" placeholder="Tìm tên, mã số..." class="w-full bg-slate-50 input-glass border border-slate-200 rounded-xl py-2.5 pl-11 pr-10 text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder:font-normal">
+                <input x-model="searchQuery" type="text" placeholder="Tìm tên, mã số..." class="w-full bg-slate-50 input-glass border border-slate-200 rounded-xl py-2.5 pl-11 pr-10 text-sm font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 placeholder:font-normal">
                 <button aria-label="Xóa ô tìm kiếm" x-show="searchQuery !== ''" @click="searchQuery = ''" style="display: none;" class="tap-safe absolute right-1 top-1/2 -translate-y-1/2 p-2 flex items-center justify-center text-slate-500 active:scale-90 transition-transform">
                     <div class="w-6 h-6 bg-slate-100 rounded-full flex items-center justify-center">
                         <i data-lucide="x" class="w-3.5 h-3.5"></i>
@@ -39,7 +39,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
                 <div x-show="availableBlocks.length > 1" style="display: none;">
                     <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Khối</label>
-                    <select x-model="filterBlock" @change="filterClass = ''" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 tntt-select">
+                    <select x-model="filterBlock" @change="filterClass = ''" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 dark:text-white dark:bg-slate-800 dark:border-slate-600 tntt-select">
                         <option value="">Tất cả các khối</option>
                         <template x-for="b in availableBlocks" :key="b">
                             <option :value="b" x-text="b"></option>
@@ -48,7 +48,7 @@
                 </div>
                 <div x-show="availableClasses.length > 1" style="display: none;">
                     <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Lớp</label>
-                    <select x-model="filterClass" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 tntt-select">
+                    <select x-model="filterClass" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 dark:text-white dark:bg-slate-800 dark:border-slate-600 tntt-select">
                         <option value="">Tất cả các lớp</option>
                         <template x-for="cls in availableClasses" :key="cls">
                             <option :value="cls" x-text="cls"></option>
@@ -57,7 +57,7 @@
                 </div>
                 <div>
                     <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Tình trạng</label>
-                    <select x-model="filterStatus" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 tntt-select">
+                    <select x-model="filterStatus" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 dark:text-white dark:bg-slate-800 dark:border-slate-600 tntt-select">
                         <option value="">Tất cả tình trạng</option>
                         <option value="đang sinh hoạt">Đang sinh hoạt</option>
                         <option value="dừng sinh hoạt">Dừng sinh hoạt</option>
