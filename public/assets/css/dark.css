@@ -372,6 +372,7 @@ body {
     background-color: #d97706 !important; /* amber-600 */
 }
 
+<<<<<<< HEAD
 /* Legacy support - keep for compatibility */
 .dark .bg-rose-100.text-rose-700,
 .dark .bg-emerald-100.text-emerald-700 {
@@ -380,6 +381,8 @@ body {
 }
 
 
+=======
+>>>>>>> dc28f2d (fix: address code review findings)
 /* Analytics components */
 .dark .analytics-stat-card {
     background-color: var(--bg-card) !important;
