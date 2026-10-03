@@ -4,10 +4,10 @@
     <!-- 1. THANH ĐIỀU HƯỚNG -->
     <div class="flex items-center justify-between mb-6">
         <div class="flex items-center">
-            <button aria-label="Quay lại trang chủ" @click="changeModule('dashboard')" class="w-10 h-10 bg-white rounded-2xl shadow-sm border border-slate-200 flex items-center justify-center active:scale-90 transition-transform mr-4">
-                <i data-lucide="chevron-left" class="w-6 h-6 text-slate-600"></i>
+            <button aria-label="Quay lại trang chủ" @click="changeModule('dashboard')" class="w-10 h-10 bg-white dark:bg-slate-700 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-600 flex items-center justify-center active:scale-90 transition-transform mr-4">
+                <i data-lucide="chevron-left" class="w-6 h-6 text-slate-600 dark:text-slate-300"></i>
             </button>
-            <h2 class="text-xl font-black text-slate-800 tracking-tight">Chương Trình</h2>
+            <h2 class="text-xl font-black text-slate-800 dark:text-white tracking-tight">Chương Trình</h2>
         </div>
         
         <button @click="openCreateProgram()" type="button" class="bg-blue-600 text-white px-4 py-2 rounded-xl font-bold text-sm shadow-md shadow-blue-200 flex items-center active:scale-95 transition-transform">
@@ -20,7 +20,7 @@
         <!-- Loading skeleton -->
         <template x-if="syncing">
             <template x-for="i in 2" :key="'skel-' + i">
-                <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100">
+                <div class="bg-white dark:bg-slate-700 rounded-card p-5 shadow-sm border border-slate-100 dark:border-slate-600">
                     <div class="flex justify-between items-start">
                         <div class="space-y-3 flex-1">
                             <div class="flex gap-2">
@@ -41,7 +41,7 @@
             </template>
         </template>
         <template x-for="prog in programs" :key="prog.id">
-            <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100 relative overflow-hidden flex flex-col gap-4">
+            <div class="bg-white dark:bg-slate-700 rounded-card p-5 shadow-sm border border-slate-100 dark:border-slate-600 relative overflow-hidden flex flex-col gap-4">
                 
                 <div class="flex justify-between items-start">
                     <div class="pr-6">
@@ -53,7 +53,7 @@
                                   :class="prog.status === 'kích hoạt' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'"
                                   x-text="prog.status"></span>
                         </div>
-                        <h3 class="text-base font-black text-slate-800 leading-tight" x-text="prog.name"></h3>
+                        <h3 class="text-base font-black text-slate-800 dark:text-white leading-tight" x-text="prog.name"></h3>
                         <p class="text-sm font-medium text-slate-500 mt-1 flex items-center">
                             <i data-lucide="repeat" class="w-3.5 h-3.5 mr-1.5 text-slate-400 shrink-0"></i>
                             <span class="text-slate-700 font-bold" x-text="programSchedule(prog)"></span>
@@ -109,7 +109,7 @@
             <!-- Header cố định -->
             <div class="flex justify-center pt-3 pb-2 shrink-0"><div class="w-12 h-1.5 bg-slate-200 rounded-full"></div></div>
             <div class="flex justify-between items-center px-5 pb-3 border-b border-slate-100 shrink-0">
-                <h3 class="text-lg font-black text-slate-800" x-text="isEditingProgram ? 'Cập nhật chương trình' : 'Tạo chương trình mới'"></h3>
+                <h3 class="text-lg font-black text-slate-800 dark:text-white" x-text="isEditingProgram ? 'Cập nhật chương trình' : 'Tạo chương trình mới'"></h3>
                 <button aria-label="Đóng" @click="showProgramModal = false" class="tap-safe w-8 h-8 bg-slate-100 rounded-full text-slate-500 active:scale-90 flex items-center justify-center"><i data-lucide="x" class="w-4 h-4"></i></button>
             </div>
             <!-- Nội dung cuộn -->
@@ -131,7 +131,7 @@
                     </div>
                     <div>
                         <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Loại</label>
-                        <select x-model="programForm.type" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800">
+                        <select x-model="programForm.type" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-white">
                             <option value="bắt buộc">Bắt buộc</option>
                             <option value="chiến dịch">Chiến dịch</option>
                         </select>
@@ -154,14 +154,14 @@
                 </div>
                 <div x-show="programForm.type === 'chiến dịch'" style="display: none;">
                     <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Ngày diễn ra</label>
-                    <input x-model="programForm.eventDate" type="date" min="2000-01-01" max="2100-12-31" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                    <input x-model="programForm.eventDate" type="date" min="2000-01-01" max="2100-12-31" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                 </div>
 
                 <!-- Giờ chốt sổ: BĐH nhập trực tiếp. Để trống thì mặc định
                      giờ bắt đầu + CUTOFF_MINUTES phút (hiện gợi ý bên dưới). -->
                 <div>
                     <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Giờ chốt sổ</label>
-                    <input x-model="programForm.cutoffTime" type="time" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                    <input x-model="programForm.cutoffTime" type="time" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500">
                     <p class="text-micro text-slate-500 mt-1 ml-1">
                         Để trống = giờ bắt đầu + <span x-text="CUTOFF_MINUTES"></span> phút
                         <span x-show="programForm.startTime && !programForm.cutoffTime">(<span class="font-bold text-rose-500" x-text="addMinutes(programForm.startTime, CUTOFF_MINUTES)"></span>)</span>
@@ -171,7 +171,7 @@
                 <!-- Ngưỡng "tính vắng" (mốc 2) -->
                 <div>
                     <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Giờ "tính vắng" (tùy chọn)</label>
-                    <input x-model="programForm.absentTime" type="time" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800">
+                    <input x-model="programForm.absentTime" type="time" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-white">
                     <p class="text-micro text-slate-500 mt-1 ml-1">Sau giờ này không ghi được nữa (em tính vắng). Để trống = không dùng.</p>
                 </div>
 
@@ -179,11 +179,11 @@
                 <div x-show="programForm.type === 'bắt buộc'" class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Áp dụng từ</label>
-                        <input x-model="programForm.effectiveFrom" type="date" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800">
+                        <input x-model="programForm.effectiveFrom" type="date" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-white">
                     </div>
                     <div>
                         <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Đến ngày</label>
-                        <input x-model="programForm.effectiveTo" type="date" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800">
+                        <input x-model="programForm.effectiveTo" type="date" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-white">
                     </div>
                 </div>
 
@@ -228,7 +228,7 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Màu nhãn</label>
-                        <select x-model="programForm.color" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800">
+                        <select x-model="programForm.color" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-white">
                             <option value="">Mặc định</option>
                             <option value="rose">Đỏ</option>
                             <option value="amber">Vàng</option>
@@ -239,7 +239,7 @@
                     </div>
                     <div>
                         <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Thứ tự hiển thị</label>
-                        <input x-model.number="programForm.sortOrder" type="number" min="1" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800">
+                        <input x-model.number="programForm.sortOrder" type="number" min="1" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-white">
                     </div>
                 </div>
             </div>

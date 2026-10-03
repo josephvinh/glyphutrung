@@ -12,7 +12,7 @@
             <div class="space-y-4">
 
                 <!-- Phạm vi in -->
-                <div class="bg-white rounded-card p-4 shadow-sm border border-slate-100">
+                <div class="bg-white dark:bg-slate-700 rounded-card p-4 shadow-sm border border-slate-100 dark:border-slate-600">
                     <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Phạm vi in</h3>
                     <div class="flex gap-1.5 mb-3">
                         <template x-for="opt in [{v:'class',t:'Theo lớp'},{v:'block',t:'Theo khối'},{v:'all',t:'Tất cả'}]" :key="opt.v">
@@ -23,11 +23,11 @@
                         </template>
                     </div>
                     <select x-show="qrScopeType === 'class'" x-model="qrScopeValue" @change="qrSyncSelected()"
-                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800">
+                            class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-white">
                         <template x-for="c in availableClasses" :key="c"><option :value="c" x-text="c"></option></template>
                     </select>
                     <select x-show="qrScopeType === 'block'" style="display:none" x-model="qrScopeValue" @change="qrSyncSelected()"
-                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800">
+                            class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-white">
                         <template x-for="b in availableBlocks" :key="b"><option :value="b" x-text="b"></option></template>
                     </select>
 
@@ -63,7 +63,7 @@
                 </div>
 
                 <!-- Thông tin trên thẻ -->
-                <div class="bg-white rounded-card p-4 shadow-sm border border-slate-100">
+                <div class="bg-white dark:bg-slate-700 rounded-card p-4 shadow-sm border border-slate-100 dark:border-slate-600">
                     <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Thông tin trên thẻ</h3>
                     <div class="grid grid-cols-2 gap-2">
                         <template x-for="f in [{k:'code',t:'Mã số'},{k:'holyName',t:'Tên thánh'},{k:'name',t:'Họ tên'},{k:'className',t:'Lớp'},{k:'block',t:'Khối'},{k:'birthDate',t:'Ngày sinh'}]" :key="f.k">
@@ -79,7 +79,7 @@
                 </div>
 
                 <!-- Kiểu thẻ & bố cục -->
-                <div class="bg-white rounded-card p-4 shadow-sm border border-slate-100">
+                <div class="bg-white dark:bg-slate-700 rounded-card p-4 shadow-sm border border-slate-100 dark:border-slate-600">
                     <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Kiểu thẻ &amp; bố cục</h3>
                     <div class="flex gap-1.5 mb-3">
                         <button type="button" @click="qrTemplate='compact'"
@@ -120,7 +120,7 @@
             </div>
 
             <!-- CỘT PHẢI: XEM TRƯỚC -->
-            <div class="bg-white rounded-card p-4 shadow-sm border border-slate-100">
+            <div class="bg-white dark:bg-slate-700 rounded-card p-4 shadow-sm border border-slate-100 dark:border-slate-600">
                 <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Xem trước <span class="text-slate-500 normal-case font-medium">(tối đa 6 thẻ)</span></h3>
                 <div class="bg-slate-50 rounded-2xl p-3 overflow-x-auto" x-html="qrPreviewHtml"></div>
             </div>

@@ -8,7 +8,7 @@
                 <button aria-label="Quay lại trang chủ" @click="changeModule('dashboard')" class="tap-safe w-10 h-10 shrink-0 bg-white rounded-2xl shadow-sm border border-slate-200 flex items-center justify-center active:scale-90 transition-transform mr-3">
                     <i data-lucide="chevron-left" class="w-6 h-6 text-slate-600"></i>
                 </button>
-                <h2 class="text-xl font-black text-slate-800 tracking-tight">Thống Kê</h2>
+                <h2 class="text-xl font-black text-slate-800 dark:text-white tracking-tight">Thống Kê</h2>
             </div>
             <!-- XUẤT BÁO CÁO: chọn mảng (Chuyên cần / Thi đua) × định dạng -->
             <div class="shrink-0 relative" x-data="{ exportOpen: false }">
@@ -38,7 +38,7 @@
         <div class="bg-white border border-slate-200 rounded-field p-1 flex items-center justify-between shadow-sm">
             <button @click="shiftStatMonth(-1)" class="tap-safe w-10 h-10 shrink-0 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-50 active:scale-90 transition-transform"><i data-lucide="chevron-left" class="w-5 h-5"></i></button>
             <div class="text-center">
-                <span class="text-sm font-black text-slate-800 uppercase tracking-wide" x-text="statMonthLabel"></span>
+                <span class="text-sm font-black text-slate-800 dark:text-white uppercase tracking-wide" x-text="statMonthLabel"></span>
                 <p class="text-[10px] text-slate-400 leading-none mt-0.5">Chỉ tính các buổi đã qua giờ chốt</p>
             </div>
             <button @click="shiftStatMonth(1)" class="tap-safe w-10 h-10 shrink-0 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-50 active:scale-90 transition-transform"><i data-lucide="chevron-right" class="w-5 h-5"></i></button>
@@ -199,7 +199,7 @@
 
                     <div class="border-t border-slate-100 mt-4 pt-3 flex items-center justify-between">
                         <span class="text-xs font-semibold text-slate-500">Tỷ lệ không bị trừ điểm (Có mặt + Đi trễ)</span>
-                        <span class="text-sm font-black text-slate-800" x-text="dutyRate(statSummary.total) + '%'"></span>
+                        <span class="text-sm font-black text-slate-800 dark:text-white" x-text="dutyRate(statSummary.total) + '%'"></span>
                     </div>
                 </div>
 
@@ -267,8 +267,8 @@
                         <template x-for="row in statSummary.byBlock" :key="row.name">
                             <div>
                                 <div class="flex justify-between items-baseline mb-1.5">
-                                    <span class="text-sm font-bold text-slate-700" x-text="row.name"></span>
-                                    <span class="text-sm font-black text-slate-800" x-text="row.rate + '%'"></span>
+                                    <span class="text-sm font-bold text-slate-700 dark:text-white" x-text="row.name"></span>
+                                    <span class="text-sm font-black text-slate-800 dark:text-white" x-text="row.rate + '%'"></span>
                                 </div>
                                 <div class="h-2.5 rounded-full bg-slate-100 overflow-hidden">
                                     <div class="h-full rounded-full transition-all" :class="rateBarClass(row.rate)" :style="'width:' + row.rate + '%'"></div>
@@ -286,12 +286,12 @@
                             <div>
                                 <div class="flex justify-between items-baseline mb-1.5">
                                     <div class="min-w-0">
-                                        <span class="text-sm font-bold text-slate-700" x-text="row.name"></span>
+                                        <span class="text-sm font-bold text-slate-700 dark:text-white" x-text="row.name"></span>
                                         <span class="text-micro text-slate-500 ml-1.5">
                                             vắng KP <span class="font-bold text-rose-500" x-text="row.stats.unexcused"></span>
                                         </span>
                                     </div>
-                                    <span class="text-sm font-black text-slate-800 shrink-0" x-text="row.rate + '%'"></span>
+                                    <span class="text-sm font-black text-slate-800 dark:text-white shrink-0" x-text="row.rate + '%'"></span>
                                 </div>
                                 <div class="h-2.5 rounded-full bg-slate-100 overflow-hidden">
                                     <div class="h-full rounded-full transition-all" :class="rateBarClass(row.rate)" :style="'width:' + row.rate + '%'"></div>
@@ -302,7 +302,7 @@
                 </div>
 
                 <!-- 7. EM CẦN QUAN TÂM -->
-                <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100 mb-5">
+                <div class="bg-white dark:bg-slate-700 rounded-card p-5 shadow-sm border border-slate-100 dark:border-slate-600 mb-5">
                     <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Em cần quan tâm</h3>
                     <p class="text-micro text-slate-500 mb-4 leading-snug">Nghỉ không phép nhiều nhất trong kỳ — nên gọi hỏi thăm phụ huynh.</p>
 
@@ -313,7 +313,7 @@
                                     <span class="text-base font-black leading-none" x-text="item.stats.unexcused"></span>
                                 </div>
                                 <div class="flex-1 min-w-0">
-                                    <p class="text-sm font-black text-slate-800 leading-snug">
+                                    <p class="text-sm font-black text-slate-800 dark:text-white leading-snug">
                                         <span class="font-normal text-slate-500" x-text="item.student.holyName"></span>
                                         <span x-text="item.student.name"></span>
                                     </p>

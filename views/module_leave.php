@@ -6,7 +6,7 @@
         <button aria-label="Quay lại trang chủ" @click="changeModule('dashboard')" class="w-10 h-10 bg-white rounded-2xl shadow-sm border border-slate-200 flex items-center justify-center active:scale-90 transition-transform mr-4">
             <i data-lucide="chevron-left" class="w-6 h-6 text-slate-600"></i>
         </button>
-        <h2 class="text-xl font-black text-slate-800 tracking-tight">Xin Phép</h2>
+        <h2 class="text-xl font-black text-slate-800 dark:text-white tracking-tight">Xin Phép</h2>
     </div>
 
     <!-- 2. HAI TAB -->
@@ -34,7 +34,7 @@
     <div x-show="leaveTab === 'create'">
 
         <!-- Chọn buổi -->
-        <div class="bg-white rounded-card p-4 shadow-sm border border-slate-100 mb-4 space-y-3">
+        <div class="bg-white dark:bg-slate-700 rounded-card p-4 shadow-sm border border-slate-100 dark:border-slate-600 mb-4 space-y-3">
             <div>
                 <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Ngày xin phép</label>
                 <input x-model="leaveDate" type="date" min="2000-01-01" max="2100-12-31" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
@@ -106,7 +106,7 @@
                                     <span class="text-slate-300 mx-1">•</span>
                                     <span class="text-slate-500 font-medium" x-text="student.className"></span>
                                 </p>
-                                <p class="text-sm font-black text-slate-800 leading-snug">
+                                <p class="text-sm font-black text-slate-800 dark:text-white leading-snug">
                                     <span class="font-normal text-slate-500" x-text="student.holyName"></span>
                                     <span x-text="student.name"></span>
                                 </p>
@@ -148,7 +148,7 @@
             <template x-if="syncing && visibleLeaveRequests.length === 0">
                 <div class="space-y-4 xl:contents">
                     <template x-for="i in 4" :key="'sk-lv-' + i">
-                        <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100">
+                        <div class="bg-white dark:bg-slate-700 rounded-card p-5 shadow-sm border border-slate-100 dark:border-slate-600">
                             <div class="flex justify-between items-start mb-3">
                                 <div class="flex-1 min-w-0 pr-3">
                                     <div class="skeleton skeleton-text-sm w-20 mb-1"></div>
@@ -162,7 +162,7 @@
                 </div>
             </template>
             <template x-for="req in visibleLeaveRequests" :key="req.id">
-                <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100">
+                <div class="bg-white dark:bg-slate-700 rounded-card p-5 shadow-sm border border-slate-100 dark:border-slate-600">
 
                     <div class="flex justify-between items-start mb-3">
                         <div class="min-w-0 pr-3">
@@ -171,7 +171,7 @@
                                 <span class="text-slate-300 mx-1">•</span>
                                 <span class="text-slate-500 font-medium" x-text="studentById(req.studentId) ? studentById(req.studentId).className : ''"></span>
                             </p>
-                            <h3 class="text-base font-black text-slate-800 leading-snug">
+                            <h3 class="text-base font-black text-slate-800 dark:text-white leading-snug">
                                 <span class="font-normal text-slate-500" x-text="studentById(req.studentId) ? studentById(req.studentId).holyName : ''"></span>
                                 <span x-text="studentById(req.studentId) ? studentById(req.studentId).name : ''"></span>
                             </h3>
@@ -239,13 +239,13 @@
         <div x-show="showLeaveModal" x-transition:enter="transform transition ease-out duration-300" x-transition:enter-start="translate-y-full opacity-0" x-transition:enter-end="translate-y-0 opacity-100" x-transition:leave="transform transition ease-in duration-200" x-transition:leave-start="translate-y-0 opacity-100" x-transition:leave-end="translate-y-full opacity-0" class="modal-sheet relative w-full max-w-md sm:max-w-lg bg-white rounded-t-sheet sm:rounded-sheet shadow-2xl flex flex-col max-h-[88dvh] overflow-y-auto">
             <div class="flex justify-center pt-3 pb-2"><div class="w-12 h-1.5 bg-slate-200 rounded-full"></div></div>
             <div class="flex justify-between items-center px-5 pb-4 border-b border-slate-100">
-                <h3 class="text-lg font-black text-slate-800">Đơn xin phép</h3>
+                <h3 class="text-lg font-black text-slate-800 dark:text-white">Đơn xin phép</h3>
                 <button aria-label="Đóng" @click="showLeaveModal = false" class="tap-safe w-8 h-8 bg-slate-100 rounded-full text-slate-500 active:scale-90 flex items-center justify-center"><i data-lucide="x" class="w-4 h-4"></i></button>
             </div>
             <div class="p-5 space-y-4">
                 <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100">
                     <p class="text-micro font-bold text-slate-500 uppercase tracking-wide mb-1">Xin phép cho</p>
-                    <p class="text-base font-black text-slate-800 leading-snug">
+                    <p class="text-base font-black text-slate-800 dark:text-white leading-snug">
                         <span class="font-normal text-slate-500" x-text="leaveForm.studentId && studentById(leaveForm.studentId) ? studentById(leaveForm.studentId).holyName : ''"></span>
                         <span x-text="leaveForm.studentId && studentById(leaveForm.studentId) ? studentById(leaveForm.studentId).name : ''"></span>
                     </p>
@@ -253,7 +253,7 @@
                 </div>
                 <div>
                     <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Lý do xin phép</label>
-                    <textarea x-model="leaveForm.reason" rows="3" placeholder="VD: Em bị sốt, gia đình xin cho nghỉ..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none"></textarea>
+                    <textarea x-model="leaveForm.reason" rows="3" placeholder="VD: Em bị sốt, gia đình xin cho nghỉ..." class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none"></textarea>
                 </div>
             </div>
             <div class="p-4 border-t border-slate-100">
@@ -272,12 +272,12 @@
         <div x-show="showRejectModal" x-transition:enter="transform transition ease-out duration-300" x-transition:enter-start="translate-y-full opacity-0" x-transition:enter-end="translate-y-0 opacity-100" x-transition:leave="transform transition ease-in duration-200" x-transition:leave-start="translate-y-0 opacity-100" x-transition:leave-end="translate-y-full opacity-0" class="modal-sheet relative w-full max-w-md sm:max-w-lg bg-white rounded-t-sheet sm:rounded-sheet shadow-2xl flex flex-col max-h-[88dvh] overflow-y-auto">
             <div class="flex justify-center pt-3 pb-2"><div class="w-12 h-1.5 bg-slate-200 rounded-full"></div></div>
             <div class="flex justify-between items-center px-5 pb-4 border-b border-slate-100">
-                <h3 class="text-lg font-black text-slate-800">Từ chối đơn</h3>
+                <h3 class="text-lg font-black text-slate-800 dark:text-white">Từ chối đơn</h3>
                 <button aria-label="Đóng" @click="showRejectModal = false" class="tap-safe w-8 h-8 bg-slate-100 rounded-full text-slate-500 active:scale-90 flex items-center justify-center"><i data-lucide="x" class="w-4 h-4"></i></button>
             </div>
             <div class="p-5">
                 <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Lý do từ chối</label>
-                <textarea x-model="rejectForm.reason" rows="3" placeholder="Ghi rõ để GLV giải thích lại với phụ huynh..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500 resize-none"></textarea>
+                <textarea x-model="rejectForm.reason" rows="3" placeholder="Ghi rõ để GLV giải thích lại với phụ huynh..." class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500 resize-none"></textarea>
             </div>
             <div class="p-4 border-t border-slate-100">
                 <button @click="confirmReject()" type="button" class="w-full bg-rose-600 text-white font-bold py-3.5 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-rose-200 flex justify-center items-center">

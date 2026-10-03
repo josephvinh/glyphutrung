@@ -15,12 +15,17 @@
     --nav-h: 4.5rem;
     --safe-b: env(safe-area-inset-bottom, 0px);
 
-    /* === TEXT COLOR TOKENS - quy ước theo chế độ === */
-    --text-primary: #0f172a;    /* slate-900 - light mode */
-    --text-secondary: #475569;  /* slate-600 - light mode */
-    --text-muted: #94a3b8;      /* slate-400 - light mode */
-    --icon-color: #334155;      /* slate-700 - light mode */
-    --bg-page: #f8fafc;         /* slate-50 - light mode */
+    /* === TEXT COLOR TOKENS - Light Mode per THEME_COLORS.md === */
+    --text-primary: #0f172a;    /* slate-900 */
+    --text-secondary: #475569;  /* slate-600 */
+    --text-muted: #94a3b8;      /* slate-400 */
+    --icon-color: #334155;      /* slate-700 */
+    --bg-page: #f8fafc;         /* slate-50 */
+
+    /* === BACKGROUND COLOR TOKENS - Light Mode per THEME_COLORS.md === */
+    --bg-primary: #ffffff;       /* white */
+    --bg-secondary: #f1f5f9;    /* slate-100 */
+    --bg-card: #ffffff;         /* white */
 }
 
 /* Explicit Light Mode Override */
@@ -31,6 +36,9 @@
         --text-muted: #94a3b8;
         --icon-color: #334155;
         --bg-page: #f8fafc;
+        --bg-primary: #ffffff;
+        --bg-secondary: #f1f5f9;
+        --bg-card: #ffffff;
     }
 }
 .light-mode {
@@ -39,6 +47,9 @@
     --text-muted: #94a3b8;
     --icon-color: #334155;
     --bg-page: #f8fafc;
+    --bg-primary: #ffffff;
+    --bg-secondary: #f1f5f9;
+    --bg-card: #ffffff;
 }
 
 :root {
@@ -58,13 +69,19 @@
     --accent-color: #c8203a;
 }
 
-/* Dark mode tokens */
+/* Dark mode tokens - per THEME_COLORS.md */
 .dark {
-    --text-primary: #f8fafc;
-    --text-secondary: #cbd5e1;
-    --text-muted: #94a3b8;
-    --icon-color: #cbd5e1;
-    --bg-page: #0f172a;
+    /* Text Colors */
+    --text-primary: #ffffff;     /* white */
+    --text-secondary: #cbd5e1;  /* slate-700 in dark */
+    --text-muted: #94a3b8;      /* slate-500 in dark */
+    --icon-color: #cbd5e1;     /* slate-700 in dark */
+    --bg-page: #0f172a;         /* slate-900 */
+
+    /* Background Colors */
+    --bg-primary: #334155;      /* slate-700 */
+    --bg-secondary: #1e293b;   /* slate-800 */
+    --bg-card: #334155;         /* slate-700 */
 
     --glass-bg-primary: rgba(30, 41, 59, 0.85);
     --glass-bg-secondary: rgba(30, 41, 59, 0.75);
