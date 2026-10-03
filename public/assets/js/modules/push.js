@@ -59,7 +59,7 @@ window.TNTT.push = {
             // giữ đăng ký của tài khoản khác thì KHÔNG tự đụng vào — để người dùng tự bật.
             if (daDongBo && dk && Notification.permission === 'granted' && this.tbDaBat
                 && (this._canToken || !(await this._tokenDoc()))) {
-                const luu = await this.api('push', 'subscribe', { endpoint: dk.endpoint });
+                const luu = await window.TNTT.core.api('push', 'subscribe', { endpoint: dk.endpoint });
                 if (luu.ok && luu.token) await this._tokenLuu(luu.token);
             }
         } catch (e) {
@@ -153,13 +153,13 @@ window.TNTT.push = {
         });
 
         let dk = await dangKy();
-        let luu = await this.api('push', 'subscribe', { endpoint: dk.endpoint });
+        let luu = await window.TNTT.core.api('push', 'subscribe', { endpoint: dk.endpoint });
         if (!luu.ok && luu.code === 'endpoint_owned') {
             // Máy dùng chung: đăng ký này đang thuộc tài khoản khác. Huỷ đăng ký trong
             // trình duyệt rồi đăng ký lại để lấy endpoint MỚI (chỉ thử lại một lần).
             try { await dk.unsubscribe(); } catch (e) { /* bỏ qua */ }
             dk = await dangKy();
-            luu = await this.api('push', 'subscribe', { endpoint: dk.endpoint });
+            luu = await window.TNTT.core.api('push', 'subscribe', { endpoint: dk.endpoint });
         }
         if (!luu.ok) {
             try { await dk.unsubscribe(); } catch (e) { /* bỏ qua */ }   // máy chủ không nhận thì đừng để lại rác
@@ -174,7 +174,7 @@ window.TNTT.push = {
     async _pushTat() {
         const dk = await this._swReg.pushManager.getSubscription();
         if (dk) {
-            await this.api('push', 'unsubscribe', { endpoint: dk.endpoint });
+            await window.TNTT.core.api('push', 'unsubscribe', { endpoint: dk.endpoint });
             await dk.unsubscribe();
         }
         await this._tokenXoa();
@@ -185,7 +185,7 @@ window.TNTT.push = {
     /** Gửi thử cho chính mình, để biết chắc là chạy được */
     async pushThu() {
         if (!this.tbDaBat) { window.TNTT.toast.warning('Bật thông báo trên máy này trước đã.'); return; }
-        const r = await this.api('push', 'test', {});
+        const r = await window.TNTT.core.api('push', 'test', {});
         if (!r.ok) { window.TNTT.toast.error(r.error || 'Không gửi được.'); return; }
         window.TNTT.toast.success('Đã xếp hàng gửi tới ' + r.devices + ' máy.\n\n'
             + 'Nếu sau khoảng 30 giây vẫn không thấy, mở lại mục này để xem trạng thái.');
