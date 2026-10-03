@@ -59,11 +59,22 @@ if ($memcached) echo "<span class='ok'>Có Memcached</span>";
 if (!$redis && !$memcached) echo "<span class='warn'>Không tìm thấy</span>";
 echo "</td><td>Redis/Memcached giúp ghi nhớ các câu lệnh Database. Rất quan trọng cho web dùng WordPress, Magento, Laravel để giảm tải cho máy chủ MySQL.</td></tr>";
 
-// Check HTTP/2
-$http2 = isset($_SERVER['SERVER_PROTOCOL']) && strpos($_SERVER['SERVER_PROTOCOL'], 'HTTP/2') !== false;
-echo "<tr><td><b>HTTP/2 Protocol</b></td>";
-echo "<td>" . ($http2 ? "<span class='ok'>Đang dùng HTTP/2</span>" : "<span class='warn'>Chưa dùng / Không nhận diện được</span>") . "</td>";
-echo "<td>HTTP/2 giúp trình duyệt tải cùng lúc nhiều file ảnh, CSS, JS song song. (Lưu ý: Đôi khi mã PHP không nhận ra nhưng server Nginx vẫn hỗ trợ).</td></tr>";
+// Check HTTP/2 và HTTP/3
+$http_protocol = $_SERVER['SERVER_PROTOCOL'] ?? 'Không xác định';
+$is_http3 = strpos($http_protocol, 'HTTP/3') !== false || isset($_SERVER['HTTP_ALT_SVC']) && strpos($_SERVER['HTTP_ALT_SVC'], 'h3') !== false;
+$is_http2 = strpos($http_protocol, 'HTTP/2') !== false;
+
+echo "<tr><td><b>Giao thức HTTP (HTTP/2 / HTTP/3)</b></td>";
+if ($is_http3) {
+    echo "<td><span class='ok'>Đang dùng HTTP/3 (QUIC) cực nhanh 🚀</span></td>";
+    echo "<td>Host hỗ trợ HTTP/3 (QUIC). Không cần gom file (bundle) quá mức, hãy tận dụng Code Splitting để trình duyệt tải song song!</td></tr>";
+} elseif ($is_http2) {
+    echo "<td><span class='ok'>Đang dùng HTTP/2</span></td>";
+    echo "<td>HTTP/2 giúp tải nhiều file song song tốt hơn HTTP/1.1. (Nếu host có HTTP/3 thì càng tốt).</td></tr>";
+} else {
+    echo "<td><span class='warn'>HTTP/1.1 hoặc chưa nhận diện</span></td>";
+    echo "<td>Nên nâng cấp lên HTTP/2 hoặc HTTP/3 để web tải tài nguyên tĩnh (ảnh, css) nhanh hơn.</td></tr>";
+}
 
 // Check Realpath Cache
 $realpath_size = ini_get('realpath_cache_size');
