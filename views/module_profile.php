@@ -54,7 +54,7 @@
     </div>
 
     <!-- 4. PHẠM VI PHỤ TRÁCH -->
-    <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100 mb-5">
+    <div class="bg-white dark:bg-slate-700 rounded-card p-5 shadow-sm border border-slate-100 dark:border-slate-600 mb-5">
         <div class="flex items-center justify-between mb-4">
             <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider" x-text="myScopeLabel"></h3>
             <button x-show="canAccess('students')" @click="openModule('students')" style="display: none;"
@@ -81,14 +81,14 @@
     </div>
 
     <!-- 5. HOẠT ĐỘNG CỦA TÔI -->
-    <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100 mb-5">
+    <div class="bg-white dark:bg-slate-700 rounded-card p-5 shadow-sm border border-slate-100 dark:border-slate-600 mb-5">
         <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4">Hoạt động của tôi</h3>
         <div class="flex items-center gap-4">
             <div class="w-11 h-11 shrink-0 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
                 <i data-lucide="activity" class="w-5 h-5"></i>
             </div>
             <div class="flex-1 min-w-0">
-                <p class="text-sm font-black text-slate-800">
+                <p class="text-sm font-black text-slate-800 dark:text-white">
                     <span x-text="myActivity.week"></span> thao tác trong 7 ngày qua
                 </p>
                 <p class="text-micro font-medium text-slate-500 mt-0.5"
@@ -101,7 +101,7 @@
          Bật theo TỪNG MÁY, không theo tài khoản: một người dùng cả điện
          thoại lẫn máy tính thì bật ở máy nào máy đó nhận. Vì vậy nút này
          luôn nói về "máy này", không nói về "tài khoản của bạn". -->
-    <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100 mb-4">
+    <div class="bg-white dark:bg-slate-700 rounded-card p-5 shadow-sm border border-slate-100 dark:border-slate-600 mb-4">
         <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4">Thông báo</h3>
 
         <!-- Trường hợp bật được -->
@@ -113,7 +113,7 @@
                     <i :data-lucide="tbDaBat ? 'bell-ring' : 'bell-off'" class="w-5 h-5"></i>
                 </div>
                 <div class="flex-1 min-w-0">
-                    <p class="text-sm font-bold text-slate-700">Báo ra màn hình máy này</p>
+                    <p class="text-sm font-bold text-slate-700 dark:text-white">Báo ra màn hình máy này</p>
                     <p class="text-micro text-slate-500"
                        x-text="tbDangChay ? 'Đang xử lý…'
                                : (tbDaBat ? 'Đang bật. Có việc mới sẽ hiện ra ngay cả khi app đóng.'
@@ -155,7 +155,7 @@
                 <i data-lucide="square-arrow-out-up-right" class="w-5 h-5"></i>
             </div>
             <div class="flex-1 min-w-0">
-                <p class="text-sm font-bold text-slate-700">Thêm app vào Màn hình chính trước</p>
+                <p class="text-sm font-bold text-slate-700 dark:text-white">Thêm app vào Màn hình chính trước</p>
                 <p class="text-micro text-slate-500 leading-relaxed">
                     Trên iPhone, Apple chỉ cho nhận thông báo khi app đã nằm ở Màn hình chính.
                     Bấm nút Chia sẻ ở thanh dưới Safari → <span class="font-bold">Thêm vào MH chính</span>,
@@ -170,7 +170,7 @@
                 <i data-lucide="bell-off" class="w-5 h-5"></i>
             </div>
             <div class="flex-1 min-w-0">
-                <p class="text-sm font-bold text-slate-700">Máy này chưa nhận được thông báo</p>
+                <p class="text-sm font-bold text-slate-700 dark:text-white">Máy này chưa nhận được thông báo</p>
                 <p class="text-micro text-slate-500 leading-relaxed">
                     Trình duyệt không hỗ trợ, hoặc máy chủ chưa cấu hình. Thử mở app bằng
                     Chrome hoặc Safari bản mới.
@@ -180,7 +180,7 @@
     </div>
 
     <!-- 8. PHÂN CÔNG CỦA BẠN -->
-    <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100 mb-5">
+    <div class="bg-white dark:bg-slate-700 rounded-card p-5 shadow-sm border border-slate-100 dark:border-slate-600 mb-5">
         <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Phân công của bạn</h3>
         <div class="space-y-2">
             <template x-for="a in assignments" :key="a.id">
@@ -197,7 +197,7 @@
     </div>
 
     <!-- 9. TÀI KHOẢN -->
-    <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100">
+    <div class="bg-white dark:bg-slate-700 rounded-card p-5 shadow-sm border border-slate-100 dark:border-slate-600">
         <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4">Tài khoản</h3>
 
         <div class="space-y-3">
@@ -207,7 +207,7 @@
                     <i data-lucide="key-round" class="w-5 h-5"></i>
                 </div>
                 <div class="flex-1 min-w-0">
-                    <p class="text-sm font-bold text-slate-700">Đổi mật khẩu</p>
+                    <p class="text-sm font-bold text-slate-700 dark:text-white">Đổi mật khẩu</p>
                     <p class="text-micro text-slate-500">Nên đổi ngay nếu Ban Điều Hành vừa cấp lại cho bạn</p>
                 </div>
                 <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300 shrink-0"></i>
@@ -234,7 +234,7 @@
                     <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></svg>
                 </div>
                 <div class="flex-1 min-w-0">
-                    <p class="text-sm font-bold text-slate-700">Đăng nhập bằng Vân tay / Face ID</p>
+                    <p class="text-sm font-bold text-slate-700 dark:text-white">Đăng nhập bằng Vân tay / Face ID</p>
                     <p class="text-micro font-medium"
                        :class="on ? 'text-emerald-600' : 'text-slate-500'"
                        x-text="!ho_tro ? 'Thiết bị không hỗ trợ' : (busy ? 'Đang xử lý…' : (on ? 'Đang bật' : 'Đang tắt'))">Đang tắt</p>
@@ -269,7 +269,7 @@
         <div x-show="showProfileForm" x-transition:enter="transform transition ease-out duration-300" x-transition:enter-start="translate-y-full opacity-0" x-transition:enter-end="translate-y-0 opacity-100" x-transition:leave="transform transition ease-in duration-200" x-transition:leave-start="translate-y-0 opacity-100" x-transition:leave-end="translate-y-full opacity-0" class="modal-sheet relative w-full max-w-md sm:max-w-lg bg-white rounded-t-sheet sm:rounded-sheet shadow-2xl flex flex-col max-h-[88dvh] overflow-y-auto">
             <div class="flex justify-center pt-3 pb-2"><div class="w-12 h-1.5 bg-slate-200 rounded-full"></div></div>
             <div class="flex justify-between items-center px-5 pb-4 border-b border-slate-100">
-                <h3 class="text-lg font-black text-slate-800">Sửa thông tin</h3>
+                <h3 class="text-lg font-black text-slate-800 dark:text-white">Sửa thông tin</h3>
                 <button aria-label="Đóng" @click="showProfileForm = false" class="tap-safe w-8 h-8 bg-slate-100 rounded-full text-slate-500 active:scale-90 flex items-center justify-center"><i data-lucide="x" class="w-4 h-4"></i></button>
             </div>
 
@@ -353,7 +353,7 @@
          class="modal-sheet relative w-full max-w-md bg-white rounded-t-sheet sm:rounded-sheet shadow-2xl flex flex-col max-h-[88dvh] overflow-y-auto">
 
         <div class="flex items-center justify-between p-5 border-b border-slate-100">
-            <h3 class="text-lg font-black text-slate-800">Đổi mật khẩu</h3>
+            <h3 class="text-lg font-black text-slate-800 dark:text-white">Đổi mật khẩu</h3>
             <button aria-label="Đóng" @click="showChangePw = false"
                     class="tap-safe w-9 h-9 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center active:scale-90 transition-transform">
                 <i data-lucide="x" class="w-5 h-5 text-slate-500"></i>

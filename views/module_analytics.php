@@ -5,10 +5,10 @@
     <!-- 1. THANH ĐIỀU HƯỚNG -->
     <div class="flex items-center justify-between mb-5">
         <div class="flex items-center min-w-0">
-            <button aria-label="Quay lại trang chủ" @click="changeModule('dashboard')" class="tap-safe w-10 h-10 shrink-0 bg-white rounded-2xl shadow-sm border border-slate-200 flex items-center justify-center active:scale-90 transition-transform mr-4">
-                <i data-lucide="chevron-left" class="w-6 h-6 text-slate-600"></i>
+            <button aria-label="Quay lại trang chủ" @click="changeModule('dashboard')" class="tap-safe w-10 h-10 shrink-0 bg-white dark:bg-slate-700 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-600 flex items-center justify-center active:scale-90 transition-transform mr-4">
+                <i data-lucide="chevron-left" class="w-6 h-6 text-slate-600 dark:text-slate-300"></i>
             </button>
-            <h2 class="text-xl font-black text-slate-800 tracking-tight">Phân Tích Điểm Danh</h2>
+            <h2 class="text-xl font-black text-slate-800 dark:text-white tracking-tight">Phân Tích Điểm Danh</h2>
         </div>
     </div>
 
@@ -102,8 +102,8 @@
             <template x-for="(cls, index) in classData" :key="cls.id">
                 <div>
                     <div class="flex justify-between items-baseline mb-1.5">
-                        <span class="text-sm font-bold text-slate-700 truncate" x-text="cls.name"></span>
-                        <span class="text-sm font-black text-slate-800 shrink-0 ml-2" x-text="cls.rate + '%'"></span>
+                        <span class="text-sm font-bold text-slate-700 dark:text-white truncate" x-text="cls.name"></span>
+                        <span class="text-sm font-black text-slate-800 dark:text-white shrink-0 ml-2" x-text="cls.rate + '%'"></span>
                     </div>
                     <div class="analytics-progress">
                         <div class="analytics-progress-bar"
@@ -137,7 +137,7 @@
                             <span x-text="student.holyName ? student.holyName.charAt(0) : '?'"></span>
                         </div>
                         <div>
-                            <p class="text-sm font-black text-slate-800 leading-snug">
+                            <p class="text-sm font-black text-slate-800 dark:text-white leading-snug">
                                 <span class="font-normal text-slate-500" x-text="student.holyName"></span>
                                 <span x-text="student.name"></span>
                             </p>

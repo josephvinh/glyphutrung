@@ -400,7 +400,7 @@
              class="modal-sheet relative w-full max-w-sm bg-white rounded-t-sheet sm:rounded-sheet shadow-2xl h-[60dvh] sm:h-auto sm:max-h-[80vh] flex flex-col overflow-hidden">
             <div class="flex justify-center pt-3 pb-2 bg-white"><div class="w-12 h-1.5 bg-slate-200 rounded-full"></div></div>
             <div class="flex justify-between items-center px-5 pb-4 border-b border-slate-100 bg-white">
-                <h3 class="text-lg font-black text-slate-800">
+                <h3 class="text-lg font-black text-slate-800 dark:text-white">
                     Chuyển lớp cho <span x-text="selectedStudents.length"></span> em
                 </h3>
                 <button aria-label="Đóng" @click="showBulkMoveModal = false"
@@ -423,7 +423,7 @@
                 <div>
                     <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Chọn lớp đích</label>
                     <select x-model="targetClassForMove"
-                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                            class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                         <option value="">— Chọn lớp —</option>
                         <template x-for="cls in classes" :key="cls.id">
                             <option :value="cls.name" x-text="cls.block + ' · ' + cls.name"></option>

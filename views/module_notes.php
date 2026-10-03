@@ -8,7 +8,7 @@
             <i data-lucide="chevron-left" class="w-6 h-6 text-slate-600"></i>
         </button>
         <div class="min-w-0 flex-1">
-            <h2 class="text-xl font-black text-slate-800 tracking-tight leading-tight">Lịch của tôi</h2>
+            <h2 class="text-xl font-black text-slate-800 dark:text-white tracking-tight leading-tight">Lịch của tôi</h2>
             <p class="text-micro text-slate-500">Việc riêng bạn tự ghi + các buổi họp được mời</p>
         </div>
         <button @click="openCreateNote()" type="button"
@@ -27,7 +27,7 @@
                 </h3>
                 <div class="space-y-2.5">
                     <template x-for="it in g.items" :key="it.kind + '-' + it.id">
-                        <div class="bg-white rounded-card p-4 shadow-sm border"
+                        <div class="bg-white dark:bg-slate-700 rounded-card p-4 shadow-sm border"
                              :class="it.kind === 'meeting' ? 'border-blue-200 bg-blue-50/30'
                                      : (isItemOverdue(it) ? 'border-rose-200' : 'border-slate-100')">
 
@@ -46,7 +46,7 @@
 
                                 <!-- Nội dung -->
                                 <div class="flex-1 min-w-0">
-                                    <p class="text-sm font-black text-slate-800 leading-snug"
+                                    <p class="text-sm font-black text-slate-800 dark:text-white leading-snug"
                                        :class="it.kind === 'note' && it.done ? 'line-through text-slate-500' : ''"
                                        x-text="it.title"></p>
                                     <p x-show="it.desc" style="display:none" class="text-micro text-slate-500 mt-0.5 leading-snug" x-text="it.desc"></p>
@@ -125,7 +125,7 @@
 
             <div class="flex justify-center pt-3 pb-2 bg-white"><div class="w-12 h-1.5 bg-slate-200 rounded-full"></div></div>
             <div class="flex justify-between items-center px-5 pb-4 border-b border-slate-100 bg-white">
-                <h3 class="text-lg font-black text-slate-800" x-text="isEditingNote ? 'Sửa việc' : 'Thêm việc'"></h3>
+                <h3 class="text-lg font-black text-slate-800 dark:text-white" x-text="isEditingNote ? 'Sửa việc' : 'Thêm việc'"></h3>
                 <button aria-label="Đóng" @click="showNoteModal = false" class="tap-safe w-8 h-8 flex items-center justify-center bg-slate-100 rounded-full text-slate-500 active:scale-90 transition-transform"><i data-lucide="x" class="w-4 h-4"></i></button>
             </div>
 
@@ -133,23 +133,23 @@
                 <div>
                     <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Tên việc</label>
                     <input x-model="noteForm.title" type="text" placeholder="VD: Chuẩn bị giáo án, Họp phụ huynh..."
-                           class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                           class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                 </div>
                 <div>
                     <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Ghi chú (tuỳ chọn)</label>
                     <textarea x-model="noteForm.note" rows="3" placeholder="Chi tiết thêm nếu cần..."
-                              class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none"></textarea>
+                              class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none"></textarea>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Ngày nhắc</label>
                         <input x-model="noteForm.date" type="date" min="2000-01-01" max="2100-12-31"
-                               class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                               class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                     </div>
                     <div>
                         <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Giờ nhắc</label>
                         <input x-model="noteForm.time" type="time" :disabled="noteForm.allDay"
-                               class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:opacity-50">
+                               class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:opacity-50">
                     </div>
                 </div>
                 <label class="flex items-center gap-2.5 cursor-pointer select-none">
