@@ -149,13 +149,13 @@
 
             <div class="space-y-2.5">
                 <template x-for="m in moduleDefs" :key="m.key">
-                    <div class="bg-white dark:bg-slate-700 rounded-field p-4 shadow-sm border border-slate-100 dark:border-slate-600">
+                    <div class="bg-white rounded-field p-4 shadow-sm border border-slate-100">
                         <div class="flex items-center gap-3 mb-3">
                             <div class="tap-safe w-9 h-9 shrink-0 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500">
                                 <i :data-lucide="m.icon" class="w-4 h-4"></i>
                             </div>
                             <div class="min-w-0">
-                                <p class="text-sm font-black text-slate-800 dark:text-white leading-snug" x-text="m.label"></p>
+                                <p class="text-sm font-black text-slate-800 leading-snug" x-text="m.label"></p>
                                 <p class="text-micro font-medium text-slate-500" x-text="m.area === 'bdh' ? 'Khu điều hành' : 'Khu nghiệp vụ'"></p>
                             </div>
                         </div>

@@ -4,12 +4,12 @@
         
         <!-- Khối thông tin cá nhân -->
         <div class="flex-1">
-            <p class="text-xs text-white/70 dark:text-slate-400 font-medium mb-1 tracking-wide uppercase">Chào ngày mới,</p>
+            <p class="text-xs text-white/70 font-medium mb-1 tracking-wide uppercase">Chào ngày mới,</p>
             <h1 class="text-xl font-bold tracking-tight mb-1 text-white drop-shadow-sm">
                 <span x-text="user.holyName" class="mr-1 opacity-90"></span>
                 <span x-text="user.fullName"></span>
             </h1>
-            <div class="inline-flex items-center bg-white/20 dark:bg-slate-800/50 px-3 py-1 rounded-full backdrop-blur-sm border border-white/20">
+            <div class="inline-flex items-center bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm border border-white/20">
                 <i data-lucide="shield-check" class="w-3 h-3 text-white mr-1.5"></i>
                 <p class="text-xs text-white font-medium">
                     <!-- Chỉ hiện dấu • khi thật sự có lớp/khối đi kèm, nếu không
@@ -25,7 +25,7 @@
         <div class="flex items-center gap-2">
             <!-- Làm mới / đồng bộ — thay cho kéo-xuống khi cài app ra màn hình chính -->
             <button @click="refreshApp()" :disabled="syncing" type="button" aria-label="Làm mới dữ liệu"
-                    class="w-12 h-12 shrink-0 bg-slate-200/50 dark:bg-slate-800/50 hover:bg-slate-300/50 dark:hover:bg-slate-700/50 text-slate-700 dark:text-slate-200 rounded-full flex items-center justify-center border-2 border-slate-300/50 dark:border-slate-600/50 shadow-sm active:scale-90 transition-all disabled:opacity-60">
+                    class="w-12 h-12 shrink-0 bg-slate-200/50 hover:bg-slate-300/50 text-slate-700 rounded-full flex items-center justify-center border-2 border-slate-300/50/50 shadow-sm active:scale-90 transition-all disabled:opacity-60">
                 <span class="flex" :class="syncing ? 'animate-spin' : ''">
                     <i data-lucide="refresh-cw" class="w-5 h-5 pointer-events-none"></i>
                 </span>
@@ -33,7 +33,7 @@
 
             <!-- Đăng xuất -->
             <button @click="logout()" type="button" aria-label="Đăng xuất khỏi hệ thống"
-                    class="w-12 h-12 shrink-0 bg-slate-200/50 dark:bg-slate-800/50 hover:bg-slate-300/50 dark:hover:bg-slate-700/50 text-slate-700 dark:text-slate-200 rounded-full flex items-center justify-center border-2 border-slate-300/50 dark:border-slate-600/50 shadow-sm active:scale-90 transition-all">
+                    class="w-12 h-12 shrink-0 bg-slate-200/50 hover:bg-slate-300/50 text-slate-700 rounded-full flex items-center justify-center border-2 border-slate-300/50/50 shadow-sm active:scale-90 transition-all">
                 <i data-lucide="log-out" class="w-5 h-5 pointer-events-none"></i>
             </button>
         </div>

@@ -4,10 +4,10 @@
     <!-- 1. THANH ĐIỀU HƯỚNG -->
     <div class="flex items-center justify-between mb-5">
         <div class="flex items-center min-w-0">
-            <button aria-label="Quay lại trang chủ" @click="changeModule('dashboard')" class="tap-safe w-10 h-10 shrink-0 bg-white dark:bg-slate-700 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-600 flex items-center justify-center active:scale-90 transition-transform mr-4">
-                <i data-lucide="chevron-left" class="w-6 h-6 text-slate-600 dark:text-slate-300"></i>
+            <button aria-label="Quay lại trang chủ" @click="changeModule('dashboard')" class="tap-safe w-10 h-10 shrink-0 bg-white rounded-2xl shadow-sm border border-slate-200 flex items-center justify-center active:scale-90 transition-transform mr-4">
+                <i data-lucide="chevron-left" class="w-6 h-6 text-slate-600"></i>
             </button>
-            <h2 class="text-xl font-black text-slate-800 dark:text-white tracking-tight">Thông Báo</h2>
+            <h2 class="text-xl font-black text-slate-800 tracking-tight">Thông Báo</h2>
         </div>
 
         <button x-show="canManageAnnouncements" @click="openCreateAnnouncement()" class="shrink-0 btn-glass text-white px-4 py-2 rounded-xl font-bold text-sm shadow-md shadow-blue-200 flex items-center active:scale-95 transition-transform">
@@ -20,7 +20,7 @@
         <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
         <input x-model="announcementSearch" type="text" placeholder="Tìm thông báo theo tiêu đề, nội dung..."
                aria-label="Tìm thông báo"
-               class="input-glass w-full py-2.5 pl-11 pr-10 text-sm font-semibold text-slate-800 dark:text-slate-100 placeholder:font-normal">
+               class="input-glass w-full py-2.5 pl-11 pr-10 text-sm font-semibold text-slate-800 placeholder:font-normal">
         <button aria-label="Xóa ô tìm kiếm" x-show="announcementSearch !== ''" @click="announcementSearch = ''" style="display: none;"
                 class="tap-safe absolute right-1 top-1/2 -translate-y-1/2 p-2 flex items-center justify-center text-slate-500 active:scale-90 transition-transform">
             <div class="w-6 h-6 bg-slate-100 rounded-full flex items-center justify-center">
@@ -34,7 +34,7 @@
          ========================================================== -->
     <div x-show="!canManageAnnouncements">
         <div x-show="unreadAnnouncementCount > 0" style="display: none;" class="flex justify-end mb-3">
-            <button @click="markAllAnnouncementsRead()" type="button" class="flex items-center gap-1.5 px-3 py-2 bg-white dark:bg-slate-700 text-slate-500 dark:text-slate-300 rounded-xl font-bold text-xs active:scale-95 transition-transform border border-slate-200 dark:border-slate-600 shadow-sm">
+            <button @click="markAllAnnouncementsRead()" type="button" class="flex items-center gap-1.5 px-3 py-2 bg-white text-slate-500 rounded-xl font-bold text-xs active:scale-95 transition-transform border border-slate-200 shadow-sm">
                 <i data-lucide="check-check" class="w-4 h-4"></i> Đánh dấu đã đọc hết
             </button>
         </div>
@@ -61,7 +61,7 @@
                                       x-text="audienceLabel(a)"></span>
                                 <span x-show="!readAnnouncements.includes(a.id)" style="display: none;" class="w-2 h-2 rounded-full bg-blue-600"></span>
                             </div>
-                            <h3 class="text-base font-black text-slate-800 dark:text-white leading-snug" x-text="a.title"></h3>
+                            <h3 class="text-base font-black text-slate-800 leading-snug" x-text="a.title"></h3>
                         </div>
                     </div>
 
@@ -128,7 +128,7 @@
                                 <span x-show="isAnnouncementExpired(a)" style="display: none;" class="text-micro font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-rose-50 text-rose-600">Hết hạn</span>
                                 <span x-show="a.isMeeting" style="display: none;" class="text-micro font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-blue-50 text-blue-600">Buổi họp</span>
                             </div>
-                            <h3 class="text-base font-black text-slate-800 dark:text-white leading-snug" x-text="a.title"></h3>
+                            <h3 class="text-base font-black text-slate-800 leading-snug" x-text="a.title"></h3>
                         </div>
 
                         <div x-show="canEditAnnouncement(a)" class="flex flex-col gap-2 shrink-0">
@@ -143,7 +143,7 @@
 
                     <p class="text-sm text-slate-600 leading-relaxed mb-3" x-text="a.body"></p>
 
-                    <div class="bg-slate-50 dark:bg-slate-800 rounded-2xl p-3.5 space-y-2 mb-4">
+                    <div class="bg-slate-50 rounded-2xl p-3.5 space-y-2 mb-4">
                         <div class="flex items-center justify-between text-xs">
                             <span class="font-semibold text-slate-500">Thời điểm phát</span>
                             <span class="font-bold text-slate-700" x-text="a.publishedAt || 'Chưa phát'"></span>
@@ -192,7 +192,7 @@
 
             <div class="flex justify-center pt-3 pb-2 bg-white"><div class="w-12 h-1.5 bg-slate-200 rounded-full"></div></div>
             <div class="flex justify-between items-center px-5 pb-4 border-b border-slate-100 bg-white">
-                <h3 class="text-lg font-black text-slate-800 dark:text-white" x-text="isEditingAnnouncement ? 'Sửa thông báo' : 'Phát thông báo mới'"></h3>
+                <h3 class="text-lg font-black text-slate-800" x-text="isEditingAnnouncement ? 'Sửa thông báo' : 'Phát thông báo mới'"></h3>
                 <button aria-label="Đóng" @click="showAnnouncementModal = false" class="tap-safe w-8 h-8 flex items-center justify-center bg-slate-100 rounded-full text-slate-500 active:scale-90 transition-transform"><i data-lucide="x" class="w-4 h-4"></i></button>
             </div>
 
@@ -200,12 +200,12 @@
                 <input type="hidden" name="_csrf" :value="window.TNTT.csrfToken">
                 <div>
                     <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Tiêu đề</label>
-                    <input x-model="announcementForm.title" type="text" placeholder="VD: Họp GLV toàn đoàn..." class="w-full bg-slate-50 dark:bg-slate-800 input-glass border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                    <input x-model="announcementForm.title" type="text" placeholder="VD: Họp GLV toàn đoàn..." class="w-full bg-slate-50 input-glass border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                 </div>
 
                 <div>
                     <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Nội dung</label>
-                    <textarea x-model="announcementForm.body" rows="5" placeholder="Ghi rõ thời gian, địa điểm, việc cần chuẩn bị..." class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none"></textarea>
+                    <textarea x-model="announcementForm.body" rows="5" placeholder="Ghi rõ thời gian, địa điểm, việc cần chuẩn bị..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none"></textarea>
                 </div>
 
                 <!-- Mức độ -->
@@ -224,7 +224,7 @@
                 <!-- Đối tượng nhận -->
                 <div>
                     <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Gửi tới</label>
-                    <select x-model="announcementForm.audienceType" :disabled="audienceLocked" class="w-full disabled:opacity-60 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                    <select x-model="announcementForm.audienceType" :disabled="audienceLocked" class="w-full disabled:opacity-60 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                         <option value="toàn đoàn">Toàn đoàn</option>
                         <option value="khối">Một khối</option>
                         <option value="lớp">Một lớp</option>
@@ -233,7 +233,7 @@
 
                 <div x-show="announcementForm.audienceType === 'khối'" style="display: none;">
                     <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Chọn khối</label>
-                    <select x-model="announcementForm.audienceValue" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                    <select x-model="announcementForm.audienceValue" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                         <option value="">-- Chọn khối --</option>
                         <template x-for="b in audienceBlockChoices" :key="b">
                             <option :value="b" x-text="b"></option>
@@ -243,7 +243,7 @@
 
                 <div x-show="announcementForm.audienceType === 'lớp'" style="display: none;">
                     <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Chọn lớp</label>
-                    <select x-model="announcementForm.audienceValue" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                    <select x-model="announcementForm.audienceValue" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                         <option value="">-- Chọn lớp --</option>
                         <template x-for="c in classes" :key="c.name">
                             <option :value="c.name" x-text="c.name"></option>
@@ -255,17 +255,17 @@
                 <div class="border-t border-slate-100 pt-4">
                     <label class="flex items-center gap-2.5 cursor-pointer select-none">
                         <input x-model="announcementForm.isMeeting" type="checkbox" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
-                        <span class="text-sm font-bold text-slate-700 dark:text-white">Đây là buổi họp</span>
+                        <span class="text-sm font-bold text-slate-700">Đây là buổi họp</span>
                         <span class="text-micro text-slate-500">(tự vào lịch + hỏi tham gia)</span>
                     </label>
                     <div x-show="announcementForm.isMeeting" x-collapse style="display: none;" class="mt-3 space-y-3">
                         <div>
                             <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Thời gian họp</label>
-                            <input x-model="announcementForm.meetingAt" type="datetime-local" min="2000-01-01T00:00" max="2100-12-31T23:59" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                            <input x-model="announcementForm.meetingAt" type="datetime-local" min="2000-01-01T00:00" max="2100-12-31T23:59" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                         </div>
                         <div>
                             <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Địa điểm (tuỳ chọn)</label>
-                            <input x-model="announcementForm.meetingPlace" type="text" placeholder="VD: Hội trường giáo xứ" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                            <input x-model="announcementForm.meetingPlace" type="text" placeholder="VD: Hội trường giáo xứ" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                         </div>
                     </div>
                 </div>
@@ -273,12 +273,12 @@
                 <div class="grid grid-cols-2 gap-3 border-t border-slate-100 pt-4 pb-6">
                     <div>
                         <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Hạn hiển thị</label>
-                        <input x-model="announcementForm.expiresAt" type="date" min="2000-01-01" max="2100-12-31" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                        <input x-model="announcementForm.expiresAt" type="date" min="2000-01-01" max="2100-12-31" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                         <p class="text-micro text-slate-500 mt-1 ml-1">Để trống là không giới hạn</p>
                     </div>
                     <div>
                         <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Trạng thái</label>
-                        <select x-model="announcementForm.status" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                        <select x-model="announcementForm.status" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                             <option value="đã phát">Phát ngay</option>
                             <option value="nháp">Lưu nháp</option>
                         </select>
@@ -305,7 +305,7 @@
             <div class="flex justify-center pt-3 pb-2 bg-white"><div class="w-12 h-1.5 bg-slate-200 rounded-full"></div></div>
             <div class="flex justify-between items-center px-5 pb-4 border-b border-slate-100 bg-white">
                 <div class="min-w-0">
-                    <h3 class="text-lg font-black text-slate-800 dark:text-white leading-tight">Kết quả họp</h3>
+                    <h3 class="text-lg font-black text-slate-800 leading-tight">Kết quả họp</h3>
                     <p class="text-micro text-slate-500 truncate" x-text="meetingResult.title"></p>
                 </div>
                 <button aria-label="Đóng" @click="showMeetingResult = false" class="tap-safe w-8 h-8 shrink-0 flex items-center justify-center bg-slate-100 rounded-full text-slate-500 active:scale-90 transition-transform"><i data-lucide="x" class="w-4 h-4"></i></button>

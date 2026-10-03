@@ -13,7 +13,7 @@
         <button aria-label="Quay lại trang chủ" @click="changeModule('dashboard')" class="tap-safe w-10 h-10 shrink-0 bg-white rounded-2xl shadow-sm border border-slate-200 flex items-center justify-center active:scale-90 transition-transform mr-4">
             <i data-lucide="chevron-left" class="w-6 h-6 text-slate-600"></i>
         </button>
-        <h2 class="text-xl font-black text-slate-800 dark:text-white tracking-tight">Niên Khoá</h2>
+        <h2 class="text-xl font-black text-slate-800 tracking-tight">Niên Khoá</h2>
     </div>
 
     <!-- Cấp dưới Ban Điều Hành chỉ được xem -->
@@ -110,22 +110,22 @@
         <div x-show="showYearModal" x-transition:enter="transform transition ease-out duration-300" x-transition:enter-start="translate-y-full opacity-0" x-transition:enter-end="translate-y-0 opacity-100" x-transition:leave="transform transition ease-in duration-200" x-transition:leave-start="translate-y-0 opacity-100" x-transition:leave-end="translate-y-full opacity-0" class="modal-sheet relative w-full max-w-md sm:max-w-lg bg-white rounded-t-sheet sm:rounded-sheet shadow-2xl flex flex-col max-h-[88dvh] overflow-y-auto">
             <div class="flex justify-center pt-3 pb-2"><div class="w-12 h-1.5 bg-slate-200 rounded-full"></div></div>
             <div class="flex justify-between items-center px-5 pb-4 border-b border-slate-100">
-                <h3 class="text-lg font-black text-slate-800 dark:text-white" x-text="yearFormTitle"></h3>
+                <h3 class="text-lg font-black text-slate-800" x-text="yearFormTitle"></h3>
                 <button aria-label="Đóng" @click="showYearModal = false" class="tap-safe w-8 h-8 bg-slate-100 rounded-full text-slate-500 active:scale-90 flex items-center justify-center"><i data-lucide="x" class="w-4 h-4"></i></button>
             </div>
             <div class="p-5 space-y-4">
                 <div>
                     <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Tên niên khoá</label>
-                    <input x-model="yearForm.name" type="text" placeholder="VD: 2027 - 2028" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                    <input x-model="yearForm.name" type="text" placeholder="VD: 2027 - 2028" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Khai giảng</label>
-                        <input x-model="yearForm.startDate" type="date" min="2000-01-01" max="2100-12-31" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                        <input x-model="yearForm.startDate" type="date" min="2000-01-01" max="2100-12-31" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                     </div>
                     <div>
                         <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Bế giảng</label>
-                        <input x-model="yearForm.endDate" type="date" min="2000-01-01" max="2100-12-31" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                        <input x-model="yearForm.endDate" type="date" min="2000-01-01" max="2100-12-31" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                     </div>
                 </div>
                 <p class="text-micro text-slate-500 leading-snug">

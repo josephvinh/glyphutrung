@@ -16,9 +16,9 @@
     <div class="home-overview grid gap-4">
 
         <!-- SẮP TỚI: việc cá nhân + buổi họp gần nhất -->
-        <div class="bg-white dark:bg-slate-700 rounded-card p-5 shadow-sm border border-slate-100 dark:border-slate-600 flex flex-col">
+        <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100 flex flex-col">
             <div class="flex items-center justify-between mb-3">
-                <h3 class="text-sm font-black text-slate-800 dark:text-white flex items-center gap-2">
+                <h3 class="text-sm font-black text-slate-800 flex items-center gap-2">
                     <i data-lucide="calendar-check" class="w-4 h-4 text-blue-600"></i> Sắp tới
                 </h3>
                 <button @click="openNotes()" type="button" class="text-micro font-bold text-blue-600 flex items-center gap-0.5">
@@ -49,9 +49,9 @@
         </div>
 
         <!-- THÔNG BÁO GẦN ĐÂY -->
-        <div class="bg-white dark:bg-slate-700 rounded-card p-5 shadow-sm border border-slate-100 dark:border-slate-600 flex flex-col">
+        <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100 flex flex-col">
             <div class="flex items-center justify-between mb-3">
-                <h3 class="text-sm font-black text-slate-800 dark:text-white flex items-center gap-2">
+                <h3 class="text-sm font-black text-slate-800 flex items-center gap-2">
                     <i data-lucide="megaphone" class="w-4 h-4 text-rose-500"></i> Thông báo gần đây
                 </h3>
                 <button @click="openAnnouncements()" type="button" class="text-micro font-bold text-blue-600 flex items-center gap-0.5">

@@ -6,7 +6,7 @@
         <button aria-label="Quay lại trang chủ" @click="changeModule('dashboard')" class="tap-safe w-10 h-10 shrink-0 bg-white rounded-2xl shadow-sm border border-slate-200 flex items-center justify-center active:scale-90 transition-transform mr-4">
             <i data-lucide="chevron-left" class="w-6 h-6 text-slate-600"></i>
         </button>
-        <h2 class="text-xl font-black text-slate-800 dark:text-white tracking-tight">Khối &amp; Lớp</h2>
+        <h2 class="text-xl font-black text-slate-800 tracking-tight">Khối &amp; Lớp</h2>
     </div>
 
     <!-- Cấp dưới BĐH chỉ được xem -->
@@ -21,7 +21,7 @@
     <div>
 
         <!-- BAN ĐIỀU HÀNH: luôn khóa, chỉ xem -->
-        <div class="bg-white dark:bg-slate-700 rounded-card p-5 shadow-sm border border-slate-100 dark:border-slate-600 mb-4">
+        <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100 mb-4">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Ban Điều Hành</h3>
                 <span class="flex items-center gap-1 text-micro font-bold text-slate-500">
@@ -35,7 +35,7 @@
                             <i data-lucide="shield-check" class="w-4 h-4"></i>
                         </div>
                         <div class="flex-1 min-w-0">
-                            <p class="text-sm font-black text-slate-800 dark:text-white leading-snug">
+                            <p class="text-sm font-black text-slate-800 leading-snug">
                                 <span class="font-normal text-slate-500" x-text="m.holyName"></span>
                                 <span x-text="m.fullName"></span>
                             </p>
@@ -63,7 +63,7 @@
                     <div class="p-5">
                         <div class="flex justify-between items-start gap-3 mb-3">
                             <button @click="expandedBlock = (expandedBlock === b ? '' : b)" type="button" class="flex-1 min-w-0 text-left">
-                                <h3 class="text-base font-black text-slate-800 dark:text-white leading-snug flex items-center gap-2">
+                                <h3 class="text-base font-black text-slate-800 leading-snug flex items-center gap-2">
                                     <span x-text="b"></span>
                                     <!-- Icon đổi theo trạng thái: KHÔNG dùng :data-lucide.
                                          lucide thay thẻ <i> bằng <svg> nên binding trỏ vào thẻ
@@ -93,7 +93,7 @@
                         <!-- Trưởng khối -->
                         <div class="bg-amber-50 border border-amber-100 rounded-2xl p-3.5">
                             <p class="text-micro font-bold text-amber-600 uppercase tracking-wide mb-1.5">Trưởng khối</p>
-                            <p x-show="!canManageOrg" style="display: none;" class="text-sm font-black text-slate-800 dark:text-white"
+                            <p x-show="!canManageOrg" style="display: none;" class="text-sm font-black text-slate-800"
                                x-text="headOfBlock(b) ? memberFullName(headOfBlock(b)) : 'Chưa phân công'"></p>
                             <select x-show="canManageOrg" style="display: none;"
                                     :value="headOfBlock(b) ? headOfBlock(b).id : ''"
@@ -117,7 +117,7 @@
                                 <div class="bg-white rounded-2xl p-4 border border-slate-100">
                                     <div class="flex justify-between items-start gap-3 mb-3">
                                         <div class="min-w-0">
-                                            <h4 class="text-sm font-black text-slate-800 dark:text-white leading-snug" x-text="cls.name"></h4>
+                                            <h4 class="text-sm font-black text-slate-800 leading-snug" x-text="cls.name"></h4>
                                             <p class="text-micro font-medium text-slate-500 mt-0.5">
                                                 <span x-text="classSize(cls.name)"></span> em
                                                 <span class="text-slate-300 mx-1">•</span>
@@ -137,7 +137,7 @@
                                     <!-- Chủ nhiệm lớp -->
                                     <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-3 mb-3">
                                         <p class="text-micro font-bold text-emerald-700 uppercase tracking-wide mb-1.5">Chủ nhiệm lớp</p>
-                                        <p x-show="!canManageOrg" style="display: none;" class="text-sm font-black text-slate-800 dark:text-white"
+                                        <p x-show="!canManageOrg" style="display: none;" class="text-sm font-black text-slate-800"
                                            x-text="headOfClass(cls.name) ? memberFullName(headOfClass(cls.name)) : 'Chưa phân công'"></p>
                                         <select x-show="canManageOrg" style="display: none;"
                                                 :value="headOfClass(cls.name) ? headOfClass(cls.name).id : ''"
@@ -158,7 +158,7 @@
                                                         class="flex-1 min-w-0 text-left flex items-center gap-2.5 py-1"
                                                         :class="canManageOrg ? 'active:scale-[0.98] transition-transform' : 'cursor-default'">
                                                     <div class="flex-1 min-w-0">
-                                                        <p class="text-sm font-bold text-slate-700 dark:text-white leading-snug truncate">
+                                                        <p class="text-sm font-bold text-slate-700 leading-snug truncate">
                                                             <span class="font-normal text-slate-500" x-text="m.holyName"></span>
                                                             <span x-text="m.fullName"></span>
                                                         </p>
@@ -227,12 +227,12 @@
         <div x-show="showBlockModal" x-transition:enter="transform transition ease-out duration-300" x-transition:enter-start="translate-y-full opacity-0" x-transition:enter-end="translate-y-0 opacity-100" x-transition:leave="transform transition ease-in duration-200" x-transition:leave-start="translate-y-0 opacity-100" x-transition:leave-end="translate-y-full opacity-0" class="modal-sheet relative w-full max-w-md sm:max-w-lg bg-white rounded-t-sheet sm:rounded-sheet shadow-2xl flex flex-col max-h-[88dvh] overflow-y-auto">
             <div class="flex justify-center pt-3 pb-2"><div class="w-12 h-1.5 bg-slate-200 rounded-full"></div></div>
             <div class="flex justify-between items-center px-5 pb-4 border-b border-slate-100">
-                <h3 class="text-lg font-black text-slate-800 dark:text-white" x-text="blockForm.original ? 'Sửa tên khối' : 'Thêm khối mới'"></h3>
+                <h3 class="text-lg font-black text-slate-800" x-text="blockForm.original ? 'Sửa tên khối' : 'Thêm khối mới'"></h3>
                 <button aria-label="Đóng" @click="showBlockModal = false" class="tap-safe w-8 h-8 bg-slate-100 rounded-full text-slate-500 active:scale-90 flex items-center justify-center"><i data-lucide="x" class="w-4 h-4"></i></button>
             </div>
             <div class="p-5">
                 <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Tên khối</label>
-                <input x-model="blockForm.name" type="text" placeholder="VD: Khai Tâm..." class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                <input x-model="blockForm.name" type="text" placeholder="VD: Khai Tâm..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                 <p x-show="blockForm.original" style="display: none;" class="text-micro text-amber-600 mt-2 leading-snug">
                     Đổi tên khối sẽ cập nhật theo cho tất cả lớp, thiếu nhi, GLV và thông báo đang gắn với khối này.
                 </p>
@@ -253,17 +253,17 @@
         <div x-show="showClassModal" x-transition:enter="transform transition ease-out duration-300" x-transition:enter-start="translate-y-full opacity-0" x-transition:enter-end="translate-y-0 opacity-100" x-transition:leave="transform transition ease-in duration-200" x-transition:leave-start="translate-y-0 opacity-100" x-transition:leave-end="translate-y-full opacity-0" class="modal-sheet relative w-full max-w-md sm:max-w-lg bg-white rounded-t-sheet sm:rounded-sheet shadow-2xl flex flex-col max-h-[88dvh] overflow-y-auto">
             <div class="flex justify-center pt-3 pb-2"><div class="w-12 h-1.5 bg-slate-200 rounded-full"></div></div>
             <div class="flex justify-between items-center px-5 pb-4 border-b border-slate-100">
-                <h3 class="text-lg font-black text-slate-800 dark:text-white" x-text="classForm.original ? 'Sửa lớp' : 'Thêm lớp mới'"></h3>
+                <h3 class="text-lg font-black text-slate-800" x-text="classForm.original ? 'Sửa lớp' : 'Thêm lớp mới'"></h3>
                 <button aria-label="Đóng" @click="showClassModal = false" class="tap-safe w-8 h-8 bg-slate-100 rounded-full text-slate-500 active:scale-90 flex items-center justify-center"><i data-lucide="x" class="w-4 h-4"></i></button>
             </div>
             <div class="p-5 space-y-4">
                 <div>
                     <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Tên lớp</label>
-                    <input x-model="classForm.name" type="text" placeholder="VD: Khai Tâm 1A..." class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                    <input x-model="classForm.name" type="text" placeholder="VD: Khai Tâm 1A..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                 </div>
                 <div>
                     <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Thuộc khối</label>
-                    <select x-model="classForm.block" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                    <select x-model="classForm.block" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                         <template x-for="b in blocks" :key="b">
                             <option :value="b" x-text="b"></option>
                         </template>
