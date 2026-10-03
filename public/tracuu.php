@@ -152,8 +152,10 @@ h2{font-size:14px;font-weight:800;margin-bottom:10px}
 </head>
 <body>
 <div class="hero">
-  <a class="back-btn" href="index.php" aria-label="Về trang chủ">‹</a>
-  <div class="ico">📘</div>
+  <a class="back-btn" href="index.php" aria-label="Về trang chủ">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+  </a>
+  <div class="ico"><svg xmlns="http://www.w3.org/2000/svg" width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg></div>
   <h1>Tra Cứu Điểm</h1>
   <p>Điểm số · Điểm danh · Sổ liên lạc</p>
 </div>
@@ -181,9 +183,9 @@ h2{font-size:14px;font-weight:800;margin-bottom:10px}
   </div>
 
   <div class="tabs" role="tablist" aria-label="Chọn mục xem">
-    <button role="tab" id="t-diem" aria-controls="p-diem" aria-selected="true">📝 Điểm số</button>
-    <button role="tab" id="t-dd" aria-controls="p-dd" aria-selected="false">✅ Điểm danh</button>
-    <button role="tab" id="t-ll" aria-controls="p-ll" aria-selected="false">📬 Sổ liên lạc</button>
+    <button role="tab" id="t-diem" aria-controls="p-diem" aria-selected="true"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg> Điểm số</button>
+    <button role="tab" id="t-dd" aria-controls="p-dd" aria-selected="false"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Điểm danh</button>
+    <button role="tab" id="t-ll" aria-controls="p-ll" aria-selected="false"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> Sổ liên lạc</button>
   </div>
 
   <!-- TAB ĐIỂM SỐ -->
@@ -251,7 +253,7 @@ h2{font-size:14px;font-weight:800;margin-bottom:10px}
   <!-- TAB SỔ LIÊN LẠC -->
   <section class="card" role="tabpanel" id="p-ll" aria-labelledby="t-ll" hidden>
     <?php if (!$lienLac): ?>
-      <div class="trong">📭 Chưa có phiếu liên lạc nào.<br>Phiếu sẽ hiện ở đây khi các anh chị lập và gửi cho gia đình.</div>
+      <div class="trong"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin:0 auto 8px"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><line x1="22" y1="6" x2="2" y2="6"/></svg><br>Chưa có phiếu liên lạc nào.<br>Phiếu sẽ hiện ở đây khi các anh chị lập và gửi cho gia đình.</div>
     <?php else: foreach ($lienLac as $r): ?>
       <div class="phieu">
         <h3>Phiếu liên lạc · <?php echo e_($r['term']); ?></h3>

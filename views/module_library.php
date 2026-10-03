@@ -127,7 +127,7 @@
                    class="w-full bg-white border border-slate-200 rounded-field py-3 pl-11 pr-4 text-sm font-medium text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
         </div>
         <div x-show="lib.pending.length===0" style="display:none" class="text-center py-12 text-slate-500 text-sm"
-             x-text="lib.pendingQ ? 'Không có mục nào khớp.' : 'Không có tài liệu nào chờ duyệt. 🎉'"></div>
+             x-text="lib.pendingQ ? 'Không có mục nào khớp.' : 'Không có tài liệu nào chờ duyệt.'"></div>
         <div class="space-y-3">
             <template x-for="it in lib.pending" :key="it.id">
                 <div class="bg-white rounded-card p-4 shadow-sm border border-amber-100">

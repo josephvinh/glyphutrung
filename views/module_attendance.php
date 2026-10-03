@@ -227,7 +227,7 @@
                         </div>
                     </div>
 
-                    <button @click="startSession(prog)" type="button" :disabled="!heavyLoaded || !heavyFresh" :class="(!heavyLoaded || !heavyFresh) ? 'opacity-50' : ''" class="w-full btn-glass text-white font-bold py-3 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-blue-200 flex justify-center items-center">
+                    <button @click="startSession(prog)" type="button" :disabled="!heavyLoaded || !heavyFresh" :class="(!heavyLoaded || !heavyFresh) ? 'opacity-50 w-full btn-glass text-white font-bold py-3 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-blue-200 flex justify-center items-center' : 'w-full btn-glass text-white font-bold py-3 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-blue-200 flex justify-center items-center'">
                         <i data-lucide="clipboard-check" class="w-5 h-5 mr-2"></i> Bắt đầu điểm danh
                     </button>
                 </div>
