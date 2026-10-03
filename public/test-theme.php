@@ -18,7 +18,7 @@
         .section { margin: 2rem 0; padding: 1.5rem; background: white; border-radius: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
         body.dark .section { background: #1e293b; }
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.75rem; margin-top: 1rem; }
-        .item { padding: 0.75rem; background: #f8fafc; border-radius: 0.5rem; text-align: center; border: 1px solid #e5e7eb; }
+        .item { padding: 0.75rem; background: #ffffff; border-radius: 0.5rem; text-align: center; border: 1px solid #e5e7eb; }
         body.dark .item { background: #334155; border-color: #475569; }
         h2 { margin-bottom: 0.75rem; color: #0f172a; font-size: 1rem; }
         body.dark h2 { color: #f8fafc; }
@@ -40,12 +40,12 @@
     <!-- 1. Header -->
     <div class="section">
         <h2>1. HEADER - Tên User</h2>
-        <div class="item">
-            <p class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Chào ngày mới,</p>
-            <h1 class="text-lg font-bold text-slate-900 dark:text-white">Maria Nguyễn Thị A</h1>
-            <div class="inline-flex items-center mt-2 px-3 py-1 rounded-full" style="background:rgba(203,213,225,0.5);">
-                <i data-lucide="shield-check" class="w-3 h-3 text-emerald-600 dark:text-emerald-400 mr-1"></i>
-                <span class="text-xs font-medium text-slate-700 dark:text-slate-300">GLV • Khối 1</span>
+        <div class="item" style="text-align:left;">
+            <p class="text-xs uppercase tracking-wide" style="color:#64748b;">Chào ngày mới,</p>
+            <h1 class="text-lg font-bold" style="color:#0f172a;">Maria Nguyễn Thị A</h1>
+            <div class="inline-flex items-center mt-2 px-3 py-1 rounded-full" style="background:#e2e8f0;">
+                <i data-lucide="shield-check" class="w-3 h-3" style="color:#059669;margin-right:0.25rem;"></i>
+                <span class="text-xs font-medium" style="color:#334155;">GLV • Khối 1</span>
             </div>
         </div>
     </div>
@@ -73,10 +73,16 @@
     <div class="section">
         <h2>3. STUDENT LIST - Tên các em</h2>
         <div class="item" style="text-align:left;">
-            <p class="font-bold text-blue-600 dark:text-blue-400">GLV001 <span class="text-slate-400 dark:text-slate-500">•</span> <span class="font-medium text-slate-600 dark:text-slate-400">Khai Tâm 1A</span></p>
-            <p class="font-semibold text-slate-800 dark:text-white mt-1">Lê Thị B <span class="font-normal text-slate-500 dark:text-slate-400">Maria</span></p>
+            <p>
+                <span class="font-bold" style="color:#2563eb;">GLV001</span>
+                <span style="color:#94a3b8;margin:0 0.25rem;">•</span>
+                <span class="font-medium" style="color:#475569;">Khai Tâm 1A</span>
+            </p>
+            <p class="font-semibold mt-1" style="color:#0f172a;">
+                Lê Thị B <span class="font-normal" style="color:#64748b;">Maria</span>
+            </p>
             <p class="mt-1">
-                <span class="px-2 py-0.5 rounded text-xs font-bold uppercase bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300">đang sinh hoạt</span>
+                <span class="px-2 py-0.5 rounded text-xs font-bold uppercase" style="background:#d1fae5;color:#047857;">đang sinh hoạt</span>
             </p>
         </div>
     </div>
