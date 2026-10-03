@@ -86,22 +86,28 @@
         <h2>4. TEXT COLORS</h2>
         <div class="grid">
             <div class="item">
-                <p class="font-semibold text-slate-900 dark:text-white">slate-900</p>
+                <p class="font-semibold" style="color:#0f172a;">#0f172a (Đen)</p>
+                <p class="text-xs mt-1 text-slate-500">slate-900</p>
             </div>
             <div class="item">
-                <p class="font-semibold text-slate-800 dark:text-white">slate-800</p>
+                <p class="font-semibold" style="color:#1e293b;">#1e293b (Đen đậm)</p>
+                <p class="text-xs mt-1 text-slate-500">slate-800</p>
             </div>
             <div class="item">
-                <p class="font-semibold text-slate-700 dark:text-slate-300">slate-700</p>
+                <p class="font-semibold" style="color:#334155;">#334155 (Xám đậm)</p>
+                <p class="text-xs mt-1 text-slate-500">slate-700</p>
             </div>
             <div class="item">
-                <p class="font-semibold text-slate-600 dark:text-slate-400">slate-600</p>
+                <p class="font-semibold" style="color:#475569;">#475569 (Xám)</p>
+                <p class="text-xs mt-1 text-slate-500">slate-600</p>
             </div>
             <div class="item">
-                <p class="font-semibold text-slate-500 dark:text-slate-400">slate-500</p>
+                <p class="font-semibold" style="color:#64748b;">#64748b (Xám nhạt)</p>
+                <p class="text-xs mt-1 text-slate-500">slate-500</p>
             </div>
             <div class="item">
-                <p class="font-semibold text-slate-400 dark:text-slate-500">slate-400</p>
+                <p class="font-semibold" style="color:#94a3b8;">#94a3b8 (Xám rất nhạt)</p>
+                <p class="text-xs mt-1 text-slate-500">slate-400</p>
             </div>
         </div>
     </div>
