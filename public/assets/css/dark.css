@@ -372,6 +372,14 @@ body {
     background-color: #d97706 !important; /* amber-600 */
 }
 
+/* Legacy support - keep for compatibility */
+.dark .bg-rose-100.text-rose-700,
+.dark .bg-emerald-100.text-emerald-700 {
+    background-color: rgba(244, 63, 94, 0.2) !important;
+    color: #fda4af !important;
+}
+
+
 /* Analytics components */
 .dark .analytics-stat-card {
     background-color: var(--bg-card) !important;
