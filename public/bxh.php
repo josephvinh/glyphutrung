@@ -262,17 +262,6 @@ select{border:1px solid #e2e8f0;border-radius:999px;padding:8px 12px;font-size:1
 .foot{text-align:center;font-size:11px;color:#94a3b8;margin-top:16px}
 @keyframes pop{0%{transform:scale(.6);opacity:0}100%{transform:scale(1);opacity:1}}
 .pod{animation:pop .4s ease both}.pod.p1{animation-delay:.15s}.pod.p3{animation-delay:.1s}
-/* Dark Mode */
-@media(prefers-color-scheme:dark){
- body{background:linear-gradient(160deg,#1e293b,#0f172a 40%)!important;color:#f8fafc}
- .hero{background:linear-gradient(135deg,#1e293b,#0f172a)}
- .card{background:rgba(30,41,59,0.85);border-color:rgba(255,255,255,0.1);box-shadow:0 8px 32px rgba(0,0,0,0.4)}
- .ct{background:rgba(30,41,59,0.85);border-color:rgba(255,255,255,0.1)}
- .ct b{color:#f8fafc}
- .empty{background:rgba(30,41,59,0.85);color:#94a3b8}
- .pod .ten{color:#f8fafc}
- .row .main .t{color:#f8fafc}
-}
 </style>
 </head>
 <body>

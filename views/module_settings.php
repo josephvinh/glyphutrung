@@ -3,10 +3,10 @@
 
     <!-- 1. THANH ĐIỀU HƯỚNG -->
     <div class="flex items-center mb-5">
-        <button aria-label="Quay lại trang chủ" @click="changeModule('dashboard')" class="tap-safe w-10 h-10 shrink-0 bg-white dark:bg-slate-700 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-600 flex items-center justify-center active:scale-90 transition-transform mr-4">
-            <i data-lucide="chevron-left" class="w-6 h-6 text-slate-600 dark:text-slate-300"></i>
+        <button aria-label="Quay lại trang chủ" @click="changeModule('dashboard')" class="tap-safe w-10 h-10 shrink-0 bg-white rounded-2xl shadow-sm border border-slate-200 flex items-center justify-center active:scale-90 transition-transform mr-4">
+            <i data-lucide="chevron-left" class="w-6 h-6 text-slate-600"></i>
         </button>
-        <h2 class="text-xl font-black text-slate-800 dark:text-white tracking-tight">Cài Đặt</h2>
+        <h2 class="text-xl font-black text-slate-800 tracking-tight">Cài Đặt</h2>
     </div>
 
     <div>
