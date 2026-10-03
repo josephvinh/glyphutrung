@@ -69,31 +69,6 @@
     --accent-color: #c8203a;
 }
 
-/* Dark mode tokens - per THEME_COLORS.md */
-.dark {
-    /* Text Colors */
-    --text-primary: #ffffff;     /* white */
-    --text-secondary: #cbd5e1;  /* slate-700 in dark */
-    --text-muted: #94a3b8;      /* slate-500 in dark */
-    --icon-color: #cbd5e1;     /* slate-700 in dark */
-    --bg-page: #0f172a;         /* slate-900 */
-
-    /* Background Colors */
-    --bg-primary: #334155;      /* slate-700 */
-    --bg-secondary: #1e293b;   /* slate-800 */
-    --bg-card: #334155;         /* slate-700 */
-
-    --glass-bg-primary: rgba(30, 41, 59, 0.85);
-    --glass-bg-secondary: rgba(30, 41, 59, 0.75);
-    --glass-bg-elevated: rgba(30, 41, 59, 0.95);
-    --glass-border: rgba(255, 255, 255, 0.1);
-    --glass-border-subtle: rgba(255, 255, 255, 0.05);
-    --glass-highlight: rgba(255, 255, 255, 0.15);
-    --glass-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
-    --glass-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.3);
-    --glass-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4);
-}
-
 /* ==========================================================
    LIQUID GLASS UTILITY CLASSES
    ========================================================== */
@@ -268,18 +243,6 @@ body {
     }
 }
 
-/* Dark mode background gradient override */
-.dark body {
-    background-color: #0f172a;
-}
-@media (min-width: 640px) {
-    .dark body {
-        background-image:
-            radial-gradient(1200px 600px at 50% -10%, #1e3a5f 0%, transparent 60%),
-            linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
-    }
-}
-
 /* ==========================================================
    KHUNG APP
    ========================================================== */
@@ -294,9 +257,6 @@ body {
     transition: background-color 0.2s ease;
 }
 
-.dark .app-shell {
-    background-color: #0f172a;
-}
 @media (min-width: 640px) {
     .app-shell {
         margin-block: 1.5rem;
@@ -919,8 +879,6 @@ a,
     background-color: #fff;                           /* khớp nền thẻ */
     box-shadow: 1px 0 0 #f1f5f9;
 }
-.dark .score-table-sticky thead th:first-child { background-color: var(--glass-bg-secondary); box-shadow: 1px 0 0 var(--glass-border-subtle); }
-.dark .score-table-sticky tbody td:first-child { background-color: var(--glass-bg-primary); box-shadow: 1px 0 0 var(--glass-border-subtle); }
 
 /* ==========================================================
    BỔ SUNG UTILITY cho module Thư viện & Sổ tay.
