@@ -83,9 +83,14 @@ switch ($action) {
             // Arg 4 is requireUserVerification. Set to false to match getCreateArgs (which defaults to false).
             $data = $WebAuthn->processCreate($clientDataJSON, $attestationObject, $challenge, false, true, false);
 
-            $credentialId = base64_encode($data->credentialId);
+            // Luôn lấy raw binary từ ByteBuffer bằng getBinaryString() để đảm bảo
+            // encode nhất quán, tránh phụ thuộc vào jsonSerialize() hoặc __toString().
+            $rawCredentialId = ($data->credentialId instanceof \lbuchs\WebAuthn\Binary\ByteBuffer)
+                ? $data->credentialId->getBinaryString()
+                : (string) $data->credentialId;
+            $credentialId = base64_encode($rawCredentialId);
             $publicKey = $data->credentialPublicKey;
-            $userHandle = (string)$me['id'];
+            $userHandle = (string) $me['id'];
 
             // Log nếu không có attestation verification (security warning)
             if (!$data->rootValid && $data->attestationFormat !== 'none') {
