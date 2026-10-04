@@ -5,6 +5,11 @@
 window.TNTT = window.TNTT || {};
 window.TNTT.shell = {
     // ==========================================
+    // ROUTER — expose cho Alpine template (bottom nav, sidebar)
+    // ==========================================
+    get router() { return window.TNTT.router; },
+
+    // ==========================================
     // CÁC HÀM TIỆN ÍCH CHUNG
     // ==========================================
 
@@ -149,8 +154,23 @@ window.TNTT.shell = {
             return;
         }
 
+        // Get Alpine component's data to update currentModule properly
+        const updateCurrentModule = (val) => {
+            const alpineEl = document.querySelector('[x-data="tnttApp"]');
+            if (alpineEl && alpineEl.__x) {
+                alpineEl.__x.$data.currentModule = val;
+            } else if (alpineEl && alpineEl._xDataStack) {
+                const data = alpineEl._xDataStack[0];
+                if (data && 'currentModule' in data) {
+                    data.currentModule = val;
+                }
+            }
+            // Update local shell state
+            this.currentModule = val;
+        };
+
         const updateDOM = () => {
-            this.currentModule = moduleName;
+            updateCurrentModule(moduleName);
             // Pure JavaScript module switching - no Alpine x-show dependency
             document.querySelectorAll('[data-module]').forEach(el => {
                 el.style.display = el.dataset.module === moduleName ? '' : 'none';
@@ -196,7 +216,10 @@ window.TNTT.shell = {
 
         const render = () => {
             scheduled = false;
-            if (document.querySelector('i[data-lucide]')) lucide.createIcons();
+            // Chỉ gọi lucide khi nó đã được định nghĩa
+            if (document.querySelector('i[data-lucide]') && typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
         };
 
         const schedule = () => {

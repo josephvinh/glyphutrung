@@ -175,37 +175,35 @@ if (!$__dev) ob_start();
                  ========================================================== -->
 
             <!-- TRANG CHỦ -->
-            <template x-if="currentModule==='dashboard'"><div>
-                <div data-module="dashboard" class="module-panel">
-                    <?php include __DIR__ . '/../views/layout_hero.php'; ?>
-                    <?php include __DIR__ . '/../views/layout_bible_card.php'; ?>
-                    <?php include __DIR__ . '/../views/module_menu.php'; ?>
-                </div>
-            </div></template>
+            <div x-show="currentModule==='dashboard'" data-module="dashboard" class="module-panel">
+                <?php include __DIR__ . '/../views/layout_hero.php'; ?>
+                <?php include __DIR__ . '/../views/layout_bible_card.php'; ?>
+                <?php include __DIR__ . '/../views/module_menu.php'; ?>
+            </div>
 
-            <!-- MODULE DANH SÁCH & CHƯƠNG TRÌNH -->
-            <template x-if="currentModule==='students'"><div><?php include __DIR__ . '/../views/module_students.php'; ?></div></template>
-            <template x-if="currentModule==='attendance'"><div><?php include __DIR__ . '/../views/module_attendance.php'; ?></div></template>
-            <template x-if="currentModule==='leave'"><div><?php include __DIR__ . '/../views/module_leave.php'; ?></div></template>
-            <template x-if="currentModule==='birthdays'"><div><?php include __DIR__ . '/../views/module_birthdays.php'; ?></div></template>
-            <template x-if="currentModule==='announcements'"><div><?php include __DIR__ . '/../views/module_announcements.php'; ?></div></template>
-            <template x-if="currentModule==='reporthub'"><div><?php include __DIR__ . '/../views/module_reporthub.php'; ?></div></template>
-            <template x-if="currentModule==='org'"><div><?php include __DIR__ . '/../views/module_org.php'; ?></div></template>
-            <template x-if="currentModule==='staff'"><div><?php include __DIR__ . '/../views/module_staff.php'; ?></div></template>
-            <template x-if="currentModule==='years'"><div><?php include __DIR__ . '/../views/module_years.php'; ?></div></template>
-            <template x-if="currentModule==='reports'"><div><?php include __DIR__ . '/../views/module_reports.php'; ?></div></template>
-            <template x-if="currentModule==='qrcard'"><div><?php include __DIR__ . '/../views/module_qrcard.php'; ?></div></template>
-            <template x-if="currentModule==='settings'"><div><?php include __DIR__ . '/../views/module_settings.php'; ?></div></template>
-            <template x-if="currentModule==='scores'"><div><?php include __DIR__ . '/../views/module_scores.php'; ?></div></template>
-            <template x-if="currentModule==='student_profile'"><div><?php include __DIR__ . '/../views/module_student_profile.php'; ?></div></template>
-            <template x-if="currentModule==='promotion'"><div><?php include __DIR__ . '/../views/module_promotion.php'; ?></div></template>
-            <template x-if="currentModule==='programs'"><div><?php include __DIR__ . '/../views/module_programs.php'; ?></div></template>
-            <template x-if="currentModule==='calendar'"><div><?php include __DIR__ . '/../views/module_calendar.php'; ?></div></template>
-            <template x-if="currentModule==='notes'"><div><?php include __DIR__ . '/../views/module_notes.php'; ?></div></template>
-            <template x-if="currentModule==='guide'"><div><?php include __DIR__ . '/../views/module_guide.php'; ?></div></template>
-            <template x-if="currentModule==='thu_vien'"><div><?php include __DIR__ . '/../views/module_library.php'; ?></div></template>
-            <template x-if="currentModule==='gifts'"><div><?php include __DIR__ . '/../views/module_gifts.php'; ?></div></template>
-            <template x-if="currentModule==='rewards'"><div><?php include __DIR__ . '/../views/module_rewards.php'; ?></div></template>
+            <!-- MODULE DANH SÁCH & CHƯƠNG TRÌNH — dùng x-show thay x-if để elements ở trong DOM -->
+            <div x-show="currentModule==='students'" data-module="students" style="display:none"><?php include __DIR__ . '/../views/module_students.php'; ?></div>
+            <div x-show="currentModule==='attendance'" data-module="attendance" style="display:none"><?php include __DIR__ . '/../views/module_attendance.php'; ?></div>
+            <div x-show="currentModule==='leave'" data-module="leave" style="display:none"><?php include __DIR__ . '/../views/module_leave.php'; ?></div>
+            <div x-show="currentModule==='birthdays'" data-module="birthdays" style="display:none"><?php include __DIR__ . '/../views/module_birthdays.php'; ?></div>
+            <div x-show="currentModule==='announcements'" data-module="announcements" style="display:none"><?php include __DIR__ . '/../views/module_announcements.php'; ?></div>
+            <div x-show="currentModule==='reporthub'" data-module="reporthub" style="display:none"><?php include __DIR__ . '/../views/module_reporthub.php'; ?></div>
+            <div x-show="currentModule==='org'" data-module="org" style="display:none"><?php include __DIR__ . '/../views/module_org.php'; ?></div>
+            <div x-show="currentModule==='staff'" data-module="staff" style="display:none"><?php include __DIR__ . '/../views/module_staff.php'; ?></div>
+            <div x-show="currentModule==='years'" data-module="years" style="display:none"><?php include __DIR__ . '/../views/module_years.php'; ?></div>
+            <div x-show="currentModule==='reports'" data-module="reports" style="display:none"><?php include __DIR__ . '/../views/module_reports.php'; ?></div>
+            <div x-show="currentModule==='qrcard'" data-module="qrcard" style="display:none"><?php include __DIR__ . '/../views/module_qrcard.php'; ?></div>
+            <div x-show="currentModule==='settings'" data-module="settings" style="display:none"><?php include __DIR__ . '/../views/module_settings.php'; ?></div>
+            <div x-show="currentModule==='scores'" data-module="scores" style="display:none"><?php include __DIR__ . '/../views/module_scores.php'; ?></div>
+            <div x-show="currentModule==='student_profile'" data-module="student_profile" style="display:none"><?php include __DIR__ . '/../views/module_student_profile.php'; ?></div>
+            <div x-show="currentModule==='promotion'" data-module="promotion" style="display:none"><?php include __DIR__ . '/../views/module_promotion.php'; ?></div>
+            <div x-show="currentModule==='programs'" data-module="programs" style="display:none"><?php include __DIR__ . '/../views/module_programs.php'; ?></div>
+            <div x-show="currentModule==='calendar'" data-module="calendar" style="display:none"><?php include __DIR__ . '/../views/module_calendar.php'; ?></div>
+            <div x-show="currentModule==='notes'" data-module="notes" style="display:none"><?php include __DIR__ . '/../views/module_notes.php'; ?></div>
+            <div x-show="currentModule==='guide'" data-module="guide" style="display:none"><?php include __DIR__ . '/../views/module_guide.php'; ?></div>
+            <div x-show="currentModule==='thu_vien'" data-module="thu_vien" style="display:none"><?php include __DIR__ . '/../views/module_library.php'; ?></div>
+            <div x-show="currentModule==='gifts'" data-module="gifts" style="display:none"><?php include __DIR__ . '/../views/module_gifts.php'; ?></div>
+            <div x-show="currentModule==='rewards'" data-module="rewards" style="display:none"><?php include __DIR__ . '/../views/module_rewards.php'; ?></div>
 
         </main>
 
