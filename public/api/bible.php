@@ -3,14 +3,30 @@
  * LỜI CHÚA MỖI NGÀY
  *
  *   GET  api/bible.php?action=random   — Lấy verse ngẫu nhiên (rate limit 1/IP/giờ)
- *   GET  api/bible.php?action=list     — Danh sách IP đã lấy (admin)
- *   GET  api/bible.php?action=stats    — Thống kê tổng quan (admin)
  */
 
 require __DIR__ . '/_bootstrap.php';
 
 $action = $_GET['action'] ?? '';
 $ip = client_ip();
+
+/** Tự tạo table nếu chưa có */
+function ensure_bible_table(): void {
+    try {
+        db_run('CREATE TABLE IF NOT EXISTS bible_daily (
+            id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            ip_address VARCHAR(45) NOT NULL,
+            verse_text TEXT NOT NULL,
+            verse_ref VARCHAR(100) NOT NULL,
+            verse_translation VARCHAR(50) DEFAULT "vietnamese",
+            fetched_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_ip (ip_address),
+            INDEX idx_fetched_at (fetched_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci');
+    } catch (Throwable $e) {
+        // Ignore - table might already exist
+    }
+}
 
 /** Fallback verses khi API fail */
 const FALLBACK_VERSES = [
@@ -119,6 +135,9 @@ switch ($action) {
 
     // ================================================================
     case 'random':
+        // Tự tạo table nếu chưa có
+        ensure_bible_table();
+
         // Kiểm tra rate limit: có verse trong vòng 1 giờ không?
         $cached = get_cached_verse($ip);
 
@@ -157,60 +176,15 @@ switch ($action) {
         ]);
 
     // ================================================================
-    case 'list':
-        // Chỉ admin mới xem được danh sách IP
-        $me = require_permission('settings', 'view');
-
-        $rows = db_all(
-            'SELECT id, ip_address, verse_text, verse_ref, verse_translation, fetched_at
-               FROM bible_daily
-              ORDER BY fetched_at DESC
-              LIMIT 100'
-        );
-
-        json_out([
-            'success' => true,
-            'count' => count($rows),
-            'rows' => array_map(function ($r) {
-                return [
-                    'id' => (int) $r['id'],
-                    'ip' => $r['ip_address'],
-                    'verse' => $r['verse_text'],
-                    'ref' => $r['verse_ref'],
-                    'translation' => $r['verse_translation'],
-                    'fetched_at' => $r['fetched_at'],
-                ];
-            }, $rows),
-        ]);
-
-    // ================================================================
-    case 'stats':
-        // Chỉ admin mới xem được thống kê
-        $me = require_permission('settings', 'view');
-
-        $totalRequests = (int) db_val('SELECT COUNT(*) FROM bible_daily');
-
-        $uniqueIps = (int) db_val('SELECT COUNT(DISTINCT ip_address) FROM bible_daily');
-
-        $todayStart = date('Y-m-d') . ' 00:00:00';
-        $todayUniqueIps = (int) db_val(
-            'SELECT COUNT(DISTINCT ip_address) FROM bible_daily WHERE fetched_at >= ?',
-            [$todayStart]
-        );
-
-        $lastRequest = db_val('SELECT MAX(fetched_at) FROM bible_daily');
-
-        json_out([
-            'success' => true,
-            'stats' => [
-                'total_requests' => $totalRequests,
-                'unique_ips' => $uniqueIps,
-                'today_unique_ips' => $todayUniqueIps,
-                'last_request' => $lastRequest ?? '',
-            ],
-        ]);
-
-    // ================================================================
     default:
-        json_fail('Hành động không hợp lệ.', 404);
+        // Fallback: trả verse ngẫu nhiên mà không lưu
+        $verse = get_fallback_verse();
+        json_out([
+            'success' => true,
+            'cached' => false,
+            'verse' => $verse['text'],
+            'ref' => $verse['ref'],
+            'translation' => 'fallback',
+            'message' => 'Đây là lời Chúa dành cho bạn hôm nay.',
+        ]);
 }
