@@ -9,20 +9,17 @@ window.TNTT.shell = {
     // ==========================================
     get router() { return window.TNTT.router; },
 
+    // changeModule - dùng cho nút Back trong các module
+    // Gọi router.navigate thay vì update trực tiếp để đồng bộ URL
+    changeModule(moduleName) {
+        if (window.TNTT?.router) {
+            window.TNTT.router.navigate('/' + moduleName);
+        }
+    },
+
     // ==========================================
     // CÁC HÀM TIỆN ÍCH CHUNG
     // ==========================================
-
-    // Bỏ dấu tiếng Việt để tìm kiếm: gõ "tuong" vẫn ra "Tường", gõ "daminh" vẫn ra "Đaminh"
-    normalizeText(str) {
-        return (str === null || str === undefined ? '' : String(str))
-            .normalize('NFD')
-            .replace(/[̀-ͯ]/g, '')
-            .replace(/đ/g, 'd')
-            .replace(/Đ/g, 'D')
-            .toLowerCase()
-            .trim();
-    },
 
     /**
      * So khớp tìm kiếm thiếu nhi toàn diện:
@@ -145,57 +142,6 @@ window.TNTT.shell = {
         if (this.currentModule === moduleKey) return true;
         if (moduleKey === 'students' && this.currentModule === 'student_profile') return true;
         return false;
-    },
-
-    changeModule(moduleName) {
-        // Bấm vào tab đang mở -> cuộn vút lên đầu trang (UX Facebook/Tiktok)
-        if (this.currentModule === moduleName) {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            return;
-        }
-
-        // Get Alpine component's data to update currentModule properly
-        const updateCurrentModule = (val) => {
-            const alpineEl = document.querySelector('[x-data="tnttApp"]');
-            if (alpineEl && alpineEl.__x) {
-                alpineEl.__x.$data.currentModule = val;
-            } else if (alpineEl && alpineEl._xDataStack) {
-                const data = alpineEl._xDataStack[0];
-                if (data && 'currentModule' in data) {
-                    data.currentModule = val;
-                }
-            }
-            // Update local shell state
-            this.currentModule = val;
-        };
-
-        const updateDOM = () => {
-            updateCurrentModule(moduleName);
-            // Pure JavaScript module switching - no Alpine x-show dependency
-            document.querySelectorAll('[data-module]').forEach(el => {
-                el.style.display = el.dataset.module === moduleName ? '' : 'none';
-            });
-            window.scrollTo({ top: 0, behavior: 'instant' });
-        };
-
-        // View Transitions API cho hiệu ứng mờ chéo. Nhưng đổi tab NHANH: gọi
-        // transition mới khi cái cũ chưa xong sẽ HỦY nó -> "InvalidStateError"
-        // và lần đổi đó bị rớt (kẹt ở tab cũ). Nên: đang có transition chạy dở
-        // thì đổi THẲNG (không hiệu ứng), và luôn nuốt lỗi để không bao giờ kẹt.
-        if (document.startViewTransition && !this._vtBusy) {
-            this._vtBusy = true;
-            let vt;
-            try {
-                vt = document.startViewTransition(updateDOM);
-            } catch (e) {
-                this._vtBusy = false;
-                updateDOM();
-                return;
-            }
-            vt.finished.catch(() => {}).finally(() => { this._vtBusy = false; });
-        } else {
-            updateDOM();
-        }
     },
 
     // ==========================================

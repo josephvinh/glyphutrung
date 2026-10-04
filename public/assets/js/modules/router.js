@@ -154,9 +154,7 @@ window.TNTT.router = {
         } else {
             window.history.pushState(state, '', newUrl);
         }
-
-        // Also update router's current module
-        this.currentModule = path.replace(/^\//, '');
+        // NOTE: Do NOT update currentModule here - _navigateToModule will do it
     },
 
     /**
@@ -164,8 +162,6 @@ window.TNTT.router = {
      * @private
      */
     _onPopState(event) {
-        console.log('[Router] popstate triggered, state:', event.state, 'URL:', window.location.href);
-
         // Use state from history if available, otherwise parse URL
         let module = 'dashboard';
         if (event.state && event.state.module) {
@@ -174,8 +170,6 @@ window.TNTT.router = {
             const parsed = this.parse(window.location.href);
             module = parsed.module;
         }
-
-        console.log('[Router] Navigating to:', module);
         this._navigateToModule(module, {}, true);
     },
 
@@ -184,9 +178,7 @@ window.TNTT.router = {
      * @private
      */
     _onHashChange() {
-        console.log('[Router] hashchange triggered, hash:', window.location.hash);
         const parsed = this.parse(window.location.href);
-        console.log('[Router] parsed:', parsed);
         this._navigateToModule(parsed.module, parsed.params, true);
     },
 
@@ -195,57 +187,27 @@ window.TNTT.router = {
      * @private
      */
     _navigateToModule(module, params, isHistoryNav) {
-        console.log('[Router] _navigateToModule:', module, 'isHistoryNav:', isHistoryNav);
-
         // Skip if already on this module (unless navigating with different params)
         if (module === this.currentModule && !isHistoryNav) {
-            console.log('[Router] Skipping - already on this module');
             return;
         }
 
         this.currentModule = module;
         this.params = params || {};
-        console.log('[Router] Updated currentModule to:', this.currentModule);
 
-        // Find Alpine component and update its currentModule directly
-        // This is needed because shell.changeModule() uses 'this' incorrectly
+        // Update Alpine component's currentModule
         const alpineEl = document.querySelector('[x-data="tnttApp"]');
-        console.log('[Router] Alpine element:', alpineEl);
-
-        if (alpineEl && alpineEl.__x) {
-            // Alpine.js < 3 (uses __x)
-            console.log('[Router] Using Alpine __x');
-            alpineEl.__x.$data.currentModule = module;
-        } else if (alpineEl && alpineEl._xDataStack) {
-            // Alpine.js >= 3.4 (uses _xDataStack)
-            console.log('[Router] Using Alpine _xDataStack');
+        if (alpineEl && alpineEl._xDataStack && alpineEl._xDataStack[0]) {
             const data = alpineEl._xDataStack[0];
-            if (data && 'currentModule' in data) {
+            if ('currentModule' in data) {
                 data.currentModule = module;
-                console.log('[Router] Updated Alpine data.currentModule');
-            } else {
-                console.log('[Router] No currentModule in Alpine data');
             }
-        } else if (window.Alpine && window.Alpine.store) {
-            // Alpine stores
-            const stores = window.Alpine.store('tnttApp');
-            if (stores && 'currentModule' in stores) {
-                stores.currentModule = module;
-            }
-        } else {
-            console.log('[Router] Could not find Alpine component');
         }
 
-        // Also call shell.changeModule for any side effects it might have
-        if (window.TNTT?.shell?.changeModule) {
-            console.log('[Router] Calling shell.changeModule');
-            window.TNTT.shell.changeModule(module);
-        }
-
-        // Also update core.currentModule for consistency
-        if (window.TNTT?.core) {
-            window.TNTT.core.currentModule = module;
-        }
+        // Show/hide the module divs directly
+        document.querySelectorAll('[data-module]').forEach(el => {
+            el.style.display = el.dataset.module === module ? '' : 'none';
+        });
     },
 
     /**
