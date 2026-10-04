@@ -1,8 +1,8 @@
 <!-- ==========================================================
      HEADER: Thong tin ca nhan + actions
-     - Hien tren moi man hinh
+     - Hien tren moi man hinh, co mau nen dep
      ========================================================== -->
-<header class="app-header bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-6 relative z-[100] select-none shadow-lg shadow-slate-200/50">
+<header class="app-header bg-gradient-to-r from-slate-50 to-white border-b border-slate-200/80 px-4 sm:px-6 relative z-[100] select-none shadow-md">
     <div class="flex justify-between items-center gap-4 py-3 sm:py-4">
 
         <!-- Khoi thong tin ca nhan -->
@@ -15,7 +15,7 @@
 
                 <!-- Text info -->
                 <div class="min-w-0 flex-1">
-                    <p class="text-xs text-slate-500 font-medium mb-0.5">Chào trưởng ,</p>
+                    <p class="text-xs text-slate-500 font-medium mb-0.5">Chào trưởng,</p>
                     <h1 class="text-sm sm:text-base font-bold text-slate-900 leading-tight truncate">
                         <span x-text="user.holyName" class="mr-1 text-blue-600"></span>
                         <span x-text="user.fullName"></span>
