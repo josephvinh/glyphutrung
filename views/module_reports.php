@@ -13,16 +13,16 @@
         </label>
         <div x-show="reportClass === ''"></div>
 
-        <button @click="printClassReports()" type="button" class="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl font-bold text-xs active:scale-95 transition-transform border border-blue-100 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50">
+        <button @click="printClassReports()" type="button" class="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-blue-50 text-blue-600 rounded-xl font-bold text-xs active:scale-95 transition-transform border border-blue-100 hover:bg-blue-100">
             <i data-lucide="printer" class="w-4 h-4"></i>
             <span x-text="selectedReports.length > 0 ? ('In ' + selectedReports.length + ' phiếu') : 'In PDF cả lớp'"></span>
         </button>
     </div>
 
     <!-- GLV phụ tá chỉ được xem -->
-    <div x-show="!canWriteReports" style="display: none;" class="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-3 mb-4 flex items-start gap-2.5">
-        <i data-lucide="eye" class="w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0 mt-0.5"></i>
-        <p class="text-micro text-slate-600 dark:text-slate-300 leading-snug">
+    <div x-show="!canWriteReports" style="display: none;" class="bg-slate-100 border border-slate-200 rounded-2xl p-3 mb-4 flex items-start gap-2.5">
+        <i data-lucide="eye" class="w-4 h-4 text-slate-500 shrink-0 mt-0.5"></i>
+        <p class="text-micro text-slate-600 leading-snug">
             Bạn đang ở chế độ <span class="font-bold">chỉ xem</span>. Chỉ GLV Chủ nhiệm trở lên mới lập được phiếu.
         </p>
     </div>
@@ -31,9 +31,9 @@
     <?php $scopeClassModel = 'reportClass'; include __DIR__ . '/partial_scope_filter.php'; ?>
 
     <!-- Học kỳ: chỉ hiện sau khi đã chọn lớp -->
-    <div x-show="reportClass !== ''" style="display: none;" class="bg-white dark:bg-slate-700 rounded-card p-4 shadow-sm border border-slate-100 dark:border-slate-600 mb-4">
+    <div x-show="reportClass !== ''" style="display: none;" class="bg-white rounded-card p-4 shadow-sm border border-slate-100 mb-4">
         <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Học kỳ</label>
-        <select x-model.number="reportTermId" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+        <select x-model.number="reportTermId" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
             <template x-for="t in terms" :key="t.id">
                 <option :value="t.id" x-text="t.name + ' (' + formatDate(t.from) + ' – ' + formatDate(t.to) + ')'"></option>
             </template>
@@ -79,7 +79,7 @@
         <template x-if="reportClass !== '' && syncing && reportStudents.length === 0">
             <div class="space-y-2.5 xl:contents">
                 <template x-for="i in 6" :key="'sk-rp-' + i">
-                    <div class="bg-white dark:bg-slate-700 rounded-field p-4 shadow-sm border border-slate-100 dark:border-slate-600 flex items-center gap-3">
+                    <div class="bg-white rounded-field p-4 shadow-sm border border-slate-100 flex items-center gap-3">
                         <div class="skeleton w-5 h-5 rounded shrink-0"></div>
                         <div class="skeleton w-12 h-12 rounded-2xl shrink-0"></div>
                         <div class="flex-1 min-w-0">
@@ -115,7 +115,7 @@
                 <div class="flex-1 min-w-0 cursor-pointer"
                      @click="canWriteReports ? openReportForm(student) : (reportOf(student.id) && openReportPreview(student.id))">
                     <p class="text-micro font-bold text-blue-600 leading-tight" x-text="student.code"></p>
-                    <p class="text-sm font-black text-slate-800 dark:text-white leading-snug">
+                    <p class="text-sm font-black text-slate-800 leading-snug">
                         <span class="font-normal text-slate-500" x-text="student.holyName"></span>
                         <span x-text="student.name"></span>
                     </p>
@@ -153,7 +153,7 @@
             <div class="flex justify-center pt-3 pb-2 bg-white"><div class="w-12 h-1.5 bg-slate-200 rounded-full"></div></div>
             <div class="flex justify-between items-center px-5 pb-4 border-b border-slate-100 bg-white">
                 <div class="min-w-0">
-                    <h3 class="text-lg font-black text-slate-800 dark:text-white leading-tight">Phiếu liên lạc</h3>
+                    <h3 class="text-lg font-black text-slate-800 leading-tight">Phiếu liên lạc</h3>
                     <p class="text-micro text-slate-500" x-text="reportTerm ? reportTerm.name : ''"></p>
                 </div>
                 <button aria-label="Đóng" @click="showReportForm = false" class="tap-safe w-8 h-8 shrink-0 flex items-center justify-center bg-slate-100 rounded-full text-slate-500 active:scale-90 transition-transform"><i data-lucide="x" class="w-4 h-4"></i></button>
@@ -164,7 +164,7 @@
                 <!-- Em nào -->
                 <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100">
                     <p class="text-micro font-bold text-slate-500 uppercase tracking-wide mb-1">Phiếu của</p>
-                    <p class="text-base font-black text-slate-800 dark:text-white leading-snug">
+                    <p class="text-base font-black text-slate-800 leading-snug">
                         <span class="font-normal text-slate-500" x-text="studentById(reportForm.studentId) ? studentById(reportForm.studentId).holyName : ''"></span>
                         <span x-text="studentById(reportForm.studentId) ? studentById(reportForm.studentId).name : ''"></span>
                     </p>
@@ -189,7 +189,7 @@
                     </div>
                     <div class="bg-slate-50 px-4 py-2.5 flex items-center justify-between border-t border-slate-100">
                         <span class="text-xs font-semibold text-slate-500">Tỷ lệ có mặt</span>
-                        <span class="text-sm font-black text-slate-800 dark:text-white"
+                        <span class="text-sm font-black text-slate-800"
                               x-text="(reportForm.attendance ? reportForm.attendance.rate : 0) + '% / ' + (reportForm.attendance ? reportForm.attendance.total : 0) + ' buổi'"></span>
                     </div>
                 </div>
@@ -200,13 +200,13 @@
                         <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Điểm học lực</label>
                         <input x-model="reportForm.score" @input="refreshSuggestedRank()" :disabled="!canWriteReports"
                                type="number" min="0" max="10" step="0.1" placeholder="0 – 10"
-                               class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:opacity-60">
+                               class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:opacity-60">
                         <p class="text-micro text-slate-500 mt-1 ml-1">Để trống nếu chưa kiểm tra</p>
                     </div>
                     <div>
                         <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Hạnh kiểm</label>
                         <select x-model="reportForm.conduct" :disabled="!canWriteReports"
-                                class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:opacity-60 capitalize">
+                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:opacity-60 capitalize">
                             <template x-for="c in conductOptions" :key="c">
                                 <option :value="c" x-text="c"></option>
                             </template>
@@ -235,7 +235,7 @@
                     <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Nhận xét của GLV chủ nhiệm</label>
                     <textarea x-model="reportForm.remark" :disabled="!canWriteReports" rows="4"
                               placeholder="VD: Em ngoan, thuộc bài, tích cực phát biểu. Gia đình nhắc em đi lễ đều hơn..."
-                              class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none disabled:opacity-60"></textarea>
+                              class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none disabled:opacity-60"></textarea>
                     <p class="text-micro text-slate-500 mt-1 ml-1">Bắt buộc có nhận xét mới gửi được phiếu</p>
                 </div>
             </div>
@@ -264,7 +264,7 @@
 
             <div class="flex justify-center pt-3 pb-2 bg-white no-print"><div class="w-12 h-1.5 bg-slate-200 rounded-full"></div></div>
             <div class="flex justify-between items-center px-5 pb-4 border-b border-slate-100 bg-white no-print">
-                <h3 class="text-lg font-black text-slate-800 dark:text-white">Xem trước phiếu</h3>
+                <h3 class="text-lg font-black text-slate-800">Xem trước phiếu</h3>
                 <button aria-label="Đóng" @click="showReportPreview = false" class="tap-safe w-8 h-8 flex items-center justify-center bg-slate-100 rounded-full text-slate-500 active:scale-90 transition-transform"><i data-lucide="x" class="w-4 h-4"></i></button>
             </div>
 
@@ -274,7 +274,7 @@
 
                         <div class="text-center border-b border-slate-100 pb-4">
                             <p class="text-micro font-bold text-slate-500 uppercase tracking-widest">Đoàn Thiếu Nhi Thánh Thể</p>
-                            <h4 class="text-lg font-black text-slate-800 dark:text-white mt-1">PHIẾU LIÊN LẠC</h4>
+                            <h4 class="text-lg font-black text-slate-800 mt-1">PHIẾU LIÊN LẠC</h4>
                             <p class="text-xs font-medium text-slate-500 mt-0.5" x-text="reportTerm ? reportTerm.name + ' • ' + formatDate(reportTerm.from) + ' – ' + formatDate(reportTerm.to) : ''"></p>
                         </div>
 
@@ -297,11 +297,11 @@
 
                         <div class="grid grid-cols-3 gap-3 text-center">
                             <div class="border border-slate-200 rounded-xl p-3">
-                                <p class="text-lg font-black text-slate-800 dark:text-white" x-text="previewReport.score === '' ? '–' : previewReport.score"></p>
+                                <p class="text-lg font-black text-slate-800" x-text="previewReport.score === '' ? '–' : previewReport.score"></p>
                                 <p class="text-micro font-bold text-slate-500 uppercase">Học lực</p>
                             </div>
                             <div class="border border-slate-200 rounded-xl p-3">
-                                <p class="text-sm font-black text-slate-800 dark:text-white capitalize pt-1" x-text="previewReport.conduct"></p>
+                                <p class="text-sm font-black text-slate-800 capitalize pt-1" x-text="previewReport.conduct"></p>
                                 <p class="text-micro font-bold text-slate-500 uppercase mt-1">Hạnh kiểm</p>
                             </div>
                             <div class="border border-blue-200 bg-blue-50 rounded-xl p-3">
@@ -318,7 +318,7 @@
                         <div class="grid grid-cols-2 gap-4 pt-4 border-t border-slate-100 text-center">
                             <div>
                                 <p class="text-micro font-bold text-slate-500 uppercase tracking-wide">GLV Chủ nhiệm</p>
-                                <p class="text-sm font-bold text-slate-700 dark:text-white mt-6" x-text="previewReport.createdBy"></p>
+                                <p class="text-sm font-bold text-slate-700 mt-6" x-text="previewReport.createdBy"></p>
                             </div>
                             <div>
                                 <p class="text-micro font-bold text-slate-500 uppercase tracking-wide">Phụ huynh ký tên</p>

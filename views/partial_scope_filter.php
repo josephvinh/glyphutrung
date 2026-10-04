@@ -46,8 +46,7 @@ $__nhan   = $__blockMode ? 'khối' : 'lớp';
         <?php endif; ?>
 
         <button @click="showFilter = !showFilter" type="button" aria-label="Mở bộ lọc" :aria-expanded="showFilter ? 'true' : 'false'"
-                :class="showFilter || (<?= $__active ?>) ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-500 border-slate-200'"
-                class="w-12 shrink-0 rounded-field border shadow-sm flex items-center justify-center active:scale-90 transition-all relative">
+                :class="showFilter || (<?= $__active ?>) ? 'bg-blue-600 text-white border-blue-600 w-12 shrink-0 rounded-field border shadow-sm flex items-center justify-center active:scale-90 transition-all relative' : 'bg-white text-slate-500 border-slate-200 w-12 shrink-0 rounded-field border shadow-sm flex items-center justify-center active:scale-90 transition-all relative'">
             <i data-lucide="filter" class="w-5 h-5"></i>
             <span x-show="(<?= $__active ?>) && !showFilter" style="display: none;" class="absolute -top-1 -right-1 w-3 h-3 bg-rose-500 rounded-full border-2 border-slate-50"></span>
         </button>

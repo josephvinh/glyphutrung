@@ -99,36 +99,6 @@
     }
 }
 
-/* Dark mode support */
-.dark .toast {
-    background: #1e293b;
-    color: #f1f5f9;
-}
-
-.dark .toast.success {
-    background: #064e3b;
-    color: #d1fae5;
-    border-left-color: #34d399;
-}
-
-.dark .toast.error {
-    background: #450a0a;
-    color: #fecaca;
-    border-left-color: #f87171;
-}
-
-.dark .toast.warning {
-    background: #451a03;
-    color: #fef3c7;
-    border-left-color: #fbbf24;
-}
-
-.dark .toast.info {
-    background: #1e3a5f;
-    color: #dbeafe;
-    border-left-color: #60a5fa;
-}
-
 /* Mobile responsiveness */
 @media (max-width: 480px) {
     .toast-container {
@@ -229,9 +199,3 @@
 @media (prefers-reduced-motion: reduce) {
     .tntt-dialog-backdrop, .tntt-dialog { animation: none !important; }
 }
-
-/* Dark mode (giữ sẵn — hiện app luôn sáng nhưng để phòng bật lại) */
-.dark .tntt-dialog { background: #1e293b; }
-.dark .tntt-dialog-title { color: #f1f5f9; }
-.dark .tntt-dialog-msg { color: #cbd5e1; }
-.dark .tntt-dialog-cancel { background: #334155; color: #e2e8f0; border-color: #475569; }
