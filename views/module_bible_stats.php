@@ -3,7 +3,7 @@
      Xem: api/bible.php?action=stats và ?action=list
      Premium Design với Divine Theme
      ========================================================== -->
-<div x-show="isAdmin || user.role === 'bdh'" x-cloak
+<div x-show="isAdmin" x-cloak
      class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#1e3a5f] via-[#234b6e] to-[#1e3a5f] p-5 shadow-lg"
      style="background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 50%, #1e3a5f 100%);">
 
