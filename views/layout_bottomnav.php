@@ -1,7 +1,6 @@
 <!-- ==========================================================
      THANH ĐIỀU HƯỚNG DƯỚI — 5 TAB
-     Phủ ~90% hành động hằng ngày: Trang chủ / Thiếu Nhi / Điểm danh /
-     Thông báo / Cá nhân. Mỗi tab giữ nguyên class flex-1 để chia đều.
+     Active state: nền accent + icon đổi màu + text đậm
 
      - Điện thoại : bám đáy, bo tròn 2 góc trên, có safe-area iPhone
      - Tablet trở lên : thanh pill nổi, thụt vào trong khung app
@@ -10,21 +9,21 @@
     <!-- max-w khớp với app-shell trong public/index.php để thanh nav không lệch biên -->
     <div class="nav-outer max-w-md lg:max-w-xl xl:max-w-7xl">
     <div class="nav-inner">
-        <div class="flex items-stretch justify-around px-1.5 py-2">
+        <div class="flex items-stretch justify-around px-1 py-1.5">
 
             <!-- 1. TRANG CHỦ — luôn hiện -->
-            <button @click="changeModule('dashboard')" type="button"
+            <button @click="router.navigate('/dashboard')" type="button"
                     class="flex-1 flex flex-col items-center gap-1 py-2 rounded-2xl active:scale-90 transition-transform"
                     :class="currentModule === 'dashboard' ? 'text-blue-600' : 'text-slate-400'">
                 <span class="w-10 h-8 rounded-lg flex items-center justify-center transition-colors backdrop-blur-sm"
                       :class="currentModule === 'dashboard' ? 'bg-blue-500/20' : 'bg-transparent'">
                     <i data-lucide="home" class="w-5 h-5 pointer-events-none"></i>
                 </span>
-                <span class="text-micro font-bold leading-none">Trang chủ</span>
+                <span class="text-[10px] font-semibold">Trang chủ</span>
             </button>
 
             <!-- 2. THIẾU NHI — chỉ ai có quyền students mới thấy -->
-            <button x-show="canAccess('students')" @click="changeModule('students')" type="button"
+            <button x-show="canAccess('students')" @click="router.navigate('/students')" type="button"
                     class="flex-1 flex flex-col items-center gap-1 py-2 rounded-2xl active:scale-90 transition-transform"
                     :class="(currentModule === 'students' || currentModule === 'student_profile') ? 'text-blue-600' : 'text-slate-400'"
                     style="display: none;">
@@ -32,11 +31,11 @@
                       :class="(currentModule === 'students' || currentModule === 'student_profile') ? 'bg-blue-500/20' : 'bg-transparent'">
                     <i data-lucide="users" class="w-5 h-5 pointer-events-none"></i>
                 </span>
-                <span class="text-micro font-bold leading-none">Thiếu Nhi</span>
+                <span class="text-[10px] font-semibold">Thiếu Nhi</span>
             </button>
 
             <!-- 3. ĐIỂM DANH — chỉ ai có quyền attendance mới thấy -->
-            <button x-show="canAccess('attendance')" @click="openAttendance()" type="button"
+            <button x-show="canAccess('attendance')" @click="router.navigate('/attendance')" type="button"
                     class="flex-1 flex flex-col items-center gap-1 py-2 rounded-2xl active:scale-90 transition-transform"
                     :class="currentModule === 'attendance' ? 'text-blue-600' : 'text-slate-400'"
                     style="display: none;">
@@ -44,11 +43,11 @@
                       :class="currentModule === 'attendance' ? 'bg-blue-500/20' : 'bg-transparent'">
                     <i data-lucide="clipboard-check" class="w-5 h-5 pointer-events-none"></i>
                 </span>
-                <span class="text-micro font-bold leading-none">Điểm danh</span>
+                <span class="text-[10px] font-semibold">Điểm danh</span>
             </button>
 
             <!-- 4. THÔNG BÁO — ai cũng thấy; chấm đỏ khi có thông báo chưa đọc -->
-            <button @click="openAnnouncements()" type="button"
+            <button @click="router.navigate('/announcements')" type="button"
                     class="flex-1 flex flex-col items-center gap-1 py-2 rounded-2xl active:scale-90 transition-transform"
                     :class="currentModule === 'announcements' ? 'text-blue-600' : 'text-slate-400'">
                 <span class="w-10 h-8 rounded-lg flex items-center justify-center transition-colors backdrop-blur-sm"
@@ -60,11 +59,11 @@
                               class="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-rose-500 border border-white"></span>
                     </span>
                 </span>
-                <span class="text-micro font-bold leading-none">Thông báo</span>
+                <span class="text-[10px] font-semibold">Thông báo</span>
             </button>
 
             <!-- 5. CÁ NHÂN — luôn hiện; chấm đỏ khi có việc cần làm hoặc bảo trì -->
-            <button @click="openSettings('profile')" type="button"
+            <button @click="router.navigate('/settings')" type="button"
                     class="flex-1 flex flex-col items-center gap-1 py-2 rounded-2xl active:scale-90 transition-transform"
                     :class="currentModule === 'settings' ? 'text-blue-600' : 'text-slate-400'">
                 <span class="w-10 h-8 rounded-lg flex items-center justify-center transition-colors backdrop-blur-sm"
@@ -76,7 +75,7 @@
                               class="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-rose-500 border border-white"></span>
                     </span>
                 </span>
-                <span class="text-micro font-bold leading-none">Cá nhân</span>
+                <span class="text-[10px] font-semibold">Cá nhân</span>
             </button>
 
         </div>

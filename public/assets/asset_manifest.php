@@ -18,13 +18,13 @@ return [
     // Thứ tự KHÔNG đổi tuỳ tiện: nền tảng trước, shell/dashboard sau.
     'js_modules' => [
         // Core modules (loaded on startup)
-        'core', 'xlsx_io', 'programs', 'access', 'students', 'student_profile', 'attendance', 'qrscan', 'qrcard',
+        'router', 'core', 'xlsx_io', 'programs', 'access', 'students', 'student_profile', 'attendance', 'qrscan', 'qrcard',
         'leave', 'birthdays', 'announcements', 'stats', 'analytics', 'scores',
         'reports', 'promotion', 'org', 'push', 'dashboard', 'shell',
         'calendar', 'notes', 'passkey', 'library', 'gifts', 'rewards',
     ],
     // Thứ tự CSS = thứ tự cascade: tailwind (nền) trước, phần ghi đè sau.
-    'css' => ['tailwind', 'font', 'app', 'dark', 'skeleton', 'analytics', 'toast', 'brand'],
+    'css' => ['tailwind', 'font', 'app', 'skeleton', 'analytics', 'toast', 'brand'],
 
     // LAZY MODULES: Heavy modules loaded on demand
     // Usage: TNTT_LAZY.load('qrscan').then(m => m.init())

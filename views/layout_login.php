@@ -12,6 +12,8 @@ if (!$__dev) ob_start();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#c8203a">
+    <!-- Platform detection for iOS/Android specific styling -->
+    <script>(function(){try{var ua=navigator.userAgent;if(/iPhone|iPad|iPod/i.test(ua)){document.documentElement.classList.add('ios-platform')}else if(/Android/i.test(ua)){document.documentElement.classList.add('android-platform')}}catch(e){}})();</script>
 
     <!-- BIỂU TƯỢNG APP
          icon.svg   : tab trình duyệt, nét sắc ở mọi cỡ
@@ -46,8 +48,8 @@ if (!$__dev) ob_start();
     <div class="text-center mb-8">
         <img src="assets/img/icon-192.png" alt="Logo Gia Đình Giáo Lý Phú Trung"
              class="mx-auto mb-5 rounded-panel" style="width:96px;height:96px;object-fit:contain">
-        <h1 class="text-2xl font-black text-slate-800 tracking-tight">Gia Đình Giáo Lý Phú Trung</h1>
-        <p class="text-sm text-slate-500 mt-1">Đoàn Thiếu Nhi Thánh Thể</p>
+        <h1 class="text-2xl font-black text-slate-800 tracking-tight">Gia Đình Giáo Lý </h1>
+        <p class="text-sm text-slate-500 mt-1">Giáo Xứ Phú Trung</p>
     </div>
 
     <!-- ==========================================================
@@ -59,20 +61,20 @@ if (!$__dev) ob_start();
         <div>
             <label class="block text-micro font-bold text-slate-500 uppercase mb-1.5">Số điện thoại</label>
             <div class="relative">
-                <i data-lucide="phone" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600"></i>
+                <i data-lucide="phone" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-600 z-10"></i>
                 <input x-model="phone" type="tel" inputmode="numeric" autocomplete="username"
                        placeholder="09xxxxxxxx" required
-                       class="input-glass w-full py-3.5 pl-11 pr-4 text-sm font-semibold text-slate-800 dark:text-slate-100">
+                       class="input-glass w-full py-3.5 pl-11 pr-4 text-sm font-semibold text-slate-800">
             </div>
         </div>
 
         <div>
             <label class="block text-micro font-bold text-slate-500 uppercase mb-1.5">Mật khẩu</label>
             <div class="relative">
-                <i data-lucide="key-round" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600"></i>
+                <i data-lucide="key-round" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-600 z-10"></i>
                 <input x-model="password" :type="showPw ? 'text' : 'password'" autocomplete="current-password"
                        placeholder="••••••••" required
-                       class="input-glass w-full py-3.5 pl-11 pr-12 text-sm font-semibold text-slate-800 dark:text-slate-100">
+                       class="input-glass w-full py-3.5 pl-11 pr-12 text-sm font-semibold text-slate-800">
                 <button aria-label="Hiện hoặc ẩn mật khẩu" @click="showPw = !showPw" type="button"
                         class="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center text-slate-600 active:scale-90 transition-transform">
                     <svg x-show="!showPw" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -84,7 +86,7 @@ if (!$__dev) ob_start();
         <!-- Báo lỗi -->
         <div x-show="error" style="display: none;"
              class="bg-rose-50 border border-rose-100 rounded-2xl p-3 flex items-start gap-2.5">
-            <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-500 shrink-0 mt-0.5"></i>
+            <i data-lucide="alert-triangle" class="w-5 h-5 text-rose-500 shrink-0 mt-0.5"></i>
             <p class="text-xs text-rose-700 leading-snug font-medium" x-text="error"></p>
         </div>
 
@@ -216,7 +218,7 @@ if (!$__dev) ob_start();
 
         <div x-show="error" style="display: none;"
              class="bg-rose-50 border border-rose-100 rounded-2xl p-3 flex items-start gap-2.5">
-            <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-500 shrink-0 mt-0.5"></i>
+            <i data-lucide="alert-triangle" class="w-5 h-5 text-rose-500 shrink-0 mt-0.5"></i>
             <p class="text-xs text-rose-700 leading-snug font-medium" x-text="error"></p>
         </div>
 
@@ -279,7 +281,7 @@ if (!$__dev) ob_start();
 
         <div x-show="error" style="display: none;"
              class="bg-rose-50 border border-rose-100 rounded-2xl p-3 flex items-start gap-2.5">
-            <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-500 shrink-0 mt-0.5"></i>
+            <i data-lucide="alert-triangle" class="w-5 h-5 text-rose-500 shrink-0 mt-0.5"></i>
             <p class="text-xs text-rose-700 leading-snug font-medium" x-text="error"></p>
         </div>
 
@@ -295,7 +297,7 @@ if (!$__dev) ob_start();
     </form>
 
     <p class="text-center text-micro text-slate-300 mt-8">
-        Phiên bản 1.0 · Dữ liệu lưu trên máy chủ giáo xứ
+        Phiên bản 3.2 · Dữ liệu lưu trên máy chủ giáo xứ
     </p>
 </div>
 

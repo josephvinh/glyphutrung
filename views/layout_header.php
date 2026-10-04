@@ -1,40 +1,47 @@
-﻿<!-- HEADER: Đẩy lên z-[100] để chống đè tuyệt đối -->
-<header class="app-header glass-card pb-8 sm:pb-10 px-5 sm:px-8 shadow-xl rounded-b-sheet sm:rounded-b-shell relative z-[100] select-none">
-    <div class="flex justify-between items-start">
-        
-        <!-- Khối thông tin cá nhân -->
-        <div class="flex-1">
-            <p class="text-xs text-slate-500 dark:text-slate-400 font-medium mb-1 tracking-wide uppercase">Chào ngày mới,</p>
-            <h1 class="text-xl font-bold tracking-tight mb-1 text-slate-900 dark:text-slate-100">
-                <span x-text="user.holyName" class="mr-1"></span> 
-                <span x-text="user.fullName"></span>
-            </h1>
-            <div class="inline-flex items-center bg-slate-200/50 dark:bg-slate-800/50 px-3 py-1 rounded-full backdrop-blur-sm">
-                <i data-lucide="shield-check" class="w-3 h-3 text-emerald-600 dark:text-emerald-400 mr-1.5"></i>
-                <p class="text-xs text-slate-700 dark:text-slate-300 font-medium">
-                    <!-- Chỉ hiện dấu • khi thật sự có lớp/khối đi kèm, nếu không
-                         Quản Trị sẽ thấy "Quản trị viên •" với dấu chấm treo lơ lửng. -->
-                    <span x-text="user.roleTitle"></span><span
-                        x-show="!isUnrestrictedScope"
-                        x-text="' • ' + myScopeLabel"></span>
-                </p>
+<!-- ==========================================================
+     HEADER: Thong tin ca nhan + actions
+     - Hien tren moi man hinh, co mau nen dep
+     ========================================================== -->
+<header class="app-header bg-gradient-to-r from-slate-50 to-white border-b border-slate-200/80 px-4 sm:px-6 relative z-[100] select-none shadow-md">
+    <div class="flex justify-between items-center gap-4 py-3 sm:py-4">
+
+        <!-- Khoi thong tin ca nhan -->
+        <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-3">
+                <!-- Text info -->
+                <div class="min-w-0 flex-1">
+                    <p class="text-xs text-slate-500 font-medium mb-0.5">Chào trưởng,</p>
+                    <h1 class="text-sm sm:text-base font-bold text-slate-900 leading-tight truncate">
+                        <span x-text="user.holyName" class="mr-1 text-blue-600"></span>
+                        <span x-text="user.fullName"></span>
+                    </h1>
+                    <div class="flex items-center gap-1 mt-0.5">
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 text-[10px] sm:text-xs font-semibold">
+                            <i data-lucide="shield-check" class="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5"></i>
+                            <span x-text="user.roleTitle"></span>
+                        </span>
+                        <span x-show="!isUnrestrictedScope" class="inline-flex items-center px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] sm:text-xs font-medium">
+                            <span x-text="myScopeLabel"></span>
+                        </span>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Làm mới + Đăng xuất -->
-        <div class="flex items-center gap-2">
-            <!-- Làm mới / đồng bộ — thay cho kéo-xuống khi cài app ra màn hình chính -->
-            <button @click="refreshApp()" :disabled="syncing" type="button" aria-label="Làm mới dữ liệu"
-                    class="w-12 h-12 shrink-0 bg-slate-200/50 dark:bg-slate-800/50 hover:bg-slate-300/50 dark:hover:bg-slate-700/50 text-slate-700 dark:text-slate-200 rounded-full flex items-center justify-center border-2 border-slate-300/50 dark:border-slate-600/50 shadow-sm active:scale-90 transition-all disabled:opacity-60">
-                <span class="flex" :class="syncing ? 'animate-spin' : ''">
-                    <i data-lucide="refresh-cw" class="w-5 h-5 pointer-events-none"></i>
+        <!-- Actions -->
+        <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <!-- Lam moi / dong bo -->
+            <button @click="refreshApp()" :disabled="syncing" type="button" aria-label="Lam moi du lieu"
+                    class="w-9 h-9 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-800 flex items-center justify-center transition-all active:scale-95 disabled:opacity-50">
+                <span :class="syncing ? 'animate-spin' : ''">
+                    <i data-lucide="refresh-cw" class="w-4 h-4 sm:w-5 sm:h-5"></i>
                 </span>
             </button>
 
-            <!-- Đăng xuất -->
-            <button @click="logout()" type="button" aria-label="Đăng xuất khỏi hệ thống"
-                    class="w-12 h-12 shrink-0 bg-slate-200/50 dark:bg-slate-800/50 hover:bg-slate-300/50 dark:hover:bg-slate-700/50 text-slate-700 dark:text-slate-200 rounded-full flex items-center justify-center border-2 border-slate-300/50 dark:border-slate-600/50 shadow-sm active:scale-90 transition-all">
-                <i data-lucide="log-out" class="w-5 h-5 pointer-events-none"></i>
+            <!-- Dang xuat -->
+            <button @click="logout()" type="button" aria-label="Dang xuat"
+                    class="w-9 h-9 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-slate-100 hover:bg-rose-100 text-slate-600 hover:text-rose-600 flex items-center justify-center transition-all active:scale-95">
+                <i data-lucide="log-out" class="w-4 h-4 sm:w-5 sm:h-5"></i>
             </button>
         </div>
 

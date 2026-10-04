@@ -163,12 +163,46 @@
     border: 1px solid var(--glass-border-subtle);
     border-radius: var(--r-field);
     transition: all 0.2s ease;
+    /* Platform-specific touch optimization */
+    min-height: 48px; /* Android: 48dp touch target */
+    -webkit-appearance: none;
+    appearance: none;
 }
 
 .input-glass:focus {
     border-color: var(--refraction-accent);
     box-shadow: 0 0 0 3px var(--refraction-accent);
     outline: none;
+}
+
+/* Android-specific input styling */
+.android-platform .input-glass {
+    /* Remove iOS-specific input styling for Android */
+    -webkit-appearance: none;
+    appearance: none;
+    border-radius: 12px;
+}
+
+/* iOS-specific input styling */
+.ios-platform .input-glass {
+    /* iOS inputs need slight inset look */
+    border-radius: 10px;
+}
+
+/* Card improvements */
+.glass-card {
+    /* Platform-specific card styling */
+    overflow: hidden;
+}
+
+.android-platform .glass-card {
+    /* Android Material elevation hint */
+    border-bottom: 2px solid rgba(0, 0, 0, 0.06);
+}
+
+.ios-platform .glass-card {
+    /* iOS-style subtle highlight on top */
+    border-top: 1px solid rgba(255, 255, 255, 0.5);
 }
 
 /* Dark mode overrides for glass elements */
@@ -294,6 +328,24 @@ body {
     transition: background-color 0.2s ease;
 }
 
+/* Platform-specific spacing adjustments for mobile */
+@media (max-width: 640px) {
+    /* Android: thêm padding-bottom để tránh gesture navigation bar */
+    .android-platform .app-shell {
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    /* Android: cải spacing cho cards */
+    .android-platform .glass-card {
+        margin-bottom: 12px;
+    }
+
+    /* iOS: giữ nguyên spacing vì có safe area tốt */
+    .ios-platform .app-shell {
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+}
+
 .dark .app-shell {
     background-color: #0f172a;
 }
@@ -329,7 +381,8 @@ body {
 
 /* Header: chừa chỗ cho tai thỏ khi cài lên màn hình chính */
 .app-header {
-    padding-top: calc(1.5rem + env(safe-area-inset-top, 0px));
+    padding: 1rem 1.5rem;
+    padding-top: calc(1rem + env(safe-area-inset-top, 0px));
     position: relative;
     z-index: 100;
     isolation: isolate;
@@ -356,6 +409,8 @@ body {
     bottom: 0;
     z-index: 150;
     pointer-events: none; /* chỉ thanh bar bên trong mới nhận click */
+    /* Safe area cho Android - hỗ trợ gesture navigation */
+    padding-bottom: 0;
 }
 .app-bottomnav .nav-outer {
     width: 100%;
@@ -371,6 +426,66 @@ body {
     border-radius: var(--r-sheet) var(--r-sheet) 0 0;
     box-shadow: var(--glass-shadow-md),
                 inset 0 1px 0 var(--glass-highlight);
+}
+
+/* ==========================================================
+   TOUCH TARGETS - iOS (44pt minimum) & Android (48dp minimum)
+   UI/UX Pro Max: Touch Target Size Guidelines
+   ========================================================== */
+.app-bottomnav button {
+    /* Tăng touch target từ 40x32px lên 48x56px (Android) / 44x52px (iOS) */
+    min-height: 52px;
+    min-width: 48px;
+    padding: 8px 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.app-bottomnav button .w-10 {
+    /* Icon container: 48x48px cho Android, 44x44px cho iOS */
+    width: 48px;
+    height: 36px;
+}
+
+.app-bottomnav button .w-10 svg {
+    /* Icon: 24x24px - đảm bảo đủ lớn */
+    width: 24px;
+    height: 24px;
+}
+
+/* Platform-specific adjustments */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+    .app-bottomnav .nav-inner {
+        /* iOS: dùng safe-area-inset-bottom */
+        padding-bottom: max(var(--safe-b), env(safe-area-inset-bottom));
+    }
+}
+
+/* Android-specific: tăng padding để tránh gesture navigation bar */
+@supports not (padding-bottom: env(safe-area-inset-bottom)) {
+    .app-bottomnav .nav-inner {
+        /* Fallback cho Android không hỗ trợ safe-area */
+        padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    }
+}
+
+/* Android Material Design hints - subtle elevation */
+.android-platform .app-bottomnav .nav-inner {
+    border-bottom: 2px solid rgba(0, 0, 0, 0.08);
+    box-shadow:
+        var(--glass-shadow-md),
+        0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* iOS-specific: softer shadows */
+.ios-platform .app-bottomnav .nav-inner {
+    box-shadow:
+        var(--glass-shadow-md),
+        inset 0 1px 0 var(--glass-highlight),
+        0 -1px 0 rgba(0, 0, 0, 0.02);
 }
 
 /* ==========================================================

@@ -12,7 +12,7 @@
         <button aria-label="Quay lại trang chủ" @click="changeModule('dashboard')" class="tap-safe w-10 h-10 shrink-0 bg-white rounded-2xl shadow-sm border border-slate-200 flex items-center justify-center active:scale-90 transition-transform mr-4">
             <i data-lucide="chevron-left" class="w-6 h-6 text-slate-600"></i>
         </button>
-        <h2 class="text-xl font-black text-slate-800 dark:text-white tracking-tight">Nhân Sự</h2>
+        <h2 class="text-xl font-black text-slate-800 tracking-tight">Nhân Sự</h2>
         <span x-show="pendingMembers.length > 0" style="display: none;"
               class="ml-3 px-2.5 py-1 rounded-full bg-rose-100 text-rose-700 text-micro font-black"
               x-text="pendingMembers.length + ' chờ duyệt'"></span>
@@ -55,7 +55,7 @@
                             <i data-lucide="user" class="w-5 h-5"></i>
                         </div>
                         <div class="flex-1 min-w-0">
-                            <p class="text-sm font-black text-slate-800 dark:text-white leading-snug">
+                            <p class="text-sm font-black text-slate-800 leading-snug">
                                 <span class="font-normal text-slate-500" x-text="m.holyName"></span>
                                 <span x-text="m.fullName"></span>
                             </p>
@@ -114,7 +114,7 @@
     <div class="space-y-2.5">
         <template x-for="m in filteredMembers" :key="m.id">
             <div style="content-visibility: auto; contain-intrinsic-size: auto 92px;"
-                 class="bg-white dark:bg-slate-700 rounded-field p-4 shadow-sm border border-slate-100 dark:border-slate-600 flex items-center gap-3">
+                 class="bg-white rounded-field p-4 shadow-sm border border-slate-100 flex items-center gap-3">
 
                 <div class="w-11 h-11 shrink-0 rounded-2xl flex items-center justify-center border"
                      :class="isProtectedMember(m) ? 'bg-slate-100 border-slate-200 text-slate-500' : 'bg-blue-50 border-blue-100 text-blue-500'">
@@ -123,7 +123,7 @@
                 </div>
 
                 <div class="flex-1 min-w-0">
-                    <p class="text-sm font-black text-slate-800 dark:text-white leading-snug">
+                    <p class="text-sm font-black text-slate-800 leading-snug">
                         <span class="font-normal text-slate-500" x-text="m.holyName"></span>
                         <span x-text="m.fullName"></span>
                     </p>
@@ -164,7 +164,7 @@
     </div>
 
     <!-- Bảng giải thích hệ thống vai trò -->
-    <div class="bg-white dark:bg-slate-700 rounded-card p-5 shadow-sm border border-slate-100 dark:border-slate-600 mt-5">
+    <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100 mt-5">
         <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Hệ thống vai trò</h3>
         <p class="text-micro text-slate-500 mb-4 leading-snug">
             <span class="font-bold text-slate-500">Vai trò</span> quyết định quyền trong hệ thống.
@@ -194,7 +194,7 @@
 
         <div class="flex justify-center pt-3 pb-2 bg-white"><div class="w-12 h-1.5 bg-slate-200 rounded-full"></div></div>
         <div class="flex justify-between items-center px-5 pb-4 border-b border-slate-100 bg-white">
-            <h3 class="text-lg font-black text-slate-800 dark:text-white" x-text="'Sửa thành viên'"></h3>
+            <h3 class="text-lg font-black text-slate-800" x-text="'Sửa thành viên'"></h3>
             <button aria-label="Đóng" @click="showMemberModal = false" class="tap-safe w-8 h-8 flex items-center justify-center bg-slate-100 rounded-full text-slate-500 active:scale-90 transition-transform"><i data-lucide="x" class="w-4 h-4"></i></button>
         </div>
 
@@ -231,7 +231,7 @@
                 </div>
                 <select x-model="memberForm.role" @change="onMemberRoleChange()"
                         :disabled="roleFieldLocked(memberForm)"
-                        class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed">
+                        class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed">
                     <template x-for="r in roleDefs.filter(x => x.value !== 'thu_thu')" :key="r.value">
                         <option :value="r.value" x-text="r.label"></option>
                     </template>
@@ -273,7 +273,7 @@
                  Ẩn khi người đã kiêm nhiệm — phân công do màn Khối & Lớp quản. -->
             <div x-show="roleScope(memberForm.role) === 'khối' && !isRoleLockedByAssignment(memberForm)" style="display: none;">
                 <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Khối phụ trách</label>
-                <select x-model="memberForm.block" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                <select x-model="memberForm.block" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                     <option value="">-- Chọn khối --</option>
                     <template x-for="b in blocks" :key="b">
                         <option :value="b" x-text="b"></option>
@@ -283,7 +283,7 @@
 
             <div x-show="roleScope(memberForm.role) === 'lớp' && !isRoleLockedByAssignment(memberForm)" style="display: none;">
                 <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Lớp phụ trách</label>
-                <select x-model="memberForm.className" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                <select x-model="memberForm.className" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                     <option value="">-- Chọn lớp --</option>
                     <template x-for="c in classes" :key="c.name">
                         <option :value="c.name" x-text="c.name + ' (' + c.block + ')'"></option>
@@ -293,7 +293,7 @@
 
             <div class="border-t border-slate-100 pt-4 pb-6">
                 <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Tình trạng</label>
-                <select x-model="memberForm.status" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                <select x-model="memberForm.status" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                     <option value="đang phục vụ">Đang phục vụ</option>
                     <option value="tạm nghỉ">Tạm nghỉ</option>
                 </select>
@@ -322,14 +322,14 @@
 
         <div class="flex justify-center pt-3 pb-2"><div class="w-12 h-1.5 bg-slate-200 rounded-full"></div></div>
         <div class="flex justify-between items-center px-5 pb-4 border-b border-slate-100">
-            <h3 class="text-lg font-black text-slate-800 dark:text-white">Duyệt tài khoản</h3>
+            <h3 class="text-lg font-black text-slate-800">Duyệt tài khoản</h3>
             <button aria-label="Đóng" @click="showApproveModal = false" class="tap-safe w-8 h-8 bg-slate-100 rounded-full text-slate-500 active:scale-90 flex items-center justify-center"><i data-lucide="x" class="w-4 h-4"></i></button>
         </div>
 
         <div class="p-5 space-y-4">
             <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100">
                 <p class="text-micro font-bold text-slate-500 uppercase tracking-wide mb-1">Người đăng ký</p>
-                <p class="text-base font-black text-slate-800 dark:text-white leading-snug" x-text="approveForm.name"></p>
+                <p class="text-base font-black text-slate-800 leading-snug" x-text="approveForm.name"></p>
                 <p class="text-xs font-medium text-slate-500 mt-1" x-text="approveForm.phone"></p>
                 <p x-show="approveForm.note" style="display: none;" class="text-xs text-slate-600 italic mt-2 pt-2 border-t border-slate-200" x-text="approveForm.note"></p>
             </div>
@@ -344,7 +344,7 @@
 
             <div>
                 <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Vai trò</label>
-                <select x-model="approveForm.role" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                <select x-model="approveForm.role" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                     <option value="glv">Giáo Lý Viên</option>
                     <option value="du_bi">Dự Bị</option>
                 </select>
