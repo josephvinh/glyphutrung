@@ -188,15 +188,15 @@ switch ($action) {
         // Chỉ admin mới xem được thống kê
         $me = require_permission('settings', 'view');
 
-        $totalRequests = (int) db_val('SELECT COUNT(*) FROM bible_daily') ?? 0;
+        $totalRequests = (int) db_val('SELECT COUNT(*) FROM bible_daily');
 
-        $uniqueIps = (int) db_val('SELECT COUNT(DISTINCT ip_address) FROM bible_daily') ?? 0;
+        $uniqueIps = (int) db_val('SELECT COUNT(DISTINCT ip_address) FROM bible_daily');
 
         $todayStart = date('Y-m-d') . ' 00:00:00';
         $todayUniqueIps = (int) db_val(
             'SELECT COUNT(DISTINCT ip_address) FROM bible_daily WHERE fetched_at >= ?',
             [$todayStart]
-        ) ?? 0;
+        );
 
         $lastRequest = db_val('SELECT MAX(fetched_at) FROM bible_daily');
 

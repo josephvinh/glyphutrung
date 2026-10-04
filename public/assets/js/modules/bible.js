@@ -20,8 +20,10 @@ window.TNTT.bible = {
     // INIT: Tải stats khi khởi động (chỉ admin)
     // ==========================================
     initBible() {
-        // Chỉ tải stats cho admin và BĐH
-        if (this.isAdmin || this.user?.role === 'bdh') {
+        // Dùng this.isAdmin từ tnttApp (được gán từ core module)
+        // isAdmin là getter trên user object, an toàn khi user chưa load
+        const isAdmin = this.user?.role === 'admin';
+        if (isAdmin || this.user?.role === 'bdh') {
             this.refreshBibleStats();
         }
     },
