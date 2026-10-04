@@ -53,12 +53,12 @@
             <button @click="openAnnouncements()" type="button"
                     class="nav-tab relative"
                     :class="currentModule === 'announcements' ? 'nav-tab-active' : 'nav-tab-inactive'">
-                <span class="nav-tab-icon"
+                <span class="nav-tab-icon relative"
                       :class="currentModule === 'announcements' ? 'nav-icon-active' : 'nav-icon-inactive'">
                     <i data-lucide="megaphone" class="w-6 h-6 pointer-events-none"></i>
                     <!-- Chấm đỏ thông báo chưa đọc -->
                     <span x-show="unreadAnnouncementCount > 0" style="display: none;"
-                          class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-rose-500 border-2 border-white"></span>
+                          class="absolute top-0 right-1 w-2.5 h-2.5 rounded-full bg-rose-500 border-2 border-white"></span>
                 </span>
                 <span class="nav-tab-label"
                       :class="currentModule === 'announcements' ? 'nav-label-active' : 'nav-label-inactive'">Thông báo</span>
@@ -68,12 +68,12 @@
             <button @click="openSettings('profile')" type="button"
                     class="nav-tab relative"
                     :class="currentModule === 'settings' ? 'nav-tab-active' : 'nav-tab-inactive'">
-                <span class="nav-tab-icon"
+                <span class="nav-tab-icon relative"
                       :class="currentModule === 'settings' ? 'nav-icon-active' : 'nav-icon-inactive'">
                     <i data-lucide="user" class="w-6 h-6 pointer-events-none"></i>
                     <!-- Chấm đỏ việc cần làm -->
                     <span x-show="myTasks.length > 0 || maintenanceCount > 0" style="display: none;"
-                          class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-rose-500 border-2 border-white"></span>
+                          class="absolute top-0 right-1 w-2.5 h-2.5 rounded-full bg-rose-500 border-2 border-white"></span>
                 </span>
                 <span class="nav-tab-label"
                       :class="currentModule === 'settings' ? 'nav-label-active' : 'nav-label-inactive'">Cá nhân</span>

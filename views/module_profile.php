@@ -8,8 +8,8 @@
     <!-- 2. THE HO SO -->
     <div class="bg-white rounded-card p-5 shadow-sm border border-slate-200 mb-5">
         <div class="flex items-start gap-4">
-            <div class="w-16 h-16 shrink-0 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center text-white shadow-md">
-                <span class="text-xl font-black" x-text="user.fullName ? user.fullName.charAt(0).toUpperCase() : '?'"></span>
+            <div class="w-16 h-16 shrink-0 rounded-2xl flex items-center justify-center text-white shadow-md" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
+                <span class="text-2xl font-black" x-text="user.fullName ? user.fullName.charAt(0).toUpperCase() : '?'"></span>
             </div>
             <div class="flex-1 min-w-0">
                 <p class="text-micro font-bold uppercase tracking-wider text-blue-600" x-text="myDanhXung"></p>
