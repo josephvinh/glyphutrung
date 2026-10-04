@@ -1,11 +1,10 @@
 <!-- ==========================================================
-     HERO: dải thẻ trượt ngang, nằm đè lên bụng Header
+     HERO: dải thẻ trượt ngang
      - Điện thoại : trượt ngang, snap từng thẻ
      - Tablet trở lên : 3 thẻ chia đều 1 hàng, hết trượt
-     Cả 3 thẻ đều bấm được, dẫn thẳng vào module tương ứng.
      ========================================================== -->
 
-<div class="relative z-[110] -mt-5">
+<div class="relative z-[110] mt-4 mb-4">
     <!-- .bleed-x kéo dải này tràn ra sát mép, bù lại padding ngang của vùng nội dung -->
     <div class="bleed-x flex overflow-x-auto sm:overflow-visible gap-4 pb-4 px-4 sm:px-6 pt-2 snap-x snap-mandatory hide-scrollbar">
 

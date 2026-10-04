@@ -3,14 +3,14 @@
 
      Active state: indicator bar bên trái + nền nhạt
      ========================================================== -->
-<aside class="app-sidebar hidden lg:flex flex-col gap-3 w-64 shrink-0">
+<aside class="app-sidebar hidden lg:flex flex-col gap-3 w-64 shrink-0 p-3 overflow-hidden">
 
     <!-- Nhận diện KIÊM nút về Trang chủ.
          Không cần một mục "Trang chủ" riêng nữa: bấm vào tên app là về,
          đúng thói quen trên web. Viền xanh cho biết đang ở Trang chủ. -->
     <button @click="router.navigate('/dashboard')" type="button"
             aria-label="Về trang chủ"
-            class="sidebar-brand flex items-center gap-3 p-3 rounded-xl transition-all"
+            class="sidebar-brand flex items-center gap-3 p-3 rounded-xl transition-all w-full"
             :class="currentModule === 'dashboard' ? 'bg-blue-50 border border-blue-200' : 'bg-white border border-slate-200 hover:bg-slate-50'">
         <img src="assets/img/icon-192.png" alt="Logo Gia Đình Giáo Lý Phú Trung"
              class="w-12 h-12 rounded-xl object-contain shadow-sm bg-white p-1">
