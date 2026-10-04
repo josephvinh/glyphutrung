@@ -7,7 +7,7 @@
         <button aria-label="Quay lại trang chủ" @click="changeModule('dashboard')" class="tap-safe w-10 h-10 shrink-0 bg-white rounded-2xl shadow-sm border border-slate-200 flex items-center justify-center active:scale-90 transition-transform mr-4">
             <i data-lucide="chevron-left" class="w-6 h-6 text-slate-600"></i>
         </button>
-        <h2 class="text-xl font-black text-slate-800 dark:text-white tracking-tight">Lên Lớp</h2>
+        <h2 class="text-xl font-black text-slate-800 tracking-tight">Lên Lớp</h2>
     </div>
 
     <!-- Kết quả lần chuyển vừa xong -->
@@ -112,7 +112,7 @@
                             <span class="text-slate-300 mx-1">•</span>
                             <span class="text-slate-500 font-medium" x-text="s.className"></span>
                         </p>
-                        <p class="text-sm font-black text-slate-800 dark:text-white leading-snug">
+                        <p class="text-sm font-black text-slate-800 leading-snug">
                             <span class="font-normal text-slate-500" x-text="s.holyName"></span>
                             <span x-text="s.name"></span>
                         </p>
@@ -162,7 +162,7 @@
 
                     <div class="flex items-center gap-2 mb-3">
                         <div class="min-w-0">
-                            <p class="text-sm font-black text-slate-800 dark:text-white leading-snug" x-text="cls.name"></p>
+                            <p class="text-sm font-black text-slate-800 leading-snug" x-text="cls.name"></p>
                             <p class="text-micro font-medium text-slate-500">
                                 <span x-text="classSize(cls.name)"></span> em đang học
                             </p>
@@ -193,7 +193,7 @@
          ========================================================== -->
     <div x-show="promoteBlock !== '' && promoteTab === 'run'" style="display: none;">
 
-        <div class="bg-white dark:bg-slate-700 rounded-card p-5 shadow-sm border border-slate-100 dark:border-slate-600 mb-4">
+        <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100 mb-4">
             <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4">Sắp thực hiện</h3>
 
             <div class="space-y-3">
@@ -216,8 +216,8 @@
                     <span class="text-lg font-black text-rose-500" x-text="promoteSummary.stay"></span>
                 </div>
                 <div class="flex items-center justify-between border-t border-slate-100 pt-3">
-                    <span class="text-sm font-bold text-slate-700 dark:text-white">Tổng số em</span>
-                    <span class="text-lg font-black text-slate-800 dark:text-white" x-text="promoteSummary.total"></span>
+                    <span class="text-sm font-bold text-slate-700">Tổng số em</span>
+                    <span class="text-lg font-black text-slate-800" x-text="promoteSummary.total"></span>
                 </div>
             </div>
         </div>
@@ -226,7 +226,7 @@
              không ghi đè năm hiện tại, để lịch sử học còn nguyên -->
         <!-- Trước đây khối này ẩn/hiện theo chế độ dữ liệu giả lập.
              Chế độ đó đã gỡ, app luôn chạy với máy chủ, nên hiện thường trực. -->
-        <div class="bg-white dark:bg-slate-700 rounded-card p-5 shadow-sm border border-slate-100 dark:border-slate-600 mb-4">
+        <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100 mb-4">
             <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Chuyển sang niên khoá</label>
             <select x-model="promoteTargetId" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                 <option value="">-- Chọn niên khoá đích --</option>

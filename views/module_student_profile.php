@@ -44,8 +44,8 @@
     <div x-show="profileTab === 'info'" style="display: none;">
 
         <!-- SỔ MỘC: VÍ + LỬA CHUỖI -->
-        <div class="bg-white dark:bg-slate-700 rounded-card p-5 shadow-sm border border-slate-100 dark:border-slate-600 mb-5">
-            <h3 class="text-base font-black text-slate-800 dark:text-white mb-4 flex items-center gap-2">
+        <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100 mb-5">
+            <h3 class="text-base font-black text-slate-800 mb-4 flex items-center gap-2">
                 <i data-lucide="gem" class="w-5 h-5 text-amber-500"></i> Sổ Mộc
             </h3>
 
@@ -60,7 +60,7 @@
                 </div>
                 <div class="bg-rose-50 rounded-xl p-3 text-center">
                     <p class="text-micro font-bold text-rose-500 uppercase tracking-wide mb-1 flex items-center justify-center gap-1">
-                        🔥 Chuỗi
+                        <i data-lucide="flame" class="w-3.5 h-3.5 text-rose-500"></i> Chuỗi
                     </p>
                     <p class="text-xl font-black text-rose-600">
                         <span x-text="profileStampSummary.current_streak"></span>
@@ -87,8 +87,8 @@
             </div>
         </div>
 
-        <div class="bg-white dark:bg-slate-700 rounded-card p-5 shadow-sm border border-slate-100 dark:border-slate-600">
-            <h3 class="text-base font-black text-slate-800 dark:text-white mb-4 flex items-center gap-2">
+        <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100">
+            <h3 class="text-base font-black text-slate-800 mb-4 flex items-center gap-2">
                 <i data-lucide="user-circle" class="w-5 h-5 text-blue-600"></i> Hồ sơ đầy đủ
             </h3>
 
@@ -243,7 +243,7 @@
                 <template x-if="reports.filter(r => r.studentId === profileStudent.id).length > 0">
                     <div class="space-y-3">
                         <template x-for="r in reports.filter(r => r.studentId === profileStudent.id).sort((a,b) => b.termId - a.termId)" :key="r.id">
-                            <div class="bg-white dark:bg-slate-700 rounded-card p-4 shadow-sm border border-slate-100 dark:border-slate-600">
+                            <div class="bg-white rounded-card p-4 shadow-sm border border-slate-100">
                                 <div class="flex items-start justify-between mb-3">
                                     <div>
                                         <h4 class="font-bold text-slate-800" x-text="terms.find(t => t.id === r.termId)?.name || 'Học kỳ ' + r.termId"></h4>
@@ -400,7 +400,7 @@
                         <span x-show="!qrReady" style="display: none;" class="text-xs text-slate-500">Đang tải mã QR…</span>
                     </div>
 
-                    <h3 class="text-lg font-black text-slate-800 dark:text-white mb-1">
+                    <h3 class="text-lg font-black text-slate-800 mb-1">
                         <span x-text="profileStudent ? profileStudent.holyName : ''" class="font-normal text-slate-500"></span>
                         <span x-text="profileStudent ? profileStudent.name : ''"></span>
                     </h3>

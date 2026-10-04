@@ -8,7 +8,7 @@
             <i data-lucide="chevron-left" class="w-5 h-5 text-slate-600"></i>
         </button>
         <div class="flex-1 min-w-0">
-            <h2 class="text-lg font-black text-slate-800 dark:text-white">Thư viện &amp; Sổ tay</h2>
+            <h2 class="text-lg font-black text-slate-800">Thư viện &amp; Sổ tay</h2>
             <p class="text-micro text-slate-500">Tài liệu để tải · bài viết tra cứu nhanh</p>
         </div>
         <!-- Quản chủ đề: chỉ người duyệt được mới thấy -->
@@ -92,7 +92,7 @@
              x-text="lib.mineQ ? 'Không tìm thấy tài liệu nào khớp.' : 'Bạn chưa đăng tài liệu nào.'"></div>
         <div class="space-y-3">
             <template x-for="it in lib.mineItems" :key="it.id">
-                <div class="bg-white dark:bg-slate-700 rounded-card p-4 shadow-sm border border-slate-100 dark:border-slate-600 flex gap-3 items-start">
+                <div class="bg-white rounded-card p-4 shadow-sm border border-slate-100 flex gap-3 items-start">
                     <div class="w-11 h-11 shrink-0 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500">
                         <i :data-lucide="libItemIcon(it)" class="w-5 h-5"></i>
                     </div>
@@ -127,10 +127,10 @@
                    class="w-full bg-white border border-slate-200 rounded-field py-3 pl-11 pr-4 text-sm font-medium text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
         </div>
         <div x-show="lib.pending.length===0" style="display:none" class="text-center py-12 text-slate-500 text-sm"
-             x-text="lib.pendingQ ? 'Không có mục nào khớp.' : 'Không có tài liệu nào chờ duyệt. 🎉'"></div>
+             x-text="lib.pendingQ ? 'Không có mục nào khớp.' : 'Không có tài liệu nào chờ duyệt.'"></div>
         <div class="space-y-3">
             <template x-for="it in lib.pending" :key="it.id">
-                <div class="bg-white dark:bg-slate-700 rounded-card p-4 shadow-sm border border-amber-100">
+                <div class="bg-white rounded-card p-4 shadow-sm border border-amber-100">
                     <div class="flex gap-3 items-start">
                         <div class="w-11 h-11 shrink-0 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
                             <i :data-lucide="libItemIcon(it)" class="w-5 h-5"></i>
@@ -161,7 +161,7 @@
         <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" @click="libCompose.open=false"></div>
         <div class="relative w-full max-w-md bg-white rounded-t-sheet sm:rounded-sheet shadow-2xl p-5 max-h-[92dvh] overflow-y-auto">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="text-base font-black text-slate-800 dark:text-white"
+                <h3 class="text-base font-black text-slate-800"
                     x-text="libCompose.id ? (libCompose.mode==='article' ? 'Sửa bài sổ tay' : 'Sửa tài liệu') : 'Soạn mới'"></h3>
                 <button aria-label="Đóng" @click="libCompose.open=false" class="tap-safe w-8 h-8 bg-slate-100 rounded-full text-slate-500 active:scale-90 flex items-center justify-center"><i data-lucide="x" class="w-4 h-4"></i></button>
             </div>
@@ -231,7 +231,7 @@
     <div x-show="libRejectBox.open" style="display:none" class="fixed inset-0 z-[210] flex items-end justify-center sm:items-center sm:p-6">
         <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" @click="libRejectBox.open=false"></div>
         <div class="relative w-full max-w-md bg-white rounded-t-sheet sm:rounded-sheet shadow-2xl p-5">
-            <h3 class="text-base font-black text-slate-800 dark:text-white mb-1">Từ chối tài liệu</h3>
+            <h3 class="text-base font-black text-slate-800 mb-1">Từ chối tài liệu</h3>
             <p class="text-xs text-slate-500 mb-3 truncate" x-text="(libRejectBox.item || {}).title || ''"></p>
             <label class="block text-micro font-bold text-slate-500 uppercase mb-1.5">Lý do (người đăng sẽ đọc được)</label>
             <textarea x-model="libRejectBox.reason" rows="3" placeholder="VD: Trùng tài liệu đã có, hoặc file mờ không đọc được…"
@@ -250,7 +250,7 @@
         <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" @click="libCat.open=false"></div>
         <div class="relative w-full max-w-md bg-white rounded-t-sheet sm:rounded-sheet shadow-2xl p-5 max-h-[92dvh] overflow-y-auto">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="text-base font-black text-slate-800 dark:text-white">Quản chủ đề</h3>
+                <h3 class="text-base font-black text-slate-800">Quản chủ đề</h3>
                 <button aria-label="Đóng" @click="libCat.open=false" class="tap-safe w-8 h-8 bg-slate-100 rounded-full text-slate-500 active:scale-90 flex items-center justify-center"><i data-lucide="x" class="w-4 h-4"></i></button>
             </div>
             <p class="text-xs text-slate-500 mb-3">Ẩn một chủ đề thì tài liệu cũ vẫn còn, chỉ không còn hiện trong bộ lọc.</p>

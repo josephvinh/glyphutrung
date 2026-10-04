@@ -3,10 +3,10 @@
 
     <!-- 1. THANH ĐIỀU HƯỚNG -->
     <div class="flex items-center mb-5">
-        <button aria-label="Quay lại trang chủ" @click="changeModule('dashboard')" class="tap-safe w-10 h-10 shrink-0 bg-white dark:bg-slate-700 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-600 flex items-center justify-center active:scale-90 transition-transform mr-4">
-            <i data-lucide="chevron-left" class="w-6 h-6 text-slate-600 dark:text-slate-300"></i>
+        <button aria-label="Quay lại trang chủ" @click="changeModule('dashboard')" class="tap-safe w-10 h-10 shrink-0 bg-white rounded-2xl shadow-sm border border-slate-200 flex items-center justify-center active:scale-90 transition-transform mr-4">
+            <i data-lucide="chevron-left" class="w-6 h-6 text-slate-600"></i>
         </button>
-        <h2 class="text-xl font-black text-slate-800 dark:text-white tracking-tight">Sinh Nhật</h2>
+        <h2 class="text-xl font-black text-slate-800 tracking-tight">Sinh Nhật</h2>
     </div>
 
     <!-- ==========================================================
@@ -78,7 +78,7 @@
     </div>
 
     <!-- 3. SẮP TỚI TRONG 7 NGÀY -->
-    <div x-show="upcomingBirthdays.length > 0" style="display: none;" class="bg-white dark:bg-slate-700 rounded-card p-5 shadow-sm border border-slate-100 dark:border-slate-600 mb-5">
+    <div x-show="upcomingBirthdays.length > 0" style="display: none;" class="bg-white rounded-card p-5 shadow-sm border border-slate-100 mb-5">
         <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Sắp tới trong 7 ngày</h3>
         <div class="space-y-2.5 xl:space-y-0 xl:grid xl:grid-cols-2 xl:gap-2.5 xl:items-start">
             <template x-for="item in upcomingBirthdays" :key="item.student.key">
@@ -88,7 +88,7 @@
                         <i data-lucide="cake" class="w-5 h-5"></i>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <p class="text-sm font-black text-slate-800 dark:text-white leading-snug">
+                        <p class="text-sm font-black text-slate-800 leading-snug">
                             <span class="font-normal text-slate-500" x-text="item.student.holyName"></span>
                             <span x-text="item.student.name"></span>
                         </p>
@@ -107,14 +107,14 @@
     </div>
 
     <!-- 4. CHỌN THÁNG -->
-    <div class="bg-white dark:bg-slate-700 rounded-card p-4 shadow-sm border border-slate-100 dark:border-slate-600 mb-4">
+    <div class="bg-white rounded-card p-4 shadow-sm border border-slate-100 mb-4">
         <div class="flex items-center gap-2">
             <button aria-label="Tháng trước" @click="shiftBirthdayMonth(-1)" class="w-10 h-10 shrink-0 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-center text-slate-500 active:scale-90 transition-transform">
                 <i data-lucide="chevron-left" class="w-4 h-4"></i>
             </button>
             <div class="flex-1 text-center">
                 <p class="text-micro font-bold text-slate-500 uppercase tracking-wide">Tháng</p>
-                <p class="text-lg font-black text-slate-800 dark:text-white leading-tight" x-text="'Tháng ' + birthdayMonth"></p>
+                <p class="text-lg font-black text-slate-800 leading-tight" x-text="'Tháng ' + birthdayMonth"></p>
             </div>
             <button aria-label="Tháng sau" @click="shiftBirthdayMonth(1)" class="w-10 h-10 shrink-0 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-center text-slate-500 active:scale-90 transition-transform">
                 <i data-lucide="chevron-right" class="w-4 h-4"></i>
@@ -167,7 +167,7 @@
                         <span class="text-micro font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border"
                               :class="birthdayChipClass(p.kind)" x-text="birthdayKindLabel(p.kind)"></span>
                     </div>
-                    <p class="text-sm font-black text-slate-800 dark:text-white leading-snug">
+                    <p class="text-sm font-black text-slate-800 leading-snug">
                         <span class="font-normal text-slate-500" x-text="p.holyName"></span>
                         <span x-text="p.name"></span>
                     </p>

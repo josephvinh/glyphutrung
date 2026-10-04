@@ -426,18 +426,6 @@ body.khung-don .moc-khac{margin-top:8px;padding:7px 9px;font-size:11px}
 
 .canh-bao-nho{background:#fef2f2;border:1px solid #fca5a5;color:#b91c1c;border-radius:14px;padding:12px;font-size:12.5px;margin-bottom:12px;line-height:1.5}
 .canh-bao-nho a{color:#b91c1c;font-weight:800;text-decoration:underline}
-/* Dark Mode */
-@media(prefers-color-scheme:dark){
- body{background:linear-gradient(160deg,#1e293b,#0f172a 40%)!important;color:#f8fafc}
- .hero{background:linear-gradient(135deg,#b91c1c,#991b1b)}
- .card{background:rgba(30,41,59,0.85);border-color:rgba(255,255,255,0.1);box-shadow:0 8px 32px rgba(0,0,0,0.4)}
- .card::before{background:linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent)}
- form.tra input[type=text]{background:rgba(30,41,59,0.85);border-color:rgba(255,255,255,0.1);color:#f8fafc}
- .o{background:rgba(30,41,59,0.8)}
- .lichsu h3{color:#94a3b8}
- .dong{border-top-color:rgba(255,255,255,0.1)}
- .doi-qua-trong,.gioi-thieu{background:rgba(30,41,59,0.85);border-color:rgba(255,255,255,0.1)}
-}
 </style>
 </head>
 <body class="<?= ($tab === 'so-moc' && $ketQua && !$pendingOut) ? 'khung-don' : '' ?>">
@@ -446,7 +434,7 @@ body.khung-don .moc-khac{margin-top:8px;padding:7px 9px;font-size:11px}
   <a href="index.php" class="back-btn" aria-label="Quay lại">
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
   </a>
-  <div class="ico">📖</div>
+  <div class="ico"><svg xmlns="http://www.w3.org/2000/svg" width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg></div>
   <h1>SỔ MỘC ĐIỆN TỬ</h1>
   <p>Đoàn Thiếu Nhi Thánh Thể · Giáo xứ Phú Trung</p>
 </div>
@@ -454,8 +442,8 @@ body.khung-don .moc-khac{margin-top:8px;padding:7px 9px;font-size:11px}
 <div class="wrap">
 
   <div class="tabs">
-    <a href="<?= e_(urlVoi(['tab' => 'so-moc'])) ?>" class="<?= $tab === 'so-moc' ? 'on' : '' ?>">📖 Sổ Mộc</a>
-    <a href="<?= e_(urlVoi(['tab' => 'doi-qua'])) ?>" class="<?= $tab === 'doi-qua' ? 'on' : '' ?>">🎁 Đổi quà</a>
+    <a href="<?= e_(urlVoi(['tab' => 'so-moc'])) ?>" class="<?= $tab === 'so-moc' ? 'on' : '' ?>"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg> Sổ Mộc</a>
+    <a href="<?= e_(urlVoi(['tab' => 'doi-qua'])) ?>" class="<?= $tab === 'doi-qua' ? 'on' : '' ?>"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 5.5a2 2 0 0 0-4 0c0 1.5 2 2.5 4 3"/><circle cx="12" cy="16" r="1"/></svg> Đổi quà</a>
   </div>
 
   <?php if ($tab === 'doi-qua'): ?>
@@ -464,7 +452,8 @@ body.khung-don .moc-khac{margin-top:8px;padding:7px 9px;font-size:11px}
 
       <form class="tra" method="get">
         <input type="hidden" name="tab" value="doi-qua">
-        <input type="text" name="ma" value="<?= e_($ma) ?>" placeholder="Nhập mã thiếu nhi (VD: GDGLPT260001)" maxlength="32" autofocus required>
+        <label for="somoc-ma-doi" class="sr-only">Mã thiếu nhi</label>
+        <input id="somoc-ma-doi" type="text" name="ma" value="<?= e_($ma) ?>" placeholder="Nhập mã thiếu nhi (VD: GDGLPT260001)" maxlength="32" autofocus required>
         <button type="submit">Tra cứu</button>
       </form>
 
@@ -472,7 +461,7 @@ body.khung-don .moc-khac{margin-top:8px;padding:7px 9px;font-size:11px}
         <div class="thongbao">Không tìm thấy thiếu nhi với mã "<?= e_($ma) ?>".<br>Vui lòng kiểm tra lại mã số.</div>
       <?php else: ?>
         <div class="doi-qua-trong">
-          <div class="ico">🎁</div>
+          <div class="ico"><svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 5.5a2 2 0 0 0-4 0c0 1.5 2 2.5 4 3"/><circle cx="12" cy="16" r="1"/></svg></div>
           Nhập mã thiếu nhi ở trên để xem quà và đặt đổi nhé!
         </div>
       <?php endif; ?>
@@ -509,7 +498,7 @@ body.khung-don .moc-khac{margin-top:8px;padding:7px 9px;font-size:11px}
         <!-- Đã có sẵn 1 đơn chờ lấy -> không cho đặt thêm (mỗi em 1 đơn) -->
         <template x-if="!success && pending">
           <div class="canh-bao-nho">
-            🔒 Em đang có một đơn <b>chờ lấy</b> — mỗi em chỉ được đặt 1 đơn cùng lúc.
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 5.5a2 2 0 0 0-4 0c0 1.5 2 2.5 4 3"/><circle cx="12" cy="16" r="1"/></svg> Em đang có một đơn <b>chờ lấy</b> — mỗi em chỉ được đặt 1 đơn cùng lúc.
             Xem chi tiết hoặc hủy đơn ở tab <a href="<?= e_(urlVoi(['tab' => 'so-moc'])) ?>">Sổ Mộc</a> để đặt đơn mới.
           </div>
         </template>
@@ -518,7 +507,7 @@ body.khung-don .moc-khac{margin-top:8px;padding:7px 9px;font-size:11px}
         <template x-if="!success && !pending">
           <div>
             <template x-if="gifts.length === 0">
-              <div class="doi-qua-trong"><div class="ico">🎁</div>Hiện chưa có quà nào để đổi.</div>
+              <div class="doi-qua-trong"><div class="ico"><svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 5.5a2 2 0 0 0-4 0c0 1.5 2 2.5 4 3"/><circle cx="12" cy="16" r="1"/></svg></div>Hiện chưa có quà nào để đổi.</div>
             </template>
 
             <template x-if="gifts.length > 0">
@@ -527,7 +516,7 @@ body.khung-don .moc-khac{margin-top:8px;padding:7px 9px;font-size:11px}
                   <template x-for="g in gifts" :key="g.id">
                     <div class="qua-the" :class="{ het: g.stock <= 0 }">
                       <template x-if="urlAnhOk(g.imageUrl)"><img class="qua-anh" :src="g.imageUrl" :alt="g.name" loading="lazy"></template>
-                      <template x-if="!urlAnhOk(g.imageUrl)"><div class="qua-anh-trong">🎁</div></template>
+                      <template x-if="!urlAnhOk(g.imageUrl)"><div class="qua-anh-trong"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 5.5a2 2 0 0 0-4 0c0 1.5 2 2.5 4 3"/><circle cx="12" cy="16" r="1"/></svg></div></template>
                       <div class="qua-ten" x-text="g.name"></div>
                       <div class="qua-gia" x-text="g.stampCost + ' Mộc'"></div>
                       <div class="qua-ton" x-text="g.stock > 0 ? ('Còn ' + g.stock) : 'Hết hàng'"></div>
@@ -581,7 +570,8 @@ body.khung-don .moc-khac{margin-top:8px;padding:7px 9px;font-size:11px}
     <?php if (!$ketQua): ?>
     <form class="tra" method="get">
       <input type="hidden" name="tab" value="so-moc">
-      <input type="text" name="ma" value="<?= e_($ma) ?>" placeholder="Nhập mã thiếu nhi (VD: GDGLPT260001)" maxlength="32" autofocus required>
+      <label for="somoc-ma" class="sr-only">Mã thiếu nhi</label>
+      <input id="somoc-ma" type="text" name="ma" value="<?= e_($ma) ?>" placeholder="Nhập mã thiếu nhi (VD: GDGLPT260001)" maxlength="32" autofocus required>
       <button type="submit">Tra cứu</button>
     </form>
     <?php else: ?>
@@ -618,7 +608,7 @@ body.khung-don .moc-khac{margin-top:8px;padding:7px 9px;font-size:11px}
         <!-- TRANG TRONG (lộ ra khi mở bìa) -->
         <div class="trang-so">
         <div class="nen-logo" style="background-image:url('<?= $logo ?>')" aria-hidden="true"></div>
-        <div class="dau-so con-dau" aria-hidden="true"><img src="<?= $logo ?>" alt=""></div>
+        <div class="dau-so con-dau" aria-hidden="true"><img src="<?= $logo ?>" alt="" aria-hidden="true"></div>
         <div class="trang-tieu">✦ SỔ MỘC CỦA EM ✦</div>
         <div class="hoso">
           <div class="ava"><?= e_(mb_strtoupper(mb_substr(trim($ketQua['full_name']), 0, 1, 'UTF-8'), 'UTF-8')) ?></div>
@@ -644,7 +634,7 @@ body.khung-don .moc-khac{margin-top:8px;padding:7px 9px;font-size:11px}
             <div class="homnay chua">🕒 Hôm nay chưa có Mộc mới — đi lễ / đi học Giáo Lý để được đóng nhé!</div>
           <?php endif; ?>
           <div class="tong-lon">
-            <div class="num"><span class="moc-mini"><img src="<?= $logo ?>" alt=""></span><?= $tongMoc ?></div>
+            <div class="num"><span class="moc-mini"><img src="<?= $logo ?>" alt="" aria-hidden="true"></span><?= $tongMoc ?></div>
             <div class="cap">con Mộc em đã đóng được từ đầu năm</div>
           </div>
           <!-- LỊCH ĐÓNG MỘC — JS dựng từng tháng (lật tháng khỏi tải lại) -->
@@ -657,10 +647,10 @@ body.khung-don .moc-khac{margin-top:8px;padding:7px 9px;font-size:11px}
             <div class="lich-tuan"><span class="cn">CN</span><span>T2</span><span>T3</span><span>T4</span><span>T5</span><span>T6</span><span>T7</span></div>
             <div class="lich-luoi" id="lichLuoi"></div>
             <div class="lich-tong" id="lichTong"></div>
-            <div class="lich-kien">🔎 Ô vàng là ngày em được đóng Mộc. Nếu em đi lễ/đi học mà ngày đó chưa có Mộc, hãy báo Huynh Trưởng để kiểm tra và chỉnh lại nhé!</div>
+            <div class="lich-kien"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg> Ô vàng là ngày em được đóng Mộc. Nếu em đi lễ/đi học mà ngày đó chưa có Mộc, hãy báo Huynh Trưởng để kiểm tra và chỉnh lại nhé!</div>
           </div>
           <?php if ($mocKhac > 0): ?>
-            <div class="moc-khac">🎁 Mộc thưởng khác (Huynh Trưởng tặng): <b>+<?= (int) $mocKhac ?></b> — không nằm trên lịch nên đã cộng thẳng vào Ví của em.</div>
+            <div class="moc-khac"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 5.5a2 2 0 0 0-4 0c0 1.5 2 2.5 4 3"/><circle cx="12" cy="16" r="1"/></svg> Mộc thưởng khác (Huynh Trưởng tặng): <b>+<?= (int) $mocKhac ?></b> — không nằm trên lịch nên đã cộng thẳng vào Ví của em.</div>
           <?php endif; ?>
         </div><!-- /trang Mộc -->
 
@@ -669,17 +659,17 @@ body.khung-don .moc-khac{margin-top:8px;padding:7px 9px;font-size:11px}
         <div class="vi">
           <div class="o">
             <div class="nhan">VÍ MỘC</div>
-            <div class="so"><span class="moc-mini"><img src="<?= $logo ?>" alt=""></span><?= (int) $ketQua['current_balance'] ?></div>
+            <div class="so"><span class="moc-mini"><img src="<?= $logo ?>" alt="" aria-hidden="true"></span><?= (int) $ketQua['current_balance'] ?></div>
           </div>
           <div class="o lua">
-            <div class="nhan">🔥 CHUỖI ĐI LỄ</div>
+            <div class="nhan"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg> CHUỖI ĐI LỄ</div>
             <div class="so"><?= (int) $ketQua['current_streak'] ?></div>
           </div>
         </div>
         <div class="vi">
           <div class="o">
             <div class="nhan">TỔNG ĐÃ KIẾM</div>
-            <div class="so"><span class="moc-mini"><img src="<?= $logo ?>" alt=""></span><?= (int) $ketQua['total_earned'] ?></div>
+            <div class="so"><span class="moc-mini"><img src="<?= $logo ?>" alt="" aria-hidden="true"></span><?= (int) $ketQua['total_earned'] ?></div>
           </div>
           <div class="o lua">
             <div class="nhan">🏆 KỶ LỤC CHUỖI</div>
@@ -724,7 +714,7 @@ body.khung-don .moc-khac{margin-top:8px;padding:7px 9px;font-size:11px}
             <span class="con-dau"><img src="<?= $logo ?>" alt="" width="78" height="78"></span>
             <span class="tieu">SỔ MỘC</span>
             <span class="phu">Đoàn TNTT · Phú Trung</span>
-            <span class="cham">📖 Chạm để mở sổ</span>
+            <span class="cham"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg> Chạm để mở sổ</span>
           </span>
         </button>
       </div><!-- /.so-canh -->
@@ -733,7 +723,7 @@ body.khung-don .moc-khac{margin-top:8px;padding:7px 9px;font-size:11px}
       <div x-data="soMocPending(<?= j_($ma) ?>, <?= j_($pendingOut) ?>)" x-cloak>
         <template x-if="pending">
           <div class="don-cho">
-            <h3>🎁 ĐƠN ĐANG CHỜ LẤY <span x-text="'#' + pending.orderId"></span></h3>
+            <h3><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 5.5a2 2 0 0 0-4 0c0 1.5 2 2.5 4 3"/><circle cx="12" cy="16" r="1"/></svg> ĐƠN ĐANG CHỜ LẤY <span x-text="'#' + pending.orderId"></span></h3>
             <template x-for="it in (pending.items || [])" :key="it.giftId">
               <div class="mon">
                 <span x-text="it.name + ' × ' + it.qty"></span>
@@ -765,7 +755,7 @@ body.khung-don .moc-khac{margin-top:8px;padding:7px 9px;font-size:11px}
       </div>
 
     <?php elseif (!$khongCo): ?>
-      <div class="gioi-thieu">Nhập mã thiếu nhi ở trên để xem Sổ Mộc nhé! 📖</div>
+      <div class="gioi-thieu"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg> Nhập mã thiếu nhi ở trên để xem Sổ Mộc nhé!</div>
     <?php endif; ?>
 
   <?php endif; ?>

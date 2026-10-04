@@ -6,23 +6,23 @@
     <?php include __DIR__ . '/partial_children_tabs.php'; ?>
 
     <div class="flex justify-end mb-4">
-        <button @click="exportScoresExcel()" type="button" class="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl font-bold text-xs active:scale-95 transition-transform border border-blue-100 dark:border-blue-800 shadow-sm">
+        <button @click="exportScoresExcel()" type="button" class="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-blue-50 text-blue-600 rounded-xl font-bold text-xs active:scale-95 transition-transform border border-blue-100 shadow-sm">
             <i data-lucide="file-up" class="w-4 h-4"></i> Xuất
         </button>
     </div>
 
-    <div x-show="!canWriteScores" style="display: none;" class="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-3 mb-4 flex items-start gap-2.5">
-        <i data-lucide="eye" class="w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0 mt-0.5"></i>
-        <p class="text-micro text-slate-600 dark:text-slate-300 leading-snug">Bạn đang ở chế độ <span class="font-bold">chỉ xem</span>.</p>
+    <div x-show="!canWriteScores" style="display: none;" class="bg-slate-100 border border-slate-200 rounded-2xl p-3 mb-4 flex items-start gap-2.5">
+        <i data-lucide="eye" class="w-4 h-4 text-slate-500 shrink-0 mt-0.5"></i>
+        <p class="text-micro text-slate-600 leading-snug">Bạn đang ở chế độ <span class="font-bold">chỉ xem</span>.</p>
     </div>
 
     <!-- 2. CHỌN LỚP — cùng kiểu bộ lọc của Danh sách (thanh + nút phễu) -->
     <?php $scopeClassModel = 'scoreClass'; include __DIR__ . '/partial_scope_filter.php'; ?>
 
     <!-- Học kỳ: chỉ hiện sau khi đã chọn lớp -->
-    <div x-show="scoreClass !== ''" style="display: none;" class="bg-white dark:bg-slate-700 rounded-card p-4 shadow-sm border border-slate-100 dark:border-slate-600 mb-4">
-        <label class="block text-micro font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">Học kỳ</label>
-        <select x-model.number="scoreTermId" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+    <div x-show="scoreClass !== ''" style="display: none;" class="bg-white rounded-card p-4 shadow-sm border border-slate-100 mb-4">
+        <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Học kỳ</label>
+        <select x-model.number="scoreTermId" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
             <template x-for="t in terms" :key="t.id">
                 <option :value="t.id" x-text="t.name"></option>
             </template>
@@ -70,7 +70,7 @@
         </div>
 
         <!-- Tiến độ chấm -->
-        <div class="bg-white dark:bg-slate-700 rounded-field p-4 shadow-sm border border-slate-100 dark:border-slate-600 mb-4">
+        <div class="bg-white rounded-field p-4 shadow-sm border border-slate-100 mb-4">
             <div class="flex justify-between items-baseline mb-2">
                 <span class="text-xs font-bold text-slate-500">
                     Đã nhập <span class="text-blue-600 text-base" x-text="scoreProgress.done"></span> / <span x-text="scoreProgress.total"></span>
@@ -105,7 +105,7 @@
 
                     <div class="flex-1 min-w-0">
                         <p class="text-micro font-bold text-blue-600 leading-tight" x-text="s.code"></p>
-                        <p class="text-sm font-black text-slate-800 dark:text-white leading-snug">
+                        <p class="text-sm font-black text-slate-800 leading-snug">
                             <span class="font-normal text-slate-500" x-text="s.holyName"></span>
                             <span x-text="s.name"></span>
                         </p>
@@ -177,7 +177,7 @@
             </table>
         </div>
 
-        <div class="bg-white dark:bg-slate-700 rounded-card p-5 shadow-sm border border-slate-100 dark:border-slate-600 mt-4">
+        <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100 mt-4">
             <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Cách tính điểm trung bình</h3>
             <p class="text-xs text-slate-600 leading-relaxed">
                 Cộng điểm nhân hệ số rồi chia tổng hệ số:

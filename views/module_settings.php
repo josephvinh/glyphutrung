@@ -1,12 +1,12 @@
 <!-- MÀN CÀI ĐẶT — chỉ Quản Trị Hệ Thống -->
-<div data-module="settings" class="module-panel pt-6 pb-24 relative">
+<div data-module="settings" class="module-panel pt-16 pb-24 relative">
 
     <!-- 1. THANH ĐIỀU HƯỚNG -->
     <div class="flex items-center mb-5">
-        <button aria-label="Quay lại trang chủ" @click="changeModule('dashboard')" class="tap-safe w-10 h-10 shrink-0 bg-white dark:bg-slate-700 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-600 flex items-center justify-center active:scale-90 transition-transform mr-4">
-            <i data-lucide="chevron-left" class="w-6 h-6 text-slate-600 dark:text-slate-300"></i>
+        <button aria-label="Quay lại trang chủ" @click="changeModule('dashboard')" class="tap-safe w-10 h-10 shrink-0 bg-white rounded-2xl shadow-sm border border-slate-200 flex items-center justify-center active:scale-90 transition-transform mr-4">
+            <i data-lucide="chevron-left" class="w-6 h-6 text-slate-600"></i>
         </button>
-        <h2 class="text-xl font-black text-slate-800 dark:text-white tracking-tight">Cài Đặt</h2>
+        <h2 class="text-xl font-black text-slate-800 tracking-tight">Cài Đặt</h2>
     </div>
 
     <div>
@@ -44,27 +44,6 @@
 
         <!-- THẺ: CÁ NHÂN (ai cũng thấy) -->
         <div x-show="settingsTab === 'profile'">
-            <!-- Dark mode toggle -->
-            <div class="bg-white dark:bg-slate-700 rounded-card p-4 shadow-sm border border-slate-100 dark:border-slate-600 mb-4 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 shrink-0 rounded-2xl flex items-center justify-center border transition-colors"
-                         :class="dark ? 'bg-slate-700 border-slate-600 text-amber-400' : 'bg-slate-50 border-slate-200 text-slate-500'">
-                        <i :data-lucide="dark ? 'sun' : 'moon'" class="w-5 h-5"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm font-bold text-slate-700 dark:text-white">Chế độ tối</p>
-                        <p class="text-micro text-slate-500">Giảm mỏi mắt khi dùng ban đêm</p>
-                    </div>
-                </div>
-                <button @click="toggleDark()" type="button" role="switch"
-                        :aria-label="dark ? 'Tắt chế độ tối' : 'Bật chế độ tối'"
-                        :aria-checked="dark ? 'true' : 'false'"
-                        class="w-11 h-6 shrink-0 rounded-full relative transition-colors duration-200"
-                        :class="dark ? 'bg-emerald-500' : 'bg-slate-300'">
-                    <div class="w-4 h-4 bg-white rounded-full absolute top-1 shadow-sm transition-transform duration-200"
-                         :class="dark ? 'translate-x-6' : 'translate-x-1'"></div>
-                </button>
-            </div>
             <?php include __DIR__ . '/module_profile.php'; ?>
         </div>
 
@@ -170,13 +149,13 @@
 
             <div class="space-y-2.5">
                 <template x-for="m in moduleDefs" :key="m.key">
-                    <div class="bg-white dark:bg-slate-700 rounded-field p-4 shadow-sm border border-slate-100 dark:border-slate-600">
+                    <div class="bg-white rounded-field p-4 shadow-sm border border-slate-100">
                         <div class="flex items-center gap-3 mb-3">
                             <div class="tap-safe w-9 h-9 shrink-0 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500">
                                 <i :data-lucide="m.icon" class="w-4 h-4"></i>
                             </div>
                             <div class="min-w-0">
-                                <p class="text-sm font-black text-slate-800 dark:text-white leading-snug" x-text="m.label"></p>
+                                <p class="text-sm font-black text-slate-800 leading-snug" x-text="m.label"></p>
                                 <p class="text-micro font-medium text-slate-500" x-text="m.area === 'bdh' ? 'Khu điều hành' : 'Khu nghiệp vụ'"></p>
                             </div>
                         </div>

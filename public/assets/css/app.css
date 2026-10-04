@@ -69,31 +69,6 @@
     --accent-color: #c8203a;
 }
 
-/* Dark mode tokens - per THEME_COLORS.md */
-.dark {
-    /* Text Colors */
-    --text-primary: #ffffff;     /* white */
-    --text-secondary: #cbd5e1;  /* slate-700 in dark */
-    --text-muted: #94a3b8;      /* slate-500 in dark */
-    --icon-color: #cbd5e1;     /* slate-700 in dark */
-    --bg-page: #0f172a;         /* slate-900 */
-
-    /* Background Colors */
-    --bg-primary: #334155;      /* slate-700 */
-    --bg-secondary: #1e293b;   /* slate-800 */
-    --bg-card: #334155;         /* slate-700 */
-
-    --glass-bg-primary: rgba(30, 41, 59, 0.85);
-    --glass-bg-secondary: rgba(30, 41, 59, 0.75);
-    --glass-bg-elevated: rgba(30, 41, 59, 0.95);
-    --glass-border: rgba(255, 255, 255, 0.1);
-    --glass-border-subtle: rgba(255, 255, 255, 0.05);
-    --glass-highlight: rgba(255, 255, 255, 0.15);
-    --glass-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
-    --glass-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.3);
-    --glass-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4);
-}
-
 /* ==========================================================
    LIQUID GLASS UTILITY CLASSES
    ========================================================== */
@@ -155,19 +130,17 @@
     box-shadow: var(--glass-shadow-sm);
 }
 
-/* Glass Input */
+/* Glass Input - Fixed for readability */
 .input-glass {
-    background: var(--glass-bg-secondary);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    background: var(--bg-primary, #ffffff);
     border: 1px solid var(--glass-border-subtle);
     border-radius: var(--r-field);
     transition: all 0.2s ease;
 }
 
 .input-glass:focus {
-    border-color: var(--refraction-accent);
-    box-shadow: 0 0 0 3px var(--refraction-accent);
+    border-color: var(--accent-color, #c8203a);
+    box-shadow: 0 0 0 3px rgba(200, 32, 58, 0.1);
     outline: none;
 }
 
@@ -268,18 +241,6 @@ body {
     }
 }
 
-/* Dark mode background gradient override */
-.dark body {
-    background-color: #0f172a;
-}
-@media (min-width: 640px) {
-    .dark body {
-        background-image:
-            radial-gradient(1200px 600px at 50% -10%, #1e3a5f 0%, transparent 60%),
-            linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
-    }
-}
-
 /* ==========================================================
    KHUNG APP
    ========================================================== */
@@ -294,9 +255,6 @@ body {
     transition: background-color 0.2s ease;
 }
 
-.dark .app-shell {
-    background-color: #0f172a;
-}
 @media (min-width: 640px) {
     .app-shell {
         margin-block: 1.5rem;
@@ -329,20 +287,37 @@ body {
 
 /* Header: chừa chỗ cho tai thỏ khi cài lên màn hình chính */
 .app-header {
-    padding-top: calc(1.5rem + env(safe-area-inset-top, 0px));
+    padding: 1rem 1.5rem;
     position: relative;
     z-index: 100;
-    isolation: isolate;
+    background: white;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+@media (max-width: 639px) {
+    .app-header {
+        padding: 0.75rem 1rem;
+    }
+}
+
+@media (min-width: 640px) {
+    /* Trong khung thẻ nổi thì không còn tai thỏ */
+    .app-header { padding: 1.25rem 1.5rem; }
+}
+
+@media (min-width: 1024px) {
+    /* Desktop: header trong sidebar layout */
+    .app-header {
+        background: transparent;
+        border-bottom: none;
+        padding: 1.5rem;
+    }
 }
 
 /* Main content cần padding-top để không bị header che */
 .app-content {
     position: relative;
     z-index: 1;
-}
-@media (min-width: 640px) {
-    /* Trong khung thẻ nổi thì không còn tai thỏ */
-    .app-header { padding-top: 2rem; }
 }
 
 /* ==========================================================
@@ -371,6 +346,163 @@ body {
     border-radius: var(--r-sheet) var(--r-sheet) 0 0;
     box-shadow: var(--glass-shadow-md),
                 inset 0 1px 0 var(--glass-highlight);
+}
+
+/* ==========================================================
+   NAVIGATION TABS - Active State rõ ràng
+   ========================================================== */
+.nav-tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 6px 8px;
+    border-radius: 12px;
+    min-width: 60px;
+    transition: all 0.2s ease;
+}
+
+/* Active state - nền accent + shadow nhẹ */
+.nav-tab-active {
+    background: rgba(200, 32, 58, 0.1);
+    box-shadow: inset 0 -2px 0 rgba(200, 32, 58, 0.3);
+}
+
+/* Inactive state */
+.nav-tab-inactive {
+    background: transparent;
+}
+
+/* Tab icon */
+.nav-tab-icon {
+    position: relative;
+    width: 40px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-icon-active {
+    color: #c8203a;
+}
+
+.nav-icon-inactive {
+    color: #94a3b8;
+}
+
+/* Tab label */
+.nav-tab-label {
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.nav-label-active {
+    color: #c8203a;
+    font-weight: 700;
+}
+
+.nav-label-inactive {
+    color: #94a3b8;
+}
+
+/* Hover effect cho inactive tabs */
+.nav-tab-inactive:hover {
+    background: rgba(0, 0, 0, 0.04);
+}
+
+.nav-tab-inactive:hover .nav-icon-inactive {
+    color: #64748b;
+}
+
+.nav-tab-inactive:hover .nav-label-inactive {
+    color: #64748b;
+}
+
+/* ==========================================================
+   SIDEBAR NAVIGATION - Desktop
+   ========================================================== */
+.app-sidebar {
+    height: 100%;
+    padding: 1rem 0;
+}
+
+.sidebar-brand {
+    border: 1px solid;
+}
+
+/* Sidebar items */
+.sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.625rem 0.75rem;
+    border-radius: 0.625rem;
+    transition: all 0.15s ease;
+    position: relative;
+}
+
+/* Active sidebar item */
+.sidebar-item-active {
+    background: rgba(200, 32, 58, 0.08);
+}
+
+.sidebar-item-inactive {
+    background: transparent;
+}
+
+.sidebar-item-inactive:hover {
+    background: rgba(0, 0, 0, 0.04);
+}
+
+/* Indicator bar bên trái */
+.sidebar-indicator {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 0;
+    border-radius: 0 2px 2px 0;
+    transition: height 0.2s ease;
+}
+
+.sidebar-indicator-active {
+    height: 60%;
+    background: #c8203a;
+}
+
+/* Sidebar icon */
+.sidebar-icon {
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.5rem;
+    flex-shrink: 0;
+}
+
+.sidebar-icon-active {
+    color: #c8203a;
+    background: rgba(200, 32, 58, 0.12);
+}
+
+.sidebar-icon-dark {
+    color: #334155;
+}
+
+/* Sidebar badge */
+.sidebar-badge {
+    padding: 0.125rem 0.5rem;
+    border-radius: 9999px;
+    background: #c8203a;
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.4;
 }
 
 /* ==========================================================
@@ -919,8 +1051,6 @@ a,
     background-color: #fff;                           /* khớp nền thẻ */
     box-shadow: 1px 0 0 #f1f5f9;
 }
-.dark .score-table-sticky thead th:first-child { background-color: var(--glass-bg-secondary); box-shadow: 1px 0 0 var(--glass-border-subtle); }
-.dark .score-table-sticky tbody td:first-child { background-color: var(--glass-bg-primary); box-shadow: 1px 0 0 var(--glass-border-subtle); }
 
 /* ==========================================================
    BỔ SUNG UTILITY cho module Thư viện & Sổ tay.
@@ -1086,4 +1216,68 @@ select.tntt-select {
     background-position: right 0.75rem center;
     background-size: 1rem 1rem;
     padding-right: 2.25rem;
+}
+
+/* ==========================================================
+   COMPREHENSIVE RESPONSIVE & OVERFLOW FIXES
+   Ensures consistent layout across all devices
+   ========================================================== */
+
+/* Prevent overflow on all devices */
+html {
+    overflow-x: hidden;
+    overflow-y: scroll;
+    scrollbar-gutter: stable;
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    overflow-x: hidden;
+    min-height: 100vh;
+    min-height: 100dvh;
+}
+
+/* Ensure all elements stay within bounds */
+*, *::before, *::after {
+    box-sizing: border-box;
+    max-width: 100%;
+}
+
+img, video, iframe, svg {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Flex containers */
+.flex, .inline-flex {
+    min-width: 0;
+    max-width: 100%;
+}
+
+/* Scroll snap */
+.snap-x {
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+}
+.snap-center { scroll-snap-align: center; }
+.snap-mandatory { scroll-snap-type: x mandatory; }
+
+/* Hide scrollbar but keep functionality */
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Mobile responsive */
+@media screen and (max-width: 639px) {
+    .app-main {
+        padding-left: max(1rem, env(safe-area-inset-left));
+        padding-right: max(1rem, env(safe-area-inset-right));
+    }
+}
+
+/* Desktop sidebar */
+@media screen and (min-width: 1024px) {
+    .app-sidebar {
+        width: 16rem;
+        flex-shrink: 0;
+    }
 }
