@@ -8,11 +8,6 @@
         <!-- Khoi thong tin ca nhan -->
         <div class="flex-1 min-w-0">
             <div class="flex items-center gap-3">
-                <!-- Avatar -->
-                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-black text-base sm:text-lg shadow-md shrink-0">
-                    <span x-text="user.fullName ? user.fullName.charAt(0).toUpperCase() : '?'"></span>
-                </div>
-
                 <!-- Text info -->
                 <div class="min-w-0 flex-1">
                     <p class="text-xs text-slate-500 font-medium mb-0.5">Chào trưởng,</p>
