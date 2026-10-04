@@ -14,7 +14,7 @@
     <!-- Nhận diện KIÊM nút về Trang chủ.
          Không cần một mục "Trang chủ" riêng nữa: bấm vào tên app là về,
          đúng thói quen trên web. Viền xanh cho biết đang ở Trang chủ. -->
-    <button @click="changeModule('dashboard')" type="button"
+    <button @click="router.navigate('/dashboard')" type="button"
             aria-label="Về trang chủ"
             class="bg-white dark:bg-slate-700 rounded-card border border-slate-100 dark:border-slate-600 shadow-sm px-4 py-4 text-left transition-colors hover:bg-slate-50 dark:hover:bg-slate-600"
             :class="currentModule === 'dashboard' ? 'border-blue-300 dark:border-blue-400 ring-2 ring-blue-100 dark:ring-blue-800' : 'border-slate-100 dark:border-slate-600'">
@@ -37,7 +37,7 @@
             <p class="px-3 pb-2 text-micro font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Chức năng</p>
             <div class="space-y-0.5">
                 <template x-for="m in visibleModules('glv')" :key="'sb-' + m.key">
-                    <button @click="openModule(m.key)" type="button"
+                    <button @click="router.navigate('/' + m.key)" type="button"
                             class="nav-item w-full"
                             :class="[ (currentModule === m.key || (m.key === 'students' && currentModule === 'student_profile')) ? 'nav-item-on' : '',
                                       isUnderMaintenance(m.key) ? 'opacity-50' : '' ]">
@@ -65,7 +65,7 @@
                       : (user.role === 'truong_khoi' ? 'Quản lý khối' : 'Thông tin chung')"></p>
             <div class="space-y-0.5">
                 <template x-for="m in visibleModules('bdh')" :key="'sb2-' + m.key">
-                    <button @click="openModule(m.key)" type="button"
+                    <button @click="router.navigate('/' + m.key)" type="button"
                             class="nav-item w-full"
                             :class="[ currentModule === m.key ? 'nav-item-on' : '',
                                       isUnderMaintenance(m.key) ? 'opacity-50' : '' ]">
@@ -84,7 +84,7 @@
          Cá nhân đã gộp vào Cài Đặt (thẻ đầu tiên), nên ở đây chỉ còn một
          lối vào duy nhất, và ai cũng thấy. -->
     <div class="bg-white rounded-card border border-slate-100 shadow-sm p-3">
-        <button @click="openSettings()" type="button"
+        <button @click="router.navigate('/settings')" type="button"
                 class="nav-item w-full" :class="currentModule === 'settings' ? 'nav-item-on' : ''">
             <span class="nav-ico"><i data-lucide="settings" class="w-[18px] h-[18px]"></i></span>
             <span class="flex-1 text-left truncate">
