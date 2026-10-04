@@ -5,19 +5,21 @@
 window.TNTT = window.TNTT || {};
 window.TNTT.shell = {
     // ==========================================
+    // ROUTER — expose cho Alpine template (bottom nav, sidebar)
+    // ==========================================
+    get router() { return window.TNTT.router; },
+
+    // changeModule - dùng cho nút Back trong các module
+    // Gọi router.navigate thay vì update trực tiếp để đồng bộ URL
+    changeModule(moduleName) {
+        if (window.TNTT?.router) {
+            window.TNTT.router.navigate('/' + moduleName);
+        }
+    },
+
+    // ==========================================
     // CÁC HÀM TIỆN ÍCH CHUNG
     // ==========================================
-
-    // Bỏ dấu tiếng Việt để tìm kiếm: gõ "tuong" vẫn ra "Tường", gõ "daminh" vẫn ra "Đaminh"
-    normalizeText(str) {
-        return (str === null || str === undefined ? '' : String(str))
-            .normalize('NFD')
-            .replace(/[̀-ͯ]/g, '')
-            .replace(/đ/g, 'd')
-            .replace(/Đ/g, 'D')
-            .toLowerCase()
-            .trim();
-    },
 
     /**
      * So khớp tìm kiếm thiếu nhi toàn diện:
@@ -142,42 +144,6 @@ window.TNTT.shell = {
         return false;
     },
 
-    changeModule(moduleName) {
-        // Bấm vào tab đang mở -> cuộn vút lên đầu trang (UX Facebook/Tiktok)
-        if (this.currentModule === moduleName) {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            return;
-        }
-
-        const updateDOM = () => {
-            this.currentModule = moduleName;
-            // Pure JavaScript module switching - no Alpine x-show dependency
-            document.querySelectorAll('[data-module]').forEach(el => {
-                el.style.display = el.dataset.module === moduleName ? '' : 'none';
-            });
-            window.scrollTo({ top: 0, behavior: 'instant' });
-        };
-
-        // View Transitions API cho hiệu ứng mờ chéo. Nhưng đổi tab NHANH: gọi
-        // transition mới khi cái cũ chưa xong sẽ HỦY nó -> "InvalidStateError"
-        // và lần đổi đó bị rớt (kẹt ở tab cũ). Nên: đang có transition chạy dở
-        // thì đổi THẲNG (không hiệu ứng), và luôn nuốt lỗi để không bao giờ kẹt.
-        if (document.startViewTransition && !this._vtBusy) {
-            this._vtBusy = true;
-            let vt;
-            try {
-                vt = document.startViewTransition(updateDOM);
-            } catch (e) {
-                this._vtBusy = false;
-                updateDOM();
-                return;
-            }
-            vt.finished.catch(() => {}).finally(() => { this._vtBusy = false; });
-        } else {
-            updateDOM();
-        }
-    },
-
     // ==========================================
     // TRÌNH THEO DÕI ICON
     //
@@ -196,7 +162,10 @@ window.TNTT.shell = {
 
         const render = () => {
             scheduled = false;
-            if (document.querySelector('i[data-lucide]')) lucide.createIcons();
+            // Chỉ gọi lucide khi nó đã được định nghĩa
+            if (document.querySelector('i[data-lucide]') && typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
         };
 
         const schedule = () => {

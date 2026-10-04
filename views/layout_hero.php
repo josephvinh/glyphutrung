@@ -10,7 +10,7 @@
 
         <!-- Thẻ 1: Thông báo mới nhất từ BĐH -->
         <button @click="openAnnouncements()" type="button"
-                class="min-w-[280px] sm:min-w-0 sm:flex-1 snap-center bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between text-left active:scale-[0.98] transition-transform">
+                class="min-w-[160px] flex-1 sm:min-w-0 sm:flex-1 snap-center bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between text-left active:scale-[0.98] transition-transform">
             <div class="flex justify-between items-start mb-2">
                 <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center">
                     <i data-lucide="bell" class="w-4 h-4"></i>
@@ -28,7 +28,7 @@
 
         <!-- Thẻ 2: Sĩ số lớp đang phụ trách -->
         <button @click="changeModule('students')" type="button"
-                class="min-w-[160px] sm:min-w-0 sm:flex-1 snap-center bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between text-left active:scale-[0.98] transition-transform">
+                class="min-w-[160px] flex-1 sm:min-w-0 sm:flex-1 snap-center bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between text-left active:scale-[0.98] transition-transform">
             <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center mb-2">
                 <i data-lucide="users" class="w-4 h-4"></i>
             </div>
@@ -45,7 +45,7 @@
 
         <!-- Thẻ 3: Sinh nhật tháng này -->
         <button @click="openBirthdays()" type="button"
-                class="min-w-[140px] sm:min-w-0 sm:flex-1 snap-center bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between text-left active:scale-[0.98] transition-transform">
+                class="min-w-[160px] flex-1 sm:min-w-0 sm:flex-1 snap-center bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between text-left active:scale-[0.98] transition-transform">
             <div class="flex justify-between items-start mb-2">
                 <div class="w-9 h-9 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center">
                     <i data-lucide="cake" class="w-4 h-4"></i>

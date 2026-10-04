@@ -76,6 +76,18 @@ window.TNTT.router = {
     },
 
     /**
+     * Navigate back in history - equivalent to browser back button.
+     * Falls back to navigating to dashboard if no history.
+     */
+    goBack() {
+        if (window.history.length > 1) {
+            window.history.back();
+        } else {
+            this.navigate('/dashboard');
+        }
+    },
+
+    /**
      * Parse a URL or path and return {module, params}.
      * @param {string} input - Full URL or path like '/students/123' or '/#/students'
      * @returns {{module: string, params: object}}
@@ -130,31 +142,35 @@ window.TNTT.router = {
      * @private
      */
     _updateUrl(path, replace) {
-        let newUrl;
+        // Always use hash mode: /#/module
+        const base = window.location.pathname.split('?')[0]; // Remove query params
+        const newUrl = base + '#/' + path.replace(/^\//, '');
 
-        if (this.mode === 'hash') {
-            // Hash mode: /#/students
-            const base = window.location.pathname;
-            newUrl = base + '#/' + path.replace(/^\//, '');
-        } else {
-            // Clean mode: /students
-            newUrl = '/' + path.replace(/^\//, '');
-        }
+        // Store module in history state for reliable back/forward
+        const state = { module: path.replace(/^\//, '') };
 
         if (replace) {
-            window.history.replaceState(null, '', newUrl);
+            window.history.replaceState(state, '', newUrl);
         } else {
-            window.history.pushState(null, '', newUrl);
+            window.history.pushState(state, '', newUrl);
         }
+        // NOTE: Do NOT update currentModule here - _navigateToModule will do it
     },
 
     /**
      * Handle browser back/forward navigation.
      * @private
      */
-    _onPopState() {
-        const parsed = this.parse(window.location.href);
-        this._navigateToModule(parsed.module, parsed.params, true);
+    _onPopState(event) {
+        // Use state from history if available, otherwise parse URL
+        let module = 'dashboard';
+        if (event.state && event.state.module) {
+            module = event.state.module;
+        } else {
+            const parsed = this.parse(window.location.href);
+            module = parsed.module;
+        }
+        this._navigateToModule(module, {}, true);
     },
 
     /**
@@ -162,7 +178,6 @@ window.TNTT.router = {
      * @private
      */
     _onHashChange() {
-        if (this.mode !== 'hash') return;
         const parsed = this.parse(window.location.href);
         this._navigateToModule(parsed.module, parsed.params, true);
     },
@@ -173,20 +188,26 @@ window.TNTT.router = {
      */
     _navigateToModule(module, params, isHistoryNav) {
         // Skip if already on this module (unless navigating with different params)
-        if (module === this.currentModule && !isHistoryNav) return;
+        if (module === this.currentModule && !isHistoryNav) {
+            return;
+        }
 
         this.currentModule = module;
         this.params = params || {};
 
-        // Call the shell's changeModule to switch the view
-        if (window.TNTT?.shell?.changeModule) {
-            window.TNTT.shell.changeModule(module);
+        // Update Alpine component's currentModule
+        const alpineEl = document.querySelector('[x-data="tnttApp"]');
+        if (alpineEl && alpineEl._xDataStack && alpineEl._xDataStack[0]) {
+            const data = alpineEl._xDataStack[0];
+            if ('currentModule' in data) {
+                data.currentModule = module;
+            }
         }
 
-        // Also update core.currentModule for consistency
-        if (window.TNTT?.core) {
-            window.TNTT.core.currentModule = module;
-        }
+        // Show/hide the module divs directly
+        document.querySelectorAll('[data-module]').forEach(el => {
+            el.style.display = el.dataset.module === module ? '' : 'none';
+        });
     },
 
     /**
@@ -206,14 +227,9 @@ window.TNTT.router = {
      * @private
      */
     _detectMode() {
-        // If current URL has hash, use hash mode
-        if (window.location.hash && window.location.hash.match(/^#\/.+/)) {
-            this.mode = 'hash';
-        } else {
-            // Check if server supports clean URLs via .htaccess
-            // For now, default to hash if no hash present
-            this.mode = window.location.hash ? 'hash' : 'clean';
-        }
+        // Always use hash mode for reliable SPA navigation
+        // This ensures browser back/forward works correctly
+        this.mode = 'hash';
     },
 
     /**
