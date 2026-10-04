@@ -267,6 +267,11 @@ window.TNTT.shell = {
         // Khởi tạo module mặc định (dashboard)
         this.changeModule('dashboard');
 
+        // Khởi tạo URL router - phải sau khi changeModule đầu tiên
+        if (window.TNTT?.router?.init) {
+            window.TNTT.router.init();
+        }
+
         this.initIconWatcher();
 
         // Gọi initCore() để khởi tạo các tính năng core và điểm danh ngoại tuyến (#121)
