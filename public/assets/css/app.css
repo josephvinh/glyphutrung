@@ -3,6 +3,48 @@
    Giữ nguyên phong cách: bo góc lớn, shadow mềm, tông slate/blue
    ========================================================== */
 
+/* ==========================================================
+   CRITICAL: PREVENT OVERFLOW ON ALL DEVICES
+   This MUST be first to ensure no content breaks out of bounds
+   ========================================================== */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+html {
+    /* Prevent horizontal overflow */
+    overflow-x: hidden;
+    overflow-y: scroll;
+    scrollbar-gutter: stable;
+    /* Smooth scrolling */
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    /* Prevent horizontal overflow */
+    overflow-x: hidden;
+    /* Ensure minimum viewport height */
+    min-height: 100vh;
+    min-height: 100dvh;
+    /* Prevent text size adjustment on mobile */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
+/* Ensure all elements respect boundaries */
+* {
+    max-width: 100%;
+    overflow-wrap: break-word;
+}
+
+/* Container that always stays within viewport */
+.container-safe {
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+}
+
 :root {
     /* Bo góc theo cấp bậc - giảm kích thước cho Liquid Glass */
     --r-shell: 1.5rem;
@@ -285,16 +327,25 @@ body {
 
 /* Header: chừa chỗ cho tai thỏ khi cài lên màn hình chính */
 .app-header {
-    padding: 1rem 1.5rem;
+    padding: 1rem 1rem;
     position: relative;
     z-index: 100;
     background: white;
     border-bottom: 1px solid #e2e8f0;
+    flex-shrink: 0; /* Prevent header from shrinking */
 }
 
-@media (max-width: 639px) {
+@media (min-width: 640px) {
+    /* Tablet */
     .app-header {
-        padding: 0.75rem 1rem;
+        padding: 1.25rem 1.5rem;
+    }
+}
+
+@media (min-width: 1024px) {
+    /* Desktop - header hidden, sidebar shows user info */
+    .app-header {
+        display: none;
     }
 }
 
@@ -1234,4 +1285,87 @@ select.tntt-select {
     background-position: right 0.75rem center;
     background-size: 1rem 1rem;
     padding-right: 2.25rem;
+}
+
+/* ==========================================================
+   COMPREHENSIVE RESPONSIVE FIXES
+   Ensures consistent layout across all devices
+   ========================================================== */
+
+/* Mobile-first responsive helpers */
+@media screen and (max-width: 639px) {
+    /* Ensure full width on mobile */
+    .app-shell,
+    .app-content,
+    .app-main {
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    /* Prevent text overflow */
+    .text-xs, .text-sm, .text-base, .text-lg, .text-xl {
+        overflow-wrap: break-word;
+        word-break: break-word;
+    }
+    
+    /* Ensure buttons don't overflow */
+    button, 
+    [role="button"] {
+        max-width: 100%;
+        overflow-wrap: break-word;
+    }
+    
+    /* Safe area for notched phones */
+    .app-main {
+        padding-left: max(1rem, env(safe-area-inset-left));
+        padding-right: max(1rem, env(safe-area-inset-right));
+    }
+}
+
+/* Tablet responsive (640px - 1023px) */
+@media screen and (min-width: 640px) and (max-width: 1023px) {
+    .app-shell {
+        max-width: 100%;
+    }
+}
+
+/* Desktop (1024px+) */
+@media screen and (min-width: 1024px) {
+    .app-sidebar {
+        width: 16rem;
+        flex-shrink: 0;
+    }
+}
+
+/* Prevent any element from overflowing horizontally */
+img, video, iframe, svg {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Ensure flex containers don't overflow */
+.flex, .inline-flex {
+    min-width: 0;
+    max-width: 100%;
+}
+
+/* Grid responsive */
+.grid {
+    min-width: 0;
+}
+
+/* Modal/sheet responsive */
+.modal-sheet,
+.modal-overlay {
+    width: 100%;
+    max-width: 100vw;
+}
+
+/* Bottom sheet on mobile - full width */
+@media screen and (max-width: 639px) {
+    .modal-sheet,
+    .rounded-t-sheet {
+        border-radius: 1rem 1rem 0 0;
+        max-width: 100%;
+    }
 }
