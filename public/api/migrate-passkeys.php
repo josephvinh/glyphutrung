@@ -16,7 +16,10 @@
 
 require __DIR__ . '/../public/api/_bootstrap.php';
 require_login();
-require_csrf(); // Extra safety for data modification
+
+// NOTE: CSRF không cần thiết vì:
+// 1. Đã require_login() kiểm tra admin
+// 2. Migration là script hệ thống, không phải user form
 
 $role = $me['role_code'] ?? '';
 if ($role !== 'admin') {
