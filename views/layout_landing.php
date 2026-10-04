@@ -28,7 +28,7 @@ $icons = ['lock' => '🔐', 'book' => '📒', 'search' => '📘', 'trophy' => '�
     <title>GIA ĐÌNH GIÁO LÝ PHÚ TRUNG</title>
     <style>
         *{box-sizing:border-box;margin:0;padding:0}
-        body{min-height:100vh;background:linear-gradient(135deg,#f8fafc 0%,#e2e8f0 50%,#f1f5f9 100%);color:#1e293b;font-family:system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+        body{min-height:100vh;background:linear-gradient(135deg,#f8fafc 0%,#e2e8f0 50%,#f1f5f9 100%);color:#1e293b;font-family:"Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
         .wrap{max-width:560px;margin:0 auto;padding:40px 20px calc(32px + env(safe-area-inset-bottom))}
         @media(min-width:640px){.wrap{max-width:720px;padding:60px 40px}}
         @media(min-width:1024px){.wrap{max-width:800px;padding:80px 40px}}
@@ -188,8 +188,8 @@ $icons = ['lock' => '🔐', 'book' => '📒', 'search' => '📘', 'trophy' => '�
 <main class="wrap">
     <div class="brand">
         <img src="assets/img/icon-192.png?v=<?php echo $__cssV; ?>" alt="Logo">
-        <h1>Gia Đình Giáo Lý Phú Trung</h1>
-        <p>�oàn Thiếu Nhi Thánh Thể</p>
+        <h1>Gia Đình Giáo Lý </h1>
+        <p>Giáo xứ Phú Trung</p>
     </div>
 
     <nav class="grid">
@@ -216,7 +216,7 @@ $icons = ['lock' => '🔐', 'book' => '📒', 'search' => '📘', 'trophy' => '�
         <?php endforeach; ?>
     </nav>
 
-    <footer>Quản lý & tra cứu dành cho Đoàn Thiếu Nhi Thánh Thể</footer>
+    <footer>Quản lý & tra cứu dành cho GIA ĐÌNH GIÁO LÝ GX PHÚ TRUNG</footer>
 </main>
 
 <script>
