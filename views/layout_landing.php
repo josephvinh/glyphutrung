@@ -1,5 +1,5 @@
 <?php
-// TRANG CHỦ CÔNG KHAI - Landing page với Lời Chúa Mỗi Ngày
+// TRANG CHỦ CÔNG KHAI - Landing page voi Lời Chúa Mỗi Ngày
 $__cssV = @filemtime(__DIR__ . '/../public/assets/img/icon-192.png') ?: 0;
 $__links = [
     ['href' => '#loichua', 'icon' => 'cross', 'title' => 'Lời Chúa Mỗi Ngày',
@@ -58,7 +58,7 @@ $icons = ['lock' => '🔐', 'book' => '📒', 'search' => '📘', 'trophy' => '�
         /* Scripture Card */
         a.card.scripture{background:linear-gradient(135deg,#1e3a5f,#2d5a87,#1e3a5f);
                          border:1px solid rgba(255,215,140,0.3);padding:20px;flex-direction:column;
-                         align-items:center;text-align:center;cursor:pointer}
+                         align-items:center;text-align:center;cursor:pointer;min-height:200px}
         a.card.scripture::after{content:'✝';position:absolute;top:-20px;right:-20px;
                                 font-size:120px;opacity:0.05;transform:rotate(15deg);pointer-events:none}
         a.card.scripture:hover{transform:translateY(-3px);box-shadow:0 8px 32px rgba(30,58,95,0.4);
@@ -66,51 +66,34 @@ $icons = ['lock' => '🔐', 'book' => '📒', 'search' => '📘', 'trophy' => '�
         a.card.scripture .ic{background:rgba(255,215,140,0.2);border-radius:50%;width:64px;height:64px;
                             border:2px solid rgba(255,215,140,0.3);margin-bottom:12px}
         a.card.scripture .ic svg{width:32px;height:32px;stroke:#ffd700;fill:none;stroke-width:2}
-        a.card.scripture b{color:#fff;font-size:1.1rem;text-shadow:0 1px 2px rgba(0,0,0,0.2)}
-        a.card.scripture small{color:rgba(255,255,255,0.8)}
+        a.card.scripture .title{color:#fff;font-size:1.1rem;font-weight:700;text-shadow:0 1px 2px rgba(0,0,0,0.2)}
+        a.card.scripture .desc{color:rgba(255,255,255,0.8);font-size:.85rem;margin-top:4px}
         a.card.scripture .go{display:none}
-        a.card.scripture .cta{display:inline-flex;align-items:center;gap:8px;margin-top:14px;
-                              padding:10px 20px;background:linear-gradient(135deg,#ffd700,#ffb347);
-                              color:#1e3a5f;font-weight:700;font-size:.85rem;border-radius:24px;
-                              box-shadow:0 2px 8px rgba(255,215,0,0.3)}
-        a.card.scripture .cta:hover{transform:scale(1.05);box-shadow:0 4px 16px rgba(255,215,0,0.4)}
-        a.card.scripture .cta svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2}
 
-        /* Scripture Modal */
-        .modal-backdrop{position:fixed;inset:0;background:rgba(10,30,60,0.9);z-index:1000;
-                        display:flex;align-items:center;justify-content:center;padding:20px;
-                        opacity:0;transition:opacity .3s;pointer-events:none}
-        .modal-backdrop.show{opacity:1;pointer-events:auto}
-        .modal-box{background:linear-gradient(180deg,#1a365d,#0f2744);border-radius:24px;
-                   max-width:480px;width:100%;padding:0;box-shadow:0 25px 80px rgba(0,0,0,0.5);
-                   transform:scale(.9);transition:transform .35s;overflow:hidden}
-        .modal-backdrop.show .modal-box{transform:scale(1)}
-        .modal-header{background:rgba(255,215,140,0.1);padding:32px 24px;text-align:center}
-        .modal-header h2{color:#ffd700;font-size:1.25rem;font-weight:800;text-transform:uppercase;
-                          letter-spacing:.1em;margin:16px 0 0}
-        .modal-header p{color:rgba(255,255,255,0.7);font-size:.85rem;margin:8px 0 0}
-        .cross-icon{width:72px;height:72px;margin:0 auto;background:linear-gradient(135deg,#ffd700,#ffb347);
-                    border-radius:50%;display:flex;align-items:center;justify-content:center;
-                    box-shadow:0 4px 20px rgba(255,215,0,0.4)}
-        .cross-icon svg{width:36px;height:36px;stroke:#1a365d;fill:none;stroke-width:2.5}
-        .modal-body{padding:24px}
-        .verse-box{background:rgba(255,255,255,0.05);border:1px solid rgba(255,215,140,0.15);
-                   border-radius:16px;padding:24px 20px;min-height:140px;text-align:center}
-        .verse-text{font-size:1.05rem;line-height:1.8;color:#fff;font-style:italic}
-        .verse-ref{color:#ffd700;font-weight:600;margin-top:16px;display:block}
-        .loading{display:flex;flex-direction:column;align-items:center;gap:12px}
-        .spinner{width:40px;height:40px;border:3px solid rgba(255,215,140,0.2);border-top-color:#ffd700;
-                 border-radius:50%;animation:spin 1s linear infinite}
+        /* CTA Button */
+        .cta-btn{display:inline-flex;align-items:center;gap:8px;margin-top:14px;
+                padding:10px 24px;background:linear-gradient(135deg,#ffd700,#ffb347);
+                color:#1e3a5f;font-weight:700;font-size:.9rem;border-radius:24px;
+                box-shadow:0 2px 8px rgba(255,215,0,0.3);cursor:pointer;border:none;
+                transition:all .2s}
+        .cta-btn:hover{transform:scale(1.05);box-shadow:0 4px 16px rgba(255,215,0,0.4)}
+        .cta-btn:disabled{opacity:0.7;cursor:not-allowed;transform:none}
+
+        /* Verse Display */
+        .verse-container{margin-top:12px;width:100%;text-align:center}
+        .verse-text{color:#fff;font-size:.95rem;line-height:1.6;font-style:italic;
+                   padding:12px;background:rgba(255,255,255,0.08);border-radius:12px;
+                   border:1px solid rgba(255,215,140,0.2)}
+        .verse-ref{color:#ffd700;font-weight:600;margin-top:8px;font-size:.85rem}
+        .verse-ref::before{content:'— '}
+
+        /* Loading */
+        .loading-spinner{width:24px;height:24px;border:3px solid rgba(255,215,140,0.3);
+                        border-top-color:#ffd700;border-radius:50%;animation:spin 1s linear infinite;margin:10px auto}
         @keyframes spin{to{transform:rotate(360deg)}}
-        .loading p{color:rgba(255,255,255,0.6);font-size:.85rem}
-        .modal-footer{padding:0 24px 24px}
-        .close-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;
-                   padding:14px;background:rgba(255,255,255,0.1);color:#fff;font-size:.95rem;font-weight:600;
-                   border:1px solid rgba(255,255,255,0.1);border-radius:12px;cursor:pointer}
-        .close-btn:hover{background:rgba(255,255,255,0.15)}
-        .close-btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2}
+
         footer{margin-top:28px;text-align:center;font-size:.75rem;color:#94a3b8}
-        @media(prefers-reduced-motion:reduce){.spinner{animation:none}}
+        @media(prefers-reduced-motion:reduce){.loading-spinner{animation:none}}
     </style>
 </head>
 <body>
@@ -128,8 +111,13 @@ $icons = ['lock' => '🔐', 'book' => '📒', 'search' => '📘', 'trophy' => '�
             <div class="ic">
                 <svg viewBox="0 0 24 24"><path d="M12 2v20M7 7h10" stroke-linecap="round"/></svg>
             </div>
-            <span><b><?php echo $l['title']; ?></b><small><?php echo $l['desc']; ?></small></span>
-            <span class="cta">Nhận lời Chúa →</span>
+            <span class="title"><?php echo $l['title']; ?></span>
+            <span class="desc"><?php echo $l['desc']; ?></span>
+            <div id="verseArea" style="margin-top:12px;width:100%;text-align:center;display:none"></div>
+            <button class="cta-btn" id="ctaBtn" onclick="event.preventDefault();event.stopPropagation();getVerse()">
+                <svg viewBox="0 0 24 24" width="16" height="16"><path d="M12 2v20M7 7h10" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
+                Nhận lời Chúa
+            </button>
             <?php else: ?>
             <span class="ic"><?php echo $icons[$l['icon']] ?? '📌'; ?></span>
             <span><b><?php echo $l['title']; ?></b><small><?php echo $l['desc']; ?></small></span>
@@ -142,102 +130,79 @@ $icons = ['lock' => '🔐', 'book' => '📒', 'search' => '📘', 'trophy' => '�
     <footer>Quản lý & tra cứu dành cho Đoàn Thiếu Nhi Thánh Thể</footer>
 </main>
 
-<!-- Scripture Modal -->
-<div id="scriptureModal" class="modal-backdrop">
-    <div class="modal-box">
-        <div class="modal-header">
-            <div class="cross-icon">
-                <svg viewBox="0 0 24 24"><path d="M12 2v20M7 7h10" stroke-linecap="round"/></svg>
-            </div>
-            <h2>Lời Chúa Mỗi Ngày</h2>
-            <p>Hãy để Lời Chúa soi sáng con đường của bạn</p>
-        </div>
-        <div class="modal-body">
-            <div class="verse-box" id="verseBox">
-                <div class="loading" id="loadingBox">
-                    <div class="spinner"></div>
-                    <p>Đang tải lời Chúa...</p>
-                </div>
-                <p class="verse-text" id="verseText" style="display:none"></p>
-                <span class="verse-ref" id="verseRef" style="display:none"></span>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="close-btn" onclick="closeModal()">
-                <svg viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round"/></svg>
-                Đóng
-            </button>
-        </div>
-    </div>
-</div>
-
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    var modal = document.getElementById('scriptureModal');
-    var loadingBox = document.getElementById('loadingBox');
-    var verseText = document.getElementById('verseText');
-    var verseRef = document.getElementById('verseRef');
+(function() {
+    var verseArea = document.getElementById('verseArea');
+    var ctaBtn = document.getElementById('ctaBtn');
 
-    // Click on scripture card
-    var cards = document.querySelectorAll('#loichua');
-    cards.forEach(function(card) {
-        card.addEventListener('click', function(e) {
-            e.preventDefault();
-            openModal();
-        });
-    });
+    // Kiem tra xem da co verse hom nay chua
+    function getStoredVerse() {
+        try {
+            var stored = localStorage.getItem('dailyVerse');
+            if (stored) {
+                var data = JSON.parse(stored);
+                var today = new Date().toDateString();
+                if (data.date === today) {
+                    return data;
+                }
+            }
+        } catch(e) {}
+        return null;
+    }
 
-    // Also click on CTA button
-    document.querySelectorAll('.cta').forEach(function(btn) {
-        if (btn.textContent.includes('Nhận lời')) {
-            btn.closest('a').addEventListener('click', function(e) {
-                e.preventDefault();
-                openModal();
-            });
-        }
-    });
+    // Luu verse vao localStorage
+    function saveVerse(verse, ref) {
+        try {
+            var data = {
+                date: new Date().toDateString(),
+                verse: verse,
+                ref: ref,
+                timestamp: Date.now()
+            };
+            localStorage.setItem('dailyVerse', JSON.stringify(data));
+        } catch(e) {}
+    }
 
-    function openModal() {
-        modal.classList.add('show');
-        loadingBox.style.display = 'flex';
-        verseText.style.display = 'none';
-        verseRef.style.display = 'none';
+    // Hien thi verse
+    function showVerse(verse, ref) {
+        verseArea.innerHTML = '<div class="verse-text">' + verse + '</div><div class="verse-ref">' + ref + '</div>';
+        verseArea.style.display = 'block';
+        ctaBtn.style.display = 'none';
+    }
+
+    // Hien thi loading
+    function showLoading() {
+        verseArea.innerHTML = '<div class="loading-spinner"></div><p style="color:rgba(255,255,255,0.7);font-size:.85rem">Đang tải...</p>';
+        verseArea.style.display = 'block';
+        ctaBtn.disabled = true;
+        ctaBtn.innerHTML = '<div class="loading-spinner" style="width:16px;height:16px;border-width:2px;margin:0"></div> Đang tải...';
+    }
+
+    // Lay verse tu API
+    window.getVerse = function() {
+        showLoading();
 
         fetch('api/bible.php?action=random')
             .then(function(resp) { return resp.json(); })
             .then(function(data) {
-                loadingBox.style.display = 'none';
-                if (data.success) {
-                    verseText.textContent = data.verse;
-                    verseText.style.display = 'block';
-                    verseRef.textContent = '— ' + data.ref;
-                    verseRef.style.display = 'block';
+                if (data.success && data.verse) {
+                    showVerse(data.verse, data.ref);
+                    saveVerse(data.verse, data.ref);
                 } else {
-                    verseText.textContent = 'Không thể tải lời Chúa. Vui lòng thử lại.';
-                    verseText.style.display = 'block';
+                    verseArea.innerHTML = '<p style="color:#fca5a5;font-size:.85rem">Không thể tải. Thử lại sau.</p>';
                 }
             })
             .catch(function() {
-                loadingBox.style.display = 'none';
-                verseText.textContent = 'Lỗi kết nối. Vui lòng thử lại.';
-                verseText.style.display = 'block';
+                verseArea.innerHTML = '<p style="color:#fca5a5;font-size:.85rem">Lỗi kết nối.</p>';
             });
-    }
-
-    window.closeModal = function() {
-        modal.classList.remove('show');
     };
 
-    // Close on Escape
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') closeModal();
-    });
-
-    // Close on backdrop click
-    modal.addEventListener('click', function(e) {
-        if (e.target === modal) closeModal();
-    });
-});
+    // Kiem tra khi load trang
+    var stored = getStoredVerse();
+    if (stored) {
+        showVerse(stored.verse, stored.ref);
+    }
+})();
 </script>
 
 </body>
