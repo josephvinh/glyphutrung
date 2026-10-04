@@ -269,7 +269,7 @@ window.TNTT.shell = {
 
         // Khởi tạo URL router - phải sau khi changeModule đầu tiên
         if (window.TNTT?.router?.init) {
-            window.TNTT['core/router'].init();
+            window.TNTT.router.init();
         }
 
         this.initIconWatcher();
