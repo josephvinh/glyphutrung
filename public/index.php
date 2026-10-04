@@ -179,6 +179,7 @@ if (!$__dev) ob_start();
                 <div data-module="dashboard" class="module-panel">
                     <?php include __DIR__ . '/../views/layout_hero.php'; ?>
                     <?php include __DIR__ . '/../views/module_menu.php'; ?>
+                    <?php include __DIR__ . '/../views/module_bible_stats.php'; ?>
                 </div>
             </div></template>
 

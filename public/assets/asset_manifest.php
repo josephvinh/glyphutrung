@@ -19,7 +19,7 @@ return [
     'js_modules' => [
         // Core modules (loaded on startup)
         'router', 'core', 'xlsx_io', 'programs', 'access', 'students', 'student_profile', 'attendance', 'qrscan', 'qrcard',
-        'leave', 'birthdays', 'announcements', 'stats', 'analytics', 'scores',
+        'leave', 'birthdays', 'announcements', 'stats', 'analytics', 'scores', 'bible',
         'reports', 'promotion', 'org', 'push', 'dashboard', 'shell',
         'calendar', 'notes', 'passkey', 'library', 'gifts', 'rewards',
     ],

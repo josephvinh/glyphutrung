@@ -1,8 +1,10 @@
 <?php
 /**
- * LỜI CHÚA MỖI NGÀY
+ * LOI CHUA MOI NGAY
  *
- *   GET  api/bible.php?action=random   — Lấy verse ngẫu nhiên (rate limit 1/IP/giờ)
+ *   GET  api/bible.php?action=random   — Lay verse ngau nhien (rate limit 1/IP/gio)
+ *   GET  api/bible.php?action=list     — Danh sach IP da lay (admin)
+ *   GET  api/bible.php?action=stats    — Thong ke tong quan (admin)
  */
 
 require __DIR__ . '/_bootstrap.php';
@@ -10,7 +12,7 @@ require __DIR__ . '/_bootstrap.php';
 $action = $_GET['action'] ?? '';
 $ip = client_ip();
 
-/** Tự tạo table nếu chưa có */
+/** Tu tao table neu chua co */
 function ensure_bible_table(): void {
     try {
         db_run('CREATE TABLE IF NOT EXISTS bible_daily (
@@ -30,21 +32,20 @@ function ensure_bible_table(): void {
 
 /** Fallback verses khi API fail */
 const FALLBACK_VERSES = [
-    ['text' => 'Đừng lo âu điều gì, nhưng trong mọi việc hãy trình bày nhu cầu của anh em cho Đức Chúa Trời, và Ngài sẽ ban sự bình an của Đức Chúa Trời, vượt quá mọi điều chúng ta có thể hiểu biết.', 'ref' => 'Philippians 4:6'],
-    ['text' => 'Vì Chúa yêu thương thế gian này, Ngài đã ban Con Một, để ai tin Con Ngài cũng được sự sống đời đời.', 'ref' => 'John 3:16'],
-    ['text' => 'Tôi ở với anh em mọi ngày cho đến tận thế hoàn tất.', 'ref' => 'Matthew 28:20'],
-    ['text' => 'Hãy vui lên và hát ngợi khen, vì Đấng Toàn Năng đã làm những điều vĩ đại.', 'ref' => 'Psalms 126:3'],
-    ['text' => 'Chúa là Đấng chăn nuôi tôi, tôi sẽ không thiếu thốn gì.', 'ref' => 'Psalms 23:1'],
-    ['text' => 'Hãy cậy thương yêu Đức Chúa Trời, hãy chờ đợi Ngài và giữ vững lòng.', 'ref' => 'Lamentations 3:24-25'],
-    ['text' => 'Mọi sự đều có lúc, có thì giống, có lúc chữa bệnh, có lúc phá đổ, có lúc xây dựng.', 'ref' => 'Ecclesiastes 3:3'],
-    ['text' => 'Lòng tôi hát mừng Chúa, tôi sẽ tạ ơn Chúa đến đời đời.', 'ref' => 'Psalms 30:12'],
-    ['text' => 'Những điều bất khả khả thì ở nơi người không thể làm được, nhưng không phải nơi Đức Chúa Trời.', 'ref' => 'Jeremiah 32:17'],
-    ['text' => 'Nếu tôi lên trời, Ngài ở đó; nếu xuống âm phủ, Ngài cũng ở đó.', 'ref' => 'Psalms 139:8'],
+    ['text' => 'Dung lo au dieu gi, nhung trong moi viec hay trinh bay nhu cau cua anh em cho Duc Cha Troi, va Ngai se ban su binh an cua Duc Cha Troi, vuot qua moi dieu chung ta co the hieu biet.', 'ref' => 'Philippians 4:6'],
+    ['text' => 'Vi Cha yeu thuong the gian nay, Ngai da ban Con Mot, de ai tin Con Ngai cung duoc su song doi doi.', 'ref' => 'John 3:16'],
+    ['text' => 'Toi o voi anh em moi ngay cho den tan the hoan tat.', 'ref' => 'Matthew 28:20'],
+    ['text' => 'Hay vui len va hat ngo khen, vi Dang Toan Nang da lam nhung dieu vi dai.', 'ref' => 'Psalms 126:3'],
+    ['text' => 'Cha la Dang chan nuoi toi, toi se khong thieu thon gi.', 'ref' => 'Psalms 23:1'],
+    ['text' => 'Hay cay thuong yeu Duc Cha Troi, hay cho doi Ngai va giu vung long.', 'ref' => 'Lamentations 3:24-25'],
+    ['text' => 'Moi su deu co luc, co thi giong, co luc chua benh, co luc pha do, co luc xay dung.', 'ref' => 'Ecclesiastes 3:3'],
+    ['text' => 'Long toi hat mua Cha, toi se ta on Cha den doi doi.', 'ref' => 'Psalms 30:12'],
+    ['text' => 'Nhung dieu bat kha kha thi o noi nguoi khong the lam duoc, nhung khong phai noi Duc Cha Troi.', 'ref' => 'Jeremiah 32:17'],
+    ['text' => 'Neu toi len troi, Ngai o do; neu xuong am phu, Ngai cung o do.', 'ref' => 'Psalms 139:8'],
 ];
 
 /**
- * Lấy verse ngẫu nhiên từ bible-api.com
- * Returns array ['text' => string, 'ref' => string] hoặc null nếu fail
+ * Lay verse ngau nhien tu bible-api.com
  */
 function fetch_random_verse(): ?array
 {
@@ -81,7 +82,7 @@ function fetch_random_verse(): ?array
 }
 
 /**
- * Lấy verse fallback ngẫu nhiên
+ * Lay verse fallback ngau nhien
  */
 function get_fallback_verse(): array
 {
@@ -90,8 +91,7 @@ function get_fallback_verse(): array
 }
 
 /**
- * Kiểm tra rate limit: 1 lần/IP/giờ
- * Returns cached verse if within 1 hour, null otherwise
+ * Kiem tra rate limit: 1 lan/IP/gio
  */
 function get_cached_verse(string $ip): ?array
 {
@@ -120,7 +120,7 @@ function get_cached_verse(string $ip): ?array
 }
 
 /**
- * Lưu verse vào database
+ * Luu verse vao database
  */
 function save_verse(string $ip, string $text, string $ref, string $translation = 'vietnamese'): int
 {
@@ -135,10 +135,10 @@ switch ($action) {
 
     // ================================================================
     case 'random':
-        // Tự tạo table nếu chưa có
+        // Tu tao table neu chua co
         ensure_bible_table();
 
-        // Kiểm tra rate limit: có verse trong vòng 1 giờ không?
+        // Kiem tra rate limit: co verse trong vong 1 gio khong?
         $cached = get_cached_verse($ip);
 
         if ($cached) {
@@ -148,14 +148,14 @@ switch ($action) {
                 'verse' => $cached['text'],
                 'ref' => $cached['ref'],
                 'translation' => $cached['translation'] ?? 'vietnamese',
-                'message' => 'Đây là lời Chúa dành cho bạn hôm nay.',
+                'message' => 'Day la loi Chua danh cho ban hom nay.',
             ]);
         }
 
-        // Thử fetch từ API
+        // Thu fetch tu API
         $verse = fetch_random_verse();
 
-        // Fallback nếu API fail
+        // Fallback neu API fail
         if ($verse === null) {
             $verse = get_fallback_verse();
             $translation = 'fallback';
@@ -163,7 +163,7 @@ switch ($action) {
             $translation = 'vietnamese';
         }
 
-        // Lưu vào database
+        // Luu vao database
         save_verse($ip, $verse['text'], $verse['ref'], $translation);
 
         json_out([
@@ -172,12 +172,63 @@ switch ($action) {
             'verse' => $verse['text'],
             'ref' => $verse['ref'],
             'translation' => $translation,
-            'message' => 'Đây là lời Chúa dành cho bạn hôm nay.',
+            'message' => 'Day la loi Chua danh cho ban hom nay.',
+        ]);
+
+    // ================================================================
+    case 'list':
+        // Chi admin moi xem duoc danh sach IP
+        $me = require_permission('settings', 'view');
+
+        $rows = db_all(
+            'SELECT id, ip_address, verse_text, verse_ref, verse_translation, fetched_at
+               FROM bible_daily
+              ORDER BY fetched_at DESC
+              LIMIT 100'
+        );
+
+        json_out([
+            'success' => true,
+            'count' => count($rows),
+            'rows' => array_map(function ($r) {
+                return [
+                    'id' => (int) $r['id'],
+                    'ip' => $r['ip_address'],
+                    'verse' => $r['verse_text'],
+                    'ref' => $r['verse_ref'],
+                    'translation' => $r['verse_translation'],
+                    'fetched_at' => $r['fetched_at'],
+                ];
+            }, $rows),
+        ]);
+
+    // ================================================================
+    case 'stats':
+        // Chi admin moi xem duoc thong ke
+        $me = require_permission('settings', 'view');
+
+        $totalRequests = (int) db_val('SELECT COUNT(*) FROM bible_daily');
+        $uniqueIps = (int) db_val('SELECT COUNT(DISTINCT ip_address) FROM bible_daily');
+        $todayStart = date('Y-m-d') . ' 00:00:00';
+        $todayUniqueIps = (int) db_val(
+            'SELECT COUNT(DISTINCT ip_address) FROM bible_daily WHERE fetched_at >= ?',
+            [$todayStart]
+        );
+        $lastRequest = db_val('SELECT MAX(fetched_at) FROM bible_daily');
+
+        json_out([
+            'success' => true,
+            'stats' => [
+                'total_requests' => $totalRequests,
+                'unique_ips' => $uniqueIps,
+                'today_unique_ips' => $todayUniqueIps,
+                'last_request' => $lastRequest ?? '',
+            ],
         ]);
 
     // ================================================================
     default:
-        // Fallback: trả verse ngẫu nhiên mà không lưu
+        // Fallback: tra verse ngau nhien ma khong luu
         $verse = get_fallback_verse();
         json_out([
             'success' => true,
@@ -185,6 +236,6 @@ switch ($action) {
             'verse' => $verse['text'],
             'ref' => $verse['ref'],
             'translation' => 'fallback',
-            'message' => 'Đây là lời Chúa dành cho bạn hôm nay.',
+            'message' => 'Day la loi Chua danh cho ban hom nay.',
         ]);
 }
