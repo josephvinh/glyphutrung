@@ -253,6 +253,8 @@ body {
     max-height: 100dvh;
     overflow: hidden;
     transition: background-color 0.2s ease;
+    display: flex;
+    flex-direction: column;
 }
 
 @media (min-width: 640px) {
@@ -270,10 +272,6 @@ body {
    .app-content KHÔNG được ràng buộc chiều cao -> .app-main (overflow-y:auto)
    không có chiều cao giới hạn -> không cuộn được, phần dưới bị cắt. */
 @media (max-width: 1023px) {
-    .app-shell {
-        display: flex;
-        flex-direction: column;
-    }
     .app-content {
         flex: 1 1 auto;
         min-height: 0; /* bắt buộc để con overflow-y:auto cuộn được trong flex */
