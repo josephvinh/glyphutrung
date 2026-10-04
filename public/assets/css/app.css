@@ -381,7 +381,8 @@ body {
 
 /* Header: chừa chỗ cho tai thỏ khi cài lên màn hình chính */
 .app-header {
-    padding-top: calc(1.5rem + env(safe-area-inset-top, 0px));
+    padding: 1rem 1.5rem;
+    padding-top: calc(1rem + env(safe-area-inset-top, 0px));
     position: relative;
     z-index: 100;
     isolation: isolate;
