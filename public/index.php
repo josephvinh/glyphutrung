@@ -74,6 +74,8 @@ if (!$__dev) ob_start();
     <meta name="theme-color" content="#c8203a">
     <!-- Áp chế độ tối TRƯỚC khi vẽ trang, tránh nháy trắng -->
     <script>try{var d=localStorage.getItem('darkMode');if(d==='true')document.documentElement.classList.add('dark')}catch(e){}</script>
+    <!-- Platform detection for iOS/Android specific styling -->
+    <script>(function(){try{var ua=navigator.userAgent;if(/iPhone|iPad|iPod/i.test(ua)){document.documentElement.classList.add('ios-platform')}else if(/Android/i.test(ua)){document.documentElement.classList.add('android-platform')}}catch(e){}})();</script>
 
     <!-- BIỂU TƯỢNG APP
          icon.svg   : tab trình duyệt, nét sắc ở mọi cỡ
