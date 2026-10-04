@@ -20,7 +20,7 @@
         <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
         <input x-model="announcementSearch" type="text" placeholder="Tìm thông báo theo tiêu đề, nội dung..."
                aria-label="Tìm thông báo"
-               class="input-glass w-full py-2.5 pl-11 pr-10 text-sm font-semibold text-slate-800 dark:text-slate-100 placeholder:font-normal">
+               class="input-glass w-full py-2.5 pl-11 pr-10 text-sm font-semibold text-slate-800 placeholder:font-normal">
         <button aria-label="Xóa ô tìm kiếm" x-show="announcementSearch !== ''" @click="announcementSearch = ''" style="display: none;"
                 class="tap-safe absolute right-1 top-1/2 -translate-y-1/2 p-2 flex items-center justify-center text-slate-500 active:scale-90 transition-transform">
             <div class="w-6 h-6 bg-slate-100 rounded-full flex items-center justify-center">

@@ -39,7 +39,10 @@ if (!headers_sent()) {
          . "font-src 'self'; connect-src 'self'; "
          . "object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';");
     if (!empty($_SERVER['HTTPS'])) {
-        header('Strict-Transport-Security: max-age=15552000');
+        // Tăng từ 180 ngày → 2 năm (63072000s) để trình duyệt luôn dùng HTTPS
+        header('Strict-Transport-Security: max-age=63072000');
+        // Announce HTTP/3 (QUIC) support — LiteSpeed/Cloudflare sẽ thực sự hỗ trợ
+        header('Alt-Svc: h3=":443"; ma=86400');
     }
 }
 

@@ -8,6 +8,7 @@ $base = __DIR__ . '/';
 
 header('Content-Type: text/css; charset=utf-8');
 header('Cache-Control: public, max-age=31536000, immutable');
+header('Vary: Accept-Encoding');
 
 $files = array_map(fn($c) => $base . $c . '.css', $manifest['css']);
 

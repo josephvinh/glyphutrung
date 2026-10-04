@@ -45,7 +45,7 @@
                 <button aria-label="Lùi một ngày" @click="shiftAttendanceDate(-1)" class="w-10 h-10 shrink-0 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-center text-slate-500 active:scale-90 transition-transform">
                     <i data-lucide="chevron-left" class="w-4 h-4"></i>
                 </button>
-                <input x-model="attendanceDate" type="date" min="2000-01-01" max="2100-12-31" class="input-glass flex-1 min-w-0 px-3 py-2.5 text-sm font-semibold text-slate-800 dark:text-slate-100">
+                <input x-model="attendanceDate" type="date" min="2000-01-01" max="2100-12-31" class="input-glass flex-1 min-w-0 px-3 py-2.5 text-sm font-semibold text-slate-800">
                 <button aria-label="Tới một ngày" @click="shiftAttendanceDate(1)" class="w-10 h-10 shrink-0 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-center text-slate-500 active:scale-90 transition-transform">
                     <i data-lucide="chevron-right" class="w-4 h-4"></i>
                 </button>
@@ -227,7 +227,7 @@
                         </div>
                     </div>
 
-                    <button @click="startSession(prog)" type="button" :disabled="!heavyLoaded || !heavyFresh" :class="(!heavyLoaded || !heavyFresh) ? 'opacity-50' : ''" class="w-full btn-glass text-white font-bold py-3 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-blue-200 flex justify-center items-center">
+                    <button @click="startSession(prog)" type="button" :disabled="!heavyLoaded || !heavyFresh" :class="(!heavyLoaded || !heavyFresh) ? 'opacity-50 w-full btn-glass text-white font-bold py-3 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-blue-200 flex justify-center items-center' : 'w-full btn-glass text-white font-bold py-3 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-blue-200 flex justify-center items-center'">
                         <i data-lucide="clipboard-check" class="w-5 h-5 mr-2"></i> Bắt đầu điểm danh
                     </button>
                 </div>

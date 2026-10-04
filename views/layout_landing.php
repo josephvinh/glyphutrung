@@ -92,14 +92,6 @@ $__links = [
         a.card.primary .ic{background:rgba(255,255,255,0.2)}
         a.card.primary small{color:rgba(255,255,255,0.85)}
         a.card.primary .go{color:rgba(255,255,255,0.8)}
-        /* Dark mode */
-        @media (prefers-color-scheme: dark) {
-            body{background:#0f172a;color:#f8fafc}
-            a.card{background:rgba(30,41,59,0.75);border-color:rgba(255,255,255,0.1);box-shadow:0 8px 32px rgba(0,0,0,0.25)}
-            a.card .ic{background:rgba(51,65,85,0.8)}
-            a.card small{color:#94a3b8}
-            a.card .go{color:#64748b}
-        }
         @media (prefers-reduced-transparency: reduce) {
             a.card{background:#fff!important;backdrop-filter:none!important}
             a.card.primary{background:#c8203a!important}

@@ -15,6 +15,11 @@ if (extension_loaded('zlib')
     header('Vary: Accept-Encoding');
     @ob_start('ob_gzhandler');
 }
+// HTML phải luôn revalidate — bundle.php?v=<mtime> đã phá cache cho asset
+// tĩnh; trang thì cần fresh mỗi lần để tránh stale data.
+header('Cache-Control: no-cache, no-store, must-revalidate');
+header('Pragma: no-cache');
+header('Expires: 0');
 $me = current_member();
 // Khách chưa đăng nhập: hiện trang chủ điều hướng; bấm "Đăng nhập quản lý"
 // (?dangnhap=1) mới vào form đăng nhập. Người cần đổi mật khẩu vào thẳng form.
@@ -67,9 +72,6 @@ if (!$__dev) ob_start();
     <!-- Cho phép phóng to (GLV lớn tuổi đọc chữ nhỏ) + hỗ trợ tai thỏ iPhone -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#c8203a">
-    <!-- Áp chế độ tối TRƯỚC khi vẽ trang, tránh nháy trắng -->
-    <script>try{var d=localStorage.getItem('darkMode');if(d==='true')document.documentElement.classList.add('dark')}catch(e){}</script>
-
     <!-- BIỂU TƯỢNG APP
          icon.svg   : tab trình duyệt, nét sắc ở mọi cỡ
          icon-180   : iOS "Thêm vào màn hình chính" (iOS không nhận SVG)
@@ -130,6 +132,9 @@ if (!$__dev) ob_start();
     <link rel="stylesheet" href="assets/css/<?= $c ?>.css?v=<?php echo asset_v(__DIR__ . '/assets/css/' . $c . '.css'); ?>">
     <?php endforeach; ?>
     <?php else: ?>
+    <!-- Preload bundle JS để trình duyệt bắt đầu tải song song với stylesheet -->
+    <link rel="preload" href="assets/css/bundle.php?v=<?php echo bundle_v($__cssFiles); ?>" as="style">
+    <link rel="preload" href="assets/js/bundle.php?v=<?php echo bundle_v($__jsFiles); ?>" as="script">
     <link rel="stylesheet" href="assets/css/bundle.php?v=<?php echo bundle_v($__cssFiles); ?>">
     <?php endif; ?>
 </head>

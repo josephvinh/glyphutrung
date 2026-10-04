@@ -5,41 +5,41 @@
      không khớp, mà thẻ này do settingsTab điều khiển. -->
 <div class="relative pb-24">
 
-    <!-- 2. THẺ HỒ SƠ -->
-    <div class="bg-gradient-to-br from-blue-600 to-blue-700 rounded-card p-5 shadow-lg shadow-blue-200 mb-5 text-white">
+    <!-- 2. THE HO SO -->
+    <div class="bg-white rounded-card p-5 shadow-sm border border-slate-200 mb-5">
         <div class="flex items-start gap-4">
-            <div class="w-16 h-16 shrink-0 bg-white/20 rounded-2xl flex items-center justify-center border-2 border-white/40 backdrop-blur-sm">
-                <i data-lucide="user" class="w-8 h-8"></i>
+            <div class="w-16 h-16 shrink-0 rounded-2xl flex items-center justify-center text-white shadow-md" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
+                <span class="text-2xl font-black" x-text="user.fullName ? user.fullName.charAt(0).toUpperCase() : '?'"></span>
             </div>
             <div class="flex-1 min-w-0">
-                <p class="text-micro font-bold uppercase tracking-wider text-blue-200" x-text="myDanhXung"></p>
-                <h3 class="text-lg font-black leading-tight mt-0.5">
-                    <span class="font-normal text-blue-100" x-text="user.holyName"></span>
+                <p class="text-micro font-bold uppercase tracking-wider text-blue-600" x-text="myDanhXung"></p>
+                <h3 class="text-lg font-black leading-tight mt-0.5 text-slate-900">
+                    <span class="font-normal text-blue-600" x-text="user.holyName"></span>
                     <span x-text="user.fullName"></span>
                 </h3>
-                <div class="inline-flex items-center bg-blue-800/40 px-2.5 py-1 rounded-lg mt-2 backdrop-blur-sm">
-                    <i data-lucide="shield-check" class="w-3 h-3 text-blue-300 mr-1.5"></i>
-                    <span class="text-micro font-bold text-blue-50" x-text="roleLabel(user.role)"></span>
+                <div class="inline-flex items-center bg-blue-50 px-2.5 py-1 rounded-lg mt-2 border border-blue-100">
+                    <i data-lucide="shield-check" class="w-3 h-3 text-blue-600 mr-1.5"></i>
+                    <span class="text-micro font-bold text-blue-700" x-text="roleLabel(user.role)"></span>
                 </div>
             </div>
         </div>
 
-        <div class="mt-4 pt-4 border-t border-white/20 grid grid-cols-2 gap-3">
+        <div class="mt-4 pt-4 border-t border-slate-100 grid grid-cols-2 gap-3">
             <div>
-                <p class="text-micro font-bold uppercase tracking-wide text-blue-200">Phụ trách</p>
-                <p class="text-sm font-bold mt-0.5" x-text="myScopeLabel"></p>
+                <p class="text-micro font-bold uppercase tracking-wide text-slate-500">Phụ trách</p>
+                <p class="text-sm font-bold mt-0.5 text-slate-900" x-text="myScopeLabel"></p>
             </div>
             <div>
-                <p class="text-micro font-bold uppercase tracking-wide text-blue-200">Điện thoại</p>
-                <p class="text-sm font-bold mt-0.5" x-text="user.phone || 'Chưa có'"></p>
+                <p class="text-micro font-bold uppercase tracking-wide text-slate-500">Điện thoại</p>
+                <p class="text-sm font-bold mt-0.5 text-slate-900" x-text="user.phone || 'Chưa có'"></p>
             </div>
-            <div>
-                <p class="text-micro font-bold uppercase tracking-wide text-blue-200">Ngày sinh</p>
-                <p class="text-sm font-bold mt-0.5" x-text="user.birthDate ? formatDate(user.birthDate) : 'Chưa có'"></p>
+            <div class="col-span-2">
+                <p class="text-micro font-bold uppercase tracking-wide text-slate-500">Ngày sinh</p>
+                <p class="text-sm font-bold mt-0.5 text-slate-900" x-text="user.birthDate ? formatDate(user.birthDate) : 'Chưa có'"></p>
             </div>
         </div>
 
-        <button @click="openProfileForm()" type="button" class="w-full mt-4 py-2.5 bg-white/20 backdrop-blur-sm rounded-xl font-bold text-xs active:scale-[0.98] transition-transform border border-white/30 flex items-center justify-center gap-2">
+        <button @click="openProfileForm()" type="button" class="w-full mt-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs active:scale-[0.98] transition-all flex items-center justify-center gap-2">
             <i data-lucide="pencil" class="w-3.5 h-3.5"></i> Sửa thông tin
         </button>
     </div>

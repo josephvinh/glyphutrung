@@ -60,7 +60,7 @@
                 </div>
                 <div class="bg-rose-50 rounded-xl p-3 text-center">
                     <p class="text-micro font-bold text-rose-500 uppercase tracking-wide mb-1 flex items-center justify-center gap-1">
-                        🔥 Chuỗi
+                        <i data-lucide="flame" class="w-3.5 h-3.5 text-rose-500"></i> Chuỗi
                     </p>
                     <p class="text-xl font-black text-rose-600">
                         <span x-text="profileStampSummary.current_streak"></span>
