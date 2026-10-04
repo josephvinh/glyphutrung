@@ -13,7 +13,7 @@
 
 <<<<<<< HEAD
             <!-- 1. TRANG CHỦ — luôn hiện -->
-            <button @click="router.navigate('/dashboard')" type="button"
+            <button @click="changeModule('dashboard')" type="button"
                     class="flex-1 flex flex-col items-center gap-1 py-2 rounded-2xl active:scale-90 transition-transform"
                     :class="currentModule === 'dashboard' ? 'text-blue-600' : 'text-slate-400'">
                 <span class="w-10 h-8 rounded-lg flex items-center justify-center transition-colors backdrop-blur-sm"
@@ -35,7 +35,7 @@
 
 <<<<<<< HEAD
             <!-- 2. THIẾU NHI — chỉ ai có quyền students mới thấy -->
-            <button x-show="canAccess('students')" @click="router.navigate('/students')" type="button"
+            <button x-show="canAccess('students')" @click="changeModule('students')" type="button"
                     class="flex-1 flex flex-col items-center gap-1 py-2 rounded-2xl active:scale-90 transition-transform"
                     :class="(currentModule === 'students' || currentModule === 'student_profile') ? 'text-blue-600' : 'text-slate-400'"
 =======
@@ -55,7 +55,7 @@
 
 <<<<<<< HEAD
             <!-- 3. ĐIỂM DANH — chỉ ai có quyền attendance mới thấy -->
-            <button x-show="canAccess('attendance')" @click="router.navigate('/attendance')" type="button"
+            <button x-show="canAccess('attendance')" @click="changeModule('attendance')" type="button"
                     class="flex-1 flex flex-col items-center gap-1 py-2 rounded-2xl active:scale-90 transition-transform"
                     :class="currentModule === 'attendance' ? 'text-blue-600' : 'text-slate-400'"
 =======
@@ -75,7 +75,7 @@
 
 <<<<<<< HEAD
             <!-- 4. THÔNG BÁO — ai cũng thấy; chấm đỏ khi có thông báo chưa đọc -->
-            <button @click="router.navigate('/announcements')" type="button"
+            <button @click="changeModule('announcements')" type="button"
                     class="flex-1 flex flex-col items-center gap-1 py-2 rounded-2xl active:scale-90 transition-transform"
                     :class="currentModule === 'announcements' ? 'text-blue-600' : 'text-slate-400'">
                 <span class="w-10 h-8 rounded-lg flex items-center justify-center transition-colors backdrop-blur-sm"
@@ -105,7 +105,7 @@
 
 <<<<<<< HEAD
             <!-- 5. CÁ NHÂN — luôn hiện; chấm đỏ khi có việc cần làm hoặc bảo trì -->
-            <button @click="router.navigate('/settings')" type="button"
+            <button @click="changeModule('settings')" type="button"
                     class="flex-1 flex flex-col items-center gap-1 py-2 rounded-2xl active:scale-90 transition-transform"
                     :class="currentModule === 'settings' ? 'text-blue-600' : 'text-slate-400'">
                 <span class="w-10 h-8 rounded-lg flex items-center justify-center transition-colors backdrop-blur-sm"
