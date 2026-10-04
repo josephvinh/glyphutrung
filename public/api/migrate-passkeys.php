@@ -16,6 +16,7 @@
 
 require __DIR__ . '/../public/api/_bootstrap.php';
 require_login();
+require_csrf(); // Extra safety for data modification
 
 $role = $me['role_code'] ?? '';
 if ($role !== 'admin') {
@@ -155,7 +156,8 @@ try {
             last_used_at DATETIME NULL,
             reason VARCHAR(255),
             migrated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            INDEX idx_member (member_id)
+            INDEX idx_member (member_id),
+            INDEX idx_migrated (migrated_at)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     ");
 
