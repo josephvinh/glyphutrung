@@ -7,7 +7,7 @@
         <div class="flex items-start justify-between gap-4">
             <div class="flex-1 min-w-0">
                 <span class="inline-block text-xs font-bold text-amber-100 uppercase tracking-wider mb-2">✨ Lời Chúa Hôm Nay</span>
-                <p class="text-white font-medium text-base leading-relaxed" x-text="verse"></p>
+                <p class="text-slate-900 font-medium text-base leading-relaxed" x-text="verse"></p>
                 <p class="text-amber-100 font-semibold text-sm mt-3" x-text="'— ' + ref"></p>
             </div>
             <div class="shrink-0 w-10 h-10 rounded-full bg-amber-400/30 flex items-center justify-center">
