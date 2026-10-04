@@ -279,11 +279,6 @@ window.TNTT.shell = {
             this.initCore();
         }
 
-        // Gọi initBible() để tải stats Lời Chúa Mỗi Ngày (chỉ admin)
-        if (typeof this.initBible === 'function') {
-            this.initBible();
-        }
-
         // Dò tình trạng thông báo đẩy của máy này. Không hỏi quyền ở đây —
         // trình duyệt chỉ cho hỏi khi người dùng chạm vào nút, và hỏi ngay
         // lúc mở app thì hầu hết mọi người bấm Chặn cho xong.
