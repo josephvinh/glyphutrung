@@ -88,7 +88,12 @@ window.TNTT.router = {
         // Extract pathname from full URL
         try {
             const url = new URL(input);
-            path = url.pathname + url.search;
+            // Support clean URL mode: /students → index.php?_route=students
+            if (url.searchParams.has('_route')) {
+                path = '/' + url.searchParams.get('_route');
+            } else {
+                path = url.pathname;
+            }
         } catch (e) {
             // Not a full URL, treat as path
         }
