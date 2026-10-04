@@ -1,50 +1,40 @@
 <!-- ==========================================================
      DAILY BIBLE VERSE: Kinh Thánh hom nay
-     - Hien thi verse neu da boc hom nay
-     - Hien thi nut boc neu chua boc
      ========================================================== -->
 <div class="mt-2 mb-4" x-data="bibleCard()" x-init="init()">
-    <div id="bibleCard" class="relative overflow-hidden bg-gradient-to-br from-blue-700 via-blue-800 to-indigo-900 rounded-2xl shadow-xl border border-blue-400/20 p-5">
-
-        <!-- Loading state -->
-        <div x-show="loading" class="flex items-center justify-center py-4">
-            <div class="animate-spin rounded-full h-6 w-6 border-2 border-blue-300/30 border-t-blue-300"></div>
-        </div>
-
-        <!-- Has verse today -->
-        <div x-show="!loading && verse" class="relative z-10">
-            <div class="flex items-center gap-2 mb-3">
-                <div class="w-9 h-9 rounded-xl bg-blue-500/40 flex items-center justify-center shadow-inner">
-                    <i data-lucide="book-open" class="w-5 h-5 text-blue-200"></i>
-                </div>
-                <div>
-                    <span class="text-xs font-bold text-blue-200 uppercase tracking-wider">Lời Chúa Hôm Nay</span>
-                    <p class="text-[10px] text-blue-300/60">Dành cho bạn</p>
-                </div>
-            </div>
-            <p class="text-white text-sm leading-relaxed" x-text="verse"></p>
-            <p class="text-amber-300 text-xs font-semibold mt-3" x-text="'— ' + ref"></p>
-        </div>
-
-        <!-- No verse today - show draw button -->
-        <div x-show="!loading && !verse" class="relative z-10 flex items-center justify-between gap-4">
+    <!-- Has verse today -->
+    <div x-show="!loading && verse" id="bibleCard" class="relative overflow-hidden bg-gradient-to-br from-amber-500 via-orange-500 to-amber-600 rounded-2xl shadow-xl border border-amber-300/50 p-5 cursor-pointer hover:shadow-2xl transition-shadow" @click="drawVerse()">
+        <div class="flex items-start justify-between gap-4">
             <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2 mb-2">
-                    <div class="w-9 h-9 rounded-xl bg-blue-500/40 flex items-center justify-center shadow-inner">
-                        <i data-lucide="book-open" class="w-5 h-5 text-blue-200"></i>
-                    </div>
-                    <div>
-                        <span class="text-xs font-bold text-blue-200 uppercase tracking-wider">Lời Chúa Hôm Nay</span>
-                        <p class="text-[10px] text-blue-300/60">Nhận lời Chúa dành riêng cho bạn</p>
-                    </div>
-                </div>
-                <p class="text-blue-100/80 text-xs">Bốc thăm lời Chúa mỗi ngày để bắt đầu ngày mới.</p>
+                <span class="inline-block text-xs font-bold text-amber-100 uppercase tracking-wider mb-2">✨ Lời Chúa Hôm Nay</span>
+                <p class="text-white font-medium text-base leading-relaxed" x-text="verse"></p>
+                <p class="text-amber-100 font-semibold text-sm mt-3" x-text="'— ' + ref"></p>
+            </div>
+            <div class="shrink-0 w-10 h-10 rounded-full bg-amber-400/30 flex items-center justify-center">
+                <i data-lucide="sparkles" class="w-5 h-5 text-amber-200"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- No verse today - show draw button -->
+    <div x-show="!loading && !verse" id="bibleCard" class="relative overflow-hidden bg-gradient-to-br from-blue-600 via-indigo-600 to-blue-700 rounded-2xl shadow-xl border border-blue-400/30 p-5">
+        <div class="flex items-center justify-between gap-4">
+            <div class="flex-1 min-w-0">
+                <span class="inline-block text-xs font-bold text-blue-200 uppercase tracking-wider mb-1">✨ Lời Chúa Hôm Nay</span>
+                <p class="text-white/90 text-sm">Bốc thăm lời Chúa mỗi ngày để nhận lời Chúa dành riêng cho bạn.</p>
             </div>
             <button @click="drawVerse()" type="button"
                     class="shrink-0 inline-flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-900 text-sm font-bold rounded-full shadow-lg active:scale-95 transition-all">
                 <i data-lucide="sparkles" class="w-4 h-4"></i>
                 Bốc
             </button>
+        </div>
+    </div>
+
+    <!-- Loading state -->
+    <div x-show="loading" id="bibleCard" class="bg-gradient-to-br from-blue-600 via-indigo-600 to-blue-700 rounded-2xl shadow-xl border border-blue-400/30 p-5">
+        <div class="flex items-center justify-center py-4">
+            <div class="animate-spin rounded-full h-6 w-6 border-2 border-blue-300/30 border-t-blue-300"></div>
         </div>
     </div>
 </div>
@@ -59,7 +49,6 @@ function bibleCard() {
             this.loadTodayVerse();
         },
         loadTodayVerse() {
-            // Kiem tra localStorage truoc
             try {
                 const stored = localStorage.getItem('dailyBibleVerse');
                 if (stored) {
@@ -73,8 +62,6 @@ function bibleCard() {
                     }
                 }
             } catch(e) {}
-
-            // Goi API de lay verse (API se tra ve verse da luu neu cung IP trong 1 gio)
             this.fetchFromApi();
         },
         async fetchFromApi() {
@@ -84,7 +71,6 @@ function bibleCard() {
                 if (data.success && data.verse) {
                     this.verse = data.verse;
                     this.ref = data.ref || '';
-                    // Luu vao localStorage de hien thi offline
                     try {
                         localStorage.setItem('dailyBibleVerse', JSON.stringify({
                             date: new Date().toDateString(),
