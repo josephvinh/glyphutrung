@@ -1,22 +1,16 @@
 <!-- ==========================================================
      HEADER: Thong tin ca nhan + actions
-     - Desktop: AN (sidebar da co thong tin user)
-     - Mobile/Tablet: Hien header day du
+     - Hien tren moi man hinh, co mau nen dep
      ========================================================== -->
-<header class="app-header bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-6 lg:hidden relative z-[100] select-none">
+<header class="app-header bg-gradient-to-r from-slate-50 to-white border-b border-slate-200/80 px-4 sm:px-6 relative z-[100] select-none shadow-md">
     <div class="flex justify-between items-center gap-4 py-3 sm:py-4">
 
         <!-- Khoi thong tin ca nhan -->
         <div class="flex-1 min-w-0">
             <div class="flex items-center gap-3">
-                <!-- Avatar -->
-                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-black text-base sm:text-lg shadow-md shrink-0">
-                    <span x-text="user.fullName ? user.fullName.charAt(0).toUpperCase() : '?'"></span>
-                </div>
-
                 <!-- Text info -->
                 <div class="min-w-0 flex-1">
-                    <p class="text-xs text-slate-500 font-medium mb-0.5">Chao ngay moi,</p>
+                    <p class="text-xs text-slate-500 font-medium mb-0.5">Chào trưởng,</p>
                     <h1 class="text-sm sm:text-base font-bold text-slate-900 leading-tight truncate">
                         <span x-text="user.holyName" class="mr-1 text-blue-600"></span>
                         <span x-text="user.fullName"></span>
