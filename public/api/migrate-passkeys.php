@@ -7,6 +7,11 @@
  *
  * TRUY CẬP: http://your-domain/api/migrate-passkeys.php
  * CHỈ ADMIN: Cần đăng nhập với tài khoản admin trước
+ *
+ * SAFETY:
+ * - Dùng transaction để đảm bảo atomicity
+ * - Không xóa record mà chuyển sang bảng backup
+ * - Idempotent: chạy lại nhiều lần an toàn
  */
 
 require __DIR__ . '/../public/api/_bootstrap.php';
@@ -39,17 +44,20 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             .btn { background: #c8203a; color: white; border: none; padding: 15px 30px; font-size: 16px; border-radius: 8px; cursor: pointer; }
             .btn:hover { background: #a01830; }
             .btn:disabled { background: #ccc; cursor: not-allowed; }
-            .result { background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0; white-space: pre-wrap; font-family: monospace; }
+            .result { background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0; white-space: pre-wrap; font-family: monospace; font-size: 13px; max-height: 400px; overflow-y: auto; }
             .success { color: #16a34a; }
             .error { color: #dc2626; }
             .warning { background: #fef3c7; border: 1px solid #f59e0b; padding: 15px; border-radius: 8px; margin: 20px 0; }
+            .already-done { background: #f0fdf4; border: 1px solid #16a34a; padding: 15px; border-radius: 8px; margin: 20px 0; }
+            .summary { background: #fafafa; border: 1px solid #e5e5e5; padding: 15px; border-radius: 8px; margin: 20px 0; }
+            .summary strong { color: #c8203a; }
         </style>
     </head>
     <body>
         <h1>🔧 Fix Passkey Credentials</h1>
 
         <div class="warning">
-            ⚠️ <strong>Backup khuyến nghị:</strong> Nên backup database trước khi chạy.
+            ⚠️ <strong>Backup:</strong> Dữ liệu không hợp lệ sẽ được chuyển sang bảng backup <code>member_passkeys_invalid</code>, không bị xóa.
         </div>
 
         <div class="info">
@@ -57,19 +65,28 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             <br>Script này sẽ convert hex → binary cho các passkey bị ảnh hưởng.
         </div>
 
-        <button class="btn" onclick="runMigration()">🚀 Chạy Migration</button>
+        <button class="btn" id="runBtn" onclick="runMigration()">🚀 Chạy Migration</button>
 
         <div id="result" class="result" style="display:none"></div>
 
+        <div class="summary" id="summary" style="display:none">
+            <h3>📊 Tóm tắt</h3>
+            <div>Tổng passkeys: <strong id="total">-</strong></div>
+            <div>Đã OK: <strong id="okCount">-</strong></div>
+            <div>Đã fix (hex→binary): <strong id="fixedCount">-</strong></div>
+            <div>Chuyển sang backup: <strong id="invalidCount">-</strong></div>
+        </div>
+
         <script>
             async function runMigration() {
-                const btn = document.querySelector('.btn');
+                const btn = document.getElementById('runBtn');
                 btn.disabled = true;
                 btn.textContent = '⏳ Đang chạy...';
 
                 const resultDiv = document.getElementById('result');
                 resultDiv.style.display = 'block';
                 resultDiv.textContent = 'Đang xử lý...';
+                resultDiv.style.color = '#666';
 
                 try {
                     const res = await fetch(window.location.href, {
@@ -83,6 +100,14 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
                     if (data.ok) {
                         resultDiv.style.color = '#16a34a';
                         btn.textContent = '✅ Hoàn thành!';
+                        btn.style.display = 'none';
+
+                        // Show summary
+                        document.getElementById('summary').style.display = 'block';
+                        document.getElementById('total').textContent = data.total || 0;
+                        document.getElementById('okCount').textContent = data.ok_count || 0;
+                        document.getElementById('fixedCount').textContent = data.fixed_count || 0;
+                        document.getElementById('invalidCount').textContent = data.invalid_count || 0;
                     } else {
                         resultDiv.style.color = '#dc2626';
                         btn.textContent = '❌ Lỗi';
@@ -109,61 +134,121 @@ $result = [
     'total' => 0,
     'ok_count' => 0,
     'fixed_count' => 0,
-    'deleted_count' => 0,
-    'remaining' => 0,
+    'invalid_count' => 0,
+    'invalid_records' => [],
     'details' => []
 ];
 
 try {
-    $all = db_all("SELECT * FROM member_passkeys");
-    $result['total'] = count($all);
+    $db = db();
 
-    if (empty($all)) {
-        $result['message'] = 'Không có passkey nào để fix.';
-        output_json($result);
-    }
+    // Tạo bảng backup nếu chưa có
+    $db->exec("
+        CREATE TABLE IF NOT EXISTS member_passkeys_invalid (
+            id INT PRIMARY KEY,
+            member_id INT NOT NULL,
+            credential_id TEXT NOT NULL,
+            public_key TEXT NOT NULL,
+            user_handle VARCHAR(255) NOT NULL,
+            sign_count INT DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            last_used_at DATETIME NULL,
+            reason VARCHAR(255),
+            migrated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_member (member_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    ");
 
-    $hexPattern = '/^[0-9a-fA-F]+$/';
-    $validPattern = '/^[A-Za-z0-9+\/]+=*$/';
+    $db->beginTransaction();
 
-    foreach ($all as $pk) {
-        $credId = $pk['credential_id'];
+    try {
+        $all = db_all("SELECT * FROM member_passkeys");
+        $result['total'] = count($all);
 
-        // Kiểm tra xem có phải hex không
-        if (preg_match($hexPattern, $credId) && strlen($credId) % 2 == 0) {
-            $binary = hex2bin($credId);
-            if ($binary !== false) {
-                $correct = base64_encode($binary);
-                if (preg_match($validPattern, $correct)) {
-                    db_run("UPDATE member_passkeys SET credential_id = ? WHERE id = ?",
-                            [$correct, $pk['id']]);
-                    $result['fixed_count']++;
-                    $result['details'][] = "✅ Fixed ID={$pk['id']}, member_id={$pk['member_id']} (hex→binary)";
-                    continue;
+        if (empty($all)) {
+            $result['message'] = 'Không có passkey nào để fix.';
+            $db->commit();
+            output_json($result);
+        }
+
+        $hexPattern = '/^[0-9a-fA-F]+$/';
+        $validPattern = '/^[A-Za-z0-9+\/]+=*$/';
+
+        foreach ($all as $pk) {
+            $credId = $pk['credential_id'];
+
+            // Case 1: Hex format → convert to binary
+            if (preg_match($hexPattern, $credId) && strlen($credId) % 2 == 0) {
+                $binary = hex2bin($credId);
+                if ($binary !== false) {
+                    $correct = base64_encode($binary);
+                    if (preg_match($validPattern, $correct)) {
+                        // Idempotent: chỉ update nếu thực sự khác
+                        if ($credId !== $correct) {
+                            db_run("UPDATE member_passkeys SET credential_id = ? WHERE id = ?",
+                                [$correct, $pk['id']]);
+                            $result['fixed_count']++;
+                            $result['details'][] = "Fixed ID={$pk['id']} (hex→binary)";
+                        } else {
+                            $result['ok_count']++;
+                        }
+                        continue;
+                    }
                 }
             }
+
+            // Case 2: Valid base64 format → OK
+            if (preg_match($validPattern, $credId)) {
+                $result['ok_count']++;
+                continue;
+            }
+
+            // Case 3: Invalid format → move to backup table
+            $stmt = $db->prepare("
+                INSERT INTO member_passkeys_invalid
+                    (id, member_id, credential_id, public_key, user_handle, sign_count, created_at, last_used_at, reason)
+                VALUES
+                    (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE reason = VALUES(reason), migrated_at = CURRENT_TIMESTAMP
+            ");
+            $stmt->execute([
+                $pk['id'],
+                $pk['member_id'],
+                $pk['credential_id'],
+                $pk['public_key'],
+                $pk['user_handle'],
+                $pk['sign_count'],
+                $pk['created_at'],
+                $pk['last_used_at'],
+                'invalid_format'
+            ]);
+
+            // Xóa khỏi bảng chính
+            db_run("DELETE FROM member_passkeys WHERE id = ?", [$pk['id']]);
+
+            $result['invalid_count']++;
+            $result['invalid_records'][] = [
+                'id' => $pk['id'],
+                'member_id' => $pk['member_id']
+            ];
+            $result['details'][] = "Moved ID={$pk['id']} to backup (invalid format)";
         }
 
-        // Kiểm tra format base64 thường - đã OK
-        if (preg_match($validPattern, $credId)) {
-            $result['ok_count']++;
-            continue;
-        }
+        // Đếm còn lại
+        $remaining = db_one("SELECT COUNT(*) as cnt FROM member_passkeys");
+        $result['remaining'] = $remaining['cnt'];
 
-        // Format lạ - xóa
-        db_run("DELETE FROM member_passkeys WHERE id = ?", [$pk['id']]);
-        $result['deleted_count']++;
-        $result['details'][] = "⚠️ Deleted ID={$pk['id']} (invalid format)";
+        $result['message'] = "Đã xử lý {$result['total']} passkeys: {$result['ok_count']} OK, {$result['fixed_count']} đã fix, {$result['invalid_count']} chuyển sang backup.";
+
+        // Log
+        log_action('migrate', 'system', $result['message']);
+
+        $db->commit();
+
+    } catch (Throwable $e) {
+        $db->rollBack();
+        throw $e;
     }
-
-    // Đếm còn lại
-    $remaining = db_one("SELECT COUNT(*) as cnt FROM member_passkeys");
-    $result['remaining'] = $remaining['cnt'];
-
-    $result['message'] = "Đã xử lý {$result['total']} passkeys: {$result['ok_count']} OK, {$result['fixed_count']} đã fix, {$result['deleted_count']} đã xóa.";
-
-    // Log
-    log_action('migrate', 'system', $result['message']);
 
 } catch (Throwable $e) {
     $result['ok'] = false;
