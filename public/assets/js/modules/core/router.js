@@ -4,7 +4,7 @@
    ========================================================== */
 window.TNTT = window.TNTT || {};
 
-window.TNTT.router = {
+window.TNTT['core/router'] = {
     // Current parsed state
     currentModule: 'dashboard',
     params: {},
