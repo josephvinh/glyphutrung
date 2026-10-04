@@ -12,6 +12,32 @@
 #    - chốt kiểm quyền trong từng tệp PHP của api/
 # ============================================================
 
+# ============================================================
+#  CLEAN URL ROUTING — SPA Support
+#
+#  Cho phép truy cập /students, /attendance thay vì /#/students
+#  Dùng cho Vue Router history mode.
+# ============================================================
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # Skip API endpoints — không rewrite /api/
+    RewriteCond %{REQUEST_URI} !^/api/
+
+    # Skip static assets — không rewrite /assets/
+    RewriteCond %{REQUEST_URI} !^/assets/
+
+    # Skip existing files — chỉ rewrite khi file không tồn tại
+    RewriteCond %{REQUEST_FILENAME} !-f
+
+    # Skip existing directories — chỉ rewrite khi directory không tồn tại
+    RewriteCond %{REQUEST_FILENAME} !-d
+
+    # Rewrite all other paths to index.php with _route parameter
+    RewriteRule ^(.*)$ index.php?_route=$1 [QSA,L]
+</IfModule>
+
 # --- Không cho liệt kê thư mục ---
 # Bọc IfModule vì có hosting cấm chỉ thị Options trong .htaccess
 <IfModule mod_autoindex.c>

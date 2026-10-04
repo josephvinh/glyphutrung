@@ -12,6 +12,8 @@ if (!$__dev) ob_start();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#c8203a">
+    <!-- Platform detection for iOS/Android specific styling -->
+    <script>(function(){try{var ua=navigator.userAgent;if(/iPhone|iPad|iPod/i.test(ua)){document.documentElement.classList.add('ios-platform')}else if(/Android/i.test(ua)){document.documentElement.classList.add('android-platform')}}catch(e){}})();</script>
 
     <!-- BIỂU TƯỢNG APP
          icon.svg   : tab trình duyệt, nét sắc ở mọi cỡ
