@@ -30,37 +30,33 @@ public/assets/js/bundle.min.js
 public/assets/js/login.min.js
 
 # ============================================================
-# DEVELOPMENT ONLY — KHÔNG PUSH LÊN HOST
+# LƯU Ý: build/, tests/, docs/, phpunit.xml, package*.json, tsconfig.json,
+# CLAUDE.md PHẢI được track trong git (trước đây bị liệt ở đây với ý "không lên
+# host" khiến file MỚI trong các thư mục đó bị bỏ qua âm thầm — xem
+# docs/process/GITHUB_SETUP.md §10). Việc loại file dev khỏi host làm ở bước
+# TRIỂN KHAI (rsync --exclude), không phải bằng .gitignore.
 # ============================================================
 
-# CI/CD workflows (chạy trên GitHub, không cần trên host)
-# .github/ - GIỮ LẠI TRONG GIT để GitHub Actions hoạt động
-
-# Claude Code workspace files
+# Claude Code workspace / kết quả review
 REVIEW_RESULTS/
-
-# Development artifacts (build tools, tests, docs - không cần trên production)
-build/
-tests/
-docs/
 scratch/
 
-# PHPUnit
+# PHPUnit (bản PHAR tải về — không track)
 phpunit10.phar
-phpunit.xml
 
-# Dev config files
-tsconfig.json
-package.json
-package-lock.json
+# Kết quả chạy test trên máy (không commit)
+test-results/
+playwright-report/
+junit.xml
+
+# Quyền Claude Code riêng từng máy — không commit (.claude/launch.json đã liệt ở trên)
+.claude/settings.local.json
 
 # Claude workspace directories
 "NGOC VINH"/
 "[working-dir] NGOC VINH"/
 Enter/
 
-# Documentation
-CLAUDE.md
 CHANGES_SUMMARY.md
 
 # Runtime logs (không commit log chạy máy)
