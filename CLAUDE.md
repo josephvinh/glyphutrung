@@ -1,10 +1,11 @@
 # CLAUDE.md — Hướng dẫn cho Claude Code trên repo này
 
 > Claude Code (và mọi agent) đọc file này trước khi làm việc. Giữ **ngắn và
-> đúng**. Quy định đầy đủ: `docs/process/AGENT_RULES.md`. Quy trình:
-> `docs/process/FEATURE_WORKFLOW.md`, `TESTING.md`, `FUNCTIONAL_AUDIT.md`,
-> `DESIGN_AUDIT.md`, `GITHUB_SETUP.md`. Lỗ hổng đang mở:
-> `docs/security/SECURITY_AUDIT.md`.
+> đúng**. Mục lục toàn bộ quy trình + quy ước: **`docs/process/README.md`**.
+> Quy định đầy đủ: `docs/process/AGENT_RULES.md`. Lỗ hổng đang mở:
+> `docs/security/SECURITY_AUDIT.md`. Mười loại audit (bảo mật, chức năng, design,
+> a11y, hiệu năng, riêng tư, toàn vẹn dữ liệu, hạ tầng, phụ thuộc, chất lượng
+> code) — xem README.
 
 ## Dự án là gì
 
