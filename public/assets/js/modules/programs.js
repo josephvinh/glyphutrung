@@ -80,9 +80,22 @@ window.TNTT.programs = {
             window.TNTT.toast.warning('Chương trình dạng chiến dịch cần chọn ngày diễn ra!');
             return;
         }
-        // Giờ chốt (nếu nhập) phải sau giờ bắt đầu
-        if (f.cutoffTime && f.cutoffTime <= f.startTime) {
-            window.TNTT.toast.warning('Giờ chốt phải sau giờ bắt đầu!');
+        // Hai mốc giờ nay BẮT BUỘC nhập (bỏ mặc định ẩn +30'): giờ tính đi
+        // trễ và giờ khoá sổ. Thứ tự: bắt đầu < tính đi trễ ≤ khoá sổ.
+        if (!f.cutoffTime) {
+            window.TNTT.toast.warning('Vui lòng nhập giờ tính đi trễ!');
+            return;
+        }
+        if (f.cutoffTime <= f.startTime) {
+            window.TNTT.toast.warning('Giờ tính đi trễ phải sau giờ bắt đầu!');
+            return;
+        }
+        if (!f.absentTime) {
+            window.TNTT.toast.warning('Vui lòng nhập giờ khoá sổ (tính vắng)!');
+            return;
+        }
+        if (f.absentTime < f.cutoffTime) {
+            window.TNTT.toast.warning('Giờ khoá sổ phải từ giờ tính đi trễ trở đi!');
             return;
         }
         f.name = f.name.trim();
@@ -99,8 +112,6 @@ window.TNTT.programs = {
             f.dayOfWeek = null;
             f.daysOfWeek = [];
         }
-        if (f.absentTime && f.absentTime <= f.startTime) { window.TNTT.toast.warning('Giờ "tính vắng" phải sau giờ bắt đầu!'); return; }
-
         // LƯU LÊN MÁY CHỦ (trước đây chỉ đổi cục bộ -> mất khi tải lại).
         const r = await this.api('programs', 'save', this.programPayload(f));
         if (!r || !r.ok) { window.TNTT.toast.error(r && r.error || 'Không lưu được chương trình.'); return; }
