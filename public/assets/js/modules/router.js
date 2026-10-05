@@ -195,10 +195,13 @@ window.TNTT.router = {
         this.currentModule = module;
         this.params = params || {};
 
-        // Update Alpine component's currentModule
+        // Update Alpine component's currentModule.
+        // Alpine v3 lưu scope ở thuộc tính _x_dataStack (KHÔNG phải _xDataStack);
+        // viết sai tên -> điều kiện luôn false -> component.currentModule kẹt ở
+        // 'dashboard', nên thanh thẻ Thiếu Nhi không bao giờ sáng thẻ đang mở.
         const alpineEl = document.querySelector('[x-data="tnttApp"]');
-        if (alpineEl && alpineEl._xDataStack && alpineEl._xDataStack[0]) {
-            const data = alpineEl._xDataStack[0];
+        if (alpineEl && alpineEl._x_dataStack && alpineEl._x_dataStack[0]) {
+            const data = alpineEl._x_dataStack[0];
             if ('currentModule' in data) {
                 data.currentModule = module;
             }
