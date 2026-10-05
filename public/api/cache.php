@@ -17,6 +17,7 @@ class Cache {
     }
 
     public static function get(string $key): ?array {
+        self::init();  // Ensure dir is initialized before using
         $file = self::$dir . '/' . md5($key) . '.json';
         if (!file_exists($file)) return null;
 
@@ -38,6 +39,7 @@ class Cache {
     }
 
     public static function del(string $key): void {
+        self::init();  // Ensure dir is initialized before using
         $file = self::$dir . '/' . md5($key) . '.json';
         if (file_exists($file)) unlink($file);
     }
