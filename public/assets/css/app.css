@@ -501,19 +501,17 @@ body {
 }
 
 /* ==========================================================
-   Ô NHẬP NGÀY/GIỜ TRONG LƯỚI 2 CỘT
-   Safari/iOS gán cho input[type=date|datetime-local|time|month|week] một
-   min-width NỘI TẠI khá lớn (đủ để hiện trọn chuỗi ngày, VD "ngày 5 thg 10,
-   2026"). Trong các popup dùng `grid grid-cols-2` (Hạn hiển thị + Trạng thái,
-   Ngày sinh + Giới tính...), min-width đó làm cột phình quá 1fr khiến hai ô
-   CHỒNG LÊN NHAU. Dù đã có w-full, grid item vẫn không co dưới min-width của
-   ô nhập -> cho phép co về 0 để vừa cột.
+   Ô NHẬP / SELECT TRONG LƯỚI–FLEX 2 CỘT
+   Safari/iOS gán cho input ngày/giờ VÀ cho <select> (theo nhãn option dài
+   nhất) một min-width NỘI TẠI khá lớn. Trong các popup dùng `grid grid-cols-2`
+   hoặc flex (Hạn hiển thị + Trạng thái, Ngày sinh + Giới tính, Khối + Lớp...),
+   min-width đó làm ô phình quá track khiến các ô CHỒNG LÊN NHAU — gặp ở rất
+   nhiều modal, không chỉ ô ngày. Các control ở đây đều w-full nên cho
+   min-width:0 để co vừa cột. Trừ checkbox/radio vì chúng có kích thước cố định.
    ========================================================== */
-input[type="date"],
-input[type="datetime-local"],
-input[type="time"],
-input[type="month"],
-input[type="week"] { min-width: 0; }
+input:not([type="checkbox"]):not([type="radio"]),
+select,
+textarea { min-width: 0; }
 
 /* ==========================================================
    TIỆN ÍCH
