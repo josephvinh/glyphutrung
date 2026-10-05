@@ -586,7 +586,23 @@ window.TNTT.core = {
         tuchoi:     { icon: 'x',           label: 'Từ chối',    cls: 'bg-rose-50 text-rose-600 border-rose-100' },
         diemdanh:   { icon: 'clock',       label: 'Điểm danh',  cls: 'bg-amber-50 text-amber-600 border-amber-100' },
         phanquyen:  { icon: 'shield-check', label: 'Phân quyền', cls: 'bg-blue-50 text-blue-600 border-blue-100' },
-        baotri:     { icon: 'wrench',      label: 'Bảo trì',    cls: 'bg-slate-100 text-slate-600 border-slate-200' }
+        baotri:     { icon: 'wrench',      label: 'Bảo trì',    cls: 'bg-slate-100 text-slate-600 border-slate-200' },
+        // Các action do MÁY CHỦ ghi (public/api/*.php) — phải có mặt ở đây, nếu
+        // không view gọi logDefs[action].cls trên undefined -> vỡ cả bảng nhật ký.
+        chuyen:     { icon: 'arrow-right-left', label: 'Chuyển', cls: 'bg-blue-50 text-blue-600 border-blue-100' },
+        'doi-qua':  { icon: 'gift',        label: 'Đổi quà',    cls: 'bg-emerald-50 text-emerald-600 border-emerald-100' },
+        fav:        { icon: 'star',        label: 'Yêu thích',  cls: 'bg-amber-50 text-amber-600 border-amber-100' },
+        unfav:      { icon: 'star',        label: 'Bỏ thích',   cls: 'bg-slate-100 text-slate-600 border-slate-200' },
+        migrate:    { icon: 'refresh-cw',  label: 'Di trú',     cls: 'bg-slate-100 text-slate-600 border-slate-200' },
+        warn:       { icon: 'shield-alert', label: 'Cảnh báo',  cls: 'bg-rose-50 text-rose-600 border-rose-100' }
+    },
+
+    // Luôn trả về một def hợp lệ: action lạ (ghi từ phiên bản sau, hoặc dữ liệu
+    // cũ) không được làm vỡ bảng nhật ký nữa. Chuẩn hoá biến thể gạch dưới
+    // 'doi_qua' (máy chủ ghi lẫn với 'doi-qua') về cùng một def.
+    logDef(action) {
+        const key = action === 'doi_qua' ? 'doi-qua' : action;
+        return this.logDefs[key] || { icon: 'activity', label: 'Khác', cls: 'bg-slate-100 text-slate-600 border-slate-200' };
     },
 
     logSearch: '',

@@ -91,8 +91,8 @@
                                      :class="i > 0 ? 'border-t border-slate-50' : ''">
 
                                     <div class="tap-safe w-8 h-8 shrink-0 rounded-xl flex items-center justify-center border"
-                                         :class="logDefs[l.action].cls">
-                                        <i :data-lucide="logDefs[l.action].icon" class="w-3.5 h-3.5"></i>
+                                         :class="logDef(l.action).cls">
+                                        <i :data-lucide="logDef(l.action).icon" class="w-3.5 h-3.5"></i>
                                     </div>
 
                                     <div class="flex-1 min-w-0">
