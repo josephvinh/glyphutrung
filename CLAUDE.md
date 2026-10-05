@@ -2,8 +2,8 @@
 
 > Claude Code (và mọi agent) đọc file này trước khi làm việc. Giữ **ngắn và
 > đúng**. Quy định đầy đủ: `docs/process/AGENT_RULES.md`. Quy trình:
-> `docs/process/FEATURE_WORKFLOW.md`, `TESTING.md`, `GITHUB_SETUP.md`. Lỗ hổng
-> đang mở: `docs/security/SECURITY_AUDIT.md`.
+> `docs/process/FEATURE_WORKFLOW.md`, `TESTING.md`, `DESIGN_AUDIT.md`,
+> `GITHUB_SETUP.md`. Lỗ hổng đang mở: `docs/security/SECURITY_AUDIT.md`.
 
 ## Dự án là gì
 

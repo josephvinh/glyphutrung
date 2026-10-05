@@ -140,6 +140,10 @@ màn hình (trước/sau).
 - **Review (người hoặc `tntt-reviewer`/Opus):** đọc diff theo
   `docs/process/TESTING.md` → "Checklist review". Đặc biệt đọc kỹ **những dòng bị
   xóa**.
+- **Design review (bắt buộc nếu đụng UI — `views/*.php`, `assets/css/*`, JS
+  render):** đối chiếu `docs/process/DESIGN_AUDIT.md` (baseline brand/typography/
+  mobile/a11y), chạy `tests/e2e/axe.js`, và kèm **ảnh chụp trước/sau** ở điện
+  thoại + máy tính.
 - **Security (`tntt-security`/Opus):** bắt buộc khi thay đổi đụng: đăng nhập/
   phiên, phân quyền, dữ liệu cá nhân thiếu nhi/nhân sự, endpoint công khai
   (`somoc*`, `tracuu`, `bxh`, `push`, `bible`), upload, hoặc cache. Dùng checklist
