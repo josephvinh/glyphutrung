@@ -1,5 +1,22 @@
 # TNTT Agent Team - Hướng Dẫn Sử Dụng
 
+> ⚠️ **ĐỌC TRƯỚC:** Quy định BẮT BUỘC cho mọi agent ở `docs/process/AGENT_RULES.md`
+> và `CLAUDE.md` (gốc repo). Quy trình: `docs/process/FEATURE_WORKFLOW.md`,
+> `TESTING.md`, `GITHUB_SETUP.md`. Lỗ hổng đang mở: `docs/security/SECURITY_AUDIT.md`.
+> File này chỉ hướng dẫn **cách gọi** agent team — luật thắng khi mâu thuẫn.
+
+## Luật cứng (tóm tắt — chi tiết ở AGENT_RULES.md)
+
+1. Không commit/push/PR/comment GitHub khi **chưa được yêu cầu rõ**.
+2. "Xong" = đã chạy test + mở app thật và **dán bằng chứng** (không đoán).
+3. Xóa code phải `grep` mọi nơi gọi trước; một PR = một mục đích.
+4. Không nuốt lỗi dữ liệu quan trọng (`INSERT IGNORE`/`catch{}`).
+5. Không làm yếu phân quyền; endpoint ghi đủ `require_write` + `require_permission`
+   + kiểm phạm vi. Đụng dữ liệu lớp → thêm test "lớp khác → 403".
+6. Secret chỉ ở `config/config.local.php`; không đưa định danh model vào repo.
+7. Không chạy seed/install trên DB thật; không lưu PII vào `public/cache/`.
+8. **Không tự spawn subagent** trừ khi người dùng yêu cầu dùng subagent.
+
 ## Tổng Quan
 
 Hệ thống Agent Team cho phép bạn điều phối nhiều AI agents để làm việc trên các tasks khác nhau một cách hiệu quả.
