@@ -4,9 +4,13 @@
  */
 
 class Cache {
-    private static string $dir = __DIR__ . '/../cache';
+    private static string $dir;
 
     public static function init(): void {
+        // Cache ra NGOÀI public/ để tránh truy cập trực tiếp qua URL
+        if (!isset(self::$dir)) {
+            self::$dir = dirname(__DIR__, 2) . '/storage/cache';
+        }
         if (!is_dir(self::$dir)) {
             mkdir(self::$dir, 0755, true);
         }

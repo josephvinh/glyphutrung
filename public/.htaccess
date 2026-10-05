@@ -16,7 +16,7 @@
 #  CLEAN URL ROUTING — SPA Support
 #
 #  Cho phép truy cập /students, /attendance thay vì /#/students
-#  Dùng cho Vue Router history mode.
+#  App dùng Alpine.js SPA — rewrite tất cả path về index.php.
 # ============================================================
 <IfModule mod_rewrite.c>
     RewriteEngine On
@@ -47,7 +47,7 @@
 # --- Cấm tải các loại tệp dữ liệu / cấu hình / sao lưu ---
 # Apache 2.4 trở lên
 <IfModule mod_authz_core.c>
-    <FilesMatch "\.(sql|gz|tar|tgz|zip|bak|log|ini|env|md)$">
+    <FilesMatch "\.(sql|gz|tar|tgz|zip|bak|log|ini|env|md|json)$">
         Require all denied
     </FilesMatch>
     # `error_log` không có đuôi nên lọt luật trên
@@ -62,7 +62,7 @@
 # Apache 2.2 (cú pháp cũ) — chỉ chạy khi KHÔNG có mod_authz_core
 <IfModule !mod_authz_core.c>
     <IfModule mod_authz_host.c>
-        <FilesMatch "\.(sql|gz|tar|tgz|zip|bak|log|ini|env|md)$">
+        <FilesMatch "\.(sql|gz|tar|tgz|zip|bak|log|ini|env|md|json)$">
             Order allow,deny
             Deny from all
         </FilesMatch>

@@ -25,7 +25,8 @@ $config = [
     'pass_attendance' => 60,
 
     // Mật khẩu cấp cho tài khoản mới. Lần đăng nhập đầu buộc phải đổi.
-    'default_password' => 'tntt@2026',
+    // Giá trị mặc định rỗng — đặt giá trị thật trong config.local.php
+    'default_password' => '',
 
     // Khoá để chạy install.php qua trình duyệt khi máy chủ không có
     // Terminal. Đặt một chuỗi ngẫu nhiên dài. Để RỖNG (mặc định) nghĩa là
@@ -37,9 +38,9 @@ $config = [
     // Khai public/private/subject trong config.local.php trên máy chủ.
     // Tạo khoá: php -r 'require "config/push.php"; print_r(push_tao_khoa());'
     'push' => [
-        'public'  => 'BI34XJuXSHfOCKAIgFTUSdmr4uqI-GUt9yPi8KJ87HpaIcuZJ3rPczdw8-neF0heejYE0VE9o0zwDzZxy4z1Bs',
-        'private' => 'E0wuL-lV0WULtShw2VBPn0a9UK-uh8WAfmb1AKytDDo',
-        'subject' => 'mailto:tuongngocvinh@gmail.com',
+        'public'  => '',
+        'private' => '',
+        'subject' => 'mailto:admin@example.com',
     ],
 
     // THƯ VIỆN TÀI LIỆU — nơi lưu file + giới hạn.

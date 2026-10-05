@@ -131,6 +131,13 @@ function save_verse(string $ip, string $text, string $ref, string $translation =
     );
 }
 
+// S10: Cleanup bible_daily records older than 30 days
+try {
+    db_run('DELETE FROM bible_daily WHERE fetched_at < DATE_SUB(NOW(), INTERVAL 30 DAY)');
+} catch (Throwable $e) {
+    // Ignore cleanup errors
+}
+
 switch ($action) {
 
     // ================================================================
@@ -177,7 +184,7 @@ switch ($action) {
 
     // ================================================================
     case 'list':
-        // Chi admin moi xem duoc danh sach IP
+        // Chi admin moi xem duoc danh sach IP (da bam)
         $me = require_permission('settings', 'view');
 
         $rows = db_all(
@@ -193,7 +200,7 @@ switch ($action) {
             'rows' => array_map(function ($r) {
                 return [
                     'id' => (int) $r['id'],
-                    'ip' => $r['ip_address'],
+                    'ip' => $r['ip_address'] ? hash('crc32c', $r['ip_address']) : '', // PR-6: Bam IP khi hien thi
                     'verse' => $r['verse_text'],
                     'ref' => $r['verse_ref'],
                     'translation' => $r['verse_translation'],

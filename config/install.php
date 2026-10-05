@@ -91,81 +91,58 @@ say("✓ Đã chạy lược đồ ($made lệnh tạo bảng, $skipped lệnh b
 // ---------------------------------------------------------------
 // 2b. NÂNG CẤP LƯỢC ĐỒ CHO CSDL ĐÃ TỒN TẠI
 //
-// CREATE TABLE IF NOT EXISTS không đụng vào bảng đã có, nên cột mới
-// phải thêm bằng ALTER. Mỗi lệnh đều bọc try/catch — chạy lại lần hai
-// báo "đã có cột" thì bỏ qua, không phải lỗi.
+// Schema mới nhất đã có trong schema.sql (source of truth).
+// Chạy migrations/*.sql để nâng cấp DB cũ:
+//   - Migrations đã chạy sẽ được bỏ qua (CREATE TABLE IF NOT EXISTS,
+//     ALTER với trùng cột → catch & bỏ qua)
+//   - Thứ tự: 001 → 007 (migration 007 thêm hidden_at/deleted_at)
+//
+// LƯU Ý: Không có inline ALTER ở đây nữa. Tất cả delta đều qua migrations.
 // ---------------------------------------------------------------
 $migrations = [
-    "CREATE TABLE IF NOT EXISTS push_subscriptions (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        member_id INT NOT NULL,
-        endpoint VARCHAR(500) NOT NULL,
-        ua VARCHAR(255) NULL,
-        created_at DATETIME NOT NULL,
-        last_ok_at DATETIME NULL,
-        token_hash CHAR(64) NULL,
-        ring_seq INT UNSIGNED NOT NULL DEFAULT 0,
-        ring_done INT UNSIGNED NOT NULL DEFAULT 0,
-        ring_lock_until DATETIME NULL,
-        ring_tries TINYINT UNSIGNED NOT NULL DEFAULT 0,
-        last_fail_code SMALLINT NULL,
-        UNIQUE KEY uq_push (endpoint(255)),
-        UNIQUE KEY uq_push_token (token_hash),
-        KEY idx_push_member (member_id),
-        CONSTRAINT fk_push_member FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
-    "CREATE TABLE IF NOT EXISTS push_outbox (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        member_id INT NOT NULL,
-        title VARCHAR(120) NOT NULL,
-        body VARCHAR(255) NOT NULL,
-        url VARCHAR(120) NOT NULL DEFAULT '/',
-        tag VARCHAR(48) NOT NULL DEFAULT 'tntt-chung',
-        created_at DATETIME NOT NULL,
-        taken_at DATETIME NULL,
-        KEY idx_outbox_cho (member_id, taken_at, id),
-        CONSTRAINT fk_outbox_member FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
-    "ALTER TABLE members MODIFY status
-        ENUM('chờ duyệt','đang phục vụ','tạm nghỉ','đã nghỉ') NOT NULL DEFAULT 'đang phục vụ'",
-    "ALTER TABLE members ADD COLUMN register_note VARCHAR(255) NULL",
-    "ALTER TABLE members ADD COLUMN registered_at DATETIME NULL",
-    "ALTER TABLE members ADD COLUMN birth_date DATE NULL",
-    // Cột lịch/thi đua cho chương trình (buổi lặp nhiều thứ, khoảng ngày, QR,
-    // và cờ count_for_emulation = tích Mộc). CSDL mới đã có sẵn từ schema.sql;
-    // các ALTER này nâng cấp CSDL cũ (trùng cột thì bỏ qua theo catch bên dưới).
-    "ALTER TABLE programs ADD COLUMN count_for_emulation TINYINT(1) NOT NULL DEFAULT 0",
-    "ALTER TABLE programs ADD COLUMN days_of_week VARCHAR(32) NULL",
-    "ALTER TABLE programs ADD COLUMN absent_time TIME NULL",
-    "ALTER TABLE programs ADD COLUMN effective_from DATE NULL",
-    "ALTER TABLE programs ADD COLUMN effective_to DATE NULL",
-    "ALTER TABLE programs ADD COLUMN allow_qr TINYINT(1) NOT NULL DEFAULT 1",
-    "ALTER TABLE programs ADD COLUMN auto_close_after_event TINYINT(1) NOT NULL DEFAULT 0",
-    "ALTER TABLE programs ADD COLUMN color VARCHAR(48) NULL",
-    "ALTER TABLE programs ADD COLUMN icon VARCHAR(48) NULL",
-    "ALTER TABLE programs ADD COLUMN sort_order TINYINT NOT NULL DEFAULT 1",
-    // Web Push: token máy (băm SHA-256) + hàng đợi chuông bền (#100, #107)
-    "ALTER TABLE push_subscriptions ADD COLUMN token_hash CHAR(64) NULL",
-    "ALTER TABLE push_subscriptions ADD UNIQUE KEY uq_push_token (token_hash)",
-    "ALTER TABLE push_subscriptions ADD COLUMN ring_seq INT UNSIGNED NOT NULL DEFAULT 0",
-    "ALTER TABLE push_subscriptions ADD COLUMN ring_done INT UNSIGNED NOT NULL DEFAULT 0",
-    "ALTER TABLE push_subscriptions ADD COLUMN ring_lock_until DATETIME NULL",
-    "ALTER TABLE push_subscriptions ADD COLUMN ring_tries TINYINT UNSIGNED NOT NULL DEFAULT 0",
-    "ALTER TABLE push_subscriptions ADD COLUMN last_fail_code SMALLINT NULL",
+    __DIR__ . '/migrations/001_initial_schema.sql',
+    __DIR__ . '/migrations/002_qr_card_templates.sql',
+    __DIR__ . '/migrations/003_stamps_rewards.sql',
+    __DIR__ . '/migrations/004_tracuu_throttle.sql',
+    __DIR__ . '/migrations/005_tracuu_code_fails.sql',
+    __DIR__ . '/migrations/006_bible_tracking.sql',
+    __DIR__ . '/migrations/007_student_retention.sql',
 ];
+
 $mig = 0;
-foreach ($migrations as $sqlMig) {
-    try { $pdo->exec($sqlMig); $mig++; }
-    catch (PDOException $e) {
-        $msg = strtolower($e->getMessage());
-        if (!str_contains($msg, 'duplicate column name') && !str_contains($msg, 'already exists')
-            && !str_contains($msg, 'duplicate key name')) {
-            say('LỖI nâng cấp: ' . $e->getMessage());
-            exit(1);
+foreach ($migrations as $migFile) {
+    if (!file_exists($migFile)) {
+        say("  ⚠ Bỏ qua: {$migFile} không tồn tại");
+        continue;
+    }
+    $sql = file_get_contents($migFile);
+    if ($sql === false) {
+        say("  ⚠ Lỗi đọc: {$migFile}");
+        continue;
+    }
+    // Bỏ dòng comment rồi tách theo dấu chấm phẩy
+    $sql = preg_replace('/^\s*--.*$/m', '', $sql);
+    $parts = array_filter(array_map('trim', explode(';', $sql)), fn($s) => $s !== '');
+
+    foreach ($parts as $stmt) {
+        try { $pdo->exec($stmt); }
+        catch (PDOException $e) {
+            $msg = strtolower($e->getMessage());
+            $benign = ['duplicate key name', 'duplicate foreign key', 'duplicate check constraint',
+                       'already exists', 'duplicate column name', 'no such table'];
+            $isBenign = false;
+            foreach ($benign as $b) {
+                if (str_contains($msg, $b)) { $isBenign = true; break; }
+            }
+            if (!$isBenign) {
+                say('  LỖI SQL: ' . $e->getMessage());
+                say('  Câu lệnh: ' . substr($stmt, 0, 120) . '...');
+            }
         }
     }
+    $mig++;
 }
-say("✓ Nâng cấp lược đồ ($mig lệnh áp dụng)");
+say("✓ Nâng cấp lược đồ ({$mig} migration files đã chạy)");
 
 // ---------------------------------------------------------------
 // 3. DỮ LIỆU KHỞI TẠO

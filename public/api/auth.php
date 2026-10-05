@@ -77,9 +77,16 @@ switch ($action) {
         // Hết lượt thử thì dừng ngay, không kiểm mật khẩu nữa
         login_throttle($phone);
 
+        // S-NEW-2: Timing attack mitigation - dummy hash check khi user không tồn tại
+        if (!$m) {
+            password_verify($pass, '$2y$10$dummy.hash.for.timing.equalization.123456789012345678901234');
+            login_failed($phone);
+            json_fail('Số điện thoại hoặc mật khẩu không đúng.', 401);
+        }
+
         // Cùng một thông điệp cho cả hai trường hợp — không tiết lộ
         // số điện thoại nào có tài khoản.
-        if (!$m || !password_verify_upgrade($pass, $m['password_hash'], $m['id'])) {
+        if (!password_verify_upgrade($pass, $m['password_hash'], $m['id'])) {
             login_failed($phone);
             json_fail('Số điện thoại hoặc mật khẩu không đúng.', 401);
         }
@@ -106,8 +113,9 @@ switch ($action) {
 
     // -------------------------------------------------------------
     case 'logout':
-        // Chỉ POST: GET cho phép trang ngoài đăng xuất người dùng bằng <img src=...> (#88).
+        // S8: CSRF protection - yêu cầu POST với CSRF token
         require_post();
+        require_csrf();
         if (current_member()) log_action('xoa', 'auth', 'Đăng xuất', '');
         $_SESSION = [];
         session_destroy();

@@ -107,6 +107,11 @@ switch ($action) {
             json_fail('Không đặt được đơn, vui lòng kiểm tra lại.');
         }
 
+        // S4: Xác thực mã em + ngày sinh trước khi đặt đơn
+        require_once __DIR__ . '/_tracuu.php';
+        $auth = tracuu_auth($code, $password);
+        if (!$auth) http_response_code(403);
+
         try {
             $r = rewards_place_order((int) $student['id'], $yearId, $items, $password);
         } catch (RewardsError $e) {
@@ -136,6 +141,11 @@ switch ($action) {
         if ($code === '' || $password === '') {
             json_fail('Không hủy được đơn, vui lòng kiểm tra lại.');
         }
+
+        // S4: Xác thực mã em + ngày sinh trước khi hủy đơn
+        require_once __DIR__ . '/_tracuu.php';
+        $auth = tracuu_auth($code, $password);
+        if (!$auth) http_response_code(403);
 
         $student = db_one('SELECT id FROM students WHERE code = ?', [$code]);
         if (!$student) {

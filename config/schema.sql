@@ -199,7 +199,11 @@ CREATE TABLE IF NOT EXISTS students (
     mother_name  VARCHAR(128) NULL,
     mother_phone VARCHAR(20)  NULL,
     created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_student_name (full_name)
+    hidden_at    TIMESTAMP NULL DEFAULT NULL COMMENT 'ngày bị ẩn (PR-2 retention)',
+    deleted_at   TIMESTAMP NULL DEFAULT NULL COMMENT 'ngày bị xóa mềm (PR-2 retention)',
+    INDEX idx_student_name (full_name),
+    INDEX idx_students_hidden (hidden_at),
+    INDEX idx_students_deleted (deleted_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS enrollments (

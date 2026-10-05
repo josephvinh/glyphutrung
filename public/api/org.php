@@ -160,7 +160,8 @@ switch ($action) {
 
         // Mật khẩu tạm sinh ngẫu nhiên, không dùng chung một chuỗi cho mọi
         // người — nếu không thì ai cũng đoán được mật khẩu của người mới.
-        $temp = 'tntt' . random_int(1000, 9999);
+        // Dùng bin2hex(random_bytes(4)) cho entropy cao hơn (8 hex = 65536 combos)
+        $temp = 'TNTT' . bin2hex(random_bytes(4));
         db_run('UPDATE members SET password_hash=?, must_change_pw=1 WHERE id=?',
                [password_hash($temp, PASSWORD_DEFAULT), $id]);
 

@@ -150,6 +150,7 @@ foreach ($students as $s) {
     $rowsEm[] = [
         'id'         => $sid,
         'ten'        => trim(($s['holy_name'] ? $s['holy_name'] . ' ' : '') . $s['full_name']),
+        'ten_ngan'   => trim(($s['holy_name'] ? $s['holy_name'] . ' ' : '') . get_first_name($s['full_name'])), // PR-5: Chi hien ten
         'class_id'   => (int) $s['class_id'],
         'class_name' => $s['class_name'] ?? '',
         'diem'       => $diem,
@@ -189,6 +190,11 @@ $tieuDeKy    = ($period === 'tuan')
 
 function e_($s) { return htmlspecialchars((string) $s, ENT_QUOTES, 'UTF-8'); }
 function chuDau($ten) { $t = trim($ten); return $t === '' ? '?' : mb_strtoupper(mb_substr($t, 0, 1, 'UTF-8'), 'UTF-8'); }
+// PR-5: Tra ve chi ten (khong ho) de giam lo thong tin tre em
+function get_first_name($fullName) {
+    $parts = preg_split('/\s+/', trim($fullName), -1, PREG_SPLIT_NO_EMPTY);
+    return $parts ? end($parts) : $fullName;
+}
 
 // giữ lại lọc khác khi đổi 1 tham số (dùng cho link)
 function urlVoi(array $ghi): string {
@@ -325,8 +331,8 @@ select{border:1px solid #e2e8f0;border-radius:999px;padding:8px 12px;font-size:1
       <?php $medalBuc=['p1'=>'<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="#f6b100" stroke="#b7860b" stroke-width="1"><circle cx="12" cy="12" r="10"/><text x="12" y="16" text-anchor="middle" font-size="12" font-weight="bold" fill="#fff">1</text></svg>','p2'=>'<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="#9aa7b4" stroke="#6b7280" stroke-width="1"><circle cx="12" cy="12" r="10"/><text x="12" y="16" text-anchor="middle" font-size="12" font-weight="bold" fill="#fff">2</text></svg>','p3'=>'<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="#c8813e" stroke="#92400e" stroke-width="1"><circle cx="12" cy="12" r="10"/><text x="12" y="16" text-anchor="middle" font-size="12" font-weight="bold" fill="#fff">3</text></svg>']; foreach ($od as $o): $d=$o['d']; ?>
         <div class="pod <?= $o['p'] ?>">
           <div class="medal"><?= $medalBuc[$o['p']] ?? '' ?></div>
-          <div class="ava"><?= e_(chuDau($d['ten'])) ?></div>
-          <div class="ten"><?= e_($d['ten']) ?></div>
+          <div class="ava"><?= e_(chuDau($d['ten_ngan'] ?? $d['ten'])) ?></div>
+          <div class="ten"><?= e_($d['ten_ngan'] ?? $d['ten']) ?></div>
           <?php if ($type!=='lop'): ?><div class="lop"><?= e_($d['class_name']) ?></div><?php endif; ?>
           <div class="diem"><?= rtrim(rtrim(number_format($d['diem'],1),'0'),'.') ?></div>
         </div>
@@ -334,7 +340,7 @@ select{border:1px solid #e2e8f0;border-radius:999px;padding:8px 12px;font-size:1
     </div>
 
     <?php if (isset($top[0])): ?>
-      <div class="champ"><?= e_($tenChampion) ?>: <b><?= e_($top[0]['ten']) ?></b>
+      <div class="champ"><?= e_($tenChampion) ?>: <b><?= e_($top[0]['ten_ngan'] ?? $top[0]['ten']) ?></b>
         <?= $type!=='lop' && $top[0]['class_name'] ? '('.e_($top[0]['class_name']).')' : '' ?> — <?= rtrim(rtrim(number_format($top[0]['diem'],1),'0'),'.') ?> điểm <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2z"/></svg></div>
     <?php endif; ?>
 
@@ -346,7 +352,7 @@ select{border:1px solid #e2e8f0;border-radius:999px;padding:8px 12px;font-size:1
           <div class="medalrow"><?= $mej[$d['medal']] ?? '' ?></div>
           <div class="ava2"><?= e_(chuDau($d['ten'])) ?></div>
           <div class="main">
-            <div class="t"><?= e_($d['ten']) ?></div>
+            <div class="t"><?= e_($d['ten_ngan'] ?? $d['ten']) ?></div>
             <div class="s">
               <?php if ($type!=='lop'): ?><?= e_($d['class_name']) ?> · <?php endif; ?>
               <?= e_($d['detail'] ?? '') ?>

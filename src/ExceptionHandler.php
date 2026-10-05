@@ -38,8 +38,13 @@ class ExceptionHandler
         $this->logException($e);
 
         // Neu da bat dau output, khong the send JSON nua
+        // S7: Chỉ hiện message khi debug mode, không lộ thông tin nội bộ
         if (headers_sent()) {
-            echo "\n<!-- Exception: " . $e->getMessage() . " -->";
+            if ($this->debug) {
+                echo "\n<!-- Exception: " . $e->getMessage() . " -->";
+            } else {
+                echo "\n<!-- error -->";
+            }
             return;
         }
 
