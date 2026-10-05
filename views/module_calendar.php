@@ -43,7 +43,7 @@
         <div class="grid grid-cols-7">
             <template x-for="date in calendarDays" :key="date.key">
                 <div class="min-h-[80px] sm:min-h-[100px] p-1.5 sm:p-2 border-t border-r border-slate-100 relative transition-colors hover:bg-slate-50"
-                     :class="date.isEmpty ? 'bg-slate-50/50/50' : (date.isToday ? 'bg-blue-50/50' : '')">
+                     :class="date.isEmpty ? 'bg-slate-50/50' : (date.isToday ? 'bg-blue-50/50' : '')">
                     <!-- Số ngày -->
                     <div class="flex items-center justify-between mb-1">
                         <span class="w-6 h-6 rounded-full flex items-center justify-center text-micro font-bold"
