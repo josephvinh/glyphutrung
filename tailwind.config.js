@@ -35,6 +35,12 @@ module.exports = {
       fontSize: {
         micro: ['11px', '1.35'],
       },
+      // Token bo góc cho bottom-sheet/modal — khớp --r-sheet trong app.css.
+      // Các view dùng rounded-sheet / rounded-t-sheet (popup), cần khai ở đây
+      // thì Tailwind mới sinh ra lớp tương ứng.
+      borderRadius: {
+        sheet: '1.25rem',
+      },
     },
   },
   plugins: [],
