@@ -4,6 +4,9 @@
 > CI hiện tại kiểm PHP + JS tĩnh nhưng **chưa** mở app trong trình duyệt — chính
 > khoảng trống đó để lọt lỗi #194 (app vỡ nhưng PHPUnit + ESLint vẫn xanh). Tài
 > liệu này mô tả đủ các tầng để lấp khoảng trống đó.
+>
+> Tài liệu này nói **cách chạy** test. **Rà cái gì** để khẳng định chức năng
+> đúng (ca biên, bất biến nghiệp vụ, theo từng vai): `docs/process/FUNCTIONAL_AUDIT.md`.
 
 ---
 

@@ -144,6 +144,9 @@ màn hình (trước/sau).
   render):** đối chiếu `docs/process/DESIGN_AUDIT.md` (baseline brand/typography/
   mobile/a11y), chạy `tests/e2e/axe.js`, và kèm **ảnh chụp trước/sau** ở điện
   thoại + máy tính.
+- **Audit chức năng (module bị đụng):** theo `docs/process/FUNCTIONAL_AUDIT.md` —
+  kiểm happy + biên + lỗi + toàn vẹn dữ liệu, **theo từng vai**, và các bất biến/
+  chuyển-trạng-thái liên quan.
 - **Security (`tntt-security`/Opus):** bắt buộc khi thay đổi đụng: đăng nhập/
   phiên, phân quyền, dữ liệu cá nhân thiếu nhi/nhân sự, endpoint công khai
   (`somoc*`, `tracuu`, `bxh`, `push`, `bible`), upload, hoặc cache. Dùng checklist
