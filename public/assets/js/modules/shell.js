@@ -236,8 +236,6 @@ window.TNTT.shell = {
         // Khởi tạo module mặc định (dashboard)
         this.changeModule('dashboard');
 
-        }
-
         this.initIconWatcher();
 
         // Gọi initCore() để khởi tạo các tính năng core và điểm danh ngoại tuyến (#121)
