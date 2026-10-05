@@ -4,20 +4,15 @@
  */
 
 class Cache {
-    private static string $dir = '';
+    private static string $dir = __DIR__ . '/../cache';
 
     public static function init(): void {
-        // Cache ra NGOÀI public/ để tránh truy cập trực tiếp qua URL
-        if (self::$dir === '') {
-            self::$dir = dirname(__DIR__, 2) . '/storage/cache';
-        }
         if (!is_dir(self::$dir)) {
             mkdir(self::$dir, 0755, true);
         }
     }
 
     public static function get(string $key): ?array {
-        self::init();  // Ensure dir is initialized before using
         $file = self::$dir . '/' . md5($key) . '.json';
         if (!file_exists($file)) return null;
 
@@ -39,17 +34,16 @@ class Cache {
     }
 
     public static function del(string $key): void {
-        self::init();  // Ensure dir is initialized before using
         $file = self::$dir . '/' . md5($key) . '.json';
         if (file_exists($file)) unlink($file);
     }
 
     public static function flush(): void {
-        self::init();  // Init trước khi dùng $dir
         foreach (glob(self::$dir . '/*.json') as $file) {
             unlink($file);
         }
         // Ghi lại mốc thời gian để client polling phát hiện thay đổi
+        self::init();
         file_put_contents(self::$dir . '/sync.txt', time());
     }
 }

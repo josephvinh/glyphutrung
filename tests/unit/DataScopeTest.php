@@ -52,15 +52,14 @@ class DataScopeTest extends TestCase
         self::stopServer();
     }
 
-    /** Nạp data_scope_for() từ đúng mã nguồn data/_core.php (CQ-3 refactor). */
+    /** Nạp data_scope_for() từ đúng mã nguồn data.php (fail, không skip, nếu không tìm thấy). */
     private static function loadDataScopeFor(): void
     {
         if (function_exists('data_scope_for')) return;
-        // CQ-3: hàm đã move sang data/_core.php
-        $src = file_get_contents(__DIR__ . '/../../public/api/data/_core.php');
+        $src = file_get_contents(__DIR__ . '/../../public/api/data.php');
         self::assertIsString($src);
         self::assertSame(1, preg_match('/^function data_scope_for\(.*?^}\s*$/ms', $src, $m),
-            'Không tìm thấy hàm data_scope_for() ở cột 0 trong public/api/data/_core.php');
+            'Không tìm thấy hàm data_scope_for() ở cột 0 trong public/api/data.php');
         eval($m[0]);
         self::assertTrue(function_exists('data_scope_for'));
     }

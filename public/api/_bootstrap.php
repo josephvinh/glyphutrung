@@ -48,18 +48,30 @@ $exceptionHandler->register();
 // Register fatal error handler
 register_shutdown_function([TNTT\ExceptionHandler::class, 'handleFatal']);
 
-// Nén phản hồi khi trình duyệt hỗ trợ. Chỉ dùng MỘT cơ chế nén
-// (brotli ưu tiên, fallback gzip). Bỏ qua nếu server đã tự nén.
-if (!ini_get('zlib.output_compression')) {
-    if (extension_loaded('brotli')
-        && stripos($_SERVER['HTTP_ACCEPT_ENCODING'] ?? '', 'br') !== false) {
-        // Brotli nén tốt hơn gzip ~20%
-        @ob_start('brotli_compress');
-        header('Content-Encoding: br');
-    } elseif (extension_loaded('zlib')
-        && stripos($_SERVER['HTTP_ACCEPT_ENCODING'] ?? '', 'gzip') !== false) {
-        @ob_start('ob_gzhandler');
-    }
+// Nén phản hồi khi trình duyệt hỗ trợ. data.php có thể tới vài MB (điểm danh
+// cả đoàn); JSON nén gzip giảm ~10 lần → mạng di động đỡ hẳn. Bọc buffer TRƯỚC
+// khi in bất kỳ thứ gì. Bỏ qua nếu server đã tự nén (zlib.output_compression).
+if (extension_loaded('zlib')
+    && !ini_get('zlib.output_compression')
+    && stripos($_SERVER['HTTP_ACCEPT_ENCODING'] ?? '', 'gzip') !== false) {
+    @ob_start('ob_gzhandler');
+}
+
+/* ================================================================
+   BROTLI COMPRESSION — nén mạnh hơn gzip ~20%
+   Apache: cần mod_brotli + .htaccess
+   Nginx: cần ngx_http_brotli_filter_module
+   Fallback: tự nén bằng brotli extension nếu có
+   ================================================================ */
+if (extension_loaded('brotli')
+    && !ini_get('zlib.output_compression')
+    && stripos($_SERVER['HTTP_ACCEPT_ENCODING'] ?? '', 'br') !== false) {
+    // Nén brotli level 5 (cân bằng tốc độ/nén), buffer trước ob_gzhandler
+    // Dùng giá trị số 0 thay vì constant để tránh lỗi undefined constant trên một số host
+    @ob_start(function($buffer) {
+        return brotli_compress($buffer, 0, 5); // 0 = BROTLI_GENERIC
+    });
+    header('Content-Encoding: br');
 }
 
 header('Content-Type: application/json; charset=utf-8');
@@ -130,22 +142,10 @@ function require_login_pending_pw(): array
  * đã qua require_permission(). Bỏ bước kiểm phạm vi = leo thang chiều ngang
  * (xem lỗi F1 trong docs/BAO_CAO_PHAN_QUYEN_THANH_VIEN.md).
  */
-/**
- * Lấy mức quyền của thành viên hiện tại trên một module.
- * Kết quả được MEMOIZE trong request để tránh N+1 queries khi gọi nhiều lần.
- * PERF-2: Memoization cache theo member_id + module_key.
- */
 function permission_of(string $moduleKey): string
 {
-    static $cache = [];
-
     $me = current_member();
     if (!$me) return 'none';
-
-    $cacheKey = $me['id'] . '|' . $moduleKey;
-    if (isset($cache[$cacheKey])) {
-        return $cache[$cacheKey];
-    }
 
     // Quyền = HỢP của vai trò GỐC (members.role_code) + mọi vai kiêm nhiệm.
     // Kiêm nhiệm chỉ THÊM quyền, KHÔNG hạ vai gốc: một Quản trị/BĐH tự thêm
@@ -156,10 +156,7 @@ function permission_of(string $moduleKey): string
     $activeRoles = array_column($assignments, 'role_code');
     $activeRoles[] = $me['role_code'];
     $activeRoles = array_values(array_unique(array_filter($activeRoles)));
-    if (empty($activeRoles)) {
-        $cache[$cacheKey] = 'none';
-        return 'none';
-    }
+    if (empty($activeRoles)) return 'none';
 
     // Lấy mọi mức quyền của các vai rồi chọn cao nhất THEO HẠNG
     // (none < view < edit). KHÔNG dùng SQL MAX(level): level là chuỗi nên so
@@ -175,8 +172,6 @@ function permission_of(string $moduleKey): string
     foreach ($rows as $r) {
         if (($hang[$r['level']] ?? 0) > ($hang[$tot] ?? 0)) $tot = $r['level'];
     }
-
-    $cache[$cacheKey] = $tot;
     return $tot;
 }
 

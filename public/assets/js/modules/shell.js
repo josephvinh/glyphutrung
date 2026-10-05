@@ -21,6 +21,17 @@ window.TNTT.shell = {
     // CÁC HÀM TIỆN ÍCH CHUNG
     // ==========================================
 
+    // Bỏ dấu tiếng Việt để tìm kiếm: gõ "tuong" vẫn ra "Tường", gõ "daminh" vẫn ra "Đaminh"
+    normalizeText(str) {
+        return (str === null || str === undefined ? '' : String(str))
+            .normalize('NFD')
+            .replace(/[̀-ͯ]/g, '')
+            .replace(/đ/g, 'd')
+            .replace(/Đ/g, 'D')
+            .toLowerCase()
+            .trim();
+    },
+
     /**
      * So khớp tìm kiếm thiếu nhi toàn diện:
      * 1. Tên, Tên thánh riêng lẻ
@@ -235,6 +246,11 @@ window.TNTT.shell = {
 
         // Khởi tạo module mặc định (dashboard)
         this.changeModule('dashboard');
+
+        // Khởi tạo URL router - phải sau khi changeModule đầu tiên
+        if (window.TNTT?.router?.init) {
+            window.TNTT.router.init();
+        }
 
         this.initIconWatcher();
 

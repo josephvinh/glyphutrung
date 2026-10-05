@@ -23,14 +23,6 @@ return [
     'pass_score'      => 5,
     'pass_attendance' => 60,
 
-    // PR-2: Retention policy cho hồ sơ thiếu nhi
-    // Ẩn: sau 12 tháng không hoạt động (không ghi danh, không cập nhật)
-    // Xóa: sau 7 năm từ ngày tạo hoặc theo yêu cầu phụ huynh
-    'retention' => [
-        'hide_after_months'  => 12,  // Ẩn sau 12 tháng
-        'delete_after_years' => 7,   // Xóa sau 7 năm
-    ],
-
     // Mật khẩu cấp cho tài khoản mới. Lần đăng nhập đầu buộc phải đổi.
     // ⚠️ QUAN TRỌNG: Đổi thành chuỗi ngẫu nhiên dài trước khi deploy production!
     // Ví dụ: openssl_rand_pseudo_bytes(16) -> hex hoặc dùng password generator

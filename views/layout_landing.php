@@ -248,9 +248,7 @@ $icons = ['lock' => '🔐', 'book' => '📒', 'search' => '📘', 'trophy' => '�
     }
 
     function showVerse(verse, ref) {
-        // S6: XSS prevention - dùng textContent thay vì innerHTML
-        verseArea.textContent = verse;
-        refArea.textContent = ref;
+        verseArea.innerHTML = '<div class="verse-box"><p class="verse-text">' + verse + '</p><span class="verse-ref">' + ref + '</span></div>';
         verseArea.style.display = 'block';
         ctaBtn.style.display = 'none';
     }

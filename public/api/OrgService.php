@@ -4,7 +4,8 @@
  *
  * Khối & Lớp: tách logic nghiệp vụ ra khỏi org.php.
  * Giữ nguyên cấu trúc switch/case để không phá API contract.
- * Nên chuyển sang class-based endpoints khi có thời gian refactor đầy đủ.
+ *
+ * TODO: Chuyển sang class-based endpoints khi có thời gian refactor đầy đủ
  */
 
 class OrgService

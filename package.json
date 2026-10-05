@@ -32,21 +32,22 @@
     "@playwright/test": "^1.63.0",
     "@types/node": "^26.6.2",
     "autoprefixer": "^10.4.16",
+    "esbuild": "^0.28.2",
+    "eslint": "^9.15.0",
+    "playwright": "^1.63.0",
+    "postcss": "^8.4.31",
+    "sharp": "^0.33.5",
+    "tailwindcss": "^3.2.7",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
     "color": "^4.2.3",
     "color-convert": "^2.0.1",
     "color-name": "^1.1.4",
     "color-string": "^1.9.1",
     "detect-libc": "^2.1.2",
-    "esbuild": "^0.28.2",
-    "eslint": "^9.15.0",
     "is-arrayish": "^0.3.4",
-    "playwright": "^1.63.0",
-    "postcss": "^8.4.31",
     "semver": "^7.8.5",
-    "sharp": "^0.33.5",
-    "simple-swizzle": "^0.2.4",
-    "tailwindcss": "^3.2.7",
-    "typescript": "^7.0.2"
-  },
-  "dependencies": {}
+    "simple-swizzle": "^0.2.4"
+  }
 }

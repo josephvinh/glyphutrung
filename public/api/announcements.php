@@ -202,24 +202,16 @@ switch ($action) {
     case 'read':
         require_write();
         $me = require_permission('announcements', 'view');
-        try {
-            db_run('INSERT IGNORE INTO announcement_reads (member_id, announcement_id) VALUES (?,?)',
-                   [$me['id'], (int) ($in['id'] ?? 0)]);
-        } catch (Throwable $e) {
-            error_log('[announcements read] ' . $e->getMessage());
-        }
+        db_run('INSERT IGNORE INTO announcement_reads (member_id, announcement_id) VALUES (?,?)',
+               [$me['id'], (int) ($in['id'] ?? 0)]);
         json_out(['ok' => true]);
 
     case 'readall':
         require_write();
         $me = require_permission('announcements', 'view');
-        try {
-            db_run('INSERT IGNORE INTO announcement_reads (member_id, announcement_id)
-                    SELECT ?, id FROM announcements WHERE year_id = ? AND status = ?',
-                   [$me['id'], $yid, 'đã phát']);
-        } catch (Throwable $e) {
-            error_log('[announcements readall] ' . $e->getMessage());
-        }
+        db_run('INSERT IGNORE INTO announcement_reads (member_id, announcement_id)
+                SELECT ?, id FROM announcements WHERE year_id = ? AND status = ?',
+               [$me['id'], $yid, 'đã phát']);
         json_out(['ok' => true]);
 
     // -------------------------------------------------------------

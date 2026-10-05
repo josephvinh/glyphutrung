@@ -71,7 +71,7 @@ if (!$__dev) ob_start();
     <meta charset="UTF-8">
     <!-- Cho phép phóng to (GLV lớn tuổi đọc chữ nhỏ) + hỗ trợ tai thỏ iPhone -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#e11d36">
+    <meta name="theme-color" content="#c8203a">
 <!-- Áp chế độ tối TRƯỚC khi vẽ trang, tránh nháy trắng -->
     <script>try{var d=localStorage.getItem('darkMode');if(d==='true')document.documentElement.classList.add('dark')}catch(e){}</script>
     <!-- Platform detection for iOS/Android specific styling -->

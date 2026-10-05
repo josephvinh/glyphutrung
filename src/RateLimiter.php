@@ -35,14 +35,13 @@ class RateLimiter
         return 'ip_' . $this->getClientIp();
     }
 
-    /** Lấy IP client (hỗ trợ proxy) - S5: chống XFF spoof */
+    /** Lấy IP client (hỗ trợ proxy) */
     private function getClientIp(): string
     {
         $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
-        // Chỉ tin X-Forwarded-For khi request đến từ trusted proxy
-        $trusted = ['127.0.0.1', '::1', 'localhost'];
+        // X-Forwarded-For có thể bị spoof, chỉ dùng khi tin tưởng proxy
         if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])
-            && in_array($_SERVER['REMOTE_ADDR'] ?? '', $trusted, true)) {
+            && in_array($_SERVER['REMOTE_ADDR'] ?? '', ['127.0.0.1', '::1', 'localhost'], true) === false) {
             $ips = array_map('trim', explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']));
             $ip = $ips[0] ?? $ip;
         }
