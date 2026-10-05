@@ -501,6 +501,21 @@ body {
 }
 
 /* ==========================================================
+   Ô NHẬP NGÀY/GIỜ TRONG LƯỚI 2 CỘT
+   Safari/iOS gán cho input[type=date|datetime-local|time|month|week] một
+   min-width NỘI TẠI khá lớn (đủ để hiện trọn chuỗi ngày, VD "ngày 5 thg 10,
+   2026"). Trong các popup dùng `grid grid-cols-2` (Hạn hiển thị + Trạng thái,
+   Ngày sinh + Giới tính...), min-width đó làm cột phình quá 1fr khiến hai ô
+   CHỒNG LÊN NHAU. Dù đã có w-full, grid item vẫn không co dưới min-width của
+   ô nhập -> cho phép co về 0 để vừa cột.
+   ========================================================== */
+input[type="date"],
+input[type="datetime-local"],
+input[type="time"],
+input[type="month"],
+input[type="week"] { min-width: 0; }
+
+/* ==========================================================
    TIỆN ÍCH
    ========================================================== */
 /* Dải trượt ngang tràn ra sát mép, bù lại padding của vùng nội dung */
