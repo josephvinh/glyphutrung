@@ -1,6 +1,6 @@
 # Báo Cáo Tiến Độ Audit
 
-**Ngày:** 2026-05-10 (cập nhật lần 3)
+**Ngày:** 2026-05-10 (final)
 **Người cập nhật:** Claude Code
 
 ---
@@ -10,16 +10,26 @@
 | Trạng thái | Số lượng |
 |-------------|-----------|
 | ✅ Hoàn thành | 44 |
-| 🔄 Đang làm | 0 |
-| ⏳ Chưa bắt đầu | 0 |
-| ⏭️ Bỏ qua | 0 |
-| **Tổng** | **44** |
+| ❌ Bỏ qua | 2 (Đ1, Đ6) |
+| **Tổng** | **44 + 2 decisions** |
 
-**Tiến độ:** 100% (44/44)
+**Tiến độ:** 100% audit + Đ2/Đ3/Đ4/Đ5 + Đ0 = 5/7 giai đoạn #198
 
 ---
 
-## Files đã thay đổi
+## Issue #198 Alignment
+
+| Giai đoạn | Issue #198 | Status |
+|------------|------------|--------|
+| Đ0 - Lưới an toàn | Test ảnh-chụp | ✅ |
+| Đ1 - Autoloader | composer.json, PSR-4 | ❌ Bỏ qua |
+| Đ2 - Logic ra khỏi web root | data.php refactored | ✅ |
+| Đ3 - Định tuyến mỏng | Dead code removed | ✅ |
+| Đ4 - Chẻ front-end | Backend modules | ✅ |
+| Đ5 - Migration + config | Schema unified | ✅ |
+| Đ6 - Test tooling | Consolidation | ❌ Bỏ qua |
+
+**Đã hoàn thành 5/7 giai đoạn có thể làm được**
 
 ### PHP Files
 | File | Thay đổi |
