@@ -4,11 +4,11 @@
  */
 
 class Cache {
-    private static string $dir;
+    private static string $dir = '';
 
     public static function init(): void {
         // Cache ra NGOÀI public/ để tránh truy cập trực tiếp qua URL
-        if (!isset(self::$dir)) {
+        if (self::$dir === '') {
             self::$dir = dirname(__DIR__, 2) . '/storage/cache';
         }
         if (!is_dir(self::$dir)) {
@@ -43,11 +43,11 @@ class Cache {
     }
 
     public static function flush(): void {
+        self::init();  // Init trước khi dùng $dir
         foreach (glob(self::$dir . '/*.json') as $file) {
             unlink($file);
         }
         // Ghi lại mốc thời gian để client polling phát hiện thay đổi
-        self::init();
         file_put_contents(self::$dir . '/sync.txt', time());
     }
 }
