@@ -30,6 +30,25 @@ agent là `CLAUDE.md` (gốc repo).
 > Mỗi audit: **convention** (how-to) ở đây; **báo cáo toàn-app** từng đợt lưu
 > `docs/audit/<TÊN>_<YYYY-MM>.md`; finding trong một PR để thẳng ở PR.
 
+## Cách gọi audit
+
+**Bằng lệnh (Claude Code)** — dùng slash command `.claude/commands/audit.md`:
+
+```
+/audit            # hoặc /audit all  → chạy TẤT CẢ theo thứ tự ưu tiên
+/audit security   # chạy một loại
+/audit performance
+```
+
+Tên hợp lệ: `security · functional · design · a11y · performance · privacy ·
+data · infra · deps · code` (hoặc `all`). Lệnh sẽ: dựng môi trường test, làm theo
+tài liệu quy ước tương ứng, ghi báo cáo vào `docs/audit/<TÊN>_<YYYY-MM>.md`, rồi
+tổng hợp trong chat. Mặc định **chỉ rà + báo cáo, không sửa/commit**.
+
+**Bằng lời** (nếu không dùng slash command): nói thẳng, ví dụ *"audit toàn bộ
+theo docs/process"* hoặc *"chạy audit bảo mật + hiệu năng"* — agent làm đúng quy
+ước này.
+
 ## Khi nào dùng cái nào (nhanh)
 
 - **Làm tính năng mới** → `FEATURE_WORKFLOW` + `TESTING` + `FUNCTIONAL_AUDIT`
