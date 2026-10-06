@@ -35,7 +35,7 @@ try {
     $hideCutoff = date('Y-m-d H:i:s', strtotime("-{$hideAfterMonths} months"));
 
     // Tìm các em đang ẩn nhưng không có enrollment "đang sinh hoạt" gần cutoff
-    // Dựa trên: students (id), enrollments (student_id, status, year_id), years (id, start_date)
+    // Dựa trên: students (id), enrollments (student_id, status, year_id), school_years (id, start_date)
     $stmt = db()->prepare("
         UPDATE students s
         SET s.hidden_at = NOW()
@@ -43,7 +43,7 @@ try {
           AND s.deleted_at IS NULL
           AND NOT EXISTS (
               SELECT 1 FROM enrollments e
-              JOIN years y ON y.id = e.year_id
+              JOIN school_years y ON y.id = e.year_id
               WHERE e.student_id = s.id
                 AND e.status = 'đang sinh hoạt'
                 AND y.start_date >= ?

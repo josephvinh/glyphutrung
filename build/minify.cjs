@@ -95,9 +95,8 @@ function buildTailwind() {
     fs.writeFileSync(path.join(cssBase, 'bundle.min.css'), cssMin.code);
     console.log('CSS :', kb(cssRaw.length), '->', kb(cssMin.code.length));
 
-    // BUNDLE MÀN ĐĂNG NHẬP: passkey (window.Passkey) + login (component
-    // loginScreen). Trang đăng nhập là trang riêng, chỉ cần 2 mảnh này.
-    const loginFiles = [ path.join(jsBase, 'modules/passkey.js'), path.join(jsBase, 'login.js') ];
+    // BUNDLE MÀN ĐĂNG NHẬP: chỉ component loginScreen (Alpine).
+    const loginFiles = [ path.join(jsBase, 'login.js') ];
     const loginRaw = loginFiles.map(read).join('\n;\n');
     const loginMin = await esbuild.transform(loginRaw, { loader: 'js', minify: true, legalComments: 'none' });
     fs.writeFileSync(path.join(jsBase, 'login.min.js'), loginMin.code);
