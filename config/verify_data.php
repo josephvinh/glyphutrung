@@ -70,6 +70,8 @@ echo "\n";
 echo "--- DATA-3: Stamp Balance Reconciliation ---\n";
 
 try {
+    // PR-5 fix: Bỏ ss.current_balance < 0 vì số dư âm có thể hợp lệ
+    // (khi xóa điểm danh đã tạo tem mà em đã tiêu)
     $query = "
         SELECT ss.student_id, ss.current_balance, ss.held_balance,
                COALESCE(SUM(st.amount), 0) AS sum_transactions
@@ -77,7 +79,6 @@ try {
         LEFT JOIN stamp_transactions st ON st.student_id = ss.student_id AND st.year_id = ss.year_id
         GROUP BY ss.student_id, ss.year_id
         HAVING ss.current_balance <> COALESCE(SUM(st.amount), 0)
-           OR ss.current_balance < 0
            OR ss.held_balance < 0
     ";
 

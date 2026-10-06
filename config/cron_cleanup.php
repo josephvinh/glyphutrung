@@ -29,22 +29,24 @@ function cleanup(string $table, string $column, int $days): int {
 }
 
 // PR-2: Student retention policy
-// 1. Ẩn các em không hoạt động > 12 tháng (không có enrollment gần đây)
+// 1. Ẩn các em không hoạt động > 12 tháng (không có enrollment "đang sinh hoạt" gần đây)
 try {
     $hideAfterMonths = (int) ($retention['hide_after_months'] ?? 12);
     $hideCutoff = date('Y-m-d H:i:s', strtotime("-{$hideAfterMonths} months"));
 
-    // Tìm các em đang hoạt động nhưng không có enrollment gần đây
+    // Tìm các em đang ẩn nhưng không có enrollment "đang sinh hoạt" gần cutoff
+    // Dựa trên: students (id), enrollments (student_id, status, year_id), years (id, start_date)
     $stmt = db()->prepare("
         UPDATE students s
         SET s.hidden_at = NOW()
         WHERE s.hidden_at IS NULL
           AND s.deleted_at IS NULL
-          AND s.status = 'nghỉ'
           AND NOT EXISTS (
               SELECT 1 FROM enrollments e
+              JOIN years y ON y.id = e.year_id
               WHERE e.student_id = s.id
-                AND e.updated_at >= ?
+                AND e.status = 'đang sinh hoạt'
+                AND y.start_date >= ?
           )
     ");
     $stmt->execute([$hideCutoff]);
@@ -59,7 +61,7 @@ try {
     $deleteAfterYears = (int) ($retention['delete_after_years'] ?? 7);
     $deleteCutoff = date('Y-m-d H:i:s', strtotime("-{$deleteAfterYears} years"));
 
-    // Xóa mềm -> cập nhật deleted_at nếu chưa có
+    // Cập nhật deleted_at cho các em đã ẩn đủ lâu nhưng chưa có deleted_at
     $stmt = db()->prepare("
         UPDATE students
         SET deleted_at = NOW()
@@ -85,9 +87,9 @@ try {
     error_log('[cron_cleanup] students delete: ' . $e->getMessage());
 }
 
-// Activity logs: giữ 6 tháng
+// Activity logs: giữ 6 tháng (dùng cột logged_at, không phải created_at)
 try {
-    $n = cleanup('activity_logs', 'created_at', 180);
+    $n = cleanup('activity_logs', 'logged_at', 180);
     if ($n > 0) $deleted['activity_logs'] = $n;
 } catch (Throwable $e) {
     error_log('[cron_cleanup] activity_logs: ' . $e->getMessage());

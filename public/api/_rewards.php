@@ -158,7 +158,8 @@ function rewards_lookup(string $code, int $yearId): ?array
     $code = trim($code);
     if ($code === '') return null;
 
-    $s = db_one("SELECT id, code, full_name FROM students WHERE code=?", [$code]);
+    // PR-2: Chỉ tra cứu em không bị ẩn/xóa
+    $s = db_one("SELECT id, code, full_name FROM students WHERE code=? AND hidden_at IS NULL AND deleted_at IS NULL", [$code]);
     if (!$s) return null;
 
     $w = db_one(

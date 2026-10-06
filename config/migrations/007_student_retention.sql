@@ -6,21 +6,50 @@
 --  - deleted_at: ngày bị xóa mềm (chờ xóa hẳn sau 7 năm hoặc theo yêu cầu)
 -- ================================================================
 
--- Thêm cột tracking retention vào students
-ALTER TABLE students
-ADD COLUMN hidden_at TIMESTAMP NULL DEFAULT NULL AFTER status,
-ADD COLUMN deleted_at TIMESTAMP NULL DEFAULT NULL AFTER hidden_at;
+-- Idempotent: chỉ thêm nếu chưa có
+SET @dbname = DATABASE();
+SET @tablename = 'students';
+SET @columnname = 'hidden_at';
+SET @preparedStatement = (SELECT IF(
+    (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = @tablename AND COLUMN_NAME = @columnname) > 0,
+    'SELECT 1',
+    'ALTER TABLE students ADD COLUMN hidden_at TIMESTAMP NULL DEFAULT NULL'
+));
+PREPARE stmt FROM @preparedStatement;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
--- Index để query nhanh các em đang ẩn
-CREATE INDEX idx_students_hidden ON students(hidden_at);
+SET @columnname = 'deleted_at';
+SET @preparedStatement = (SELECT IF(
+    (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = @tablename AND COLUMN_NAME = @columnname) > 0,
+    'SELECT 1',
+    'ALTER TABLE students ADD COLUMN deleted_at TIMESTAMP NULL DEFAULT NULL'
+));
+PREPARE stmt FROM @preparedStatement;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
--- Index để query các em chờ xóa
-CREATE INDEX idx_students_deleted ON students(deleted_at);
+-- Idempotent: chỉ tạo index nếu chưa có
+SET @indexname = 'idx_students_hidden';
+SET @preparedStatement = (SELECT IF(
+    (SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS
+     WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = @tablename AND INDEX_NAME = @indexname) > 0,
+    'SELECT 1',
+    'CREATE INDEX idx_students_hidden ON students(hidden_at)'
+));
+PREPARE stmt FROM @preparedStatement;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
--- ================================================================
---  Lưu ý:
---  - Cron job chạy định kỳ để:
---    1. Ẩn các em không hoạt động > 12 tháng
---    2. Xóa các em đã bị ẩn > 7 năm
---  - File cron: config/cron_cleanup.php (đã tạo)
--- ================================================================
+SET @indexname = 'idx_students_deleted';
+SET @preparedStatement = (SELECT IF(
+    (SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS
+     WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = @tablename AND INDEX_NAME = @indexname) > 0,
+    'SELECT 1',
+    'CREATE INDEX idx_students_deleted ON students(deleted_at)'
+));
+PREPARE stmt FROM @preparedStatement;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;

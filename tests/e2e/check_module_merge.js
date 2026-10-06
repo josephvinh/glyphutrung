@@ -2,6 +2,8 @@
  * CQ-1: Kiểm tra trùng tên thuộc tính/hàm trong các module JS
  *
  * Các module gộp bằng Object.defineProperties - trùng tên sẽ bị đè âm thầm.
+ * Chỉ kiểm tra các export thực sự: object literals được gán cho window.TNTT
+ *
  * Chạy: node tests/e2e/check_module_merge.js
  *
  * Exit code: 0 = pass, 1 = có trùng tên
@@ -20,29 +22,24 @@ const ALLOWED_DUPLICATES = new Set([
     'TNTT',        // Global object
 ]);
 
-function extractExports(filePath) {
-    const content = fs.readFileSync(filePath, 'utf8');
+/**
+ * Trích xuất các key trong object literal được gán cho window.TNTT
+ * Ví dụ: window.TNTT.moduleName = { key1: value1, key2: value2 }
+ */
+function extractTNTTExports(content) {
     const names = new Set();
 
-    // Tìm function declarations: function name() {}
-    const funcMatches = content.matchAll(/\bfunction\s+(\w+)\s*\(/g);
-    for (const m of funcMatches) {
-        names.add(m[1]);
-    }
-
-    // Tìm arrow functions gán: const name = () => {} hoặc name: function() {}
-    const constMatches = content.matchAll(/\bconst\s+(\w+)\s*=/g);
-    for (const m of constMatches) {
-        names.add(m[1]);
-    }
-
-    // Tìm object properties: name: value hoặc 'name': value
-    const propMatches = content.matchAll(/\b(\w+)\s*:/g);
-    for (const m of propMatches) {
-        // Loại trừ labels, CSS properties
-        const line = content.substring(0, m.index).split('\n').pop();
-        if (!line.includes('case ') && !line.includes('default:')) {
-            names.add(m[1]);
+    // Tìm: window.TNTT.xxx = { ... }
+    const exportPattern = /window\.TNTT\.\w+\s*=\s*\{([^}]*)\}/g;
+    let match;
+    while ((match = exportPattern.exec(content)) !== null) {
+        const objContent = match[1];
+        // Trích key từ object: key: value hoặc 'key': value hoặc "key": value
+        const keyPattern = /(?:['"]?(\w+)['"]?\s*:|(\w+)\s*:)/g;
+        let keyMatch;
+        while ((keyMatch = keyPattern.exec(objContent)) !== null) {
+            const key = keyMatch[1] || keyMatch[2];
+            if (key) names.add(key);
         }
     }
 
@@ -55,7 +52,8 @@ function main() {
 
     for (const file of files) {
         const filePath = path.join(MODULE_DIR, file);
-        const exports = extractExports(filePath);
+        const content = fs.readFileSync(filePath, 'utf8');
+        const exports = extractTNTTExports(content);
 
         for (const name of exports) {
             if (!allExports.has(name)) {
@@ -67,9 +65,9 @@ function main() {
 
     // Lọc ra các trùng tên thực sự (nhiều hơn 1 file, không phải allowed)
     const conflicts = [];
-    for (const [name, files] of allExports) {
-        if (files.length > 1 && !ALLOWED_DUPLICATES.has(name)) {
-            conflicts.push({ name, files });
+    for (const [name, fileList] of allExports) {
+        if (fileList.length > 1 && !ALLOWED_DUPLICATES.has(name)) {
+            conflicts.push({ name, files: fileList });
         }
     }
 
