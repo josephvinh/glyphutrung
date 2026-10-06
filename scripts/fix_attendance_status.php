@@ -28,7 +28,7 @@
  *   - Chạy lại vô hại (idempotent): lần sau không còn gì để sửa.
  */
 
-require __DIR__ . '/../config/db.php';
+require __DIR__ . '/../public/api/_common.php';        // program_cutoff_ts, attendance_expected_status, db
 require __DIR__ . '/../public/api/StampService.php';   // program_earns_stamps, recalc_stamps_safe
 
 date_default_timezone_set('Asia/Ho_Chi_Minh');          // như public/api/_bootstrap.php
@@ -52,8 +52,6 @@ foreach (['from' => $from, 'to' => $to] as $k => $v) {
     }
 }
 
-$cutoffMin = (int) app_config('cutoff_minutes');
-
 // ----- Lấy bản ghi cần soát -----
 $where  = [];
 $params = [];
@@ -74,20 +72,14 @@ echo "Soát " . count($rows) . " bản ghi điểm danh"
    . ($from || $to ? " (từ " . ($from ?: '…') . " đến " . ($to ?: '…') . ")" : '')
    . ($progArg !== null ? " · chương trình #$progArg" : '') . "\n";
 
-// Giờ chốt THẬT (unix) của một buổi — khớp program_cutoff_ts.
-$cutoffTs = function (array $r) use ($cutoffMin): int {
-    $c = trim((string) ($r['cutoff_time'] ?? ''));
-    if ($c !== '') return strtotime($r['session_date'] . ' ' . $c);
-    return strtotime($r['session_date'] . ' ' . $r['start_time']) + $cutoffMin * 60;
-};
-
 $toPresent = [];   // id: đang 'đi trễ' nhưng đúng ra 'có mặt'
 $toLate    = [];   // id: đang 'có mặt' nhưng đúng ra 'đi trễ'
 $affected  = [];   // "studentId|yearId" => [studentId, yearId]
 $samples   = [];
 
 foreach ($rows as $r) {
-    $correct = strtotime($r['marked_at']) >= $cutoffTs($r) ? 'đi trễ' : 'có mặt';
+    // Giờ chốt thật của buổi (cutoff_time, trống mới start+30') — khớp server.
+    $correct = attendance_expected_status($r['marked_at'], $r, $r['session_date']);
     if ($correct === $r['status']) continue;
 
     if ($correct === 'có mặt') $toPresent[] = (int) $r['id'];

@@ -256,6 +256,17 @@ function program_cutoff_ts(array $prog, string $date): int
     return strtotime($date . ' ' . $prog['start_time']) + $cutoffMin * 60;
 }
 
+/**
+ * Trạng thái ĐÚNG của một bản ghi điểm danh, suy từ thời điểm bấm/quét
+ * (marked_at) so với giờ chốt thật của buổi. Dựng lại đúng điều máy chủ
+ * (đã vá) quyết định — dùng cho script sửa dữ liệu cũ ghi sai.
+ *   $prog cần: start_time, cutoff_time (có thể null).
+ */
+function attendance_expected_status(string $markedAt, array $prog, string $date): string
+{
+    return strtotime($markedAt) >= program_cutoff_ts($prog, $date) ? 'đi trễ' : 'có mặt';
+}
+
 /** Cấp quyền của MỘT vai trò trên MỘT module */
 function permission_of_role(string $roleCode, string $moduleKey): string
 {
