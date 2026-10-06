@@ -289,7 +289,9 @@ window.TNTT.shell = {
             });
         }
 
-        // Short Polling 10s/lần: Cập nhật dữ liệu nếu Server có thay đổi (sync.txt)
+        // Short Polling 4s/lần: Cập nhật dữ liệu nếu Server có thay đổi (sync.txt).
+        // sync.php cực nhẹ (chỉ đọc 1 file, không đụng DB) nên 4s vẫn rẻ mà bàn
+        // công tác/điểm số/thông báo của người khác hiện gần như tức thì.
         this._syncVersion = null;
         setInterval(async () => {
             if (this.syncing || document.visibilityState !== 'visible') return;
@@ -302,6 +304,6 @@ window.TNTT.shell = {
                 }
                 this._syncVersion = ts;
             } catch (e) { }
-        }, 10000);
+        }, 4000);
     }
 };
