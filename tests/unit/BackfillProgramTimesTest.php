@@ -36,7 +36,7 @@ class BackfillProgramTimesTest extends TestCase
         return db_one("SELECT cutoff_time, absent_time FROM programs WHERE id = ?", [$this->pid]);
     }
 
-    private function run(array $args): int
+    private function runScript(array $args): int
     {
         $script = dirname(__DIR__, 2) . '/scripts/backfill_program_times.php';
         $env = array_merge(getenv(), $_ENV);
@@ -50,7 +50,7 @@ class BackfillProgramTimesTest extends TestCase
 
     public function test_dry_run_khong_doi_gi(): void
     {
-        $this->assertSame(0, $this->run(['--program=' . $this->pid]));
+        $this->assertSame(0, $this->runScript(['--program=' . $this->pid]));
         $p = $this->prog();
         $this->assertNull($p['cutoff_time'], 'dry-run không được điền');
         $this->assertNull($p['absent_time']);
@@ -58,7 +58,7 @@ class BackfillProgramTimesTest extends TestCase
 
     public function test_dien_gio_di_tre_khong_dung_khoa_so(): void
     {
-        $this->assertSame(0, $this->run(['--program=' . $this->pid, '--apply']));
+        $this->assertSame(0, $this->runScript(['--program=' . $this->pid, '--apply']));
         $p = $this->prog();
         $min = (int) app_config('cutoff_minutes');
         $expect = date('H:i:s', strtotime('1970-01-01 06:00:00') + $min * 60);
@@ -68,7 +68,7 @@ class BackfillProgramTimesTest extends TestCase
 
     public function test_dien_khoa_so_khi_co_co(): void
     {
-        $this->assertSame(0, $this->run(['--program=' . $this->pid, '--absent-after=120', '--apply']));
+        $this->assertSame(0, $this->runScript(['--program=' . $this->pid, '--absent-after=120', '--apply']));
         $p = $this->prog();
         $this->assertSame('08:00:00', $p['absent_time'], 'khoá sổ = start 06:00 + 120 phút = 08:00');
     }
