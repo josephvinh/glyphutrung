@@ -31,12 +31,16 @@ $config = [
     // config.local.php nếu cần bật.
     'setup_key' => '',
 
-    // Khoá VAPID cho Web Push. KHÔNG để khoá thật ở đây (file này lên git).
-    // Khai public/private/subject trong config.local.php trên máy chủ.
-    // Tạo khoá: php -r 'require "config/push.php"; print_r(push_tao_khoa());'
+    // Khoá VAPID cho Web Push. KHÔNG để khoá thật ở đây (file này lên git — repo
+    // công khai thì public/private lộ ngay). Khai public + private trong
+    // config.local.php trên máy chủ (KHÔNG lên git). Để RỖNG ở đây nghĩa là TẮT
+    // push cho tới khi config.local.php khai khoá thật.
+    // Tạo khoá (chạy TRÊN máy chủ): php -r 'require "config/push.php"; print_r(push_tao_khoa());'
     'push' => [
-        'public'  => 'BI34XJuXSHfOCKAIgFTUSdmr4uqI-GUt9yPi8KJ87HpaIcuZJ3rPczdw8-neF0heejYE0VE9o0zwDzZxy4z1Bs',
-        'private' => 'E0wuL-lV0WULtShw2VBPn0a9UK-uh8WAfmb1AKytDDo',
+        'public'  => '',
+        'private' => '',
+        // subject chỉ là địa chỉ liên hệ VAPID (không bí mật) — để mặc định cho
+        // tiện; ghi đè ở config.local.php nếu muốn.
         'subject' => 'mailto:tuongngocvinh@gmail.com',
     ],
 
