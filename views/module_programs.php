@@ -168,14 +168,14 @@
                     <p class="text-micro text-slate-500 mt-1 ml-1">Đến sau giờ này là <b>đi trễ</b> (vẫn điểm danh được).</p>
                 </div>
 
-                <!-- Mốc 2: GIỜ KHOÁ SỔ / TÍNH VẮNG (bắt buộc). Chỉ khoá trong
-                     ngày diễn ra; ngày cũ vẫn điểm danh bù được (attendance.php). -->
+                <!-- Mốc 2: GIỜ KHOÁ SỔ / TÍNH VẮNG (bắt buộc). Sau giờ này của
+                     buổi thì không ghi điểm danh được nữa (attendance.php). -->
                 <div>
                     <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Giờ khoá sổ (tính vắng) <span class="text-rose-500">*</span></label>
                     <input x-model="programForm.absentTime" type="time" required aria-required="true"
                            class="w-full bg-slate-50 border rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
                            :class="!programForm.absentTime && showProgramModal ? 'border-rose-300 bg-rose-50' : 'border-slate-200'">
-                    <p class="text-micro text-slate-500 mt-1 ml-1">Trong ngày, sau giờ này <b>không điểm danh được nữa</b>, em vắng tính vắng.</p>
+                    <p class="text-micro text-slate-500 mt-1 ml-1">Sau giờ này <b>không điểm danh được nữa</b>, em vắng tính vắng.</p>
                 </div>
 
                 <!-- Khoảng ngày áp dụng (buổi lặp) -->

@@ -70,10 +70,7 @@ $pastCutoff = time() >= $cutoffTs;
 $status     = $pastCutoff ? 'đi trễ' : 'có mặt';
 
 // Ngưỡng "VẮNG" (mốc 2): sau giờ này KHÔNG cho ghi có mặt nữa (tính vắng).
-// CHỈ khoá trong NGÀY diễn ra — buổi của ngày cũ vẫn điểm danh bù / sửa
-// được, nếu không ép nhập absent_time sẽ khoá luôn mọi buổi quá khứ.
 $pastAbsent = !empty($prog['absent_time'] ?? '')
-    && $date === date('Y-m-d')
     && time() >= strtotime($date . ' ' . $prog['absent_time']);
 
 // Lớp tham gia chương trình (rỗng/NULL = áp dụng toàn đoàn)
