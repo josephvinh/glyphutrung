@@ -1,21 +1,17 @@
 <?php
 /**
- * BACKFILL GIỜ CHO CHƯƠNG TRÌNH CŨ
+ * BACKFILL GIỜ CHO CHƯƠNG TRÌNH CŨ (tuỳ chọn)
  *
- *   php scripts/backfill_program_times.php                       # CHẠY THỬ
- *   php scripts/backfill_program_times.php --apply               # điền giờ chốt
- *   php scripts/backfill_program_times.php --absent-after=120 --apply
- *   php scripts/backfill_program_times.php --program=3 --apply
+ *   php scripts/backfill_program_times.php                              # CHẠY THỬ (soát)
+ *   php scripts/backfill_program_times.php --cutoff-after=15 --apply    # điền giờ đi trễ = start + 15'
+ *   php scripts/backfill_program_times.php --absent-after=120 --apply   # điền giờ khoá sổ = start + 120'
+ *   php scripts/backfill_program_times.php --program=3 --cutoff-after=15 --apply
  *
- * Điền các mốc giờ còn TRỐNG để chương trình cũ hợp quy định "bắt buộc nhập":
- *
- *   - cutoff_time (giờ tính đi trễ) NULL -> start_time + cutoff_minutes
- *     (mặc định 30'). KHÔNG đổi hành vi: server vốn đã dùng đúng mặc định
- *     này khi để trống, nên chỉ là "ghi rõ ra".
- *
- *   - absent_time (giờ khoá sổ) NULL -> start_time + N phút, CHỈ khi truyền
- *     --absent-after=N. Mặc định KHÔNG đụng vì đặt giờ khoá sổ là THAY ĐỔI
- *     HÀNH VI (bắt đầu khoá cứng buổi quá khứ) — phải do bạn chọn N.
+ * Điền các mốc giờ còn TRỐNG cho buổi cũ. KHÔNG có mặc định ngầm: chỉ điền
+ * khi bạn TRUYỀN RÕ số phút (vì đặt giờ là quyết định của bạn):
+ *   - --cutoff-after=N : giờ TÍNH ĐI TRỄ = start + N phút (nếu đang trống).
+ *   - --absent-after=N : giờ KHOÁ SỔ   = start + N phút (nếu đang trống).
+ * Không truyền cờ nào thì chỉ BÁO CÁO còn bao nhiêu buổi trống, không ghi.
  *
  * Mặc định CHẠY THỬ; --apply mới ghi. Idempotent. Nên sao lưu trước --apply.
  */
@@ -24,27 +20,30 @@ require __DIR__ . '/../config/db.php';
 date_default_timezone_set('Asia/Ho_Chi_Minh');
 
 $apply = in_array('--apply', $argv, true);
+$cutoffAfter = null;
 $absentAfter = null;
 $progArg = null;
 foreach ($argv as $a) {
+    if (strpos($a, '--cutoff-after=') === 0) $cutoffAfter = (int) substr($a, 15);
     if (strpos($a, '--absent-after=') === 0) $absentAfter = (int) substr($a, 15);
     if (strpos($a, '--program=') === 0)      $progArg     = (int) substr($a, 10);
 }
-if ($absentAfter !== null && $absentAfter <= 0) {
-    fwrite(STDERR, "--absent-after phải là số phút > 0.\n");
-    exit(1);
+foreach (['--cutoff-after' => $cutoffAfter, '--absent-after' => $absentAfter] as $k => $v) {
+    if ($v !== null && $v <= 0) { fwrite(STDERR, "$k phải là số phút > 0.\n"); exit(1); }
 }
 
-$cutoffMin = (int) app_config('cutoff_minutes');
 $addMin = fn(string $t, int $m): string => date('H:i:s', strtotime("1970-01-01 $t") + $m * 60);
 
 $where = $progArg !== null ? 'WHERE id = ?' : '';
 $rows  = db_all("SELECT id, name, start_time, cutoff_time, absent_time FROM programs $where ORDER BY id",
                 $progArg !== null ? [$progArg] : []);
 
+$trongCut = 0; $trongAbs = 0;          // đếm còn trống (để báo cáo)
 $cutUpd = []; $absUpd = []; $samples = [];
 foreach ($rows as $r) {
-    $newCut = empty($r['cutoff_time']) ? $addMin($r['start_time'], $cutoffMin) : null;
+    if (empty($r['cutoff_time'])) $trongCut++;
+    if (empty($r['absent_time'])) $trongAbs++;
+    $newCut = ($cutoffAfter !== null && empty($r['cutoff_time'])) ? $addMin($r['start_time'], $cutoffAfter) : null;
     $newAbs = ($absentAfter !== null && empty($r['absent_time'])) ? $addMin($r['start_time'], $absentAfter) : null;
     if ($newCut === null && $newAbs === null) continue;
     if ($newCut !== null) $cutUpd[(int) $r['id']] = $newCut;
@@ -58,12 +57,12 @@ foreach ($rows as $r) {
 }
 
 echo "Chương trình soát: " . count($rows)
-   . " · cần điền giờ đi trễ: " . count($cutUpd)
-   . " · cần điền giờ khoá sổ: " . count($absUpd) . "\n";
-if ($absentAfter === null) {
-    echo "(Không đụng giờ khoá sổ — thêm --absent-after=N để điền = giờ bắt đầu + N phút.)\n";
+   . " · đang trống giờ đi trễ: $trongCut · đang trống giờ khoá sổ: $trongAbs\n";
+if ($cutoffAfter === null && $absentAfter === null) {
+    echo "(Chỉ báo cáo. Thêm --cutoff-after=N và/hoặc --absent-after=N để điền = giờ bắt đầu + N phút.)\n";
+    exit(0);
 }
-if ($samples) echo "Ví dụ:\n" . implode("\n", $samples) . "\n";
+if ($samples) echo "Sẽ điền:\n" . implode("\n", $samples) . "\n";
 if (!$cutUpd && !$absUpd) { echo "✓ Không có gì để điền.\n"; exit(0); }
 
 if (!$apply) {

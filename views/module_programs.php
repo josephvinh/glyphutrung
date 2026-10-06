@@ -62,7 +62,7 @@
                             <i data-lucide="clock" class="w-3.5 h-3.5 mr-1.5 text-slate-400 shrink-0"></i>
                             <span class="text-slate-700 font-bold" x-text="prog.startTime"></span>
                             <span class="text-slate-300 mx-1.5">•</span>
-                            <span class="text-micro">trễ <span class="font-bold text-rose-500" x-text="prog.cutoffTime || addMinutes(prog.startTime, CUTOFF_MINUTES)"></span></span>
+                            <span class="text-micro">trễ <span class="font-bold text-rose-500" x-text="prog.cutoffTime || prog.startTime"></span></span>
                             <template x-if="prog.absentTime"><span><span class="text-slate-300 mx-1.5">•</span><span class="text-micro">vắng <span class="font-bold text-slate-600" x-text="prog.absentTime"></span></span></span></template>
                         </p>
                     </div>

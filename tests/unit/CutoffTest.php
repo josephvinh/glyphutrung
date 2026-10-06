@@ -34,27 +34,25 @@ class CutoffTest extends TestCase
             '08:06 phải nằm SAU giờ chốt -> đi trễ');
     }
 
-    // cutoff_time rỗng/NULL -> mặc định start_time + cutoff_minutes toàn cục.
-    public function test_mac_dinh_start_cong_cutoff_minutes_khi_trong(): void
+    // cutoff_time rỗng/NULL -> coi GIỜ BẮT ĐẦU là mốc (KHÔNG còn +30' ngầm).
+    public function test_trong_thi_lay_gio_bat_dau(): void
     {
-        $min = (int) app_config('cutoff_minutes');
         foreach (['', null] as $empty) {
             $prog = ['start_time' => '06:00:00', 'cutoff_time' => $empty];
             $this->assertSame(
-                strtotime('2026-10-05 06:00:00') + $min * 60,
+                strtotime('2026-10-05 06:00:00'),
                 program_cutoff_ts($prog, '2026-10-05'),
-                'cutoff_time rỗng -> start + ' . $min . ' phút'
+                'cutoff_time rỗng -> dùng giờ bắt đầu, không +30'
             );
         }
     }
 
-    // Thiếu hẳn khóa cutoff_time (chương trình cũ) -> vẫn chạy, dùng mặc định.
+    // Thiếu hẳn khóa cutoff_time (chương trình cũ) -> vẫn chạy = giờ bắt đầu.
     public function test_khong_co_khoa_cutoff_van_chay(): void
     {
-        $min = (int) app_config('cutoff_minutes');
         $prog = ['start_time' => '07:30:00'];
         $this->assertSame(
-            strtotime('2026-10-05 07:30:00') + $min * 60,
+            strtotime('2026-10-05 07:30:00'),
             program_cutoff_ts($prog, '2026-10-05')
         );
     }

@@ -7,9 +7,6 @@ window.TNTT.programs = {
     // ==========================================
     // 1. DATA: CHƯƠNG TRÌNH & HÀM XỬ LÝ
     // ==========================================
-    // Giờ chốt = giờ bắt đầu + 30 phút, cố định toàn hệ thống
-    CUTOFF_MINUTES: 30,
-
     // dayOfWeek: 0 = Chúa Nhật ... 6 = Thứ Bảy (dùng cho chương trình "bắt buộc" lặp hàng tuần)
     // eventDate : ngày cụ thể (dùng cho chương trình "chiến dịch", chỉ diễn ra một lần)
     programs: [],   // máy chủ nạp qua loadData()
@@ -26,7 +23,7 @@ window.TNTT.programs = {
 
     showProgramModal: false,
     isEditingProgram: false,
-    // cutoffTime rỗng = dùng mặc định giờ bắt đầu + CUTOFF_MINUTES
+    // cutoffTime (giờ tính đi trễ) bắt buộc nhập; không còn mặc định ẩn.
     programForm: { id: null, name: '', type: 'bắt buộc', status: 'kích hoạt', countForAttendance: true, countForEmulation: false, startTime: '', cutoffTime: '', absentTime: '', dayOfWeek: 0, daysOfWeek: [0], eventDate: '', allowQr: true, color: '', icon: '', sortOrder: 1, effectiveFrom: '', effectiveTo: '', autoCloseAfterEvent: false, classIds: [] },
 
     openCreateProgram() {

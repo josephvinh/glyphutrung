@@ -152,7 +152,7 @@
                         <i data-lucide="alarm-clock" class="w-5 h-5 text-slate-500 shrink-0"></i>
                         <div>
                             <p class="text-micro font-bold text-slate-500 uppercase tracking-wide">Chốt điểm danh</p>
-                            <p class="text-sm font-bold text-rose-500" x-text="selectedEvent?.cutoffTime || (selectedEvent?.startTime ? addMinutes(selectedEvent.startTime, CUTOFF_MINUTES) : '--:--')"></p>
+                            <p class="text-sm font-bold text-rose-500" x-text="selectedEvent?.cutoffTime || selectedEvent?.startTime || '--:--'"></p>
                         </div>
                     </div>
                     <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">

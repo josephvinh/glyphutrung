@@ -1,8 +1,8 @@
 <?php
 /**
  * Test cho scripts/backfill_program_times.php — điền giờ còn trống.
- *   - cutoff_time NULL -> start + cutoff_minutes (an toàn, không đổi hành vi).
- *   - absent_time chỉ điền khi có --absent-after=N; mặc định KHÔNG đụng.
+ *   - chỉ điền khi có --cutoff-after=N / --absent-after=N (= start + N phút);
+ *     không cờ thì chỉ báo cáo, không ghi.
  * Dùng --program để chỉ chạm chương trình dù-một-lần của test.
  */
 
@@ -48,28 +48,28 @@ class BackfillProgramTimesTest extends TestCase
         return proc_close($p);
     }
 
-    public function test_dry_run_khong_doi_gi(): void
+    public function test_khong_co_co_thi_khong_doi_gi(): void
     {
-        $this->assertSame(0, $this->runScript(['--program=' . $this->pid]));
+        // Không truyền --cutoff-after/--absent-after -> chỉ báo cáo, không ghi.
+        $this->assertSame(0, $this->runScript(['--program=' . $this->pid, '--apply']));
         $p = $this->prog();
-        $this->assertNull($p['cutoff_time'], 'dry-run không được điền');
+        $this->assertNull($p['cutoff_time'], 'không có cờ -> không điền gì');
         $this->assertNull($p['absent_time']);
     }
 
-    public function test_dien_gio_di_tre_khong_dung_khoa_so(): void
+    public function test_dien_gio_di_tre_theo_co(): void
     {
-        $this->assertSame(0, $this->runScript(['--program=' . $this->pid, '--apply']));
+        $this->assertSame(0, $this->runScript(['--program=' . $this->pid, '--cutoff-after=15', '--apply']));
         $p = $this->prog();
-        $min = (int) app_config('cutoff_minutes');
-        $expect = date('H:i:s', strtotime('1970-01-01 06:00:00') + $min * 60);
-        $this->assertSame($expect, $p['cutoff_time'], 'cutoff = start + cutoff_minutes');
+        $this->assertSame('06:15:00', $p['cutoff_time'], 'giờ đi trễ = start 06:00 + 15 phút');
         $this->assertNull($p['absent_time'], 'không có --absent-after thì KHÔNG đụng khoá sổ');
     }
 
-    public function test_dien_khoa_so_khi_co_co(): void
+    public function test_dien_khoa_so_theo_co(): void
     {
         $this->assertSame(0, $this->runScript(['--program=' . $this->pid, '--absent-after=120', '--apply']));
         $p = $this->prog();
         $this->assertSame('08:00:00', $p['absent_time'], 'khoá sổ = start 06:00 + 120 phút = 08:00');
+        $this->assertNull($p['cutoff_time'], 'không có --cutoff-after thì KHÔNG đụng giờ đi trễ');
     }
 }

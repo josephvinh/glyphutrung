@@ -17,7 +17,7 @@
  * `marked_at` (thời điểm bấm/quét) với GIỜ CHỐT THẬT của buổi hôm đó:
  *   marked_at >= giờ chốt  -> "đi trễ"
  *   marked_at <  giờ chốt  -> "có mặt"
- * Giờ chốt = cutoff_time nếu có, ngược lại start_time + cutoff_minutes.
+ * Giờ chốt = cutoff_time nếu có, ngược lại coi giờ bắt đầu là mốc.
  * (Khớp public/api/_common.php: program_cutoff_ts.)
  *
  * AN TOÀN:
