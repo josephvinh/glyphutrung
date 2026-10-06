@@ -17,7 +17,10 @@
      - Background sync cho offline actions
    ========================================================== */
 
-const PHIEN_BAN = 'tntt-sw-10';
+// Phiên bản LẤY TỪ chính URL đăng ký (sw.js?v=<hash nội dung bundle>), do
+// push.js truyền vào. Đổi giao diện -> hash đổi -> URL SW đổi -> trình duyệt
+// cài SW mới -> activate xoá kho cũ (bên dưới). KHÔNG còn bump tay.
+const PHIEN_BAN = new URL(self.location.href).searchParams.get('v') || 'tntt-sw-dev';
 const KHO      = 'tntt-tinh-' + PHIEN_BAN;
 
 // Critical resources cần preload khi có network
