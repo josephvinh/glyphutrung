@@ -318,6 +318,29 @@ function can_access_class(array $me, string $moduleKey, int $classId, string $ne
     return false;
 }
 
+/**
+ * "CỬA SỬA": được phép VƯỢT giờ khoá sổ của buổi (điểm danh bù buổi cũ /
+ * ghi đơn phép muộn) cho MỘT lớp hay không.
+ *
+ * Mặc định mọi người bị "khoá cứng" sau giờ tính vắng — vắng là vắng. Chỉ
+ * các vai quản lý được sửa sai, và CHỈ trong phạm vi mình phụ trách:
+ *   admin / bdh (toàn đoàn), truong_khoi (khối mình), glv_chu_nhiem (lớp mình).
+ * GLV thường vẫn bị khoá → báo cấp trên thay vì tự ý.
+ *
+ * Đây là lớp nới riêng cho RÀO THỜI GIAN; KHÔNG thay rào phạm vi: nơi gọi
+ * vẫn phải qua can_access_class(...,'edit') trước. Vì thế không nới quyền
+ * ghi sang lớp ngoài tầm của người dùng.
+ */
+function can_override_session_lock(array $me, int $classId): bool
+{
+    static $OVERRIDE = ['admin', 'bdh', 'truong_khoi', 'glv_chu_nhiem'];
+    foreach (member_scopes($me) as $a) {
+        if (!in_array($a['role_code'] ?? '', $OVERRIDE, true)) continue;
+        if (assignment_covers_class($a, $classId)) return true;
+    }
+    return false;
+}
+
 /** Lấy danh sách ID lớp dựa trên phân công (null = toàn đoàn) */
 function resolve_class_ids_from_scope(array $a): ?array
 {

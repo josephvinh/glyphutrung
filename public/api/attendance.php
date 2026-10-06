@@ -271,8 +271,10 @@ if ($progClassIds !== null && !in_array((int) $st['class_id'], $progClassIds, tr
     json_fail('Lớp của em ' . $st['full_name'] . ' không thuộc buổi này.', 400);
 }
 
-// Sau ngưỡng "vắng" thì không ghi có mặt nữa (em tính vắng)
-if ($pastAbsent) {
+// Sau ngưỡng "vắng" thì không ghi có mặt nữa (em tính vắng) — trừ "cửa
+// sửa": admin/BĐH/trưởng khối/GLV chủ nhiệm được bù buổi cũ trong phạm vi
+// mình (đã qua can_access_class 'edit' ở trên). GLV thường vẫn bị khoá.
+if ($pastAbsent && !can_override_session_lock($me, (int) $st['class_id'])) {
     json_fail('Đã quá giờ "tính vắng" của buổi — em ' . $st['full_name'] . ' tính vắng, không ghi được.');
 }
 

@@ -41,13 +41,15 @@ switch ($action) {
         $prog = db_one('SELECT * FROM programs WHERE id=? AND year_id=?', [$programId, $yid]);
         if (!$prog) json_fail('Không tìm thấy chương trình.', 404);
 
-        $st = db_one('SELECT s.full_name FROM enrollments e JOIN students s ON s.id=e.student_id
+        $st = db_one('SELECT s.full_name, e.class_id FROM enrollments e JOIN students s ON s.id=e.student_id
                        WHERE e.year_id=? AND e.student_id=? AND e.status=?',
                      [$yid, $studentId, 'đang sinh hoạt']);
         if (!$st) json_fail('Em này không có trong danh sách đang sinh hoạt.', 404);
 
-        // Hết ngày diễn ra là khoá sổ
-        if ($date < date('Y-m-d')) {
+        // Hết ngày diễn ra là khoá sổ — trừ "cửa sửa": admin/BĐH/trưởng khối/
+        // GLV chủ nhiệm (trong phạm vi mình) được ghi đơn phép muộn cho buổi
+        // đã qua (vd phụ huynh báo sau). Người thường vẫn chỉ nộp trong ngày.
+        if ($date < date('Y-m-d') && !can_override_session_lock($me, (int) $st['class_id'])) {
             json_fail('Đã hết hạn xin phép cho buổi này. Chỉ nộp được trong ngày diễn ra.');
         }
 
