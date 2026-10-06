@@ -46,10 +46,12 @@ switch ($action) {
 
         if ($name === '')                            json_fail('Vui lòng nhập tên chương trình.');
         if (!preg_match('/^\d{2}:\d{2}$/', $start))  json_fail('Giờ bắt đầu không hợp lệ.');
-        if ($cutoff !== '' && !preg_match('/^\d{2}:\d{2}$/', $cutoff)) json_fail('Giờ chốt không hợp lệ.');
-        if ($cutoff !== '' && $cutoff <= $start)      json_fail('Giờ chốt phải sau giờ bắt đầu.');
-        if ($absent !== '' && !preg_match('/^\d{2}:\d{2}$/', $absent)) json_fail('Giờ "tính vắng" không hợp lệ.');
-        if ($absent !== '' && $absent <= $start)      json_fail('Giờ "tính vắng" phải sau giờ bắt đầu.');
+        // Hai mốc giờ BẮT BUỘC (bỏ mặc định ẩn +30'): giờ tính đi trễ và
+        // giờ khoá sổ. Thứ tự: bắt đầu < tính đi trễ ≤ khoá sổ.
+        if (!preg_match('/^\d{2}:\d{2}$/', $cutoff))  json_fail('Vui lòng nhập giờ tính đi trễ hợp lệ.');
+        if ($cutoff <= $start)                        json_fail('Giờ tính đi trễ phải sau giờ bắt đầu.');
+        if (!preg_match('/^\d{2}:\d{2}$/', $absent))  json_fail('Vui lòng nhập giờ khoá sổ (tính vắng) hợp lệ.');
+        if ($absent < $cutoff)                        json_fail('Giờ khoá sổ phải từ giờ tính đi trễ trở đi.');
 
         // Bắt buộc -> lặp theo thứ (một hoặc NHIỀU thứ); chiến dịch -> một ngày
         $daysCsv = null;

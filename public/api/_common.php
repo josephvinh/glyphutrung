@@ -235,6 +235,38 @@ function level_rank(string $level): int
     return ['none' => 0, 'view' => 1, 'edit' => 2][$level] ?? 0;
 }
 
+/**
+ * Thời điểm (unix) CHỐT SỔ của một buổi trong một ngày.
+ *
+ * Buổi có nhập GIỜ CHỐT riêng (programs.cutoff_time) thì dùng ĐÚNG giờ đó;
+ * để trống mới lấy mặc định giờ bắt đầu + cutoff_minutes (toàn cục, 30').
+ *
+ * PHẢI khớp với giao diện (attendance.js: cutoffOf). Trước đây máy chủ bỏ
+ * qua cutoff_time và luôn tính start_time + 30' — buổi đặt giờ chốt muộn
+ * hơn (VD bắt đầu 06:00, chốt 08:00) khiến em điểm danh lúc 06:36 — vẫn
+ * TRONG giờ quy định — bị ghi "đi trễ".
+ */
+function program_cutoff_ts(array $prog, string $date): int
+{
+    $cutoff = trim((string) ($prog['cutoff_time'] ?? ''));
+    if ($cutoff !== '') {
+        return strtotime($date . ' ' . $cutoff);
+    }
+    $cutoffMin = (int) app_config('cutoff_minutes');
+    return strtotime($date . ' ' . $prog['start_time']) + $cutoffMin * 60;
+}
+
+/**
+ * Trạng thái ĐÚNG của một bản ghi điểm danh, suy từ thời điểm bấm/quét
+ * (marked_at) so với giờ chốt thật của buổi. Dựng lại đúng điều máy chủ
+ * (đã vá) quyết định — dùng cho script sửa dữ liệu cũ ghi sai.
+ *   $prog cần: start_time, cutoff_time (có thể null).
+ */
+function attendance_expected_status(string $markedAt, array $prog, string $date): string
+{
+    return strtotime($markedAt) >= program_cutoff_ts($prog, $date) ? 'đi trễ' : 'có mặt';
+}
+
 /** Cấp quyền của MỘT vai trò trên MỘT module */
 function permission_of_role(string $roleCode, string $moduleKey): string
 {

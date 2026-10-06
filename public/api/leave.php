@@ -51,8 +51,9 @@ switch ($action) {
             json_fail('Đã hết hạn xin phép cho buổi này. Chỉ nộp được trong ngày diễn ra.');
         }
 
-        // Sau giờ chốt thì chỉ còn xin được cho em đang vắng không phép
-        $cutoffTs = strtotime($date . ' ' . $prog['start_time']) + ((int) app_config('cutoff_minutes')) * 60;
+        // Sau giờ chốt thì chỉ còn xin được cho em đang vắng không phép.
+        // Dùng giờ chốt riêng của buổi (cutoff_time) nếu có — khớp điểm danh.
+        $cutoffTs = program_cutoff_ts($prog, $date);
         if (time() >= $cutoffTs) {
             $daDiemDanh = db_one('SELECT id FROM attendances WHERE program_id=? AND session_date=? AND student_id=?',
                                  [$programId, $date, $studentId]);

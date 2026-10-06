@@ -13,10 +13,10 @@ nameA=sql(f"select name from classes where id={cA}"); nameB=sql(f"select name fr
 def P(c,path,data=None,m="POST"): return c.req(path,m,data if m=="POST" else None)
 
 # ---------------- PROGRAMS
-base={"name":"CT Thử","type":"bắt buộc","startTime":"08:00","dayOfWeek":0,"countForAttendance":True,"status":"kích hoạt"}
+base={"name":"CT Thử","type":"bắt buộc","startTime":"08:00","cutoffTime":"08:15","absentTime":"09:00","dayOfWeek":0,"countForAttendance":True,"status":"kích hoạt"}
 r=P(adm,"/api/programs.php?action=save",base); pid=r[1].get('id') if ok(r) else None
 rec("PRG-01","Tạo chương trình lặp hàng tuần hợp lệ", ok(r), show(r))
-for lab,ch in [("giờ sai định dạng",{"startTime":"8h"}),("giờ chốt ≤ giờ bắt đầu",{"cutoffTime":"07:00"}),("tính vắng ≤ giờ bắt đầu",{"absentTime":"07:59"}),("thứ = 9",{"dayOfWeek":9}),("tên rỗng",{"name":" "}),("ngày áp dụng từ > đến",{"effectiveFrom":"2026-12-01","effectiveTo":"2026-11-01"}),("chiến dịch thiếu ngày",{"type":"chiến dịch"})]:
+for lab,ch in [("giờ sai định dạng",{"startTime":"8h"}),("thiếu giờ tính đi trễ",{"cutoffTime":""}),("giờ đi trễ ≤ giờ bắt đầu",{"cutoffTime":"07:00"}),("thiếu giờ khoá sổ",{"absentTime":""}),("giờ khoá sổ < giờ đi trễ",{"absentTime":"08:05"}),("thứ = 9",{"dayOfWeek":9}),("tên rỗng",{"name":" "}),("ngày áp dụng từ > đến",{"effectiveFrom":"2026-12-01","effectiveTo":"2026-11-01"}),("chiến dịch thiếu ngày",{"type":"chiến dịch"})]:
     r=P(adm,"/api/programs.php?action=save",dict(base,**ch)); rec("PRG-02",f"Từ chối chương trình: {lab}", r[0]==400, show(r))
     if ok(r): P(adm,"/api/programs.php?action=delete",{"id":r[1].get('id')})
 r=P(glv,"/api/programs.php?action=save",base); rec("PRG-03","GLV không tạo được chương trình", r[0]==403, show(r))

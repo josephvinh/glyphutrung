@@ -63,9 +63,9 @@ if (!$hopLe) json_fail('Buổi này không diễn ra vào ngày ' . $date . '.')
 // vẫn được (điểm danh bù). $date đã chuẩn ISO nên so thẳng chuỗi.
 $laTuongLai = $date > date('Y-m-d');
 
-// Giờ chốt do máy chủ tính
-$cutoffMin  = (int) app_config('cutoff_minutes');
-$cutoffTs   = strtotime($date . ' ' . $prog['start_time']) + $cutoffMin * 60;
+// Giờ chốt do máy chủ tính — tôn trọng GIỜ CHỐT riêng của buổi
+// (cutoff_time), đúng như giao diện. Để trống mới lấy start_time + 30'.
+$cutoffTs   = program_cutoff_ts($prog, $date);
 $pastCutoff = time() >= $cutoffTs;
 $status     = $pastCutoff ? 'đi trễ' : 'có mặt';
 
