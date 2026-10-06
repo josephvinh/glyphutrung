@@ -234,7 +234,6 @@ window.TNTT.shell = {
             const local = this.moduleDefs.find(x => x.key === m.key) || {};
             return Object.assign({}, local, m);
         });
-        this.CUTOFF_MINUTES  = BOOT.config.cutoffMinutes;
         this.PASS_SCORE      = BOOT.config.passScore;
         this.PASS_ATTENDANCE = BOOT.config.passAttendance;
 

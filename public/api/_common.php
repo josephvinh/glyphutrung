@@ -236,24 +236,20 @@ function level_rank(string $level): int
 }
 
 /**
- * Thời điểm (unix) CHỐT SỔ của một buổi trong một ngày.
+ * Thời điểm (unix) tính ĐI TRỄ của một buổi trong một ngày.
  *
- * Buổi có nhập GIỜ CHỐT riêng (programs.cutoff_time) thì dùng ĐÚNG giờ đó;
- * để trống mới lấy mặc định giờ bắt đầu + cutoff_minutes (toàn cục, 30').
+ * Nguồn DUY NHẤT là giờ tính đi trễ riêng của buổi (programs.cutoff_time) —
+ * form bắt buộc nhập. KHÔNG còn mặc định ẩn "+30 phút" nữa. Buổi nào CHƯA
+ * đặt (dữ liệu cũ chưa sửa) thì coi GIỜ BẮT ĐẦU là mốc — đến sau giờ bắt
+ * đầu là trễ; hãy vào đặt giờ cho buổi đó.
  *
- * PHẢI khớp với giao diện (attendance.js: cutoffOf). Trước đây máy chủ bỏ
- * qua cutoff_time và luôn tính start_time + 30' — buổi đặt giờ chốt muộn
- * hơn (VD bắt đầu 06:00, chốt 08:00) khiến em điểm danh lúc 06:36 — vẫn
- * TRONG giờ quy định — bị ghi "đi trễ".
+ * PHẢI khớp với giao diện (attendance.js: cutoffOf).
  */
 function program_cutoff_ts(array $prog, string $date): int
 {
     $cutoff = trim((string) ($prog['cutoff_time'] ?? ''));
-    if ($cutoff !== '') {
-        return strtotime($date . ' ' . $cutoff);
-    }
-    $cutoffMin = (int) app_config('cutoff_minutes');
-    return strtotime($date . ' ' . $prog['start_time']) + $cutoffMin * 60;
+    if ($cutoff === '') $cutoff = (string) $prog['start_time'];
+    return strtotime($date . ' ' . $cutoff);
 }
 
 /**

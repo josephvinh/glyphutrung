@@ -30,13 +30,12 @@ class AttendanceStatusFixTest extends TestCase
         $this->assertSame('đi trễ', attendance_expected_status('2026-10-05 08:06:00', $prog, '2026-10-05'));
     }
 
-    public function test_cutoff_trong_dung_mac_dinh(): void
+    public function test_cutoff_trong_lay_gio_bat_dau(): void
     {
-        $min  = (int) app_config('cutoff_minutes');
+        // Không còn +30' ngầm: cutoff trống -> mốc = giờ bắt đầu.
         $prog = ['start_time' => '07:30:00', 'cutoff_time' => null];
-        $sau  = date('Y-m-d H:i:s', strtotime('2026-10-05 07:30:00') + $min * 60 + 1);
-        $this->assertSame('đi trễ', attendance_expected_status($sau, $prog, '2026-10-05'));
-        $this->assertSame('có mặt', attendance_expected_status('2026-10-05 07:30:00', $prog, '2026-10-05'));
+        $this->assertSame('đi trễ', attendance_expected_status('2026-10-05 07:30:01', $prog, '2026-10-05'));
+        $this->assertSame('có mặt', attendance_expected_status('2026-10-05 07:29:59', $prog, '2026-10-05'));
     }
 
     // ---------- 2) TÍCH HỢP: chạy script thật ----------

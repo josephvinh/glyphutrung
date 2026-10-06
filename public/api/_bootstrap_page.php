@@ -119,7 +119,6 @@ function page_bootstrap(array $me): array
         ], $modules),
         'moduleEnabled' => $enabled,
         'config' => [
-            'cutoffMinutes'  => app_config('cutoff_minutes'),
             'passScore'      => app_config('pass_score'),
             'passAttendance' => app_config('pass_attendance'),
         ],
