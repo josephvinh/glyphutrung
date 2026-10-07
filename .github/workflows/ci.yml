@@ -189,3 +189,101 @@ jobs:
             echo "$FOUND"
             echo "Di chuyển vào tests/unit/ hoặc cập nhật CI."
           fi
+
+  # Kiểm giao diện đa thiết bị (Chromium + WebKit; điện thoại Android/iPhone, laptop
+  # màn thấp; chế độ giảm trong suốt; chữ lớn). Bắt lỗi kiểu nút bị cắt/che/vô hình
+  # mà test tĩnh không thấy (#222, #226). WebKit trên Linux KHÔNG phải iPhone thật
+  # (thanh công cụ, safe-area khác) nên vẫn cần checklist máy thật trước khi phát hành.
+  # Giai đoạn đầu để continue-on-error: chưa chặn merge, chỉ báo. Khi chạy ổn định
+  # vài lần liên tiếp thì bỏ dòng này để thành bắt buộc.
+  ui-layout:
+    name: UI đa thiết bị
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: tntt_test
+          MARIADB_USER: tntt
+          MARIADB_PASSWORD: tntt
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot --silent"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    env:
+      TNTT_DB_HOST: 127.0.0.1
+      TNTT_DB_PORT: '3306'
+      TNTT_DB_NAME: tntt_test
+      TNTT_DB_USER: tntt
+      TNTT_DB_PASS: tntt
+      E2E_BASE: http://127.0.0.1:8080
+      UI_OUT: ${{ github.workspace }}/ui-matrix-out
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo_mysql, mbstring, intl, gd, curl, openssl
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install --ignore-scripts
+
+      - name: Install browsers (Chromium + WebKit)
+        run: npx playwright install --with-deps chromium webkit
+
+      - name: Wait for database (utf8mb4)
+        run: |
+          php -r '
+            for ($i = 0; $i < 30; $i++) {
+              try {
+                $p = new PDO("mysql:host=127.0.0.1;port=3306;dbname=tntt_test;charset=utf8mb4", "tntt", "tntt");
+                $p->exec("ALTER DATABASE tntt_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+                exit(0);
+              } catch (Throwable $e) { sleep(2); }
+            }
+            fwrite(STDERR, "Không kết nối được DB\n");
+            exit(1);
+          '
+
+      - name: Install schema + seed
+        run: |
+          php config/install.php
+          php tests/fixtures/ci_seed.php
+
+      - name: Start PHP server
+        run: |
+          nohup php -S 127.0.0.1:8080 -t public > php-server.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -fsS -o /dev/null http://127.0.0.1:8080/; then echo "Server sẵn sàng"; exit 0; fi
+            sleep 1
+          done
+          echo "::error::Server PHP không lên"; cat php-server.log; exit 1
+
+      - name: Kiểm giao diện
+        run: node tests/e2e/ui_matrix.js
+
+      - name: Tải ảnh lỗi + báo cáo
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-matrix
+          path: ui-matrix-out
+          if-no-files-found: ignore
+          retention-days: 14
