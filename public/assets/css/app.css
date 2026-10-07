@@ -520,6 +520,20 @@ body {
     min-height: 1.25rem;
 }
 
+/* Thanh điều hướng dưới (z-index 150) nằm NGOÀI .app-content, còn popup nằm
+   TRONG .app-content (z-index 1 -> ngữ cảnh xếp chồng riêng) nên z-[200] của
+   popup không vượt được thanh nav: nút "Lưu" ở đáy bị nav đè, bấm không được.
+   Khi thanh nav còn hiện (dưới 1024px, xem .has-sidebar) thì nhấc popup lên
+   trên nav và co chiều cao cho vừa phần còn lại. */
+@media (max-width: 1023.98px) {
+    .prog-modal {
+        margin-bottom: calc(var(--nav-h) + var(--safe-b));
+        height: min(88dvh, calc(100dvh - var(--nav-h) - var(--safe-b) - 1rem));
+    }
+    /* Sheet đã nằm trên nav, không cần chừa thêm safe-area ở chân nút Lưu */
+    .prog-modal > *:last-child { padding-bottom: 1rem; }
+}
+
 /* ==========================================================
    Ô NHẬP / SELECT TRONG LƯỚI–FLEX 2 CỘT
    Safari/iOS gán cho input ngày/giờ VÀ cho <select> (theo nhãn option dài
