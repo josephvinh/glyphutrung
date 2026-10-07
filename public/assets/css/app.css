@@ -242,10 +242,21 @@
 @media (prefers-reduced-transparency: reduce) {
     .glass-card,
     .nav-inner,
-    .btn-glass,
     .input-glass,
     .modal-glass {
         background: var(--glass-bg-elevated) !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+    }
+
+    /* Nút glass có CHỮ TRẮNG: "giảm trong suốt" nghĩa là nền ĐẶC, không phải đổi
+       sang nền sáng. Trước đây .btn-glass nằm chung nhóm trên nên lấy nền trắng
+       (--glass-bg-elevated) -> chữ trắng trên nền trắng, nút Đăng nhập / Điểm
+       danh tay biến mất trên máy bật "Giảm độ trong suốt" (vd. Samsung).
+       Có test giữ nguyên điều này: tests/unit/ReducedTransparencyTest.php. */
+    .btn-glass,
+    .btn-glass:hover {
+        background: var(--accent-color) !important;
         backdrop-filter: none !important;
         -webkit-backdrop-filter: none !important;
     }
