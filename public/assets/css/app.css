@@ -1265,3 +1265,22 @@ select.tntt-select {
     background-size: 1rem 1rem;
     padding-right: 2.25rem;
 }
+
+/* ==========================================================
+   TIỆN ÍCH BỔ SUNG
+   tailwind.css là bản BUILD SẴN (v3.2.7): class không có mặt lúc build thì không
+   tồn tại, markup dùng nó mất kiểu mà KHÔNG báo lỗi gì. Các class dưới đây được
+   view dùng nhưng bản build không có. Dùng class mới chưa định nghĩa sẽ bị chặn
+   bởi tests/unit/CssClassCoverageTest.php.
+   ========================================================== */
+.bg-white\/15 { background-color: rgb(255 255 255 / 0.15); }
+.w-4\.5 { width: 1.125rem; }
+.h-4\.5 { height: 1.125rem; }
+.line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+}
+.overscroll-contain { overscroll-behavior: contain; }
