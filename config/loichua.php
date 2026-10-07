@@ -168,7 +168,7 @@ function loi_chua_extract_verses(array $versesData, array $selectedVerses): stri
 {
     if (empty($selectedVerses)) {
         // Return all verses
-        $texts = array_map(fn($v) => $v['text'] ?? '', $versesData);
+        $texts = array_map(fn($v) => strip_tags($v['text'] ?? ''), $versesData);
         return implode(' ', array_filter($texts));
     }
 
@@ -185,7 +185,7 @@ function loi_chua_extract_verses(array $versesData, array $selectedVerses): stri
     $texts = [];
     foreach ($selectedVerses as $v) {
         if (isset($verseIndex[$v])) {
-            $texts[] = $verseIndex[$v];
+            $texts[] = strip_tags($verseIndex[$v]);
         }
     }
 
@@ -223,7 +223,7 @@ function loi_chua_validate_date(string $date): bool
 }
 
 /**
- * Fetch JSON từ URL
+ * Fetch JSON từ URL (với retry logic)
  */
 function loi_chua_fetch(string $url): ?array
 {
@@ -240,23 +240,31 @@ function loi_chua_fetch(string $url): ?array
         ],
     ]);
 
-    $response = @file_get_contents($url, false, $context);
+    $attempts = 0;
+    $maxAttempts = 2; // 1 initial + 1 retry
 
-    if ($response === false) {
-        return null;
+    while ($attempts < $maxAttempts) {
+        $response = @file_get_contents($url, false, $context);
+
+        if ($response !== false) {
+            // Check content length
+            if (strlen($response) <= GOSPEL_DATA_MAX_SIZE) {
+                $data = json_decode($response, true);
+                if (is_array($data)) {
+                    return $data;
+                }
+            }
+        }
+
+        $attempts++;
+
+        // Sleep before retry (only if not last attempt)
+        if ($attempts < $maxAttempts) {
+            usleep(1000000); // 1 second
+        }
     }
 
-    // Check content length
-    if (strlen($response) > GOSPEL_DATA_MAX_SIZE) {
-        return null;
-    }
-
-    $data = json_decode($response, true);
-    if (!is_array($data)) {
-        return null;
-    }
-
-    return $data;
+    return null;
 }
 
 /**
