@@ -15,7 +15,7 @@ const viewports = {
   largeTablet: { width: 820, height: 1180 }, // iPad Pro 11"
   lowRes: { width: 320, height: 480 }        // Low-end Android
 };
-const report = { pages: [], modules: [] };
+const report = { pages: [], modules: [], summary: { totalTests: 0, passed: 0, failed: 0, popups: 0, navOverlap: 0, overflowX: 0 } };
 
 async function audit(page) {
   return await page.evaluate(() => {
@@ -91,14 +91,44 @@ async function audit(page) {
         await page.waitForTimeout(1200);
         const cur = await page.evaluate(() => window.Alpine.$data(document.querySelector('.app-shell')).currentModule);
         const a = await audit(page);
+        const popupResults = await checkPopups(page);
         const spinner = await page.evaluate(() => !![...document.querySelectorAll('[class*="animate-spin"], .skeleton')].find((e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; }));
         if (vn !== 'tablet') await page.screenshot({ path: `${S}/shots/${role}-${key}-${vn}.png` });
-        report.modules.push({ role, viewport: vn, module: key, current: cur, ms: Date.now() - t0, stuckLoading: spinner, ...a, errors: [...errs] });
+        report.modules.push({ role, viewport: vn, module: key, current: cur, ms: Date.now() - t0, stuckLoading: spinner, ...a, ...popupResults, errors: [...errs] });
       }
       await ctx.close();
     }
   }
   await browser.close();
+  // Compute summary
+  report.summary.totalTests = report.pages.length + report.modules.length;
+  report.summary.popups = report.modules.filter(m => m.modals > 0 || m.toasts > 0 || m.drawers > 0).length;
+  report.summary.navOverlap = report.modules.filter(m => m.navOverlap).length;
+  report.summary.overflowX = report.modules.filter(m => m.overflowX > 0).length;
   fs.writeFileSync(S + '/ui_report.json', JSON.stringify(report, null, 1));
   console.log('done', report.pages.length, report.modules.length);
 })().catch((e) => { console.error(e); process.exit(1); });
+
+// Popup checks - gọi sau khi module đã load
+async function checkPopups(page) {
+  const results = { modals: 0, toasts: 0, drawers: 0, dropdowns: 0, navOverlap: false };
+
+  // Đếm các loại popup
+  results.modals = await page.locator('[role="dialog"], .modal, .modal-backdrop').count();
+  results.toasts = await page.locator('[x-data*="toast"], .toast, [class*="toast"]').count();
+  results.drawers = await page.locator('.drawer, [class*="drawer"], .sidebar').count();
+  results.dropdowns = await page.locator('select, [role="listbox"], [role="combobox"], .dropdown').count();
+
+  // Kiểm tra nav overlap (lỗi phổ biến #222)
+  const nav = await page.locator('nav, .bottom-nav, .fixed.bottom').first().boundingBox().catch(() => null);
+  const buttons = await page.locator('button, [role="button"]').all();
+  for (const btn of buttons) {
+    const box = await btn.boundingBox().catch(() => null);
+    if (box && nav && box.bottom > nav.top && box.top < nav.bottom && box.bottom > nav.bottom) {
+      results.navOverlap = true;
+      break;
+    }
+  }
+
+  return results;
+}
