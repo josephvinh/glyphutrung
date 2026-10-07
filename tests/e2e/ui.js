@@ -7,7 +7,14 @@ const roles = {
   glv: ['0911000004', 'Test@1234'],
   thu_thu: ['0911000006', 'Test@1234'],
 };
-const viewports = { mobile: { width: 390, height: 844 }, tablet: { width: 768, height: 1024 }, desktop: { width: 1366, height: 768 } };
+const viewports = {
+  mobile: { width: 390, height: 844 },       // iPhone 12/13
+  tablet: { width: 768, height: 1024 },       // iPad
+  desktop: { width: 1366, height: 768 },     // Laptop
+  iphoneSE: { width: 375, height: 667 },     // iPhone SE (small)
+  largeTablet: { width: 820, height: 1180 }, // iPad Pro 11"
+  lowRes: { width: 320, height: 480 }        // Low-end Android
+};
 const report = { pages: [], modules: [] };
 
 async function audit(page) {
