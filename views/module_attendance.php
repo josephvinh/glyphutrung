@@ -358,7 +358,7 @@
         <button x-show="canEditAttendanceStatus" style="display: none;" type="button"
                 @click="editStatusMode = !editStatusMode"
                 :aria-pressed="editStatusMode ? 'true' : 'false'"
-                class="w-full mb-4 flex items-center justify-center gap-2 py-3 rounded-2xl border font-bold text-xs active:scale-95 transition-transform"
+                class="w-full mb-4 flex items-center justify-center gap-2 py-3 rounded-2xl border shadow-sm font-bold text-xs active:scale-95 transition-transform"
                 :class="editStatusMode ? 'bg-amber-50 border-amber-300 text-amber-800' : 'bg-white border-slate-200 text-slate-600'">
             <i data-lucide="pencil" class="w-4 h-4"></i>
             <span x-text="editStatusMode ? 'Đang sửa trạng thái — bấm để tắt' : 'Sửa trạng thái'"></span>

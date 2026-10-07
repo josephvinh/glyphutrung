@@ -430,7 +430,15 @@ window.TNTT.attendance = {
             const r = await this.save('attendance', 'set_status', {
                 programId: phien.programId, date: phien.date, studentId: student.id, status: moi
             });
-            if (!r || !r.ok) return;   // save() đã hiện lỗi; giữ nguyên bản ghi
+            if (!r || !r.ok) {
+                // save() cố ý IM LẶNG khi mất kết nối với module điểm danh (vì thao
+                // tác chạm tên có hàng đợi offline). Thao tác này không có hàng đợi
+                // nên phải tự báo, nếu không người dùng tưởng đã đổi xong.
+                if (r && r.networkError) {
+                    window.TNTT.toast.warning('Mất kết nối máy chủ, chưa đổi được trạng thái. Thử lại khi có mạng.');
+                }
+                return;   // lỗi khác: save() đã hiện thông báo; giữ nguyên bản ghi
+            }
             // Thay bản ghi (xoá + thêm lại) thay vì sửa tại chỗ: đúng cách phần
             // còn lại của file cập nhật mảng lẫn index cho giao diện làm mới.
             this._attXoa(phien.programId, phien.date, student.id);
