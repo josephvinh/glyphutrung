@@ -152,6 +152,11 @@ $migrations = [
     "ALTER TABLE push_subscriptions ADD COLUMN ring_lock_until DATETIME NULL",
     "ALTER TABLE push_subscriptions ADD COLUMN ring_tries TINYINT UNSIGNED NOT NULL DEFAULT 0",
     "ALTER TABLE push_subscriptions ADD COLUMN last_fail_code SMALLINT NULL",
+    // PR-2: Student retention - ẩn PII sau khi nghỉ
+    "ALTER TABLE students ADD COLUMN hidden_at TIMESTAMP NULL DEFAULT NULL",
+    "ALTER TABLE students ADD COLUMN deleted_at TIMESTAMP NULL DEFAULT NULL",
+    "CREATE INDEX idx_students_hidden ON students(hidden_at)",
+    "CREATE INDEX idx_students_deleted ON students(deleted_at)",
 ];
 $mig = 0;
 foreach ($migrations as $sqlMig) {

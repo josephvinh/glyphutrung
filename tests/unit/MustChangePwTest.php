@@ -6,15 +6,13 @@
 // Trước #83 cờ này chỉ chặn ở giao diện: ai gọi thẳng API vẫn dùng được tài khoản còn cờ.
 // Test gọi HTTP thật (`php -S`, phiên + CSRF thật) để chứng minh:
 //  - tài khoản còn cờ, ĐÃ đăng nhập, bị 403 {code:"must_change_pw"} ở đọc (data.php, notes.php,
-//    logs.php, passkey.php?status) và ở ghi (attendance, students, org.php, notes, auth.php?profile);
+//    logs.php) và ở ghi (attendance, students, org.php, notes, auth.php?profile);
 //    dùng cả quản trị (đủ mọi quyền) để thấy chính cờ mới là lý do chặn, không phải thiếu quyền;
 //  - auth.php?action=password (có CSRF) là cửa DUY NHẤT mở; đổi xong thì data.php trả 200;
 //    thiếu CSRF / sai mật khẩu hiện tại thì không đổi được;
 //  - auth.php?action=me và logout vẫn chạy khi còn cờ;
 //  - tài khoản must_change_pw=0 không bị chặn (đối chứng);
-//  - cờ bật GIỮA phiên (admin cấp lại mật khẩu) chặn ngay request kế tiếp;
-//  - Passkey từ chối tài khoản còn cờ và không tạo phiên (AUTH-09); đối chứng: cùng khoá
-//    Passkey khi cờ = 0 đăng nhập được, nên việc từ chối là do cờ chứ không do chữ ký hỏng.
+//  - cờ bật GIỮA phiên (admin cấp lại mật khẩu) chặn ngay request kế tiếp.
 //
 // Dữ liệu tạo trong từng test, dọn trong tearDown; không phụ thuộc thứ tự chạy.
 
@@ -27,8 +25,6 @@ class MustChangePwTest extends TestCase
     use P1ApiHarness;
 
     private int $classId = 0;
-    /** @var int[] */
-    private array $passkeyMemberIds = [];
 
     public static function setUpBeforeClass(): void
     {
@@ -51,10 +47,6 @@ class MustChangePwTest extends TestCase
 
     protected function tearDown(): void
     {
-        foreach ($this->passkeyMemberIds as $id) {
-            db_run('DELETE FROM member_passkeys WHERE member_id = ?', [$id]);
-        }
-        $this->passkeyMemberIds = [];
         $this->cleanupHarness();
     }
 
@@ -104,8 +96,6 @@ class MustChangePwTest extends TestCase
         }
         $this->assertBlocked($this->http($id, 'GET', '/api/notes.php?action=list'), 'notes.php?action=list');
         $this->assertBlocked($this->http($id, 'GET', '/api/logs.php'), 'logs.php');
-        $this->assertBlocked($this->http($id, 'GET', '/api/passkey.php?action=status'), 'passkey.php?action=status');
-        $this->assertBlocked($this->http($id, 'GET', '/api/passkey.php?action=getRegisterArgs'), 'passkey.php?action=getRegisterArgs');
     }
 
     // ------------------------------------------------------------------
@@ -149,7 +139,6 @@ class MustChangePwTest extends TestCase
         self::assertTrue($d['json']['ok']);
         self::assertSame(200, $this->http($id, 'GET', '/api/notes.php?action=list')['code']);
         self::assertSame(200, $this->http($id, 'GET', '/api/logs.php')['code'], 'admin must=0 xem được nhật ký');
-        self::assertSame(200, $this->http($id, 'GET', '/api/passkey.php?action=status')['code']);
 
         $w = $this->http($id, 'POST', '/api/org.php?action=saveMember',
             ['id' => (int) $target['id'], 'holyName' => 'X', 'fullName' => 'Duoc Doi Ten', 'phone' => '0911222333', 'role' => 'glv']);
@@ -237,98 +226,5 @@ class MustChangePwTest extends TestCase
 
         $this->assertBlocked($this->http($vid, 'GET', '/api/data.php?part=core'), 'data.php sau reset');
         $this->assertBlocked($this->http($vid, 'GET', '/api/notes.php?action=list'), 'notes.php sau reset');
-    }
-
-    // ------------------------------------------------------------------
-    //  Passkey (AUTH-09)
-    // ------------------------------------------------------------------
-
-    /** Sinh khoá EC P-256 bằng openssl, lưu khoá công khai (PEM) làm Passkey của $memberId. @return array{key:\OpenSSLAsymmetricKey,cred:string} */
-    private function enrollPasskey(int $memberId): array
-    {
-        $key = openssl_pkey_new(['private_key_type' => OPENSSL_KEYTYPE_EC, 'curve_name' => 'prime256v1']);
-        self::assertNotFalse($key, 'openssl không sinh được khoá EC');
-        $pem = openssl_pkey_get_details($key)['key'];
-        $cred = random_bytes(16);
-        db_run('INSERT INTO member_passkeys (member_id, credential_id, public_key, user_handle) VALUES (?,?,?,?)',
-               [$memberId, base64_encode($cred), $pem, (string) $memberId]);
-        $this->passkeyMemberIds[] = $memberId;
-        return ['key' => $key, 'cred' => $cred];
-    }
-
-    private static function b64u(string $b): string { return rtrim(strtr(base64_encode($b), '+/', '-_'), '='); }
-
-    /**
-     * Đăng nhập Passkey bằng một phiên curl MỚI (chưa đăng nhập). Chữ ký WebAuthn thật (ES256),
-     * rpId = localhost. @return array{login:array, me:array}
-     */
-    private function passkeyLogin(array $pk, int $counter): array
-    {
-        $jar = tempnam(sys_get_temp_dir(), 'p1pk');
-        $this->jars[-$counter - 1000] = $jar;      // để cleanupHarness xoá file cookie
-        // WebAuthn chỉ chấp nhận origin https hoặc localhost: gọi qua tên `localhost` (rpId = localhost).
-        $port = (int) parse_url(self::$base, PHP_URL_PORT);
-        $origin = "http://localhost:$port";
-        $call = function (string $method, string $path, ?array $json = null) use ($jar, $origin, $port): array {
-            $ch = curl_init($origin . $path);
-            curl_setopt($ch, CURLOPT_RESOLVE, ["localhost:$port:127.0.0.1"]);
-            curl_setopt_array($ch, [
-                CURLOPT_CUSTOMREQUEST => $method, CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 30,
-                CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
-                CURLOPT_COOKIEJAR => $jar, CURLOPT_COOKIEFILE => $jar,
-            ]);
-            if ($json !== null) curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($json));
-            $body = (string) curl_exec($ch);
-            $code = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
-            curl_close($ch);
-            return ['code' => $code, 'raw' => $body, 'json' => json_decode($body, true)];
-        };
-
-        $args = $call('GET', '/api/passkey.php?action=getLoginArgs');
-        self::assertSame(200, $args['code'], $args['raw']);
-        $chal = $args['json']['args']['publicKey']['challenge'];
-        self::assertStringStartsWith('=?BINARY?B?', $chal);
-        $challenge = base64_decode(substr($chal, strlen('=?BINARY?B?'), -2));
-
-        $host = 'localhost';                                            // rpId của passkey.php = host không cổng
-        $authData = hash('sha256', $host, true) . chr(0x05) . pack('N', $counter);   // UP + UV
-        $cdj = json_encode(['type' => 'webauthn.get', 'challenge' => self::b64u($challenge), 'origin' => $origin]);
-        self::assertTrue(openssl_sign($authData . hash('sha256', $cdj, true), $sig, $pk['key'], OPENSSL_ALGO_SHA256));
-
-        $login = $call('POST', '/api/passkey.php?action=processLogin', [
-            'id' => self::b64u($pk['cred']), 'clientDataJSON' => base64_encode($cdj),
-            'authenticatorData' => base64_encode($authData), 'signature' => base64_encode($sig),
-        ]);
-        return ['login' => $login, 'me' => $call('GET', '/api/auth.php?action=me')];
-    }
-
-    public function test_passkey_login_works_when_unflagged_control(): void
-    {
-        $u = $this->glv(0);
-        $pk = $this->enrollPasskey((int) $u['id']);
-        $r = $this->passkeyLogin($pk, 1);
-        self::assertSame(200, $r['login']['code'], 'đối chứng: Passkey hợp lệ + must=0 phải vào được — ' . $r['login']['raw']);
-        self::assertTrue($r['login']['json']['ok']);
-        self::assertTrue($r['me']['json']['ok'], 'phải có phiên');
-        self::assertSame((int) $u['id'], $r['me']['json']['user']['id']);
-    }
-
-    public function test_passkey_login_is_refused_while_flagged_and_creates_no_session(): void
-    {
-        $u = $this->glv(0);
-        $pk = $this->enrollPasskey((int) $u['id']);
-        db_run('UPDATE members SET must_change_pw = 1 WHERE id = ?', [$u['id']]);
-
-        $r = $this->passkeyLogin($pk, 1);
-        $this->assertBlocked($r['login'], 'processLogin khi must=1',
-            'Tài khoản cần đổi mật khẩu. Vui lòng đăng nhập bằng số điện thoại và mật khẩu (tạm) để đổi.');
-        self::assertFalse($r['me']['json']['ok'], 'KHÔNG được tạo phiên');
-        self::assertNull($r['me']['json']['user']);
-        self::assertSame(1, $this->mustFlag((int) $u['id']));
-
-        // Không tính là lần thử sai: lần sau (cờ về 0) vào được ngay.
-        db_run('UPDATE members SET must_change_pw = 0 WHERE id = ?', [$u['id']]);
-        $r2 = $this->passkeyLogin($pk, 2);
-        self::assertSame(200, $r2['login']['code'], 'không bị khoá do thử sai: ' . $r2['login']['raw']);
     }
 }

@@ -96,17 +96,6 @@ if (!$__dev) ob_start();
             <span x-text="busy ? 'Đang kiểm tra...' : 'Đăng nhập'"></span>
         </button>
 
-        <!-- Đăng nhập sinh trắc — chỉ icon khuôn mặt kiểu native, bấm là quét
-             luôn, không popup (lỗi/huỷ xử lý im lặng hoặc hiện ô đỏ inline). -->
-        <div class="login-or"><span>hoặc</span></div>
-
-        <div class="flex justify-center">
-            <button type="button" @click="loginPasskey()" :disabled="busy" class="btn-face"
-                    aria-label="Đăng nhập bằng Face ID / Vân tay">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></svg>
-            </button>
-        </div>
-
         <p class="text-center text-micro text-slate-500 leading-snug pt-2">
             Quên mật khẩu? Liên hệ Ban Điều Hành để được cấp lại.
         </p>
@@ -302,28 +291,8 @@ if (!$__dev) ob_start();
 </div>
 
 <?php /* Script THƯỜNG (không defer) ở cuối body: chạy khi parser tới đây,
-         TRƯỚC alpine (defer) -> kịp đăng ký component loginScreen + window.Passkey. */ ?>
-<?php
-/* Bản thật: dùng login.min.js NẾU nó có và MỚI HƠN mọi tệp nguồn (cùng cách
-   assets/js/bundle.php). login.min.js bị .gitignore — thiếu hoặc cũ (quên build)
-   thì rơi về nạp nguồn passkey.js + login.js để trang đăng nhập không hỏng. */
-$__lgDir  = __DIR__ . '/../public/assets/js/';
-$__lgSrc  = [$__lgDir . 'modules/passkey.js', $__lgDir . 'login.js'];
-$__lgMin  = $__lgDir . 'login.min.js';
-$__lgUseMin = false;
-if (!$__dev && is_file($__lgMin)) {
-    $__lgUseMin = true;
-    foreach ($__lgSrc as $__f) {
-        if (is_file($__f) && filemtime($__f) > filemtime($__lgMin)) { $__lgUseMin = false; break; }
-    }
-}
-?>
-<?php if ($__lgUseMin): ?>
-<script src="assets/js/login.min.js?v=<?php echo @filemtime($__lgMin) ?: 0; ?>"></script>
-<?php else: ?>
-<script src="assets/js/modules/passkey.js?v=<?php echo @filemtime($__lgSrc[0]) ?: 0; ?>"></script>
-<script src="assets/js/login.js?v=<?php echo @filemtime($__lgSrc[1]) ?: 0; ?>"></script>
-<?php endif; ?>
+         TRƯỚC alpine (defer) -> kịp đăng ký component loginScreen. */ ?>
+<script src="assets/js/login.js?v=<?php echo @filemtime(__DIR__ . '/../public/assets/js/login.js') ?: 0; ?>"></script>
 </body>
 </html>
 <?php

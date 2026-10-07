@@ -71,8 +71,9 @@ function tracuu_auth(string $code, string $dobInput): ?array
 {
     $code = mb_substr(trim($code), 0, 32, 'UTF-8');
     $dob  = tracuu_norm_dob($dobInput);
+    // PR-2: Chỉ tra cứu em không bị ẩn/xóa
     $st   = $code === '' ? null
-        : db_one('SELECT id, code, full_name, holy_name, birth_date FROM students WHERE code = ?', [$code]);
+        : db_one('SELECT id, code, full_name, holy_name, birth_date FROM students WHERE code = ? AND hidden_at IS NULL AND deleted_at IS NULL', [$code]);
 
     // Luôn so sánh (kể cả khi không có em) để thời gian phản hồi không lộ mã tồn tại.
     $real = $st ? tracuu_dob_from_db($st['birth_date'] ?? null) : null;

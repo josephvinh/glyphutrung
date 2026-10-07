@@ -18,7 +18,7 @@ window.TNTT.router = {
         'programs', 'reports', 'org', 'staff', 'settings', 'leave',
         'birthdays', 'announcements', 'notes', 'calendar', 'promotion',
         'reporthub', 'qrcard', 'gifts', 'rewards', 'thu_vien', 'guide', 'years',
-        'access', 'qrscan', 'analytics', 'stats', 'push', 'library', 'passkey'
+        'access', 'qrscan', 'analytics', 'stats', 'push', 'library'
     ],
 
     /**

@@ -47,7 +47,10 @@ window.TNTT.push = {
         }
 
         try {
-            this._swReg = await navigator.serviceWorker.register('sw.js');
+            // Đăng ký kèm ?v=<hash nội dung> để SW tự đổi phiên bản khi bundle
+            // đổi (đổi giao diện là cache tự làm mới, khỏi bump tay PHIEN_BAN).
+            const _av = (typeof window !== 'undefined' && window.__ASSET_V) ? ('?v=' + window.__ASSET_V) : '';
+            this._swReg = await navigator.serviceWorker.register('sw.js' + _av);
             const dk = await this._swReg.pushManager.getSubscription();
             this.tbDaBat = !!dk && Notification.permission === 'granted';
             const daDongBo = await this._pushDongBo(dk ? dk.endpoint : '');
