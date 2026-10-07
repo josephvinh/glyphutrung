@@ -1,0 +1,7 @@
+version: 2
+snapshot:
+  widths: [390, 768, 1366]
+  min-height: 480
+percy:
+  css:
+    - "@media print { .no-print { display: none !important; } }"

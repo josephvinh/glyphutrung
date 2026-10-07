@@ -450,3 +450,77 @@ jobs:
         with:
           name: print-screenshots
           path: tests/e2e/out/shots/print-*.png
+
+  visual-regression:
+    name: Visual Regression (Percy)
+    runs-on: ubuntu-latest
+    needs: [php-unit]
+
+    if: github.event_name == 'pull_request'
+
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: tntt_test
+          MARIADB_USER: tntt
+          MARIADB_PASSWORD: tntt
+        ports:
+          - 3306:3306
+
+    env:
+      TNTT_DB_HOST: 127.0.0.1
+      TNTT_DB_PORT: '3306'
+      TNTT_DB_NAME: tntt_test
+      TNTT_DB_USER: tntt
+      TNTT_DB_PASS: tntt
+      E2E_BASE: http://127.0.0.1:8080
+      PERCY_TOKEN: ${{ secrets.PERCY_TOKEN }}
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo_mysql, mbstring
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Install Percy
+        run: npm install @percy/cli @percy/playwright
+
+      - name: Wait for database
+        run: |
+          php -r '
+            for ($i = 0; $i < 30; $i++) {
+              try {
+                $p = new PDO("mysql:host=127.0.0.1;port=3306;dbname=tntt_test;charset=utf8mb4", "tntt", "tntt");
+                exit(0);
+              } catch (Throwable $e) { sleep(2); }
+            }
+            exit(1);
+          '
+
+      - name: Install schema
+        run: php config/install.php
+
+      - name: Seed test data
+        run: php tests/fixtures/ci_seed.php
+
+      - name: Start PHP server
+        run: php -S 127.0.0.1:8080 -t public > /dev/null 2>&1 &
+        sleep 2
+
+      - name: Run Percy snapshots
+        run: npx percy exec -- node tests/e2e/percy_snapshot_runner.js
