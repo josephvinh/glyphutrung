@@ -106,7 +106,7 @@
     <!-- 3. POPUP THÊM/SỬA CHƯƠNG TRÌNH -->
     <div x-show="showProgramModal" style="display: none;" class="fixed inset-0 z-[200] flex items-end justify-center sm:items-center sm:p-4 md:p-6">
         <div x-show="showProgramModal" x-transition.opacity.duration.300ms @click="showProgramModal = false" class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
-        <div x-show="showProgramModal" x-transition:enter="transform transition ease-out duration-300" x-transition:enter-start="translate-y-full opacity-0" x-transition:enter-end="translate-y-0 opacity-100" x-transition:leave="transform transition ease-in duration-200" x-transition:leave-start="translate-y-0 opacity-100" x-transition:leave-end="translate-y-full opacity-0" class="modal-sheet relative w-full max-w-md sm:max-w-lg bg-white rounded-t-sheet sm:rounded-sheet shadow-2xl flex flex-col max-h-[92dvh]">
+        <div x-show="showProgramModal" x-transition:enter="transform transition ease-out duration-300" x-transition:enter-start="translate-y-full opacity-0" x-transition:enter-end="translate-y-0 opacity-100" x-transition:leave="transform transition ease-in duration-200" x-transition:leave-start="translate-y-0 opacity-100" x-transition:leave-end="translate-y-full opacity-0" class="modal-sheet relative w-full max-w-md sm:max-w-lg bg-white rounded-t-sheet sm:rounded-sheet shadow-2xl flex flex-col h-[88dvh] sm:h-[80dvh] prog-modal">
             <!-- Header cố định -->
             <div class="flex justify-center pt-3 pb-2 shrink-0"><div class="w-12 h-1.5 bg-slate-200 rounded-full"></div></div>
             <div class="flex justify-between items-center px-5 pb-3 border-b border-slate-100 shrink-0">

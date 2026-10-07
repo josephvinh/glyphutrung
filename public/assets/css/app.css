@@ -500,6 +500,26 @@ body {
     .modal-sheet > *:last-child { padding-bottom: 1rem; }
 }
 
+/* Popup chương trình trên iOS (Safari/Chrome iOS đều là WebKit):
+   ô giờ/ngày gốc của iOS bỏ qua width:100% nên tràn khỏi ô lưới và đè lên ô
+   bên cạnh; ô trống thì xẹp chiều cao. Bỏ giao diện gốc, ép vừa khung + chiều
+   cao tối thiểu, chữ căn trái như các ô khác. */
+.prog-modal input[type="date"],
+.prog-modal input[type="time"] {
+    -webkit-appearance: none;
+    appearance: none;
+    display: block;
+    min-width: 0;
+    max-width: 100%;
+    min-height: 2.75rem;
+    text-align: left;
+}
+.prog-modal input[type="date"]::-webkit-date-and-time-value,
+.prog-modal input[type="time"]::-webkit-date-and-time-value {
+    text-align: left;
+    min-height: 1.25rem;
+}
+
 /* ==========================================================
    Ô NHẬP / SELECT TRONG LƯỚI–FLEX 2 CỘT
    Safari/iOS gán cho input ngày/giờ VÀ cho <select> (theo nhãn option dài
