@@ -359,6 +359,21 @@ body {
     }
 }
 
+/* Trang đăng nhập dùng chung khung .app-shell (max-height 100dvh + overflow
+   hidden, hợp với app vì phần nội dung tự cuộn bên trong). Trang login thì
+   KHÔNG có vùng cuộn riêng: màn hình thấp hơn nội dung (điện thoại có thanh
+   công cụ, laptop cửa sổ thấp, cỡ chữ hệ thống lớn) thì thẻ đăng nhập — vốn
+   overflow:hidden nên được phép co — bị bóp lại và cắt mất nút "Đăng ký" ở
+   cuối. Cho khung login cao theo nội dung (cả trang cuộn) và cấm co thẻ.
+   Đặt SAU khối @media 640px ở trên để thắng cùng độ ưu tiên. */
+.login-shell {
+    max-height: none;
+    overflow: visible;
+}
+.login-shell > * {
+    flex-shrink: 0;
+}
+
 /* Điện thoại + tablet (trước khi có thanh bên): xếp khung theo chiều dọc để
    vùng nội dung tự cuộn. Trước đây .app-shell là block + overflow:hidden nhưng
    .app-content KHÔNG được ràng buộc chiều cao -> .app-main (overflow-y:auto)
