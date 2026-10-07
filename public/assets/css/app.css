@@ -388,10 +388,14 @@ body {
     isolation: isolate;
 }
 
-/* Main content cần padding-top để không bị header che */
+/* KHÔNG đặt z-index ở đây. z-index trên phần tử có position tạo ra ngữ cảnh
+   xếp chồng riêng: mọi popup (fixed, z-[200]...) nằm trong .app-content bị
+   nhốt ở mức 1 và luôn nằm DƯỚI thanh điều hướng dưới (.app-bottomnav, 150,
+   nằm ngoài) -> nút ở đáy popup bị nav đè, bấm không được trên điện thoại.
+   Header vẫn nổi trên nội dung nhờ z-index/isolation của chính nó. Có test
+   giữ nguyên điều này: tests/unit/ModalStackingTest.php. */
 .app-content {
     position: relative;
-    z-index: 1;
 }
 @media (min-width: 640px) {
     /* Trong khung thẻ nổi thì không còn tai thỏ */
@@ -498,6 +502,26 @@ body {
 }
 @media (min-width: 640px) {
     .modal-sheet > *:last-child { padding-bottom: 1rem; }
+}
+
+/* Popup chương trình trên iOS (Safari/Chrome iOS đều là WebKit):
+   ô giờ/ngày gốc của iOS bỏ qua width:100% nên tràn khỏi ô lưới và đè lên ô
+   bên cạnh; ô trống thì xẹp chiều cao. Bỏ giao diện gốc, ép vừa khung + chiều
+   cao tối thiểu, chữ căn trái như các ô khác. */
+.prog-modal input[type="date"],
+.prog-modal input[type="time"] {
+    -webkit-appearance: none;
+    appearance: none;
+    display: block;
+    min-width: 0;
+    max-width: 100%;
+    min-height: 2.75rem;
+    text-align: left;
+}
+.prog-modal input[type="date"]::-webkit-date-and-time-value,
+.prog-modal input[type="time"]::-webkit-date-and-time-value {
+    text-align: left;
+    min-height: 1.25rem;
 }
 
 /* ==========================================================
