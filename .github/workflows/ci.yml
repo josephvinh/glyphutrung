@@ -5,6 +5,12 @@ on:
     branches: [ master, main ]
   pull_request:
     branches: [ master, main ]
+    paths:
+      - 'views/**'
+      - 'public/assets/css/**'
+      - 'public/assets/js/**'
+      - 'public/**/*.php'
+      - 'tests/e2e/**'
   workflow_dispatch:
 
 jobs:
@@ -264,7 +270,6 @@ jobs:
 
       - name: Run UI Matrix tests
         run: node tests/e2e/ui.js
-        continue-on-error: true
 
       - name: Upload screenshots
         if: always()
@@ -357,7 +362,6 @@ jobs:
 
       - name: Run Axe accessibility tests
         run: node tests/e2e/axe.js
-        continue-on-error: true
 
       - name: Upload axe results
         if: always()
