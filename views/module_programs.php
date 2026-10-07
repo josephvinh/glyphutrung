@@ -114,7 +114,7 @@
                 <button aria-label="Đóng" @click="showProgramModal = false" class="tap-safe w-8 h-8 bg-slate-100 rounded-full text-slate-500 active:scale-90 flex items-center justify-center"><i data-lucide="x" class="w-4 h-4"></i></button>
             </div>
             <!-- Nội dung cuộn -->
-            <div class="flex-1 overflow-y-auto p-5 space-y-4 oversc-contain">
+            <div class="flex-1 overflow-y-auto p-5 space-y-4 overscroll-contain">
                 <div>
                     <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Tên Chương trình <span class="text-rose-500">*</span></label>
                     <input x-model="programForm.name" type="text" required placeholder="VD: Lễ Chúa Nhật..."

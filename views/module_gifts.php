@@ -73,7 +73,7 @@
                 <h3 class="text-lg font-black text-slate-800" x-text="isEditingGift ? 'Cập nhật quà' : 'Thêm quà mới'"></h3>
                 <button aria-label="Đóng" @click="showGiftModal = false" class="tap-safe w-8 h-8 bg-slate-100 rounded-full text-slate-500 active:scale-90 flex items-center justify-center"><i data-lucide="x" class="w-4 h-4"></i></button>
             </div>
-            <div class="flex-1 overflow-y-auto p-5 space-y-4 oversc-contain">
+            <div class="flex-1 overflow-y-auto p-5 space-y-4 overscroll-contain">
                 <div>
                     <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Tên quà <span class="text-rose-500">*</span></label>
                     <input x-model="giftForm.name" type="text" required placeholder="VD: Bút bi, sổ tay..."

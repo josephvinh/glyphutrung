@@ -142,7 +142,16 @@ window.TNTT.core = {
                     setTimeout(() => location.reload(), 1500);
                     return { ok: false, error: j.error };
                 }
-                return { ok: false, error: 'Yêu cầu không hợp lệ (CSRF). Vui lòng tải lại trang.' };
+                // Câu "CSRF" CHỈ đúng khi lỗi thật là CSRF (hoặc không đọc được nội dung
+                // trả về). Các 403 còn lại — không đủ quyền, ngoài phạm vi lớp/khối, tài
+                // khoản đã nghỉ — máy chủ đã có câu riêng, hiện đúng câu đó. Trước đây
+                // mọi 403 đều thành "CSRF" nên người dùng bị chặn quyền lại được bảo
+                // "tải lại trang", không biết vì sao.
+                const laCsrf = !j || typeof j.error !== 'string' || !j.error || /csrf/i.test(j.error);
+                return {
+                    ok: false,
+                    error: laCsrf ? 'Yêu cầu không hợp lệ (CSRF). Vui lòng tải lại trang.' : j.error
+                };
             }
             return await res.json();
         } catch (e) {

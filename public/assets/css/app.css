@@ -242,10 +242,21 @@
 @media (prefers-reduced-transparency: reduce) {
     .glass-card,
     .nav-inner,
-    .btn-glass,
     .input-glass,
     .modal-glass {
         background: var(--glass-bg-elevated) !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+    }
+
+    /* Nút glass có CHỮ TRẮNG: "giảm trong suốt" nghĩa là nền ĐẶC, không phải đổi
+       sang nền sáng. Trước đây .btn-glass nằm chung nhóm trên nên lấy nền trắng
+       (--glass-bg-elevated) -> chữ trắng trên nền trắng, nút Đăng nhập / Điểm
+       danh tay biến mất trên máy bật "Giảm độ trong suốt" (vd. Samsung).
+       Có test giữ nguyên điều này: tests/unit/ReducedTransparencyTest.php. */
+    .btn-glass,
+    .btn-glass:hover {
+        background: var(--accent-color) !important;
         backdrop-filter: none !important;
         -webkit-backdrop-filter: none !important;
     }
@@ -357,6 +368,21 @@ body {
         overflow: hidden;
         box-shadow: 0 25px 50px -12px rgb(15 23 42 / 0.25);
     }
+}
+
+/* Trang đăng nhập dùng chung khung .app-shell (max-height 100dvh + overflow
+   hidden, hợp với app vì phần nội dung tự cuộn bên trong). Trang login thì
+   KHÔNG có vùng cuộn riêng: màn hình thấp hơn nội dung (điện thoại có thanh
+   công cụ, laptop cửa sổ thấp, cỡ chữ hệ thống lớn) thì thẻ đăng nhập — vốn
+   overflow:hidden nên được phép co — bị bóp lại và cắt mất nút "Đăng ký" ở
+   cuối. Cho khung login cao theo nội dung (cả trang cuộn) và cấm co thẻ.
+   Đặt SAU khối @media 640px ở trên để thắng cùng độ ưu tiên. */
+.login-shell {
+    max-height: none;
+    overflow: visible;
+}
+.login-shell > * {
+    flex-shrink: 0;
 }
 
 /* Điện thoại + tablet (trước khi có thanh bên): xếp khung theo chiều dọc để
@@ -1239,3 +1265,22 @@ select.tntt-select {
     background-size: 1rem 1rem;
     padding-right: 2.25rem;
 }
+
+/* ==========================================================
+   TIỆN ÍCH BỔ SUNG
+   tailwind.css là bản BUILD SẴN (v3.2.7): class không có mặt lúc build thì không
+   tồn tại, markup dùng nó mất kiểu mà KHÔNG báo lỗi gì. Các class dưới đây được
+   view dùng nhưng bản build không có. Dùng class mới chưa định nghĩa sẽ bị chặn
+   bởi tests/unit/CssClassCoverageTest.php.
+   ========================================================== */
+.bg-white\/15 { background-color: rgb(255 255 255 / 0.15); }
+.w-4\.5 { width: 1.125rem; }
+.h-4\.5 { height: 1.125rem; }
+.line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+}
+.overscroll-contain { overscroll-behavior: contain; }
