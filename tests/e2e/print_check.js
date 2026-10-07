@@ -1,6 +1,8 @@
 const { chromium } = require('playwright');
 const fs = require('fs');
 const S = __dirname + '/out';
+if (!fs.existsSync(S)) fs.mkdirSync(S, { recursive: true });
+if (!fs.existsSync(S + '/shots')) fs.mkdirSync(S + '/shots', { recursive: true });
 const BASE = process.env.E2E_BASE || 'http://127.0.0.1:8080';
 
 const roles = {

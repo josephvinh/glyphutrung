@@ -2,6 +2,7 @@
 const { chromium } = require('playwright');
 const AxeBuilder = require(process.env.NPM_TOOLS + '/node_modules/@axe-core/playwright').default || require(process.env.NPM_TOOLS + '/node_modules/@axe-core/playwright').AxeBuilder;
 const fs = require('fs'); const OUT = __dirname + '/out';
+if (!fs.existsSync(OUT)) fs.mkdirSync(OUT, { recursive: true });
 (async () => {
   const browser = await chromium.launch(); const rep = {};
   for (const vp of [{ n: 'mobile', w: 390, h: 844 }, { n: 'desktop', w: 1366, h: 768 }]) {
