@@ -24,4 +24,18 @@ const fs = require('fs'); const OUT = __dirname + '/out';
   await browser.close();
   fs.writeFileSync(OUT + '/axe_results.json', JSON.stringify(rep, null, 1));
   for (const [id, v] of Object.entries(rep).sort((a, b) => b[1].nodes - a[1].nodes)) console.log(`${v.impact.padEnd(9)} ${id.padEnd(28)} ${String(v.nodes).padStart(5)} nodes | ${v.help} | ở ${Object.keys(v.where).length} màn | ${v.sample}`);
+  // Summary
+  const totalViolations = Object.values(rep).reduce((sum, v) => sum + v.nodes, 0);
+  console.log(`\n=== AXE SUMMARY ===`);
+  console.log(`Total violations: ${totalViolations}`);
+  console.log(`Critical: ${Object.values(rep).filter(v => v.impact === 'critical').reduce((sum, v) => sum + v.nodes, 0)}`);
+  console.log(`Serious: ${Object.values(rep).filter(v => v.impact === 'serious').reduce((sum, v) => sum + v.nodes, 0)}`);
+  // Exit with error if critical violations
+  if (totalViolations > 0) {
+    const criticalCount = Object.values(rep).filter(v => v.impact === 'critical').reduce((sum, v) => sum + v.nodes, 0);
+    if (criticalCount > 0) {
+      console.error('Critical accessibility violations found!');
+      process.exit(1);
+    }
+  }
 })().catch((e) => { console.error(e); process.exit(1); });
