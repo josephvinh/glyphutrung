@@ -146,6 +146,7 @@ function dinhDangGD(array $t): string {
 <style>
 :root{--vang:#f6b100;--vang2:#ffd54a;--lua:#f97316;--nen:#e11d36;--nen2:#b81528;}
 *{box-sizing:border-box;margin:0;padding:0}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 body{font-family:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
  color:#0f172a;background:linear-gradient(160deg,#eef3ff,#f8fafc 40%);min-height:100vh;padding:0 0 48px}
 .wrap{max-width:640px;margin:0 auto;padding:0 16px}
