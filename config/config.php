@@ -17,8 +17,6 @@ $config = [
         'charset'  => 'utf8mb4',
     ],
 
-    // Giờ chốt = giờ bắt đầu + số phút này, áp dụng toàn hệ thống
-    'cutoff_minutes' => 30,
 
     // Ngưỡng xét lên lớp
     'pass_score'      => 5,

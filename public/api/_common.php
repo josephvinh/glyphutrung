@@ -235,6 +235,34 @@ function level_rank(string $level): int
     return ['none' => 0, 'view' => 1, 'edit' => 2][$level] ?? 0;
 }
 
+/**
+ * Thời điểm (unix) tính ĐI TRỄ của một buổi trong một ngày.
+ *
+ * Nguồn DUY NHẤT là giờ tính đi trễ riêng của buổi (programs.cutoff_time) —
+ * form bắt buộc nhập. KHÔNG còn mặc định ẩn "+30 phút" nữa. Buổi nào CHƯA
+ * đặt (dữ liệu cũ chưa sửa) thì coi GIỜ BẮT ĐẦU là mốc — đến sau giờ bắt
+ * đầu là trễ; hãy vào đặt giờ cho buổi đó.
+ *
+ * PHẢI khớp với giao diện (attendance.js: cutoffOf).
+ */
+function program_cutoff_ts(array $prog, string $date): int
+{
+    $cutoff = trim((string) ($prog['cutoff_time'] ?? ''));
+    if ($cutoff === '') $cutoff = (string) $prog['start_time'];
+    return strtotime($date . ' ' . $cutoff);
+}
+
+/**
+ * Trạng thái ĐÚNG của một bản ghi điểm danh, suy từ thời điểm bấm/quét
+ * (marked_at) so với giờ chốt thật của buổi. Dựng lại đúng điều máy chủ
+ * (đã vá) quyết định — dùng cho script sửa dữ liệu cũ ghi sai.
+ *   $prog cần: start_time, cutoff_time (có thể null).
+ */
+function attendance_expected_status(string $markedAt, array $prog, string $date): string
+{
+    return strtotime($markedAt) >= program_cutoff_ts($prog, $date) ? 'đi trễ' : 'có mặt';
+}
+
 /** Cấp quyền của MỘT vai trò trên MỘT module */
 function permission_of_role(string $roleCode, string $moduleKey): string
 {
@@ -281,6 +309,29 @@ function can_access_class(array $me, string $moduleKey, int $classId, string $ne
     $needRank = level_rank($need);
     foreach (member_scopes($me) as $a) {
         if (level_rank(permission_of_role($a['role_code'], $moduleKey)) < $needRank) continue;
+        if (assignment_covers_class($a, $classId)) return true;
+    }
+    return false;
+}
+
+/**
+ * "CỬA SỬA": được phép VƯỢT giờ khoá sổ của buổi (điểm danh bù buổi cũ /
+ * ghi đơn phép muộn) cho MỘT lớp hay không.
+ *
+ * Mặc định mọi người bị "khoá cứng" sau giờ tính vắng — vắng là vắng. Chỉ
+ * các vai quản lý được sửa sai, và CHỈ trong phạm vi mình phụ trách:
+ *   admin / bdh (toàn đoàn), truong_khoi (khối mình), glv_chu_nhiem (lớp mình).
+ * GLV thường vẫn bị khoá → báo cấp trên thay vì tự ý.
+ *
+ * Đây là lớp nới riêng cho RÀO THỜI GIAN; KHÔNG thay rào phạm vi: nơi gọi
+ * vẫn phải qua can_access_class(...,'edit') trước. Vì thế không nới quyền
+ * ghi sang lớp ngoài tầm của người dùng.
+ */
+function can_override_session_lock(array $me, int $classId): bool
+{
+    static $OVERRIDE = ['admin', 'bdh', 'truong_khoi', 'glv_chu_nhiem'];
+    foreach (member_scopes($me) as $a) {
+        if (!in_array($a['role_code'] ?? '', $OVERRIDE, true)) continue;
         if (assignment_covers_class($a, $classId)) return true;
     }
     return false;

@@ -43,10 +43,13 @@ $bootData = page_bootstrap($me);
  *     khỏi cảnh sửa code mà vẫn thấy bản cũ do cache HTTP giữ cùng ?v.
  */
 $__dev = in_array(explode(':', $_SERVER['HTTP_HOST'] ?? '')[0], ['localhost', '127.0.0.1'], true);
+// Dấu phá cache theo NỘI DUNG (md5) — đổi đúng khi nội dung đổi, KHÔNG phụ
+// thuộc filemtime (deploy git/FTP/rsync có thể không giữ mtime -> ?v cũ ->
+// kẹt cache). Dev thêm số ngẫu nhiên để luôn tải mới.
 function asset_v(string $file): string {
     global $__dev;
-    $m = @filemtime($file) ?: 0;
-    return $__dev ? $m . '-' . mt_rand() : (string) $m;
+    if ($__dev) return (@filemtime($file) ?: 0) . '-' . mt_rand();
+    return substr(md5_file($file) ?: '0', 0, 10);
 }
 
 /* Bản gộp cho production: nạp 1 tệp JS + 1 tệp CSS thay vì ~30, nhẹ hơn hẳn
@@ -58,9 +61,16 @@ $__jsFiles = array_merge(
     [__DIR__ . '/assets/js/app.js']
 );
 $__cssFiles = array_map(fn($x) => __DIR__ . '/assets/css/' . $x . '.css', $__manifest['css']);
-function bundle_v(array $files): int {   // ?v = mtime lớn nhất trong nhóm
-    $m = 0; foreach ($files as $f) $m = max($m, @filemtime($f) ?: 0); return $m;
+function bundle_v(array $files): string {   // ?v = hash NỘI DUNG của cả nhóm
+    static $cache = [];
+    $key = implode('|', $files);
+    if (isset($cache[$key])) return $cache[$key];
+    $h = '';
+    foreach ($files as $f) $h .= md5_file($f) ?: '0';
+    return $cache[$key] = substr(md5($h), 0, 10);
 }
+// Phiên bản chung cho Service Worker: đổi khi BẤT KỲ bundle JS/CSS nào đổi.
+$__assetV = bundle_v(array_merge($__jsFiles, $__cssFiles));
 // PRODUCTION: gom cả trang rồi xoá comment HTML cho gọn (trông chuyên
 // nghiệp khi mở F12). DEV giữ nguyên comment để dễ đọc lúc sửa.
 if (!$__dev) ob_start();
@@ -317,6 +327,7 @@ if (!$__dev) ob_start();
 
     <!-- Link file JS (Có Phá Cache để điện thoại luôn load mới) -->
     <!-- Dữ liệu phiên và cấu hình, nhúng sẵn để app.js không phải chờ thêm một vòng mạng -->
+    <script>window.__ASSET_V = <?php echo json_encode($__assetV); ?>;</script>
     <script>window.TNTT_BOOT = <?php echo json_encode($bootData, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP); ?>;</script>
     <!-- Danh sách mảnh để app.js gộp — cùng nguồn với nạp/gộp (asset_manifest.php) -->
     <script>window.TNTT_MODULES = <?php echo json_encode($__manifest['js_modules']); ?>;</script>

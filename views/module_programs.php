@@ -62,7 +62,8 @@
                             <i data-lucide="clock" class="w-3.5 h-3.5 mr-1.5 text-slate-400 shrink-0"></i>
                             <span class="text-slate-700 font-bold" x-text="prog.startTime"></span>
                             <span class="text-slate-300 mx-1.5">•</span>
-                            <span class="text-micro">chốt <span class="font-bold text-rose-500" x-text="prog.cutoffTime || addMinutes(prog.startTime, CUTOFF_MINUTES)"></span></span>
+                            <span class="text-micro">trễ <span class="font-bold text-rose-500" x-text="prog.cutoffTime || prog.startTime"></span></span>
+                            <template x-if="prog.absentTime"><span><span class="text-slate-300 mx-1.5">•</span><span class="text-micro">vắng <span class="font-bold text-slate-600" x-text="prog.absentTime"></span></span></span></template>
                         </p>
                     </div>
 
@@ -126,12 +127,12 @@
                         <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Giờ Bắt đầu <span class="text-rose-500">*</span></label>
                         <input x-model="programForm.startTime" type="time" required
                                aria-required="true"
-                               class="w-full bg-slate-50 border rounded-xl px-3 py-2.5 text-sm text-slate-800"
+                               class="w-full min-w-0 bg-slate-50 border rounded-xl px-3 py-2.5 text-sm text-slate-800"
                                :class="!programForm.startTime && showProgramModal ? 'border-rose-300 bg-rose-50' : 'border-slate-200'">
                     </div>
                     <div>
                         <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Loại</label>
-                        <select x-model="programForm.type" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800">
+                        <select x-model="programForm.type" class="w-full min-w-0 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800">
                             <option value="bắt buộc">Bắt buộc</option>
                             <option value="chiến dịch">Chiến dịch</option>
                         </select>
@@ -157,33 +158,35 @@
                     <input x-model="programForm.eventDate" type="date" min="2000-01-01" max="2100-12-31" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                 </div>
 
-                <!-- Giờ chốt sổ: BĐH nhập trực tiếp. Để trống thì mặc định
-                     giờ bắt đầu + CUTOFF_MINUTES phút (hiện gợi ý bên dưới). -->
+                <!-- Mốc 1: GIỜ TÍNH ĐI TRỄ (bắt buộc). Trước đây gọi "giờ chốt
+                     sổ" + để trống thì ngầm +30' — gây nhầm với mốc tính vắng. -->
                 <div>
-                    <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Giờ chốt sổ</label>
-                    <input x-model="programForm.cutoffTime" type="time" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500">
-                    <p class="text-micro text-slate-500 mt-1 ml-1">
-                        Để trống = giờ bắt đầu + <span x-text="CUTOFF_MINUTES"></span> phút
-                        <span x-show="programForm.startTime && !programForm.cutoffTime">(<span class="font-bold text-rose-500" x-text="addMinutes(programForm.startTime, CUTOFF_MINUTES)"></span>)</span>
-                    </p>
+                    <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Giờ tính đi trễ <span class="text-rose-500">*</span></label>
+                    <input x-model="programForm.cutoffTime" type="time" required aria-required="true"
+                           class="w-full bg-slate-50 border rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                           :class="!programForm.cutoffTime && showProgramModal ? 'border-rose-300 bg-rose-50' : 'border-slate-200'">
+                    <p class="text-micro text-slate-500 mt-1 ml-1">Đến sau giờ này là <b>đi trễ</b> (vẫn điểm danh được).</p>
                 </div>
 
-                <!-- Ngưỡng "tính vắng" (mốc 2) -->
+                <!-- Mốc 2: GIỜ KHOÁ SỔ / TÍNH VẮNG (bắt buộc). Sau giờ này của
+                     buổi thì không ghi điểm danh được nữa (attendance.php). -->
                 <div>
-                    <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Giờ "tính vắng" (tùy chọn)</label>
-                    <input x-model="programForm.absentTime" type="time" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800">
-                    <p class="text-micro text-slate-500 mt-1 ml-1">Sau giờ này không ghi được nữa (em tính vắng). Để trống = không dùng.</p>
+                    <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Giờ khoá sổ (tính vắng) <span class="text-rose-500">*</span></label>
+                    <input x-model="programForm.absentTime" type="time" required aria-required="true"
+                           class="w-full bg-slate-50 border rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                           :class="!programForm.absentTime && showProgramModal ? 'border-rose-300 bg-rose-50' : 'border-slate-200'">
+                    <p class="text-micro text-slate-500 mt-1 ml-1">Sau giờ này <b>không điểm danh được nữa</b>, em vắng tính vắng.</p>
                 </div>
 
                 <!-- Khoảng ngày áp dụng (buổi lặp) -->
                 <div x-show="programForm.type === 'bắt buộc'" class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Áp dụng từ</label>
-                        <input x-model="programForm.effectiveFrom" type="date" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800">
+                        <input x-model="programForm.effectiveFrom" type="date" class="w-full min-w-0 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800">
                     </div>
                     <div>
                         <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Đến ngày</label>
-                        <input x-model="programForm.effectiveTo" type="date" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800">
+                        <input x-model="programForm.effectiveTo" type="date" class="w-full min-w-0 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800">
                     </div>
                 </div>
 
@@ -228,7 +231,7 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Màu nhãn</label>
-                        <select x-model="programForm.color" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800">
+                        <select x-model="programForm.color" class="w-full min-w-0 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800">
                             <option value="">Mặc định</option>
                             <option value="rose">Đỏ</option>
                             <option value="amber">Vàng</option>
@@ -239,7 +242,7 @@
                     </div>
                     <div>
                         <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Thứ tự hiển thị</label>
-                        <input x-model.number="programForm.sortOrder" type="number" min="1" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800">
+                        <input x-model.number="programForm.sortOrder" type="number" min="1" class="w-full min-w-0 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800">
                     </div>
                 </div>
             </div>
