@@ -23,7 +23,7 @@ date_default_timezone_set('Asia/Ho_Chi_Minh');
 // API LUÔN trả JSON. Tuyệt đối không để warning/notice/deprecation của PHP
 // lọt vào thân phản hồi: trên iOS/WebKit, res.json() sẽ ném SyntaxError
 // "The string did not match the expected pattern." (Chrome nói "Unexpected
-// token"). Thư viện lbuchs (WebAuthn) trên PHP 8.2 hay sinh deprecation —
+// token"). Thư viện nào trên PHP 8.2 hay sinh deprecation —
 // đủ một dòng là hỏng cả JSON. Ẩn hiển thị, vẫn ghi vào error_log để dò.
 ini_set('display_errors', '0');
 ini_set('log_errors', '1');
@@ -263,7 +263,7 @@ function login_failed(string $phone): void
 /** Đăng nhập đúng thì xoá lịch sử sai của số đó, CHỈ login thường */
 function login_ok(string $phone): void
 {
-    db_run('DELETE FROM login_attempts WHERE phone = ? AND phone NOT LIKE ?', [$phone, 'pk:%']);
+    db_run('DELETE FROM login_attempts WHERE phone = ?', [$phone]);
 }
 
 /* ================================================================

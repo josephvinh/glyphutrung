@@ -164,24 +164,6 @@ CREATE TABLE IF NOT EXISTS member_assignments (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================================================
---  4b. PASSKEY — đăng nhập sinh trắc học (WebAuthn)
---  Chỉ lưu KHOÁ CÔNG KHAI của vân tay/FaceID; phần bí mật nằm trong thiết bị.
--- =====================================================================
-CREATE TABLE IF NOT EXISTS member_passkeys (
-    id            INT AUTO_INCREMENT PRIMARY KEY,
-    member_id     INT          NOT NULL,
-    credential_id VARCHAR(255) NOT NULL,
-    public_key    TEXT         NOT NULL,
-    user_handle   VARCHAR(255) NOT NULL,
-    sign_count    INT          DEFAULT 0,
-    created_at    DATETIME     DEFAULT CURRENT_TIMESTAMP,
-    last_used_at  DATETIME     NULL,
-    UNIQUE KEY uq_credential (credential_id),
-    INDEX idx_pk_member (member_id),
-    CONSTRAINT fk_pk_member FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- =====================================================================
 --  5. THIẾU NHI & GHI DANH
 --  students giữ thông tin bền của em (không đổi theo năm).
 --  enrollments giữ chuyện năm nào học lớp nào, kết quả ra sao.
@@ -199,7 +181,11 @@ CREATE TABLE IF NOT EXISTS students (
     mother_name  VARCHAR(128) NULL,
     mother_phone VARCHAR(20)  NULL,
     created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_student_name (full_name)
+    hidden_at     TIMESTAMP    NULL DEFAULT NULL COMMENT 'PR-2: ngày bị ẩn (PII không hiện sau khi nghỉ)',
+    deleted_at    TIMESTAMP    NULL DEFAULT NULL COMMENT 'PR-2: ngày bị xóa mềm (chờ xóa hẳn sau 7 năm)',
+    INDEX idx_student_name (full_name),
+    INDEX idx_students_hidden (hidden_at),
+    INDEX idx_students_deleted (deleted_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS enrollments (

@@ -1,7 +1,7 @@
 /* ==========================================================
    LOGIN SCREEN — component Alpine cho màn đăng nhập / đăng ký / đổi mật khẩu.
    Trang đăng nhập là trang riêng (không có tnttApp), nên đây là component
-   độc lập, chỉ phụ thuộc window.Passkey (passkey.js) cho đăng nhập sinh trắc.
+   độc lập.
    ========================================================== */
 document.addEventListener('alpine:init', () => {
     Alpine.data('loginScreen', () => ({
@@ -88,21 +88,6 @@ document.addEventListener('alpine:init', () => {
             } catch (e) {
                 this.error = 'Không kết nối được máy chủ. Kiểm tra lại mạng rồi thử lại.';
             } finally { this.busy = false; }
-        },
-
-        async loginPasskey() {
-            this.error = '';
-            this.busy = true;
-            try {
-                const res = await window.Passkey.login();
-                if (res && res.user) { location.reload(); return; }
-                // Người dùng huỷ -> message rỗng -> im lặng. Lỗi thật -> hiện ô đỏ.
-                if (res && res.message) this.error = res.message;
-            } catch (e) {
-                this.error = 'Đăng nhập bằng FaceID / Vân tay chưa thành công. Vui lòng thử lại.';
-            } finally {
-                this.busy = false;
-            }
         },
 
         async submitChange() {

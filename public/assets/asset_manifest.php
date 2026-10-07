@@ -21,7 +21,7 @@ return [
         'router', 'core', 'xlsx_io', 'programs', 'access', 'students', 'student_profile', 'attendance', 'qrscan', 'qrcard',
         'leave', 'birthdays', 'announcements', 'stats', 'analytics', 'scores',
         'reports', 'promotion', 'org', 'push', 'dashboard', 'shell',
-        'calendar', 'notes', 'passkey', 'library', 'gifts', 'rewards',
+        'calendar', 'notes', 'library', 'gifts', 'rewards',
     ],
     // Thứ tự CSS = thứ tự cascade: tailwind (nền) trước, phần ghi đè sau.
     'css' => ['tailwind', 'font', 'app', 'skeleton', 'analytics', 'toast', 'brand'],

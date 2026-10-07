@@ -89,7 +89,8 @@ function tracuu_attempt_record(): void
  */
 function somoc_public_summary(string $code, int $yearId): ?array
 {
-    $student = db_one('SELECT id, code, full_name FROM students WHERE code = ?', [$code]);
+    // PR-2: Chỉ tra cứu em không bị ẩn/xóa
+    $student = db_one('SELECT id, code, full_name FROM students WHERE code = ? AND hidden_at IS NULL AND deleted_at IS NULL', [$code]);
     if (!$student) return null;
 
     $sid = (int) $student['id'];
