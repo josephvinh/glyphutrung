@@ -3,6 +3,8 @@
  * ĐIỂM DANH
  *
  *   POST api/attendance.php?action=toggle { programId, date, studentId }
+ *   POST api/attendance.php?action=set_status { programId, date, studentId, status }
+ *        (đổi có mặt <-> đi trễ của bản ghi đã có; chỉ người có "cửa sửa")
  *
  * Một endpoint duy nhất vì thao tác ở hiện trường chỉ có một: chạm vào
  * tên. Chưa có bản ghi thì ghi vào, có rồi thì gỡ ra.
@@ -64,7 +66,7 @@ if (!$hopLe) json_fail('Buổi này không diễn ra vào ngày ' . $date . '.')
 $laTuongLai = $date > date('Y-m-d');
 
 // Giờ chốt do máy chủ tính — tôn trọng GIỜ CHỐT riêng của buổi
-// (cutoff_time), đúng như giao diện. Để trống mới lấy start_time + 30'.
+// (cutoff_time), đúng như giao diện. Để trống thì lấy giờ bắt đầu làm mốc.
 $cutoffTs   = program_cutoff_ts($prog, $date);
 $pastCutoff = time() >= $cutoffTs;
 $status     = $pastCutoff ? 'đi trễ' : 'có mặt';
@@ -239,6 +241,45 @@ if ($st['status'] !== 'đang sinh hoạt') json_fail('Em này không còn sinh h
 // trò lớp khác với phạm vi rộng của vai trò chỉ được xem.
 if (!can_access_class($me, 'attendance', (int) $st['class_id'], 'edit')) {
     json_fail('Bạn không phụ trách lớp của em ' . $st['full_name'] . '.', 403);
+}
+
+// ---------------------------------------------------------------------
+//  SỬA TRẠNG THÁI: đổi "có mặt" <-> "đi trễ" của một bản ghi ĐÃ CÓ
+//
+//  Chạm tên chỉ ghi/gỡ, còn trạng thái do giờ chốt quyết định tại lúc ghi,
+//  nên ghi bù buổi cũ luôn ra "đi trễ" và không có đường nào đổi lại. Thao
+//  tác này dành cho người phụ trách (admin/BĐH/trưởng khối/GLV chủ nhiệm,
+//  đúng nhóm có "cửa sửa" — can_override_session_lock) và chỉ trong phạm
+//  vi lớp/khối của mình (can_access_class ở trên). GLV thường không dùng được.
+//  Không tạo bản ghi mới: em chưa được ghi thì không có gì để sửa ("vắng"
+//  là không có bản ghi, không phải một trạng thái).
+// ---------------------------------------------------------------------
+if (($_GET['action'] ?? '') === 'set_status') {
+    if (!can_override_session_lock($me, (int) $st['class_id'])) {
+        json_fail('Chỉ admin, BĐH, trưởng khối hoặc GLV chủ nhiệm (trong phạm vi mình phụ trách) mới sửa được trạng thái điểm danh.', 403);
+    }
+    $moi = $in['status'] ?? '';
+    if (!is_string($moi) || !in_array($moi, ['có mặt', 'đi trễ'], true)) {
+        json_fail('Trạng thái không hợp lệ (chỉ "có mặt" hoặc "đi trễ").', 400);
+    }
+    $cu = db_one('SELECT id, status FROM attendances WHERE program_id=? AND session_date=? AND student_id=?',
+                 [$programId, $date, $studentId]);
+    if (!$cu) {
+        json_fail('Em ' . $st['full_name'] . ' chưa được ghi điểm danh buổi này, không có gì để sửa.', 404);
+    }
+
+    $doi = ($cu['status'] !== $moi);
+    if ($doi) {
+        db_run('UPDATE attendances SET status = ? WHERE id = ?', [$moi, $cu['id']]);
+        log_action('diemdanh', 'attendance', 'Sửa trạng thái điểm danh của ' . $st['full_name'],
+                   $prog['name'] . ' · ' . $date . ' · ' . $cu['status'] . ' → ' . $moi);
+        // Mốc thưởng chuỗi của Sổ Mộc phân biệt có mặt / đi trễ -> tính lại.
+        if (program_earns_stamps($prog)) {
+            recalc_stamps_safe($studentId, $year['id']);
+        }
+        Cache::flush();
+    }
+    json_out(['ok' => true, 'status' => $moi, 'changed' => $doi]);
 }
 
 $existing = db_one('SELECT * FROM attendances WHERE program_id=? AND session_date=? AND student_id=?',

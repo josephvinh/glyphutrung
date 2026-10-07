@@ -316,7 +316,9 @@
                 <p class="text-sm font-black leading-tight" :class="isPastCutoff ? 'text-rose-700' : 'text-emerald-700'"
                    x-text="isPastCutoff ? 'Đã quá giờ chốt (' + sessionCutoff + ')' : 'Còn trong giờ, chốt lúc ' + sessionCutoff"></p>
                 <p class="text-micro leading-tight mt-0.5" :class="isPastCutoff ? 'text-rose-500' : 'text-emerald-600'"
-                   x-text="isPastCutoff ? 'Chạm tên bây giờ sẽ ghi nhận Đi trễ' : 'Chạm tên để ghi nhận Có mặt'"></p>
+                   x-text="(editStatusMode && canEditAttendanceStatus)
+                            ? 'Đang sửa: chạm tên em đã ghi để đổi Có mặt ⇄ Đi trễ'
+                            : (isPastCutoff ? 'Chạm tên bây giờ sẽ ghi nhận Đi trễ' : 'Chạm tên để ghi nhận Có mặt')"></p>
             </div>
         </div>
 
@@ -350,6 +352,17 @@
                 <i data-lucide="hand" class="w-4 h-4"></i> Điểm danh tay
             </button>
         </div>
+
+        <!-- SỬA TRẠNG THÁI (có mặt <-> đi trễ) — chỉ hiện cho vai có "cửa sửa".
+             Máy chủ vẫn kiểm lại quyền + phạm vi lớp/khối của từng lần đổi. -->
+        <button x-show="canEditAttendanceStatus" style="display: none;" type="button"
+                @click="editStatusMode = !editStatusMode"
+                :aria-pressed="editStatusMode ? 'true' : 'false'"
+                class="w-full mb-4 flex items-center justify-center gap-2 py-3 rounded-2xl border shadow-sm font-bold text-xs active:scale-95 transition-transform"
+                :class="editStatusMode ? 'bg-amber-50 border-amber-300 text-amber-800' : 'bg-white border-slate-200 text-slate-600'">
+            <i data-lucide="pencil" class="w-4 h-4"></i>
+            <span x-text="editStatusMode ? 'Đang sửa trạng thái — bấm để tắt' : 'Sửa trạng thái'"></span>
+        </button>
 
         <!-- CHỌN LỚP + TÌM NHANH — cùng kiểu bộ lọc của Danh sách (thanh + nút phễu) -->
         <?php $scopeClassModel = 'attendanceClass'; $scopeSearchModel = 'attendanceSearch'; include __DIR__ . '/partial_scope_filter.php'; ?>
@@ -423,7 +436,7 @@
         </div>
 
         <p class="text-center text-micro text-slate-500 mt-5 px-6 leading-relaxed">
-            Chạm lần nữa vào tên đã ghi để gỡ ra nếu bấm nhầm.<br>
+            <span x-show="!(editStatusMode && canEditAttendanceStatus)">Chạm lần nữa vào tên đã ghi để gỡ ra nếu bấm nhầm.<br></span>
             Các em không được ghi nhận sẽ tự tính là vắng sau giờ chốt.
         </p>
     </div>

@@ -260,6 +260,7 @@ window.TNTT.attendance = {
             return;
         }
         this.activeSession = { programId: prog.id, date: this.attendanceDate };
+        this.editStatusMode = false;
         this.attendanceSearch = '';
         // Bắt chọn lớp cho điểm danh TAY (giống Danh sách): một lớp thì tự mở,
         // nhiều lớp để trống, chọn lớp nào điểm danh lớp đó. Bộ chọn chỉ hiện
@@ -270,6 +271,7 @@ window.TNTT.attendance = {
 
     exitSession() {
         this.activeSession = null;
+        this.editStatusMode = false;
         this.attendanceSearch = '';
     },
 
@@ -396,6 +398,57 @@ window.TNTT.attendance = {
     // Chạm 1 phát là đổi trạng thái. Chạm lại lần nữa để gỡ ra nếu bấm nhầm.
     _chamGanNhat: {},   // id em -> thời điểm chạm gần nhất
 
+    // ---- SỬA TRẠNG THÁI (có mặt <-> đi trễ) của bản ghi đã có ----
+    // Chế độ bật/tắt: tắt thì chạm tên vẫn là ghi/gỡ như cũ, bật thì chạm tên
+    // em ĐÃ GHI sẽ đổi qua lại. Chỉ hiện cho vai có "cửa sửa" (khớp
+    // can_override_session_lock ở máy chủ — máy chủ mới là nơi chặn thật,
+    // kể cả phạm vi lớp/khối; đây chỉ để ẩn nút với người không dùng được).
+    editStatusMode: false,
+    _suaBusy: {},       // id em -> đang chờ máy chủ trả lời
+
+    get canEditAttendanceStatus() {
+        const duoc = ['admin', 'bdh', 'truong_khoi', 'glv_chu_nhiem'];
+        const roles = [this.user && this.user.role, ...((this.assignments || []).map(a => a.role))];
+        return roles.some(r => duoc.includes(r));
+    },
+
+    async _suaTrangThai(student) {
+        const phien = this.activeSession;
+        const cu = this.attendanceRecord(student.id, phien);
+        if (!cu) {
+            window.TNTT.toast.info('Em ' + student.name + ' chưa được ghi điểm danh. Tắt "Sửa trạng thái" rồi chạm tên để ghi.');
+            return;
+        }
+        if (!navigator.onLine) {
+            window.TNTT.toast.warning('Cần có mạng để sửa trạng thái điểm danh.');
+            return;
+        }
+        if (this._suaBusy[student.id]) return;
+        this._suaBusy[student.id] = true;
+        try {
+            const moi = cu.status === 'đi trễ' ? 'có mặt' : 'đi trễ';
+            const r = await this.save('attendance', 'set_status', {
+                programId: phien.programId, date: phien.date, studentId: student.id, status: moi
+            });
+            if (!r || !r.ok) {
+                // save() cố ý IM LẶNG khi mất kết nối với module điểm danh (vì thao
+                // tác chạm tên có hàng đợi offline). Thao tác này không có hàng đợi
+                // nên phải tự báo, nếu không người dùng tưởng đã đổi xong.
+                if (r && r.networkError) {
+                    window.TNTT.toast.warning('Mất kết nối máy chủ, chưa đổi được trạng thái. Thử lại khi có mạng.');
+                }
+                return;   // lỗi khác: save() đã hiện thông báo; giữ nguyên bản ghi
+            }
+            // Thay bản ghi (xoá + thêm lại) thay vì sửa tại chỗ: đúng cách phần
+            // còn lại của file cập nhật mảng lẫn index cho giao diện làm mới.
+            this._attXoa(phien.programId, phien.date, student.id);
+            this._attThem(Object.assign({}, cu, { status: r.status }));
+            window.TNTT.toast.success('Đã đổi ' + student.name + ' thành ' + (r.status === 'có mặt' ? 'Có mặt' : 'Đi trễ') + '.');
+        } finally {
+            delete this._suaBusy[student.id];
+        }
+    },
+
     toggleAttendance(student) {
         if (!this.activeSession) return;
 
@@ -411,6 +464,12 @@ window.TNTT.attendance = {
         const gio = Date.now();
         if (this._chamGanNhat[student.id] && gio - this._chamGanNhat[student.id] < 450) return;
         this._chamGanNhat[student.id] = gio;
+
+        // Chế độ "Sửa trạng thái": chạm tên là đổi có mặt <-> đi trễ, KHÔNG ghi/gỡ.
+        if (this.editStatusMode && this.canEditAttendanceStatus) {
+            this._suaTrangThai(student);
+            return;
+        }
 
         const cu = this.attendanceRecord(student.id, this.activeSession);
 
