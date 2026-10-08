@@ -92,11 +92,13 @@ $__links = [
         }
         a.card.primary::before{background:linear-gradient(90deg,transparent,rgba(255,255,255,0.4),transparent)}
         a.card.primary .ic{background:rgba(255,255,255,0.2)}
+        a.card.primary b{color:#fff}
         a.card.primary small{color:rgba(255,255,255,0.85)}
         a.card.primary .go{color:rgba(255,255,255,0.8)}
         @media (prefers-reduced-transparency: reduce) {
             a.card{background:#fff!important;backdrop-filter:none!important}
             a.card.primary{background:#c8203a!important}
+            a.card.scripture{background:#1e3a5f!important}
         }
 
         /* ============================================
