@@ -80,8 +80,17 @@ function loi_chua_get(string $date): ?array
     // Build response
     $result = loi_chua_build_response($date, $calData);
 
-    // Cache if valid
-    if ($result !== null) {
+    // Chỉ cache khi mọi bài đọc đều có văn bản (tránh cache kết quả lỗi CDN)
+    $complete = $result !== null && !empty($result['readings']);
+    if ($complete) {
+        foreach ($result['readings'] as $r) {
+            if (($r['text'] ?? '') === '') {
+                $complete = false;
+                break;
+            }
+        }
+    }
+    if ($complete) {
         loi_chua_cache_set($date, $result);
     }
 
@@ -299,7 +308,7 @@ function loi_chua_cache_set(string $date, array $data): bool
     $cacheFile = loi_chua_cache_path($date);
     $dir = dirname($cacheFile);
 
-    if (!is_dir($dir)) {
+    if (!is_dir($dir) && !@mkdir($dir, 0775, true) && !is_dir($dir)) {
         return false;
     }
 
