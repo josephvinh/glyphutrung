@@ -6,7 +6,7 @@
 $__cssV = @filemtime(__DIR__ . '/../public/assets/img/icon-192.png') ?: 0;
 $__links = [
     ['href' => 'loichua.php', 'icon' => 'cross', 'title' => 'Lời Chúa Hôm Nay',
-     'desc' => 'Lời Chúa theo lịch phụng vụ Việt Nam — Bài Đọc, Thánh Vịnh, Tin Mừng.', 'cls' => 'scripture', 'id' => 'loichua'],
+     'desc' => 'Lời Chúa theo lịch phụng vụ Việt Nam — Bài Đọc, Thánh Vịnh, Tin Mừng.', 'cls' => ''],
     ['href' => 'index.php?dangnhap=1', 'icon' => 'lock', 'title' => 'Đăng nhập quản lý',
      'desc' => 'Dành cho Giáo Lý Viên, Trưởng Khối, Ban Điều Hành và Thủ Thư: điểm danh, điểm số, thiếu nhi, đổi quà…', 'cls' => 'primary'],
     ['href' => 'somoc.php', 'icon' => 'book', 'title' => 'Sổ Mộc',
@@ -98,129 +98,6 @@ $__links = [
         @media (prefers-reduced-transparency: reduce) {
             a.card{background:#fff!important;backdrop-filter:none!important}
             a.card.primary{background:#c8203a!important}
-            a.card.scripture{background:#1e3a5f!important}
-        }
-
-        /* ============================================
-           SCRIPTURE CARD - Premium Bible Theme
-           ============================================ */
-        a.card.scripture{
-            background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 50%, #1e3a5f 100%);
-            border: 1px solid rgba(255, 215, 140, 0.3);
-            box-shadow:
-                0 4px 24px rgba(30, 58, 95, 0.3),
-                inset 0 1px 0 rgba(255, 255, 255, 0.1);
-            position: relative;
-            overflow: hidden;
-            padding: 20px;
-            flex-direction: column;
-            align-items: stretch;
-            text-align: center;
-        }
-        /* Decorative cross pattern */
-        a.card.scripture::after{
-            content: '✝';
-            position: absolute;
-            top: -20px;
-            right: -20px;
-            font-size: 120px;
-            opacity: 0.05;
-            transform: rotate(15deg);
-            pointer-events: none;
-        }
-        /* Shine effect */
-        a.card.scripture .shine{
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-            animation: shine 3s ease-in-out infinite;
-        }
-        @keyframes shine {
-            0%, 100% { left: -100%; }
-            50% { left: 100%; }
-        }
-        a.card.scripture:hover{
-            transform: translateY(-3px);
-            box-shadow:
-                0 8px 32px rgba(30, 58, 95, 0.4),
-                inset 0 1px 0 rgba(255, 255, 255, 0.15);
-            border-color: rgba(255, 215, 140, 0.5);
-        }
-        a.card.scripture:hover .shine{
-            animation-duration: 1.5s;
-        }
-        a.card.scripture::before{
-            background: linear-gradient(90deg, transparent, rgba(255, 215, 140, 0.3), transparent);
-            height: 2px;
-            top: 0;
-            left: 20%;
-            right: 20%;
-        }
-        a.card.scripture .ic{
-            background: rgba(255, 215, 140, 0.2);
-            border-radius: 50%;
-            width: 64px;
-            height: 64px;
-            margin: 0 auto 12px;
-            border: 2px solid rgba(255, 215, 140, 0.3);
-        }
-        a.card.scripture .ic svg{
-            width: 32px;
-            height: 32px;
-            stroke: #ffd700;
-            fill: none;
-            stroke-width: 2;
-        }
-        a.card.scripture b{
-            font-size: 1.1rem;
-            color: #fff;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
-            margin-bottom: 4px;
-        }
-        a.card.scripture small{
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 0.85rem;
-        }
-        a.card.scripture .go{
-            display: none;
-        }
-        /* Scripture card CTA button */
-        a.card.scripture .cta{
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            margin-top: 14px;
-            padding: 10px 20px;
-            background: linear-gradient(135deg, #ffd700, #ffb347);
-            color: #1e3a5f;
-            font-weight: 700;
-            font-size: 0.85rem;
-            border-radius: 24px;
-            text-decoration: none;
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
-        }
-        a.card.scripture .cta:hover{
-            transform: scale(1.05);
-            box-shadow: 0 4px 16px rgba(255, 215, 0, 0.4);
-        }
-        a.card.scripture .cta svg{
-            width: 16px;
-            height: 16px;
-            stroke: currentColor;
-            fill: none;
-            stroke-width: 2;
-        }
-
-        footer{margin-top:28px;text-align:center;font-size:.75rem;color:#94a3b8}
-
-        /* Reduced Motion */
-        @media (prefers-reduced-motion: reduce) {
-            a.card.scripture .shine{animation:none}
         }
     </style>
 </head>
@@ -234,27 +111,12 @@ $__links = [
     <nav class="grid" aria-label="Chọn chức năng">
         <?php foreach ($__links as $l): ?>
         <a class="card <?php echo $l['cls']; ?>" href="<?php echo htmlspecialchars($l['href'], ENT_QUOTES, 'UTF-8'); ?>">
-            <?php if ($l['cls'] === 'scripture'): ?>
-            <div class="shine"></div>
-            <div class="ic">
-                <!-- Cross Icon SVG -->
-                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 2v20M7 7h10" stroke-linecap="round"/>
-                </svg>
-            </div>
-            <span><b><?php echo htmlspecialchars($l['title'], ENT_QUOTES, 'UTF-8'); ?></b><small><?php echo htmlspecialchars($l['desc'], ENT_QUOTES, 'UTF-8'); ?></small></span>
-            <span class="cta">
-                Xem Lời Chúa
-                <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </span>
-            <?php else: ?>
             <span class="ic" aria-hidden="true"><?php
-                $icons = ['lock' => '🔐', 'book' => '📒', 'search' => '📘', 'trophy' => '🏆'];
+                $icons = ['cross' => '📖', 'lock' => '🔐', 'book' => '📒', 'search' => '📘', 'trophy' => '🏆'];
                 echo $icons[$l['icon']] ?? '📌';
             ?></span>
             <span><b><?php echo htmlspecialchars($l['title'], ENT_QUOTES, 'UTF-8'); ?></b><small><?php echo htmlspecialchars($l['desc'], ENT_QUOTES, 'UTF-8'); ?></small></span>
             <span class="go" aria-hidden="true">›</span>
-            <?php endif; ?>
         </a>
         <?php endforeach; ?>
     </nav>
