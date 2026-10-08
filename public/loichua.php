@@ -126,7 +126,7 @@ $cssV = @filemtime(__DIR__ . '/assets/img/icon-192.png') ?: 0;
     </style>
 </head>
 <body>
-<div class="wrap" x-data="loiChuaApp()" x-init="init()">
+<div class="wrap" x-data="loiChuaApp">
     <!-- Header -->
     <header class="header">
         <div class="icon">
@@ -221,9 +221,10 @@ $cssV = @filemtime(__DIR__ . '/assets/img/icon-192.png') ?: 0;
     <button type="button" @click="fontSize++" aria-label="Tăng cỡ chữ">A+</button>
 </div>
 
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 <script>
-function loiChuaApp() {
-    return {
+document.addEventListener('alpine:init', () => {
+    Alpine.data('loiChuaApp', () => ({
         currentDate: '<?php echo htmlspecialchars($requestDate, ENT_QUOTES, 'UTF-8'); ?>',
         data: null,
         loading: true,
@@ -236,20 +237,25 @@ function loiChuaApp() {
         maxDate: null,
 
         init() {
-            // Calculate min/max dates (Ho Chi Minh timezone)
-            const now = new Date();
-            const tzOffset = 7 * 60; // UTC+7
-            now.setMinutes(now.getMinutes() + now.getTimezoneOffset() + tzOffset);
+            this.calculateDateLimits();
+            this.fetchData();
+        },
 
-            const minDate = new Date(now);
+        calculateDateLimits() {
+            // Get today in Vietnam timezone (UTC+7)
+            const tzOffset = 7 * 60 * 60 * 1000; // 7 hours in ms
+            const localNow = new Date(Date.now() + tzOffset);
+            const todayStr = localNow.toISOString().split('T')[0];
+
+            const today = new Date(todayStr + 'T12:00:00');
+
+            const minDate = new Date(today);
             minDate.setDate(minDate.getDate() - 30);
             this.minDate = this.formatDate(minDate);
 
-            const maxDate = new Date(now);
+            const maxDate = new Date(today);
             maxDate.setDate(maxDate.getDate() + 7);
             this.maxDate = this.formatDate(maxDate);
-
-            this.fetchData();
         },
 
         async fetchData() {
@@ -263,11 +269,13 @@ function loiChuaApp() {
 
                 if (json.success) {
                     this.data = json;
+                } else if (json.error && json.error.includes('Invalid date')) {
+                    this.error = json.error;
                 } else {
-                    this.error = json.error || 'Không thể tải dữ liệu.';
+                    this.error = (json.error || 'Không thể tải dữ liệu.') + ' [code: ' + resp.status + ']';
                 }
             } catch (e) {
-                this.error = 'Lỗi kết nối. Vui lòng kiểm tra internet.';
+                this.error = 'Lỗi kết nối: ' + e.message;
             } finally {
                 this.loading = false;
             }
@@ -275,7 +283,7 @@ function loiChuaApp() {
 
         prevDay() {
             if (!this.canGoPrev) return;
-            const d = new Date(this.currentDate);
+            const d = new Date(this.currentDate + 'T12:00:00');
             d.setDate(d.getDate() - 1);
             this.currentDate = this.formatDate(d);
             this.fetchData();
@@ -283,29 +291,29 @@ function loiChuaApp() {
 
         nextDay() {
             if (!this.canGoNext) return;
-            const d = new Date(this.currentDate);
+            const d = new Date(this.currentDate + 'T12:00:00');
             d.setDate(d.getDate() + 1);
             this.currentDate = this.formatDate(d);
             this.fetchData();
         },
 
         get canGoPrev() {
+            if (!this.minDate) return true;
             return this.currentDate > this.minDate;
         },
 
         get canGoNext() {
+            if (!this.maxDate) return true;
             return this.currentDate < this.maxDate;
         },
 
         get formattedDate() {
+            if (!this.currentDate) return 'Đang tải...';
             const d = new Date(this.currentDate + 'T12:00:00');
+            if (isNaN(d.getTime())) return this.currentDate;
             const days = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
             const months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'];
-            const dayName = days[d.getDay()];
-            const day = d.getDate();
-            const month = months[d.getMonth()];
-            const year = d.getFullYear();
-            return dayName + ', ' + day + ' Tháng ' + month + ', ' + year;
+            return days[d.getDay()] + ', ' + d.getDate() + ' Tháng ' + months[d.getMonth()] + ', ' + d.getFullYear();
         },
 
         get colorHex() {
@@ -325,10 +333,9 @@ function loiChuaApp() {
             const day = String(d.getDate()).padStart(2, '0');
             return year + '-' + month + '-' + day;
         }
-    }
-}
+    }));
+});
 </script>
-<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
 </body>
 </html>
