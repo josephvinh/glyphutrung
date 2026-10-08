@@ -221,7 +221,7 @@ $cssV = @filemtime(__DIR__ . '/assets/img/icon-192.png') ?: 0;
     <button type="button" @click="fontSize++" aria-label="Tăng cỡ chữ">A+</button>
 </div>
 
-<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/cdn.min.js"></script>
 <script>
 document.addEventListener('alpine:init', () => {
     Alpine.data('loiChuaApp', () => ({
