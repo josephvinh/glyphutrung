@@ -12,6 +12,9 @@
 
 require __DIR__ . '/_bootstrap.php';
 
+// Load service layer FIRST - required for validate function
+require __DIR__ . '/../../config/loichua.php';
+
 // Chỉ cho phép GET
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     http_response_code(405);
@@ -41,9 +44,6 @@ if (!loi_chua_validate_date($date)) {
     ]);
     exit;
 }
-
-// Load service
-require __DIR__ . '/../../config/loichua.php';
 
 // Get data
 $result = loi_chua_get($date);
