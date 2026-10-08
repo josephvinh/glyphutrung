@@ -98,6 +98,7 @@ $cssV = @filemtime(__DIR__ . '/assets/img/icon-192.png') ?: 0;
         /* Out of Range */
         .out-of-range{text-align:center;padding:40px 20px}
         .out-of-range p{color:rgba(255,255,255,.7);margin:0 0 16px}
+        .out-of-range button{padding:10px 24px;background:#c8203a;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer}
         .out-of-range code{background:rgba(255,255,255,.1);padding:4px 8px;border-radius:4px;font-size:.85rem}
 
         /* Font Size Controls */
@@ -178,7 +179,7 @@ $cssV = @filemtime(__DIR__ . '/assets/img/icon-192.png') ?: 0;
                     <article class="reading-card" :class="reading.type === 'Đáp Ca' ? 'psalm' : ''">
                         <h3 x-text="reading.type"></h3>
                         <p class="ref" x-text="reading.ref"></p>
-                        <p class="text" x-text="reading.text || reading.ref + ' — văn bản đang được cập nhật'"></p>
+                        <p class="text" :style="'font-size:' + fontSize + 'px'" x-text="reading.text || reading.ref + ' — văn bản đang được cập nhật'"></p>
                     </article>
                 </template>
             </div>
@@ -209,19 +210,18 @@ $cssV = @filemtime(__DIR__ . '/assets/img/icon-192.png') ?: 0;
     <!-- Out of Range -->
     <template x-if="outOfRange">
         <div class="out-of-range">
-            <p>Dữ liệu lịch phụng vụ hiện chỉ có đến năm 2026.</p>
-            <p>Vui lòng chọn ngày khác hoặc <code>2026-12-31</code> là ngày cuối cùng có dữ liệu.</p>
+            <p>Chỉ xem được Lời Chúa từ <code x-text="minDate"></code> đến <code x-text="maxDate"></code>.</p>
+            <button type="button" @click="goToday()">Về hôm nay</button>
         </div>
     </template>
+
+    <!-- Font Size Controls -->
+    <div class="font-controls">
+        <button type="button" @click="smaller()" :disabled="fontSize <= 14" aria-label="Giảm cỡ chữ">A-</button>
+        <button type="button" @click="larger()" :disabled="fontSize >= 26" aria-label="Tăng cỡ chữ">A+</button>
+    </div>
 </div>
 
-<!-- Font Size Controls -->
-<div class="font-controls">
-    <button type="button" @click="fontSize--" aria-label="Giảm cỡ chữ">A-</button>
-    <button type="button" @click="fontSize++" aria-label="Tăng cỡ chữ">A+</button>
-</div>
-
-<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/cdn.min.js"></script>
 <script>
 document.addEventListener('alpine:init', () => {
     Alpine.data('loiChuaApp', () => ({
@@ -233,11 +233,25 @@ document.addEventListener('alpine:init', () => {
         fontSize: 17,
 
         // Limits
+        todayStr: '',
         minDate: null,
         maxDate: null,
 
         init() {
             this.calculateDateLimits();
+            try {
+                const f = parseInt(localStorage.getItem('loichuaFont'), 10);
+                if (f >= 14 && f <= 26) this.fontSize = f;
+            } catch (e) {}
+            this.fetchData();
+        },
+
+        smaller() { this.fontSize--; this.saveFont(); },
+        larger() { this.fontSize++; this.saveFont(); },
+        saveFont() { try { localStorage.setItem('loichuaFont', this.fontSize); } catch (e) {} },
+
+        goToday() {
+            this.currentDate = this.todayStr;
             this.fetchData();
         },
 
@@ -246,6 +260,7 @@ document.addEventListener('alpine:init', () => {
             const tzOffset = 7 * 60 * 60 * 1000; // 7 hours in ms
             const localNow = new Date(Date.now() + tzOffset);
             const todayStr = localNow.toISOString().split('T')[0];
+            this.todayStr = todayStr;
 
             const today = new Date(todayStr + 'T12:00:00');
 
@@ -263,14 +278,20 @@ document.addEventListener('alpine:init', () => {
             this.error = '';
             this.outOfRange = false;
 
+            if (this.currentDate < this.minDate || this.currentDate > this.maxDate) {
+                this.outOfRange = true;
+                this.loading = false;
+                return;
+            }
+
             try {
                 const resp = await fetch('api/loichua.php?date=' + this.currentDate);
                 const json = await resp.json();
 
                 if (json.success) {
                     this.data = json;
-                } else if (json.error && json.error.includes('Invalid date')) {
-                    this.error = json.error;
+                } else if (resp.status === 400) {
+                    this.outOfRange = true;
                 } else {
                     this.error = (json.error || 'Không thể tải dữ liệu.') + ' [code: ' + resp.status + ']';
                 }
@@ -336,6 +357,7 @@ document.addEventListener('alpine:init', () => {
     }));
 });
 </script>
+<script defer src="assets/js/vendor/alpine.js?v=<?php echo @filemtime(__DIR__ . '/assets/js/vendor/alpine.js') ?: 0; ?>"></script>
 
 </body>
 </html>
