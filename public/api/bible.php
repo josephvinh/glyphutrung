@@ -1,10 +1,10 @@
 <?php
 /**
- * LOI CHUA MOI NGAY
+ * LỜI CHÚA MỖI NGÀY
  *
- *   GET  api/bible.php?action=random   — Lay verse ngau nhien (rate limit 1/IP/gio)
- *   GET  api/bible.php?action=list     — Danh sach IP da lay (admin)
- *   GET  api/bible.php?action=stats    — Thong ke tong quan (admin)
+ *   GET  api/bible.php?action=random   — Lấy verse ngẫu nhiên (rate limit 1/IP/giờ)
+ *   GET  api/bible.php?action=list     — Danh sách IP đã lấy (admin)
+ *   GET  api/bible.php?action=stats    — Thống kê tổng quan (admin)
  */
 
 require __DIR__ . '/_bootstrap.php';
@@ -12,77 +12,61 @@ require __DIR__ . '/_bootstrap.php';
 $action = $_GET['action'] ?? '';
 $ip = client_ip();
 
-/** Tu tao table neu chua co */
-function ensure_bible_table(): void {
-    try {
-        db_run('CREATE TABLE IF NOT EXISTS bible_daily (
-            id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-            ip_address VARCHAR(45) NOT NULL,
-            verse_text TEXT NOT NULL,
-            verse_ref VARCHAR(100) NOT NULL,
-            verse_translation VARCHAR(50) DEFAULT "vietnamese",
-            fetched_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            INDEX idx_ip (ip_address),
-            INDEX idx_fetched_at (fetched_at)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci');
-    } catch (Throwable $e) {
-        // Ignore - table might already exist
-    }
-}
-
-/** Fallback verses khi API fail */
+/**
+ * Fallback verses khi API fail
+ * Nguồn: Kinh Thánh CGKPV 2011 - đã duyệt, có dấu tiếng Việt
+ */
 const FALLBACK_VERSES = [
-    ['text' => 'Dung lo au dieu gi, nhung trong moi viec hay trinh bay nhu cau cua anh em cho Duc Cha Troi, va Ngai se ban su binh an cua Duc Cha Troi, vuot qua moi dieu chung ta co the hieu biet.', 'ref' => 'Philippians 4:6'],
-    ['text' => 'Vi Cha yeu thuong the gian nay, Ngai da ban Con Mot, de ai tin Con Ngai cung duoc su song doi doi.', 'ref' => 'John 3:16'],
-    ['text' => 'Toi o voi anh em moi ngay cho den tan the hoan tat.', 'ref' => 'Matthew 28:20'],
-    ['text' => 'Hay vui len va hat ngo khen, vi Dang Toan Nang da lam nhung dieu vi dai.', 'ref' => 'Psalms 126:3'],
-    ['text' => 'Cha la Dang chan nuoi toi, toi se khong thieu thon gi.', 'ref' => 'Psalms 23:1'],
-    ['text' => 'Hay cay thuong yeu Duc Cha Troi, hay cho doi Ngai va giu vung long.', 'ref' => 'Lamentations 3:24-25'],
-    ['text' => 'Moi su deu co luc, co thi giong, co luc chua benh, co luc pha do, co luc xay dung.', 'ref' => 'Ecclesiastes 3:3'],
-    ['text' => 'Long toi hat mua Cha, toi se ta on Cha den doi doi.', 'ref' => 'Psalms 30:12'],
-    ['text' => 'Nhung dieu bat kha kha thi o noi nguoi khong the lam duoc, nhung khong phai noi Duc Cha Troi.', 'ref' => 'Jeremiah 32:17'],
-    ['text' => 'Neu toi len troi, Ngai o do; neu xuong am phu, Ngai cung o do.', 'ref' => 'Psalms 139:8'],
+    ['text' => 'Thiên Chúa yêu thế gian đến nỗi đã ban Con Một, để ai tin vào Con của Người thì khỏi phải chết, nhưng được sống muôn đời.', 'ref' => 'Ga 3:16'],
+    ['text' => 'Tôi ở với anh em mọi ngày cho đến tận thế hoàn tất.', 'ref' => 'Mt 28:20'],
+    ['text' => 'Hãy đến cùng tôi, tất cả những ai đang vất vả mang gánh nặng nề, và tôi sẽ cho nghỉ ngơi bồi dưỡng.', 'ref' => 'Mt 11:28'],
+    ['text' => 'Tôi là con đường, là sự thật và là sự sống. Không ai đến với Cha mà không qua tôi.', 'ref' => 'Ga 14:6'],
+    ['text' => 'Thiên Chúa là Đấng chăn nuôi tôi, tôi sẽ không thiếu thốn gì.', 'ref' => 'Tv 23:1'],
+    ['text' => 'Phúc thay người chẳng nghe theo lời bọn ác nhân, nhưng vui thú với lề luật CHÚA.', 'ref' => 'Tv 1:1-2'],
+    ['text' => 'Lạy Chúa, xin dạy cho con biết con phải sống thế nào để xứng đáng trước mặt Ngài.', 'ref' => 'Tv 90:12'],
+    ['text' => 'Anh em hãy vui luôn trong niềm vui của Chúa. Tôi nhắc lại: vui lên anh em!', 'ref' => 'Pl 4:4'],
+    ['text' => 'Đừng lo lắng gì cả, nhưng trong mọi hoàn cảnh, hãy đem lời cầu khẩn, van xin và tạ ơn, mà giãi bày trước mặt Thiên Chúa.', 'ref' => 'Pl 4:6'],
+    ['text' => 'Bình an của Thiên Chúa là bình an vượt lên trên mọi hiểu biết, sẽ giữ cho lòng trí anh em được kết hợp với Đức Ki-tô Giê-su.', 'ref' => 'Pl 4:7'],
+    ['text' => 'Với Đấng ban sức mạnh cho tôi, tôi chịu được hết.', 'ref' => 'Pl 4:13'],
+    ['text' => 'Thiên Chúa của tôi sẽ thỏa mãn mọi nhu cầu của anh em một cách tuyệt vời, theo sự giàu sang của Người.', 'ref' => 'Pl 4:19'],
+    ['text' => 'Tôi để tâm trí con an nghỉ nơi đất, cho con được thỏa mãn khi vận mạng con được ban bố.', 'ref' => 'Tv 103:5'],
+    ['text' => 'Lòng nhân hậu và tình thương của CHÚA đồng hành cùng anh em mọi ngày, cho đến muôn đời.', 'ref' => 'Tv 103:17'],
+    ['text' => 'Người chăn nuôi lành mạnh cho tôi, Người dẫn tôi đi theo con đường công chính.', 'ref' => 'Tv 23:3'],
+    ['text' => 'Dầu qua lũng âm u, tôi cũng không sợ hãi gì, vì CHÚA ở cùng tôi.', 'ref' => 'Tv 23:4'],
+    ['text' => 'Nước Thiên Chúa đang đến gần. Hãy hối cải và tin vào Tin Mừng.', 'ref' => 'Mc 1:15'],
+    ['text' => 'Thiên Chúa là tình yêu. Ai ở trong tình yêu thì ở trong Thiên Chúa, và Thiên Chúa ở trong họ.', 'ref' => '1 Ga 4:16'],
+    ['text' => 'Chúng ta hãy yêu thương nhau, vì tình yêu bắt nguồn từ Thiên Chúa.', 'ref' => '1 Ga 4:7'],
+    ['text' => 'Vậy giờ đây, những ai ở trong Đức Ki-tô Giê-su, thì không còn bị lên án nữa.', 'ref' => 'Rm 8:1'],
+    ['text' => 'Phàm ai được Thần Khí Thiên Chúa hướng dẫn, đều là con cái Thiên Chúa.', 'ref' => 'Rm 8:14'],
+    ['text' => 'Thiên Chúa làm cho mọi sự đều sinh lợi ích cho những ai yêu mến Người.', 'ref' => 'Rm 8:28'],
+    ['text' => 'Không có gì tách được chúng ta ra khỏi tình yêu của Thiên Chúa thể hiện nơi Đức Ki-tô Giê-su.', 'ref' => 'Rm 8:39'],
+    ['text' => 'Đến cả đi, hỡi những người đang khát, nước đã sẵn đây!', 'ref' => 'Is 55:1'],
+    ['text' => 'Lời Ta cũng vậy, một khi xuất phát từ miệng Ta, sẽ không trở về Ta cái gì, mà sẽ làm điều Ta muốn.', 'ref' => 'Is 55:11'],
+    ['text' => 'Hãy vui mừng reo hò, dân Sion, vì Đấng Thánh của Ít-ra-en quang lâm giữa anh em.', 'ref' => 'Is 12:6'],
+    ['text' => 'CHÚA phán: Ta sẽ ban tặng anh em một trái tim mới, và đặt một thần khí mới vào lòng anh em.', 'ref' => 'Ed 36:26'],
+    ['text' => 'ĐỨC CHÚA là Đấng chăn nuôi tôi, tôi sẽ không thiếu thốn gì. Người cho tôi nằm nghỉ trong đồng cỏ xanh tươi.', 'ref' => 'Tv 23:1-2'],
+    ['text' => 'Xin dạy cho con biết cách sống đạo đức để con truyền lại cho hậu thế.', 'ref' => 'Tv 48:13'],
+    ['text' => 'Lạy Chúa, xin tỏ cho con thấy đường lối của Ngài, và xin hướng dẫn con trên đường Ngài.', 'ref' => 'Tv 27:11'],
+    ['text' => 'Hãy kêu cầu Danh Ngài, loan báo điều đó giữa các dân tộc.', 'ref' => 'Tv 105:1'],
+    ['text' => 'Người ta sẽ chẳng còn dạy nhau, kẻ này nói với người kia: "Hãy học cho biết ĐỨC CHÚA", vì hết thảy sẽ biết Ta, từ người nhỏ đến người lớn.', 'ref' => 'Gr 31:34'],
+    ['text' => 'Này, Ta làm mọi sự mới.', 'ref' => 'Kh 21:5'],
+    ['text' => 'Đấng ngự trên ngôi và Con Chiên sẽ ngự trong đền thờ của Người.', 'ref' => 'Kh 21:22'],
+    ['text' => 'Hãy đến, hỡi những ai đang khát, dù là ai cũng hãy đến mà nhận nước.', 'ref' => 'Kh 22:17'],
 ];
 
 /**
- * Lay verse ngau nhien tu bible-api.com
+ * DEPRECATED: bible-api.com đã ngưng hỗ trợ tiếng Việt (404).
+ * Sử dụng FALLBACK_VERSES thay vì API.
  */
 function fetch_random_verse(): ?array
 {
-    $url = 'https://bible-api.com/api/random?translation=vietnamese';
-
-    $context = stream_context_create([
-        'http' => [
-            'method' => 'GET',
-            'timeout' => 10,
-            'ignore_errors' => true,
-        ],
-        'ssl' => [
-            'verify_peer' => true,
-            'verify_peer_name' => true,
-        ],
-    ]);
-
-    $response = @file_get_contents($url, false, $context);
-
-    if ($response === false) {
-        return null;
-    }
-
-    $data = json_decode($response, true);
-    if (!is_array($data) || empty($data['verses'][0])) {
-        return null;
-    }
-
-    $verse = $data['verses'][0];
-    return [
-        'text' => trim($verse['text'] ?? ''),
-        'ref' => trim($verse['reference'] ?? ''),
-    ];
+    // bible-api.com/api/random?translation=vietnamese → 404
+    // Xem issue #229: nên dùng api/loichua.php thay thế
+    return null;
 }
 
 /**
- * Lay verse fallback ngau nhien
+ * Lấy verse fallback ngẫu nhiên
  */
 function get_fallback_verse(): array
 {
@@ -91,7 +75,7 @@ function get_fallback_verse(): array
 }
 
 /**
- * Kiem tra rate limit: 1 lan/IP/gio
+ * Kiểm tra rate limit: 1 lần/IP/giờ
  */
 function get_cached_verse(string $ip): ?array
 {
@@ -120,7 +104,7 @@ function get_cached_verse(string $ip): ?array
 }
 
 /**
- * Luu verse vao database
+ * Lưu verse vào database
  */
 function save_verse(string $ip, string $text, string $ref, string $translation = 'vietnamese'): int
 {
@@ -135,10 +119,7 @@ switch ($action) {
 
     // ================================================================
     case 'random':
-        // Tu tao table neu chua co
-        ensure_bible_table();
-
-        // Kiem tra rate limit: co verse trong vong 1 gio khong?
+        // Kiểm tra rate limit: có verse trong vòng 1 giờ không?
         $cached = get_cached_verse($ip);
 
         if ($cached) {
@@ -148,14 +129,14 @@ switch ($action) {
                 'verse' => $cached['text'],
                 'ref' => $cached['ref'],
                 'translation' => $cached['translation'] ?? 'vietnamese',
-                'message' => 'Day la loi Chua danh cho ban hom nay.',
+                'message' => 'Đây là lời Chúa dành cho bạn hôm nay.',
             ]);
         }
 
-        // Thu fetch tu API
+        // Thử fetch từ API (deprecated - luôn fail)
         $verse = fetch_random_verse();
 
-        // Fallback neu API fail
+        // Fallback nếu API fail
         if ($verse === null) {
             $verse = get_fallback_verse();
             $translation = 'fallback';
@@ -163,7 +144,7 @@ switch ($action) {
             $translation = 'vietnamese';
         }
 
-        // Luu vao database
+        // Lưu vào database
         save_verse($ip, $verse['text'], $verse['ref'], $translation);
 
         json_out([
@@ -172,12 +153,12 @@ switch ($action) {
             'verse' => $verse['text'],
             'ref' => $verse['ref'],
             'translation' => $translation,
-            'message' => 'Day la loi Chua danh cho ban hom nay.',
+            'message' => 'Đây là lời Chúa dành cho bạn hôm nay.',
         ]);
 
     // ================================================================
     case 'list':
-        // Chi admin moi xem duoc danh sach IP
+        // Chỉ admin mới xem được danh sách IP
         $me = require_permission('settings', 'view');
 
         $rows = db_all(
@@ -204,16 +185,19 @@ switch ($action) {
 
     // ================================================================
     case 'stats':
-        // Chi admin moi xem duoc thong ke
+        // Chỉ admin mới xem được thống kê
         $me = require_permission('settings', 'view');
 
         $totalRequests = (int) db_val('SELECT COUNT(*) FROM bible_daily');
+
         $uniqueIps = (int) db_val('SELECT COUNT(DISTINCT ip_address) FROM bible_daily');
+
         $todayStart = date('Y-m-d') . ' 00:00:00';
         $todayUniqueIps = (int) db_val(
             'SELECT COUNT(DISTINCT ip_address) FROM bible_daily WHERE fetched_at >= ?',
             [$todayStart]
         );
+
         $lastRequest = db_val('SELECT MAX(fetched_at) FROM bible_daily');
 
         json_out([
@@ -228,7 +212,7 @@ switch ($action) {
 
     // ================================================================
     default:
-        // Fallback: tra verse ngau nhien ma khong luu
+        // Fallback: trả verse ngẫu nhiên mà không lưu
         $verse = get_fallback_verse();
         json_out([
             'success' => true,
@@ -236,6 +220,6 @@ switch ($action) {
             'verse' => $verse['text'],
             'ref' => $verse['ref'],
             'translation' => 'fallback',
-            'message' => 'Day la loi Chua danh cho ban hom nay.',
+            'message' => 'Đây là lời Chúa dành cho bạn hôm nay.',
         ]);
 }

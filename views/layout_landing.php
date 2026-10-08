@@ -1,19 +1,21 @@
 <?php
-// TRANG CHỦ CÔNG KHAI - Landing page voi Lời Chúa Mỗi Ngày
+// TRANG CHỦ CÔNG KHAI (landing) — hiện cho khách chưa đăng nhập ở index.php.
+// Chỉ là bảng điều hướng: KHÔNG nạp dữ liệu nghiệp vụ nào, mọi lối vào đều là
+// trang có sẵn (đăng nhập quản lý / tra cứu Sổ Mộc / bảng thi đua).
+// Tự chứa CSS nội tuyến để khỏi phụ thuộc bản dịch Tailwind.
 $__cssV = @filemtime(__DIR__ . '/../public/assets/img/icon-192.png') ?: 0;
 $__links = [
-    ['href' => '#loichua', 'icon' => 'cross', 'title' => 'Lời Chúa Mỗi Ngày',
-     'desc' => 'Nhận lời Chúa ngẫu nhiên dành riêng cho bạn.', 'cls' => 'scripture', 'id' => 'loichua'],
+    ['href' => 'loichua.php', 'icon' => 'cross', 'title' => 'Lời Chúa Hôm Nay',
+     'desc' => 'Lời Chúa theo lịch phụng vụ Việt Nam — Bài Đọc, Thánh Vịnh, Tin Mừng.', 'cls' => 'scripture', 'id' => 'loichua'],
     ['href' => 'index.php?dangnhap=1', 'icon' => 'lock', 'title' => 'Đăng nhập quản lý',
-     'desc' => 'Dành cho Giáo Lý Viên, Trưởng Khối, Ban Điều Hành và Thủ Thư.', 'cls' => 'primary'],
+     'desc' => 'Dành cho Giáo Lý Viên, Trưởng Khối, Ban Điều Hành và Thủ Thư: điểm danh, điểm số, thiếu nhi, đổi quà…', 'cls' => 'primary'],
     ['href' => 'somoc.php', 'icon' => 'book', 'title' => 'Sổ Mộc',
-     'desc' => 'Xem Mộc, chuỗi đi lễ và đặt trước quà.', 'cls' => ''],
+     'desc' => 'Em và phụ huynh nhập mã thiếu nhi để xem Mộc, chuỗi đ lễ và đặt trước quà.', 'cls' => ''],
     ['href' => 'tracuu.php', 'icon' => 'search', 'title' => 'Tra cứu điểm',
-     'desc' => 'Xem điểm số và sổ điểm danh.', 'cls' => ''],
+     'desc' => 'Xem điểm số, sổ điểm danh và sổ liên lạc của em — nhập mã thiếu nhi và ngày sinh (tháng-ngày-năm).', 'cls' => ''],
     ['href' => 'bxh.php', 'icon' => 'trophy', 'title' => 'Bảng thi đua',
-     'desc' => 'Xếp hạng chuyên cần & học tập.', 'cls' => ''],
+     'desc' => 'Xếp hạng chuyên cần &amp; học tập của các lớp, các em.', 'cls' => ''],
 ];
-$icons = ['lock' => '🔐', 'book' => '📒', 'search' => '📘', 'trophy' => '🏆'];
 ?>
 <!DOCTYPE html>
 <html lang="vi">
@@ -27,260 +29,235 @@ $icons = ['lock' => '🔐', 'book' => '📒', 'search' => '📘', 'trophy' => '�
     <link rel="manifest" href="manifest.json">
     <title>GIA ĐÌNH GIÁO LÝ PHÚ TRUNG</title>
     <style>
-        *{box-sizing:border-box;margin:0;padding:0}
-        body{min-height:100vh;background:linear-gradient(135deg,#f8fafc 0%,#e2e8f0 50%,#f1f5f9 100%);color:#1e293b;font-family:"Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+        *{box-sizing:border-box}
+        body{margin:0;min-height:100vh;background:#f8fafc;color:#1e293b;
+             font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
         .wrap{max-width:560px;margin:0 auto;padding:40px 20px calc(32px + env(safe-area-inset-bottom))}
-        @media(min-width:640px){.wrap{max-width:720px;padding:60px 40px}}
-        @media(min-width:1024px){.wrap{max-width:800px;padding:80px 40px}}
+        /* Tablet (640px+) */
+        @media (min-width: 640px) {
+            .wrap { max-width: 720px; padding: 60px 40px; }
+        }
+        /* Desktop (1024px+) */
+        @media (min-width: 1024px) {
+            .wrap { max-width: 800px; padding: 80px 40px; }
+        }
         .brand{text-align:center;margin-bottom:28px}
-        .brand img{width:96px;height:96px;object-fit:contain;border-radius:24px;box-shadow:0 8px 32px rgba(0,0,0,0.15)}
-        .brand h1{font-size:1.5rem;font-weight:900;margin:16px 0 4px;background:linear-gradient(135deg,#c8203a,#e11d48);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-        .brand p{margin:0;font-size:.875rem;color:#64748b}
+        .brand img{width:96px;height:96px;object-fit:contain;border-radius:24px}
+        .brand h1{font-size:1.5rem;font-weight:900;letter-spacing:-.01em;margin:16px 0 4px}
+        .brand p{margin:0;font-size:.875rem;color:#94a3b8}
         .grid{display:grid;gap:14px}
-        @media(min-width:640px){.grid{gap:18px}}
-
-        /* Base Card */
-        a.card{display:flex;align-items:center;gap:14px;padding:18px;border-radius:20px;
-               background:rgba(255,255,255,0.9);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.8);
-               box-shadow:0 4px 24px rgba(0,0,0,0.08);text-decoration:none;color:inherit;
-               transition:all .2s;position:relative;overflow:hidden}
-        a.card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,0.4),transparent);opacity:0;transition:opacity .2s}
-        a.card:hover{transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,0.15)}
-        a.card:hover::before{opacity:1}
-        a.card:active{transform:translateY(-2px) scale(.99)}
-        a.card .ic{flex:none;width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,#f1f5f9,#e2e8f0);display:flex;align-items:center;justify-content:center;font-size:1.6rem;box-shadow:0 2px 8px rgba(0,0,0,0.1)}
-        a.card b{display:block;font-size:1rem;font-weight:800;color:#1e293b;line-height:1.25}
-        a.card small{display:block;margin-top:3px;font-size:.78rem;color:#64748b;line-height:1.4}
-        a.card .go{margin-left:auto;flex:none;color:#94a3b8;font-size:1.4rem;font-weight:300}
-
-        /* Primary Card */
-        a.card.primary{background:linear-gradient(135deg,#c8203a,#dc2626);border-color:rgba(200,32,58,0.3);box-shadow:0 4px 24px rgba(200,32,58,0.3)}
-        a.card.primary .ic{background:rgba(255,255,255,0.25);box-shadow:none}
-        a.card.primary b{color:#fff}
+        @media (min-width: 640px) {
+            .grid { gap: 18px; }
+        }
+        /* Liquid Glass Cards */
+        a.card{
+            display:flex;
+            align-items:center;
+            gap:14px;
+            padding:18px;
+            border-radius:16px;
+            background:rgba(255,255,255,0.72);
+            backdrop-filter:blur(16px) saturate(180%);
+            -webkit-backdrop-filter:blur(16px) saturate(180%);
+            border:1px solid rgba(255,255,255,0.5);
+            box-shadow:0 8px 32px rgba(0,0,0,0.1);
+            text-decoration:none;color:inherit;
+            transition:transform .12s,box-shadow .12s;
+            position:relative;
+            overflow:hidden
+        }
+        a.card::before{
+            content:'';
+            position:absolute;
+            top:0;left:10%;right:10%;
+            height:1px;
+            background:linear-gradient(90deg,transparent,rgba(255,255,255,0.8),transparent)
+        }
+        a.card:hover{
+            transform:translateY(-2px);
+            box-shadow:0 12px 40px rgba(0,0,0,0.15)
+        }
+        a.card:active{transform:scale(.99)}
+        a.card:focus-visible{outline:2px solid #c8203a;outline-offset:2px}
+        a.card .ic{flex:none;width:52px;height:52px;border-radius:12px;background:rgba(241,245,249,0.8);
+                   display:flex;align-items:center;justify-content:center;font-size:1.6rem}
+        a.card b{display:block;font-size:1rem;font-weight:900;line-height:1.25}
+        a.card small{display:block;margin-top:2px;font-size:.78rem;line-height:1.35;color:#64748b}
+        a.card .go{margin-left:auto;flex:none;color:#94a3b8;font-size:1.3rem}
+        /* Primary card - TNTT Red */
+        a.card.primary{
+            background:linear-gradient(145deg,rgba(200,32,58,0.85),rgba(200,32,58,0.72));
+            border-color:rgba(200,32,58,0.3);
+            box-shadow:0 8px 32px rgba(200,32,58,0.2);
+        }
+        a.card.primary::before{background:linear-gradient(90deg,transparent,rgba(255,255,255,0.4),transparent)}
+        a.card.primary .ic{background:rgba(255,255,255,0.2)}
         a.card.primary small{color:rgba(255,255,255,0.85)}
         a.card.primary .go{color:rgba(255,255,255,0.8)}
-        a.card.primary:hover{box-shadow:0 12px 40px rgba(200,32,58,0.4)}
+        @media (prefers-reduced-transparency: reduce) {
+            a.card{background:#fff!important;backdrop-filter:none!important}
+            a.card.primary{background:#c8203a!important}
+        }
 
-        /* Scripture Card - PREMIUM */
+        /* ============================================
+           SCRIPTURE CARD - Premium Bible Theme
+           ============================================ */
         a.card.scripture{
-            background:linear-gradient(145deg,#1a365d 0%,#2c5282 30%,#1e3a5f 70%,#0f172a 100%);
-            border:2px solid rgba(255,215,0,0.4);padding:28px 24px;flex-direction:column;
-            align-items:center;text-align:center;cursor:pointer;min-height:280px;
-            box-shadow:0 8px 32px rgba(26,54,93,0.4),inset 0 1px 0 rgba(255,255,255,0.1);
-            position:relative;overflow:hidden
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 50%, #1e3a5f 100%);
+            border: 1px solid rgba(255, 215, 140, 0.3);
+            box-shadow:
+                0 4px 24px rgba(30, 58, 95, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+            padding: 20px;
+            flex-direction: column;
+            align-items: stretch;
+            text-align: center;
         }
-
-        /* Decorative glow */
-        a.card.scripture::before{
-            content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;
-            background:radial-gradient(circle,rgba(255,215,0,0.1) 0%,transparent 50%);
-            animation:pulse-glow 4s ease-in-out infinite;pointer-events:none
-        }
-        @keyframes pulse-glow{
-            0%,100%{opacity:0.5;transform:scale(1)}
-            50%{opacity:1;transform:scale(1.1)}
-        }
-
-        /* Cross watermark */
+        /* Decorative cross pattern */
         a.card.scripture::after{
-            content:'✝';position:absolute;top:-30px;right:-30px;font-size:160px;
-            opacity:0.06;transform:rotate(15deg);pointer-events:none;color:#ffd700;
-            text-shadow:0 0 40px rgba(255,215,0,0.3)
+            content: '✝';
+            position: absolute;
+            top: -20px;
+            right: -20px;
+            font-size: 120px;
+            opacity: 0.05;
+            transform: rotate(15deg);
+            pointer-events: none;
         }
-
         /* Shine effect */
-        .shine-effect{
-            position:absolute;top:0;left:-100%;width:60%;height:100%;
-            background:linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent);
-            animation:shine 3s ease-in-out infinite;pointer-events:none
+        a.card.scripture .shine{
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            animation: shine 3s ease-in-out infinite;
         }
-        @keyframes shine{
-            0%,100%{left:-100%}
-            50%{left:150%}
+        @keyframes shine {
+            0%, 100% { left: -100%; }
+            50% { left: 100%; }
         }
-
         a.card.scripture:hover{
-            transform:translateY(-6px) scale(1.02);
-            box-shadow:0 20px 60px rgba(26,54,93,0.5),0 0 40px rgba(255,215,0,0.2);
-            border-color:rgba(255,215,0,0.6)
+            transform: translateY(-3px);
+            box-shadow:
+                0 8px 32px rgba(30, 58, 95, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 215, 140, 0.5);
         }
-        a.card.scripture:hover .shine-effect{animation-duration:1.5s}
-
-        /* Icon */
+        a.card.scripture:hover .shine{
+            animation-duration: 1.5s;
+        }
+        a.card.scripture::before{
+            background: linear-gradient(90deg, transparent, rgba(255, 215, 140, 0.3), transparent);
+            height: 2px;
+            top: 0;
+            left: 20%;
+            right: 20%;
+        }
         a.card.scripture .ic{
-            background:linear-gradient(135deg,#ffd700,#ffb347);border-radius:50%;
-            width:80px;height:80px;margin-bottom:16px;border:3px solid rgba(255,255,255,0.3);
-            box-shadow:0 4px 20px rgba(255,215,0,0.4),inset 0 2px 4px rgba(255,255,255,0.4);
-            position:relative;z-index:1
+            background: rgba(255, 215, 140, 0.2);
+            border-radius: 50%;
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 12px;
+            border: 2px solid rgba(255, 215, 140, 0.3);
         }
-        a.card.scripture .ic svg{width:40px;height:40px;stroke:#1a365d;fill:none;stroke-width:2.5;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.2))}
-
-        /* Title & Description */
-        a.card.scripture .title{color:#ffd700;font-size:1.3rem;font-weight:800;letter-spacing:.02em;text-shadow:0 2px 4px rgba(0,0,0,0.3);position:relative;z-index:1}
-        a.card.scripture .desc{color:rgba(255,255,255,0.9);font-size:.9rem;margin-top:8px;line-height:1.5;position:relative;z-index:1}
-
-        /* CTA Button */
-        .cta-btn{
-            display:inline-flex;align-items:center;gap:10px;margin-top:20px;padding:14px 32px;
-            background:linear-gradient(135deg,#ffd700,#ffb347,#ffd700);background-size:200% 100%;
-            color:#1a365d;font-weight:800;font-size:1rem;border-radius:30px;border:none;cursor:pointer;
-            box-shadow:0 4px 20px rgba(255,215,0,0.5),inset 0 2px 4px rgba(255,255,255,0.4);
-            transition:all .3s;position:relative;z-index:1;animation:btn-glow 2s ease-in-out infinite
+        a.card.scripture .ic svg{
+            width: 32px;
+            height: 32px;
+            stroke: #ffd700;
+            fill: none;
+            stroke-width: 2;
         }
-        @keyframes btn-glow{
-            0%,100%{box-shadow:0 4px 20px rgba(255,215,0,0.5)}
-            50%{box-shadow:0 4px 30px rgba(255,215,0,0.8),0 0 40px rgba(255,215,0,0.3)}
+        a.card.scripture b{
+            font-size: 1.1rem;
+            color: #fff;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            margin-bottom: 4px;
         }
-        .cta-btn:hover{
-            transform:scale(1.08);background-position:100% 0;
-            box-shadow:0 8px 30px rgba(255,215,0,0.7);animation:none
+        a.card.scripture small{
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.85rem;
         }
-        .cta-btn:active{transform:scale(1.02)}
-        .cta-btn:disabled{opacity:0.6;cursor:not-allowed;transform:none;animation:none}
-
-        .cta-btn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2.5;transition:transform .3s}
-        .cta-btn:hover svg{transform:rotate(15deg)}
-
-        /* Verse Display */
-        .verse-container{margin-top:20px;width:100%;position:relative;z-index:1}
-        .verse-box{
-            background:rgba(255,255,255,0.1);border:1px solid rgba(255,215,140,0.3);
-            border-radius:16px;padding:20px;text-align:center;backdrop-filter:blur(10px);
-            animation:fadeIn .5s ease-out
+        a.card.scripture .go{
+            display: none;
         }
-        @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-
-        /* Quote marks */
-        .verse-box::before{content:'"';position:absolute;top:8px;left:16px;font-size:48px;color:rgba(255,215,0,0.2);font-family:Georgia,serif;line-height:1}
-        .verse-box::after{content:'"';position:absolute;bottom:0;right:16px;font-size:48px;color:rgba(255,215,0,0.2);font-family:Georgia,serif;line-height:1}
-
-        .verse-text{color:#fff;font-size:1.05rem;line-height:1.8;font-style:italic;padding:0 20px;position:relative;z-index:1}
-        .verse-ref{color:#ffd700;font-weight:700;margin-top:16px;font-size:.95rem;letter-spacing:.03em;display:block}
-        .verse-ref::before{content:'— '}
-
-        /* Loading */
-        .loading-container{display:flex;flex-direction:column;align-items:center;gap:12px}
-        .loading-spinner{
-            width:40px;height:40px;border:4px solid rgba(255,215,140,0.2);border-top-color:#ffd700;
-            border-radius:50%;animation:spin 1s linear infinite;box-shadow:0 0 20px rgba(255,215,0,0.3)
+        /* Scripture card CTA button */
+        a.card.scripture .cta{
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 14px;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #ffd700, #ffb347);
+            color: #1e3a5f;
+            font-weight: 700;
+            font-size: 0.85rem;
+            border-radius: 24px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
         }
-        @keyframes spin{to{transform:rotate(360deg)}}
-        .loading-text{color:rgba(255,255,255,0.8);font-size:.9rem;animation:pulse 1.5s ease-in-out infinite}
-        @keyframes pulse{0%,100%{opacity:0.6}50%{opacity:1}}
-
-        /* Footer */
-        footer{margin-top:32px;text-align:center;font-size:.8rem;color:#64748b;padding-top:20px;border-top:1px solid rgba(0,0,0,0.05)}
-
-        /* Responsive */
-        @media(max-width:480px){
-            a.card.scripture{padding:24px 20px;min-height:260px}
-            a.card.scripture .ic{width:70px;height:70px}
-            a.card.scripture .ic svg{width:35px;height:35px}
-            a.card.scripture .title{font-size:1.15rem}
-            .cta-btn{padding:12px 28px;font-size:.95rem}
+        a.card.scripture .cta:hover{
+            transform: scale(1.05);
+            box-shadow: 0 4px 16px rgba(255, 215, 0, 0.4);
         }
-        @media(prefers-reduced-motion:reduce){
-            .shine-effect,.pulse-glow,.btn-glow,.loading-spinner{animation:none}
+        a.card.scripture .cta svg{
+            width: 16px;
+            height: 16px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+        }
+
+        footer{margin-top:28px;text-align:center;font-size:.75rem;color:#94a3b8}
+
+        /* Reduced Motion */
+        @media (prefers-reduced-motion: reduce) {
+            a.card.scripture .shine{animation:none}
         }
     </style>
 </head>
 <body>
 <main class="wrap">
     <div class="brand">
-        <img src="assets/img/icon-192.png?v=<?php echo $__cssV; ?>" alt="Logo">
-        <h1>Gia Đình Giáo Lý </h1>
-        <p>Giáo xứ Phú Trung</p>
+        <img src="assets/img/icon-192.png?v=<?php echo $__cssV; ?>" alt="Logo Gia Đình Giáo Lý Phú Trung">
+        <h1>Gia Đình Giáo Lý Phú Trung</h1>
+        <p>Đoàn Thiếu Nhi Thánh Thể</p>
     </div>
-
-    <nav class="grid">
+    <nav class="grid" aria-label="Chọn chức năng">
         <?php foreach ($__links as $l): ?>
-        <a class="card <?php echo $l['cls']; ?>" href="<?php echo $l['href']; ?>" id="<?php echo $l['id'] ?? ''; ?>">
+        <a class="card <?php echo $l['cls']; ?>" href="<?php echo htmlspecialchars($l['href'], ENT_QUOTES, 'UTF-8'); ?>">
             <?php if ($l['cls'] === 'scripture'): ?>
-            <div class="shine-effect"></div>
+            <div class="shine"></div>
             <div class="ic">
-                <svg viewBox="0 0 24 24"><path d="M12 2v20M7 7h10" stroke-linecap="round"/></svg>
+                <!-- Cross Icon SVG -->
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2v20M7 7h10" stroke-linecap="round"/>
+                </svg>
             </div>
-            <span class="title"><?php echo $l['title']; ?></span>
-            <span class="desc"><?php echo $l['desc']; ?></span>
-            <div class="verse-container" id="verseArea" style="display:none"></div>
-            <button class="cta-btn" id="ctaBtn" onclick="event.preventDefault();event.stopPropagation();getVerse()">
-                <svg viewBox="0 0 24 24"><path d="M12 2v20M7 7h10" stroke-linecap="round"/></svg>
-                Nhận lời Chúa
-            </button>
+            <span><b><?php echo htmlspecialchars($l['title'], ENT_QUOTES, 'UTF-8'); ?></b><small><?php echo htmlspecialchars($l['desc'], ENT_QUOTES, 'UTF-8'); ?></small></span>
+            <span class="cta">
+                Xem Lời Chúa
+                <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
             <?php else: ?>
-            <span class="ic"><?php echo $icons[$l['icon']] ?? '📌'; ?></span>
-            <span><b><?php echo $l['title']; ?></b><small><?php echo $l['desc']; ?></small></span>
-            <span class="go">›</span>
+            <span class="ic" aria-hidden="true"><?php
+                $icons = ['lock' => '🔐', 'book' => '📒', 'search' => '📘', 'trophy' => '🏆'];
+                echo $icons[$l['icon']] ?? '📌';
+            ?></span>
+            <span><b><?php echo htmlspecialchars($l['title'], ENT_QUOTES, 'UTF-8'); ?></b><small><?php echo htmlspecialchars($l['desc'], ENT_QUOTES, 'UTF-8'); ?></small></span>
+            <span class="go" aria-hidden="true">›</span>
             <?php endif; ?>
         </a>
         <?php endforeach; ?>
     </nav>
-
-    <footer>Quản lý & tra cứu dành cho GIA ĐÌNH GIÁO LÝ GX PHÚ TRUNG</footer>
+    <footer>Quản lý &amp; tra cứu dành cho Đoàn Thiếu Nhi Thánh Thể</footer>
 </main>
-
-<script>
-(function() {
-    var verseArea = document.getElementById('verseArea');
-    var ctaBtn = document.getElementById('ctaBtn');
-
-    function getStoredVerse() {
-        try {
-            var stored = localStorage.getItem('dailyVerse');
-            if (stored) {
-                var data = JSON.parse(stored);
-                var today = new Date().toDateString();
-                if (data.date === today) return data;
-            }
-        } catch(e) {}
-        return null;
-    }
-
-    function saveVerse(verse, ref) {
-        try {
-            localStorage.setItem('dailyVerse', JSON.stringify({
-                date: new Date().toDateString(),
-                verse: verse,
-                ref: ref,
-                timestamp: Date.now()
-            }));
-        } catch(e) {}
-    }
-
-    function showVerse(verse, ref) {
-        verseArea.innerHTML = '<div class="verse-box"><p class="verse-text">' + verse + '</p><span class="verse-ref">' + ref + '</span></div>';
-        verseArea.style.display = 'block';
-        ctaBtn.style.display = 'none';
-    }
-
-    function showLoading() {
-        verseArea.innerHTML = '<div class="loading-container"><div class="loading-spinner"></div><p class="loading-text">Đang tải lời Chúa...</p></div>';
-        verseArea.style.display = 'block';
-        ctaBtn.disabled = true;
-        ctaBtn.innerHTML = '<div class="loading-spinner" style="width:20px;height:20px;border-width:3px"></div> Đang tải...';
-    }
-
-    window.getVerse = function() {
-        showLoading();
-        fetch('api/bible.php?action=random')
-            .then(function(resp) { return resp.json(); })
-            .then(function(data) {
-                if (data.success && data.verse) {
-                    showVerse(data.verse, data.ref);
-                    saveVerse(data.verse, data.ref);
-                } else {
-                    verseArea.innerHTML = '<div class="verse-box"><p class="verse-text" style="color:#fca5a5">Không thể tải lời Chúa. Vui lòng thử lại sau.</p></div>';
-                }
-            })
-            .catch(function() {
-                verseArea.innerHTML = '<div class="verse-box"><p class="verse-text" style="color:#fca5a5">Lỗi kết nối. Vui lòng kiểm tra mạng.</p></div>';
-            });
-    };
-
-    var stored = getStoredVerse();
-    if (stored) showVerse(stored.verse, stored.ref);
-})();
-</script>
 
 </body>
 </html>
