@@ -19,7 +19,7 @@ class Validator
     {
         if (!isset($this->data[$field]) || $this->data[$field] === '') {
             $this->errors[$field] = [
-                'code' => ERR_REQUIRED_FIELD,
+                'code' => 'REQUIRED_FIELD',
                 'message' => "Trường '{$field}' là bắt buộc."
             ];
         }
@@ -31,7 +31,7 @@ class Validator
         if (isset($this->data[$field]) && $this->data[$field] !== '') {
             if (!is_numeric($this->data[$field]) || (int) $this->data[$field] != $this->data[$field]) {
                 $this->errors[$field] = [
-                    'code' => ERR_INVALID_INPUT,
+                    'code' => 'INVALID_INPUT',
                     'message' => "Trường '{$field}' phải là số nguyên."
                 ];
             }
@@ -43,7 +43,7 @@ class Validator
     {
         if (isset($this->data[$field]) && !is_string($this->data[$field])) {
             $this->errors[$field] = [
-                'code' => ERR_INVALID_INPUT,
+                'code' => 'INVALID_INPUT',
                 'message' => "Trường '{$field}' phải là chuỗi."
             ];
         }
@@ -54,7 +54,7 @@ class Validator
     {
         if (isset($this->data[$field]) && strlen((string) $this->data[$field]) > $max) {
             $this->errors[$field] = [
-                'code' => ERR_VALUE_OUT_OF_RANGE,
+                'code' => 'VALUE_OUT_OF_RANGE',
                 'message' => "Trường '{$field}' không được dài quá {$max} ký tự."
             ];
         }
@@ -65,7 +65,7 @@ class Validator
     {
         if (isset($this->data[$field]) && strlen((string) $this->data[$field]) < $min) {
             $this->errors[$field] = [
-                'code' => ERR_VALUE_OUT_OF_RANGE,
+                'code' => 'VALUE_OUT_OF_RANGE',
                 'message' => "Trường '{$field}' phải có ít nhất {$min} ký tự."
             ];
         }
@@ -76,7 +76,7 @@ class Validator
     {
         if (isset($this->data[$field]) && !in_array($this->data[$field], $allowed, true)) {
             $this->errors[$field] = [
-                'code' => ERR_INVALID_INPUT,
+                'code' => 'INVALID_INPUT',
                 'message' => "Trường '{$field}' có giá trị không hợp lệ."
             ];
         }
@@ -87,7 +87,7 @@ class Validator
     {
         if (isset($this->data[$field]) && !filter_var($this->data[$field], FILTER_VALIDATE_EMAIL)) {
             $this->errors[$field] = [
-                'code' => ERR_INVALID_INPUT,
+                'code' => 'INVALID_INPUT',
                 'message' => "Trường '{$field}' phải là email hợp lệ."
             ];
         }
@@ -114,26 +114,27 @@ class Validator
  * CSRF VALIDATOR
  *
  * Centralized CSRF token validation with Origin/Referer checking.
+ * Note: This requires _bootstrap.php to be loaded for json_fail, verify_csrf, app_config.
  */
 class CSRFValidator
 {
     public static function validate(): void
     {
         // Only check for POST requests
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
             return;
         }
 
         // Check if session has CSRF token
         if (empty($_SESSION['csrf_token'])) {
-            json_fail(ERR_CSRF_INVALID, 'CSRF token not found. Please reload the page.', 403);
+            json_fail('CSRF_INVALID', 'CSRF token not found. Please reload the page.', [], 403);
         }
 
         // Get token from POST or header
         $token = $_POST['_csrf'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
 
         if (!verify_csrf($token)) {
-            json_fail(ERR_CSRF_INVALID, 'Invalid CSRF token.', 403);
+            json_fail('CSRF_INVALID', 'Invalid CSRF token.', [], 403);
         }
 
         // Optional: Check Origin header for additional security
@@ -144,7 +145,7 @@ class CSRFValidator
                 $parsedOrigin = parse_url($origin, PHP_URL_HOST);
                 $parsedSelf = parse_url(app_config('app_url'), PHP_URL_HOST);
                 if ($parsedOrigin !== $parsedSelf) {
-                    json_fail(ERR_CSRF_INVALID, 'Invalid request origin.', 403);
+                    json_fail('CSRF_INVALID', 'Invalid request origin.', [], 403);
                 }
             }
         }
