@@ -1,6 +1,6 @@
 <?php
 /**
- * TIỆN ÍCH HTTP DÙNG CHUNG — client_ip() + json_out()/json_fail()
+ * TIỆN ÍCH HTTP DÙNG CHUNG — client_ip() + json_out()
  *
  * SINGLE SOURCE cho các hàm này. Trước đây `_bootstrap.php` định nghĩa
  * chúng inline, còn `public/api/_somoc.php` (trang public không nạp
@@ -42,9 +42,5 @@ if (!function_exists('json_out')) {
     }
 }
 
-if (!function_exists('json_fail')) {
-    function json_fail(string $message, int $code = 400): never
-    {
-        json_out(['ok' => false, 'error' => $message], $code);
-    }
-}
+// Response helpers are in _response.php (includes at end for load order)
+require_once __DIR__ . '/_response.php';
