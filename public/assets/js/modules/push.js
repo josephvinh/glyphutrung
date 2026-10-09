@@ -206,9 +206,15 @@ window.TNTT.push = {
 
     /** Khoá VAPID là base64 kiểu URL; PushManager đòi Uint8Array */
     _sangMang(b64) {
-        const day = atob((b64 + '='.repeat((4 - b64.length % 4) % 4)).replace(/-/g, '+').replace(/_/g, '/'));
-        const m = new Uint8Array(day.length);
-        for (let i = 0; i < day.length; i++) m[i] = day.charCodeAt(i);
-        return m;
+        if (!b64) return new Uint8Array(0);
+        try {
+            const day = atob((b64 + '='.repeat((4 - b64.length % 4) % 4)).replace(/-/g, '+').replace(/_/g, '/'));
+            const m = new Uint8Array(day.length);
+            for (let i = 0; i < day.length; i++) m[i] = day.charCodeAt(i);
+            return m;
+        } catch (e) {
+            console.error('[TNTT] Invalid VAPID key:', e);
+            return new Uint8Array(0);
+        }
     },
 };
