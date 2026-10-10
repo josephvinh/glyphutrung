@@ -89,7 +89,7 @@ for lab, cid in CLS.items():
                 WHERE NOT EXISTS (SELECT 1 FROM score_exams WHERE term_id={T2} AND type_code='mieng' AND name='P1-Test-Exam')""")
         exam_id = sql(f"SELECT id FROM score_exams WHERE term_id={T2} AND type_code='mieng' AND name='P1-Test-Exam'")
         if exam_id:
-            sql(f"INSERT INTO scores (exam_id, student_id, value) VALUES ({exam_id},{s},7.25)")
+            sql(f"INSERT INTO scores (exam_id, student_id, term_id, type_code, value) VALUES ({exam_id},{s},{T2},'mieng',7.25)")
 
 # Người dùng bổ sung
 gAC = mk_member("T_GLVAC", "0911000007", "glv", block=bA, cls=cA)

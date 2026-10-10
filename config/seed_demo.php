@@ -189,10 +189,10 @@ $scoreRows = [];
 foreach ($studentsFlat as [$sid, $cid]) {
     foreach ($examIds as $tc => $eid) {
         $val = round(random_int(40, 100) / 10, 1); // 4.0 .. 10.0
-        $scoreRows[] = [$eid, $sid, $val, $adminId, $now];
+        $scoreRows[] = [$eid, $sid, $termId, $tc, $val, $adminId, $now];
     }
 }
-$nScore = chen_nhieu($pdo, "INSERT INTO scores (exam_id, student_id, value, updated_by, updated_at)", $scoreRows, 5, 400);
+$nScore = chen_nhieu($pdo, "INSERT INTO scores (exam_id, student_id, term_id, type_code, value, updated_by, updated_at)", $scoreRows, 7, 400);
 
 /* ---------- Tổng kết ---------- */
 $giay = round(microtime(true) - $t0, 1);
