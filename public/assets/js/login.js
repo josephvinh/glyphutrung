@@ -48,7 +48,7 @@ document.addEventListener('alpine:init', () => {
                     password: this.rPw, note: this.rNote.trim(),
                     danhXung: this.rDanhXung
                 });
-                if (!r.ok) { this.error = r.error; return; }
+                if (!r.ok) { this.error = (typeof r.error === 'string') ? r.error : (r.error?.message || 'Có lỗi xảy ra.'); return; }
                 this.rCode = r.code;
                 // Đã gửi xong thì không giữ mật khẩu lại trong bộ nhớ nữa
                 this.rPw = ''; this.rPw2 = '';
@@ -74,7 +74,7 @@ document.addEventListener('alpine:init', () => {
             this.error = ''; this.busy = true;
             try {
                 const r = await this.post('login', { phone: this.chuanHoaSdt(this.phone), password: this.password });
-                if (!r.ok) { this.error = r.error; return; }
+                if (!r.ok) { this.error = (typeof r.error === 'string') ? r.error : (r.error?.message || 'Có lỗi xảy ra.'); return; }
                 // Lần đầu đăng nhập thì bắt đổi mật khẩu ngay, không cho vào thẳng
                 if (r.user.mustChangePw) {
                     this.csrf = r.csrfToken || '';
@@ -96,7 +96,7 @@ document.addEventListener('alpine:init', () => {
             this.busy = true;
             try {
                 const r = await this.post('password', { current: this.oldPw, new: this.newPw });
-                if (!r.ok) { this.error = r.error; return; }
+                if (!r.ok) { this.error = (typeof r.error === 'string') ? r.error : (r.error?.message || 'Có lỗi xảy ra.'); return; }
                 location.reload();
             } catch (e) {
                 this.error = 'Không kết nối được máy chủ.';

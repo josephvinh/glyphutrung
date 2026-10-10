@@ -22,6 +22,8 @@ return [
         'leave', 'birthdays', 'announcements', 'stats', 'analytics', 'scores',
         'reports', 'promotion', 'org', 'push', 'dashboard', 'shell',
         'calendar', 'notes', 'library', 'gifts', 'rewards',
+        // PWA: offline queue loaded early (before shell.initOfflineSupport runs)
+        'offline_queue',
     ],
     // Thứ tự CSS = thứ tự cascade: tailwind (nền) trước, phần ghi đè sau.
     'css' => ['tailwind', 'font', 'app', 'skeleton', 'analytics', 'toast', 'brand'],

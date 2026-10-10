@@ -55,6 +55,32 @@ $config = [
     // ĐỂ NGUYÊN true trên máy chủ thật: cấm install.php/seed_demo.php qua trình
     // duyệt + không lộ lỗi CSDL cho người dùng. Máy nhà đặt false qua config.local.php.
     'production' => true,
+
+    // RATE LIMITING — giới hạn request để tránh abuse
+    'rate_limit' => [
+        // Per-user limits (requests per window)
+        'per_user' => [
+            'read'   => 120,  // GET requests: 120/min
+            'write'  => 30,   // POST/PUT/DELETE: 30/min
+            'auth'   => 10,   // Login attempts: 10/min (exponential backoff)
+        ],
+        // Per-endpoint limits
+        'per_endpoint' => [
+            'data'      => 200,  // /api/data.php: 200/min
+            'attendance' => 100, // /api/attendance.php: 100/min
+            'scores'    => 60,   // /api/scores.php: 60/min
+            'push'      => 30,   // /api/push.php: 30/min
+        ],
+        // Global limits
+        'global' => [
+            'read'  => 500,   // Total GET: 500/min
+            'write' => 100,   // Total mutation: 100/min
+        ],
+        // Window size in seconds
+        'window' => 60,
+        // Enable exponential backoff for auth failures
+        'auth_backoff' => true,
+    ],
 ];
 
 // ---------------------------------------------------------------------------

@@ -244,7 +244,9 @@ class ExportApiTest extends TestCase
 
         $this->assertSame(400, $r['code'], 'Phải từ chối 400 khi fromDate > toDate');
         $this->assertFalse($r['json']['ok'] ?? true);
-        $this->assertStringContainsString('bắt đầu', strtolower($r['json']['error'] ?? ''));
+        // New API: error.message (or old: error as string)
+        $errorMsg = is_string($r['json']['error']) ? $r['json']['error'] : ($r['json']['error']['message'] ?? '');
+        $this->assertStringContainsString('bắt đầu', strtolower($errorMsg));
     }
 
     /**
@@ -259,7 +261,9 @@ class ExportApiTest extends TestCase
 
         $this->assertSame(400, $r['code'], 'Phải từ chối 400 khi khoảng > 365 ngày');
         $this->assertFalse($r['json']['ok'] ?? true);
-        $this->assertStringContainsString('365', strtolower($r['json']['error'] ?? ''));
+        // New API: error.message (or old: error as string)
+        $errorMsg = is_string($r['json']['error']) ? $r['json']['error'] : ($r['json']['error']['message'] ?? '');
+        $this->assertStringContainsString('365', strtolower($errorMsg));
     }
 
     /**

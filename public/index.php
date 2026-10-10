@@ -82,8 +82,9 @@ if (!$__dev) ob_start();
     <!-- Cho phép phóng to (GLV lớn tuổi đọc chữ nhỏ) + hỗ trợ tai thỏ iPhone -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#c8203a">
-<!-- Áp chế độ tối TRƯỚC khi vẽ trang, tránh nháy trắng -->
-    <script>try{var d=localStorage.getItem('darkMode');if(d==='true')document.documentElement.classList.add('dark')}catch(e){}</script>
+<!-- Đã bỏ chế độ tối. Dọn khoá cũ trong trình duyệt: người từng bật dark mode
+         vẫn còn darkMode=true, nếu để lại thì nền tối + chữ sáng trên thẻ trắng. -->
+    <script>try{localStorage.removeItem('darkMode');document.documentElement.classList.remove('dark')}catch(e){}</script>
     <!-- Platform detection for iOS/Android specific styling -->
     <script>(function(){try{var ua=navigator.userAgent;if(/iPhone|iPad|iPod/i.test(ua)){document.documentElement.classList.add('ios-platform')}else if(/Android/i.test(ua)){document.documentElement.classList.add('android-platform')}}catch(e){}})();</script>
     <!-- BIỂU TƯỢNG APP

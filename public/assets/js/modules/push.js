@@ -49,8 +49,9 @@ window.TNTT.push = {
         try {
             // Đăng ký kèm ?v=<hash nội dung> để SW tự đổi phiên bản khi bundle
             // đổi (đổi giao diện là cache tự làm mới, khỏi bump tay PHIEN_BAN).
+            // sw.js dùng ES module imports nên cần { type: 'module' }
             const _av = (typeof window !== 'undefined' && window.__ASSET_V) ? ('?v=' + window.__ASSET_V) : '';
-            this._swReg = await navigator.serviceWorker.register('sw.js' + _av);
+            this._swReg = await navigator.serviceWorker.register('sw.js' + _av, { type: 'module' });
             const dk = await this._swReg.pushManager.getSubscription();
             this.tbDaBat = !!dk && Notification.permission === 'granted';
             const daDongBo = await this._pushDongBo(dk ? dk.endpoint : '');
@@ -206,9 +207,15 @@ window.TNTT.push = {
 
     /** Khoá VAPID là base64 kiểu URL; PushManager đòi Uint8Array */
     _sangMang(b64) {
-        const day = atob((b64 + '='.repeat((4 - b64.length % 4) % 4)).replace(/-/g, '+').replace(/_/g, '/'));
-        const m = new Uint8Array(day.length);
-        for (let i = 0; i < day.length; i++) m[i] = day.charCodeAt(i);
-        return m;
+        if (!b64) return new Uint8Array(0);
+        try {
+            const day = atob((b64 + '='.repeat((4 - b64.length % 4) % 4)).replace(/-/g, '+').replace(/_/g, '/'));
+            const m = new Uint8Array(day.length);
+            for (let i = 0; i < day.length; i++) m[i] = day.charCodeAt(i);
+            return m;
+        } catch (e) {
+            console.error('[TNTT] Invalid VAPID key:', e);
+            return new Uint8Array(0);
+        }
     },
 };

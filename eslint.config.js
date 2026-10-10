@@ -15,7 +15,7 @@ const browser = [
   'window', 'document', 'navigator', 'location', 'history', 'screen', 'self',
   'console', 'fetch', 'Request', 'Response', 'Headers', 'URL', 'URLSearchParams',
   'FormData', 'Blob', 'File', 'FileReader', 'Image', 'Audio', 'Option',
-  'localStorage', 'sessionStorage', 'indexedDB', 'caches', 'crypto', 'performance',
+  'localStorage', 'sessionStorage', 'indexedDB', 'IDBKeyRange', 'IDBDatabase', 'IDBTransaction', 'IDBObjectStore', 'caches', 'crypto', 'performance',
   'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval',
   'requestAnimationFrame', 'cancelAnimationFrame', 'requestIdleCallback', 'queueMicrotask',
   'alert', 'confirm', 'prompt', 'open', 'print', 'matchMedia', 'getComputedStyle',
@@ -23,17 +23,21 @@ const browser = [
   'AbortController', 'IntersectionObserver', 'MutationObserver', 'ResizeObserver',
   'Event', 'CustomEvent', 'KeyboardEvent', 'MouseEvent', 'HTMLElement', 'Node', 'DOMParser',
   'Notification', 'PublicKeyCredential', 'BarcodeDetector', 'MediaRecorder',
-  'ServiceWorkerRegistration', 'CSS',
+  'ServiceWorkerRegistration', 'ServiceWorkerGlobalScope', 'CSS',
   // Service worker (public/sw.js)
-  'clients', 'skipWaiting',
+  'clients', 'skipWaiting', 'Cache', 'CacheStorage',
 ];
 
 // Thư viện nạp bằng <script> riêng (public/assets/js/vendor/*) hoặc nạp lười từ CDN
 // (html2canvas, jspdf — nạp lười, luôn kiểm tra window.* trước khi dùng)
 const vendor = ['Alpine', 'lucide', 'XLSX', 'QRCode', 'jsQR', 'html2canvas', 'jspdf'];
 
+// Service worker globals (additional to browser)
+const serviceWorker = ['sync', 'ServiceWorkerRegistration'];
+
 const globals = {};
 for (const g of [...browser, ...vendor]) globals[g] = 'readonly';
+for (const g of serviceWorker) globals[g] = 'readonly';
 
 module.exports = [
   {
@@ -41,7 +45,32 @@ module.exports = [
     ignores: ['**/vendor/**', '**/*.min.js', 'public/assets/js/bundle.js'],
   },
   {
+    // Service worker files: ES modules with import/export
+    files: ['public/sw.js', 'public/assets/js/sw/**/*.js', 'public/assets/js/offline-queue.js'],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'module',
+      globals,
+    },
+    rules: {
+      'no-undef': 'error',
+      'no-redeclare': 'error',
+      'no-dupe-args': 'error',
+      'no-dupe-else-if': 'error',
+      'no-const-assign': 'error',
+      'no-func-assign': 'error',
+      'no-self-assign': 'error',
+      'no-unreachable': 'error',
+      'no-unsafe-negation': 'error',
+      'no-cond-assign': 'error',
+      'use-isnan': 'error',
+      'valid-typeof': 'error',
+      'no-dupe-keys': 'error',
+    },
+  },
+  {
     files: ['**/*.js'],
+    ignores: ['public/sw.js', 'public/assets/js/sw/**', 'public/assets/js/offline-queue.js'],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'script',
