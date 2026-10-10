@@ -59,8 +59,9 @@ khai thác, và cách sửa đề xuất.
 
 ## 🔴 S1 — Tệp cache chứa dữ liệu cá nhân toàn đoàn, tải được KHÔNG cần đăng nhập
 
-- **Vị trí:** `public/api/cache.php:7` (`$dir = __DIR__ . '/../cache'` → `public/cache/`),
-  ghi bởi `public/api/data.php:131,429,624`.
+- **Trạng thái:** ✅ **ĐÃ SỬA** (commit sau `ab5bd8b`)
+- **Vị trí (trước):** `public/api/cache.php:7` (`$dir = __DIR__ . '/../cache'` → `public/cache/`)
+- **Sửa:** Chuyển cache ra `storage/cache/` (ngoài web root)
 - **Bằng chứng (đã kiểm chứng động):** Trên bản chạy thật, đăng nhập admin một
   lần để sinh cache, rồi **không gửi cookie** tải thẳng:
   ```

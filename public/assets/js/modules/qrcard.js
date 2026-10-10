@@ -189,7 +189,7 @@ window.TNTT.qrcard = {
         const qr = window.qrcode(0, 'M');
         qr.addData(String(noiDung));
         qr.make();
-        return qr.createImgTag(coO, 0);   // 0 = không chừa lề, tự canh bằng CSS
+        return qr.createImgTag(coO, 4);   // 4 mô-đun quiet zone (chuẩn QR yêu cầu tối thiểu 4)
     },
 
     /** Tên em do người dùng nhập -> phải thoát trước khi nhét vào HTML */
