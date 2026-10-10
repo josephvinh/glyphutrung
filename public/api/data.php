@@ -412,12 +412,13 @@ $scores = $part === 'core' ? [] : array_map(fn($s) => [
     'by'        => $s['by_name'] ?? '',
 ], data_scoped_rows(data_scope_for($me, 'scores'),
     // LEFT JOIN để giữ lại scores có exam_id NULL (dữ liệu cũ từ migration)
-    'SELECT sc.*, m.full_name AS by_name, COALESCE(e.type_code, sc.type_code) AS type_code
+    // Đổi alias: se cho score_exams, tm cho terms để tránh trùng với enrollments e
+    'SELECT sc.*, m.full_name AS by_name, COALESCE(se.type_code, sc.type_code) AS type_code
        FROM scores sc{JOIN}
-       LEFT JOIN score_exams e ON e.id = sc.exam_id
-       LEFT JOIN terms t ON t.id = e.term_id
+       LEFT JOIN score_exams se ON se.id = sc.exam_id
+       LEFT JOIN terms tm ON tm.id = se.term_id
        LEFT JOIN members m ON m.id = sc.updated_by
-      WHERE t.year_id = ? OR (sc.exam_id IS NULL AND sc.term_id IS NOT NULL)', 'sc.student_id', $yid, [$yid]));
+      WHERE tm.year_id = ? OR (sc.exam_id IS NULL AND sc.term_id IS NOT NULL)', 'sc.student_id', $yid, [$yid]));
 
 // BƯỚC 2 (tải nền): chỉ cần điểm danh + điểm -> trả sớm, khỏi tính phần
 // còn lại (thông báo/RSVP, nhân sự, nhật ký...). Nhẹ và nhanh hơn hẳn.

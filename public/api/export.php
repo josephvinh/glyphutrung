@@ -164,7 +164,7 @@ switch ($action) {
 
         // Get scores with exams (LEFT JOIN để giữ lại scores NULL exam_id)
         $scores = db_all(
-            'SELECT s.*, COALESCE(e.type_code, s.type_code) AS type_code FROM scores s LEFT JOIN score_exams e ON e.id = s.exam_id WHERE e.term_id = ? OR s.exam_id IS NULL',
+            'SELECT s.*, COALESCE(e.type_code, s.type_code) AS type_code FROM scores s LEFT JOIN score_exams e ON e.id = s.exam_id WHERE COALESCE(e.term_id, s.term_id) = ?',
             [$termId]
         );
 

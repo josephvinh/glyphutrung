@@ -207,32 +207,6 @@ if ($method === 'POST' && $action === 'exam' && ($in['_method'] ?? '') !== 'DELE
 }
 
 // =====================================================================
-//  DELETE ?action=exam — xóa bài kiểm tra
-// =====================================================================
-if ($method === 'DELETE' || ($method === 'POST' && $action === 'exam' && isset($in['_method']) && $in['_method'] === 'DELETE')) {
-    $examId = (int) ($in['examId'] ?? ($_DELETE['examId'] ?? 0));
-    if (!$examId) json_fail('Thiếu examId.');
-
-    // Lấy exam để kiểm tra quyền
-    $exam = db_one('SELECT * FROM score_exams WHERE id=?', [$examId]);
-    if (!$exam) json_fail('Bài kiểm tra không tồn tại.', 404);
-    if ((int) $exam['year_id'] !== $year['id']) {
-        json_fail('Bài kiểm tra không thuộc niên khoá hiện tại.', 400);
-    }
-
-    // Chỉ người tạo exam hoặc admin mới được xóa
-    $isCreator = (int) ($exam['created_by'] ?? 0) === (int) ($me['id'] ?? 0);
-    $isAdmin = ($me['role_code'] ?? '') === 'admin';
-    if (!$isCreator && !$isAdmin) {
-        json_fail('Chỉ người tạo bài kiểm tra này hoặc Quản trị mới được xóa.', 403);
-    }
-
-    db_run('DELETE FROM score_exams WHERE id=?', [$examId]);
-    Cache::flush();
-    json_out(['ok' => true]);
-}
-
-// =====================================================================
 //  POST ?action=set — lưu điểm (giữ nguyên logic cũ, thêm exam_id)
 // =====================================================================
 if ($method === 'POST' && $action === 'set') {

@@ -123,7 +123,7 @@ foreach (db_all("SELECT code, weight FROM score_types") as $st) {
 $scoreRows = $termId ? db_all(
     "SELECT s.student_id, COALESCE(e.type_code, s.type_code) AS type_code, s.value
        FROM scores s LEFT JOIN score_exams e ON e.id = s.exam_id
-      WHERE e.term_id = ? OR s.exam_id IS NULL",
+      WHERE COALESCE(e.term_id, s.term_id) = ?",
     [$termId]
 ) : [];
 $scoreOf = []; // id => list ['value','weight']
