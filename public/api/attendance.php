@@ -330,25 +330,28 @@ if (($_GET['action'] ?? '') === 'mark') {
     // (phân biệt với ghi online thời gian thực)
     $offlineFlag = !empty($in['offlineMark']) ? 1 : 0;
     try {
-        db_run('INSERT IGNORE INTO attendances (year_id, program_id, session_date, student_id, status, method, marked_by, offline_marked)
+        db_run('INSERT INTO attendances (year_id, program_id, session_date, student_id, status, method, marked_by, offline_marked)
                 VALUES (?,?,?,?,?,?,?,?)',
             [$year['id'], $programId, $date, $studentId, $status, 'tay', $me['id'], $offlineFlag]);
+        $added = true;
     } catch (Throwable $e) {
         if (str_contains($e->getMessage(), 'SQLSTATE[23000]')) {
-            json_out(['ok' => true, 'added' => false]); // race condition: đã có
+            // Race condition: bản ghi đã tồn tại — idempotent coi như thành công
+            $added = false;
+        } else {
+            json_fail(safe_error($e, 'Ghi điểm danh thất bại: '), 500);
         }
-        json_fail(safe_error($e, 'Ghi điểm danh thất bại: '), 500);
     }
 
     if ($pastCutoff) {
         log_action('diemdanh', 'attendance', 'Ghi điểm danh (mark offline) cho ' . $st['full_name'],
                    $prog['name'] . ' · ' . $date . ' · ' . $status);
     }
-    if (program_earns_stamps($prog)) {
+    if ($added && program_earns_stamps($prog)) {
         recalc_stamps_safe($studentId, $year['id']);
     }
     Cache::flush();
-    json_out(['ok' => true, 'added' => true, 'status' => $status,
+    json_out(['ok' => true, 'added' => $added, 'status' => $status,
               'markedAt' => date('H:i'), 'markedBy' => $me['full_name'],
               'offlineMarked' => $offlineFlag]);
 }
