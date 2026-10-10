@@ -11,7 +11,6 @@
    ========================================================== */
 
 import { cacheManager } from './assets/js/sw/core/cache-manager.js';
-import { syncManager } from './assets/js/sw/core/sync-manager.js';
 import { cacheFirst } from './assets/js/sw/strategies/cache-first.js';
 import { networkFirst } from './assets/js/sw/strategies/network-first.js';
 import { staleWhileRevalidate } from './assets/js/sw/strategies/stale-while-revalidate.js';

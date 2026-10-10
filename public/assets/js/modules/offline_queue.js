@@ -11,7 +11,7 @@
  *   await window.TNTT.offline_queue.enqueue('attendance', '/api/attendance.php', { data });
  *
  *   // Listen for events
- *   window.TNTTOfflineQueue.addListener((event, data) => {
+ *   window.TNTT.offline_queue.addListener((event, data) => {
  *     if (event === 'sync') console.log('Synced:', data);
  *   });
  */
@@ -378,19 +378,11 @@ class OfflineQueue {
    * Try to sync (called after enqueue or when coming online)
    */
   trySync() {
+    // Only the page syncs (sw.js has no 'sync' handler). Do NOT register
+    // Background Sync here: where it succeeds (real Chrome) nothing would
+    // ever process the queue.
     if (this.isOnline) {
-      // Use Background Sync API if available
-      if ('serviceWorker' in navigator && 'sync' in window.ServiceWorkerRegistration.prototype) {
-        navigator.serviceWorker.ready.then(registration => {
-          registration.sync.register('offline-sync').catch(() => {
-            // Fallback to immediate sync
-            this.sync();
-          });
-        });
-      } else {
-        // Fallback to immediate sync
-        this.sync();
-      }
+      this.sync();
     }
   }
 

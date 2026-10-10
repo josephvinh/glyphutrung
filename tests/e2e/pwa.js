@@ -18,7 +18,7 @@ const res = []; const rec = (id, title, ok, detail = '') => { res.push({ id, tit
   const cdp = await ctx.newCDPSession(page);
   const regs = {}; await cdp.send('ServiceWorker.enable');
   cdp.on('ServiceWorker.workerRegistrationUpdated', (e) => { for (const r of e.registrations) regs[r.registrationId] = r; });
-  const reg = await page.evaluate(async () => { try { const r = await navigator.serviceWorker.register('sw.js'); await navigator.serviceWorker.ready; return { scope: r.scope, active: !!r.active }; } catch (e) { return { err: String(e) }; } });
+  const reg = await page.evaluate(async () => { try { const r = await navigator.serviceWorker.register('sw.js', { type: 'module' }); await navigator.serviceWorker.ready; return { scope: r.scope, active: !!r.active }; } catch (e) { return { err: String(e) }; } });
   rec('PWA-01', 'Đăng ký service worker sw.js thành công (tên miền khác localhost)', !!reg.scope && !reg.err, JSON.stringify(reg));
   await page.waitForTimeout(2500);
   await page.reload({ waitUntil: 'networkidle' }); await page.waitForTimeout(1500);
