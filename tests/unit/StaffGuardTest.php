@@ -471,13 +471,22 @@ class StaffGuardTest extends TestCase
                 $forUnknown = $this->org($caller, $action, $this->identityBody(['id' => $unknown, 'role_code' => 'glv']) + ['role' => 'glv']);
                 self::assertSame(404, $forAdmin['code'], "$who/$action admin");
                 self::assertSame(404, $forUnknown['code'], "$who/$action id lạ");
-                // Security: compare error structure, ignore meta (has random requestId/timestamp)
-                $errorAdmin = $forAdmin['json']['error'] ?? null;
-                $errorUnknown = $forUnknown['json']['error'] ?? null;
-                self::assertSame($errorUnknown, $errorAdmin,
+                self::assertSame($forUnknown['json']['error'] ?? null, $forAdmin['json']['error'] ?? null,
                     "$who/$action: thông điệp 404 cho admin phải GIỐNG HỆT id không tồn tại");
+                // Cả thân JSON phải giống hệt, chỉ trừ meta.requestId/meta.timestamp
+                // (ngẫu nhiên/theo giờ, không mang thông tin tài khoản).
+                self::assertSame(self::bodyWithoutRandomMeta($forUnknown), self::bodyWithoutRandomMeta($forAdmin),
+                    "$who/$action: cả thân JSON (trừ meta.requestId/timestamp) phải giống hệt");
             }
         }
+    }
+
+    private static function bodyWithoutRandomMeta(array $r): array
+    {
+        self::assertIsArray($r['json'], 'Thân phải là JSON: ' . $r['raw']);
+        $j = $r['json'];
+        unset($j['meta']['requestId'], $j['meta']['timestamp']);
+        return $j;
     }
 
     public function test_truong_khoi_with_staff_edit_is_blocked_on_admin_and_bdh_over_http(): void

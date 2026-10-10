@@ -558,10 +558,19 @@ class PushSecurityTest extends TestCase
         $r2 = $this->an('pending', ['token' => $t2['token']]);
         $r3 = $this->an('pending', ['token' => push_sinh_token()]);     // token không tồn tại
         $this->assertSame([401, 401, 401], [$r1['code'], $r2['code'], $r3['code']]);
-        // Security: compare ok + error (ignore meta with random requestId/timestamp)
-        $this->assertSame($r3['json']['ok'], $r1['json']['ok']);
-        $this->assertSame($r3['json']['error'], $r1['json']['error'], 'Không lộ khác biệt giữa chờ duyệt và token sai');
-        $this->assertSame($r3['json']['error'], $r2['json']['error']);
+        // Cả thân JSON phải giống hệt, chỉ trừ meta.requestId/meta.timestamp
+        // (ngẫu nhiên/theo giờ, không mang thông tin tài khoản).
+        $this->assertSame($this->thanKhongNgauNhien($r3), $this->thanKhongNgauNhien($r1), 'Không lộ khác biệt giữa chờ duyệt và token sai');
+        $this->assertSame($this->thanKhongNgauNhien($r3), $this->thanKhongNgauNhien($r2), 'Không lộ khác biệt giữa đã nghỉ và token sai');
+    }
+
+    /** Thân JSON bỏ meta.requestId/meta.timestamp — để so hai phản hồi "giống hệt". */
+    private function thanKhongNgauNhien(array $r): array
+    {
+        $this->assertIsArray($r['json'], 'Thân phải là JSON: ' . $r['raw']);
+        $j = $r['json'];
+        unset($j['meta']['requestId'], $j['meta']['timestamp']);
+        return $j;
     }
 
     public function test_pending_token_sai_dinh_dang_va_dong_da_co_token_khong_nhan_endpoint(): void
