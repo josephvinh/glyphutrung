@@ -263,17 +263,26 @@ $perms = [
     // seed riêng bên dưới vì thu_thu nằm ngoài $roleOrder).
     'gifts'         => ['edit','edit','none','none','none','none'],
     'rewards'       => ['edit','none','none','none','none','none'],
+    // Thư viện: view = xem + đăng (chờ duyệt); edit = duyệt/gỡ/quản chủ đề.
+    // schema.sql cũng seed khối này nhưng chạy TRƯỚC khi có roles → khóa ngoại
+    // hỏng và INSERT IGNORE nuốt lỗi, nên CSDL mới không có dòng nào.
+    'thu_vien'      => ['edit','edit','view','view','view','view'],
 ];
 $roleOrder = ['admin','bdh','truong_khoi','glv_chu_nhiem','glv','du_bi'];
 foreach ($perms as $mod => $levels) {
     foreach ($roleOrder as $i => $role) {
-        db_run('INSERT IGNORE INTO permissions (module_key, role_code, level) VALUES (?,?,?)',
+        // Không INSERT IGNORE: nó nuốt cả lỗi khóa ngoại (xem thu_vien ở trên).
+        // ON DUPLICATE KEY giữ nguyên mức Quản trị đã chỉnh khi chạy lại.
+        db_run('INSERT INTO permissions (module_key, role_code, level) VALUES (?,?,?)
+                ON DUPLICATE KEY UPDATE level = level',
                [$mod, $role, $levels[$i]]);
     }
 }
 // Thủ Thư (vai kiêm nhiệm, ngoài $roleOrder) — chỉ có quyền trên gifts/rewards.
-db_run('INSERT IGNORE INTO permissions (module_key, role_code, level) VALUES (?,?,?)', ['gifts',   'thu_thu', 'edit']);
-db_run('INSERT IGNORE INTO permissions (module_key, role_code, level) VALUES (?,?,?)', ['rewards', 'thu_thu', 'edit']);
+foreach (['gifts', 'rewards'] as $mod) {
+    db_run('INSERT INTO permissions (module_key, role_code, level) VALUES (?,?,?)
+            ON DUPLICATE KEY UPDATE level = level', [$mod, 'thu_thu', 'edit']);
+}
 say('✓ Module: ' . count($modules) . ' · Phân quyền: ' . (count($perms) * count($roleOrder) + 2));
 
 // --- Đầu điểm ---
