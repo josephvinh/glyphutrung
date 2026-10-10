@@ -86,14 +86,15 @@
                     <i data-lucide="plus" class="w-3.5 h-3.5"></i> Thêm bài
                 </button>
             </div>
-            <!-- Nếu chưa có bài nào, hiện nút tạo bài đầu tiên -->
-            <div x-show="currentScoreExams.length === 0 && canWriteScores" style="display: none;">
-                <button @click="showAddExamModal = true" type="button"
-                        class="w-full py-3 rounded-xl border-2 border-dashed border-slate-300 text-slate-500 text-sm font-bold hover:border-blue-400 hover:text-blue-600 transition-colors flex items-center justify-center gap-2">
-                    <i data-lucide="plus-circle" class="w-4 h-4"></i>
-                    Tạo bài <span x-text="currentScoreType.label"></span> đầu tiên
-                </button>
-            </div>
+        </div>
+
+        <!-- Nếu chưa có bài nào, hiện nút tạo bài đầu tiên (DI CHUYỂN RA NGOÀI div cha) -->
+        <div x-show="currentScoreExams.length === 0 && canWriteScores" style="display: none;" class="mb-4">
+            <button @click="showAddExamModal = true" type="button"
+                    class="w-full py-3 rounded-xl border-2 border-dashed border-slate-300 text-slate-500 text-sm font-bold hover:border-blue-400 hover:text-blue-600 transition-colors flex items-center justify-center gap-2">
+                <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                Tạo bài <span x-text="currentScoreType.label"></span> đầu tiên
+            </button>
         </div>
 
         <!-- Tiến độ chấm -->
