@@ -1,210 +1,135 @@
 <?php
+require_once __DIR__ . '/../bootstrap.php';
+
+use PHPUnit\Framework\TestCase;
+
 /**
- * ResponseFormatTest - Unit tests for response helpers
+ * Bộ helper phản hồi API trong public/api/_response.php:
+ * json_ok(), json_created(), json_fail(), json_validation_fail(), json_paginated().
  *
- * Tests json_ok(), json_created(), json_fail(), json_validation_fail(),
- * json_paginated() response structures.
- *
- * Note: This test file requires PHPUnit. A standalone verification script
- * (verify_response.php) can be used instead for quick testing.
+ * Các hàm json_* có kiểu trả về `never` (gửi JSON rồi exit), nên phần kiểm
+ * HÀNH VI chạy chúng trong một tiến trình PHP con và đọc lại JSON + mã HTTP —
+ * gọi thẳng trong PHPUnit sẽ giết luôn tiến trình test.
  */
+class ResponseFormatTest extends TestCase {
 
-if (!defined('ROOT_PATH')) {
-    define('ROOT_PATH', dirname(__DIR__, 2));
-}
-require_once ROOT_PATH . '/public/api/_errors.php';
-require_once ROOT_PATH . '/public/api/_http_util.php';
+    // ---- Cấu trúc meta / request id ----------------------------------------
 
-// Test runner using simple assertions
-$passed = 0;
-$failed = 0;
-$errors = [];
+    public function testResponseMetaStructure(): void {
+        $meta = response_meta(200);
+        $this->assertArrayHasKey('timestamp', $meta);
+        $this->assertArrayHasKey('requestId', $meta);
+        $this->assertArrayHasKey('status', $meta);
+        $this->assertSame('OK', $meta['status']);
+    }
 
-function assert_equals($expected, $actual, string $message = ''): void {
-    global $passed, $failed, $errors;
-    if ($expected === $actual) {
-        $passed++;
-    } else {
-        $failed++;
-        $errors[] = ($message ? "$message: " : '') . "Expected " . var_export($expected, true) . ", got " . var_export($actual, true);
+    public function testResponseMetaCreatedStatus(): void {
+        $this->assertSame('CREATED', response_meta(201)['status']);
+    }
+
+    public function testRequestIdFormatAndUniqueness(): void {
+        $id1 = generate_request_id();
+        $id2 = generate_request_id();
+        $this->assertMatchesRegularExpression('/^req_[0-9a-f]{16}$/', $id1);
+        $this->assertMatchesRegularExpression('/^req_[0-9a-f]{16}$/', $id2);
+        $this->assertNotSame($id1, $id2);
+    }
+
+    // ---- Chữ ký hàm --------------------------------------------------------
+
+    public function testAllResponseFunctionsReturnNever(): void {
+        foreach (['json_ok', 'json_created', 'json_fail', 'json_validation_fail', 'json_paginated'] as $fn) {
+            $this->assertTrue(function_exists($fn), "$fn phải tồn tại");
+            $type = (new ReflectionFunction($fn))->getReturnType();
+            $this->assertNotNull($type, "$fn phải khai kiểu trả về");
+            $this->assertSame('never', (string) $type, "$fn phải trả về never");
+        }
+    }
+
+    public function testJsonFailSignature(): void {
+        $params = (new ReflectionFunction('json_fail'))->getParameters();
+        $this->assertCount(4, $params);
+        $this->assertSame(['code', 'message', 'details', 'status'], array_map(fn($p) => $p->getName(), $params));
+        $this->assertSame('string', (string) $params[0]->getType());
+        // string|int: tham số 2 là int ở kiểu gọi cũ json_fail($message, $httpStatus)
+        $this->assertSame('string|int', (string) $params[1]->getType());
+        $this->assertSame('array', (string) $params[2]->getType());
+        $this->assertSame('int', (string) $params[3]->getType());
+    }
+
+    public function testJsonValidationFailIsDefinedInResponseFile(): void {
+        $file = (new ReflectionFunction('json_validation_fail'))->getFileName();
+        $this->assertStringEndsWith('_response.php', $file);
+    }
+
+    // ---- Hành vi json_fail: cả 3 kiểu gọi (chạy trong tiến trình con) ------
+
+    public function testJsonFailOldStyleMessageOnly(): void {
+        // ~110 nơi gọi cũ: json_fail('Câu báo lỗi.')
+        [$status, $body] = $this->runInChild("json_fail('Mật khẩu hiện tại không đúng.');");
+        $this->assertSame(400, $status);
+        $this->assertFalse($body['ok']);
+        $this->assertSame('BAD_REQUEST', $body['error']['code']);
+        $this->assertSame('Mật khẩu hiện tại không đúng.', $body['error']['message']);
+    }
+
+    public function testJsonFailOldStyleMessageAndStatus(): void {
+        // Kiểu cũ: json_fail('Câu báo lỗi.', 404)
+        [$status, $body] = $this->runInChild("json_fail('Không tìm thấy chương trình.', 404);");
+        $this->assertSame(404, $status);
+        $this->assertSame('BAD_REQUEST', $body['error']['code']);
+        $this->assertSame('Không tìm thấy chương trình.', $body['error']['message']);
+    }
+
+    public function testJsonFailNewStyleInfersStatusFromCode(): void {
+        // require_login_pending_pw(): json_fail(ERR_UNAUTHORIZED, ...) không truyền status → phải là 401
+        [$status, $body] = $this->runInChild("json_fail(ERR_UNAUTHORIZED, 'Chưa đăng nhập.');");
+        $this->assertSame(401, $status);
+        $this->assertSame('AUTH_REQUIRED', $body['error']['code']);
+        $this->assertSame('Chưa đăng nhập.', $body['error']['message']);
+    }
+
+    public function testJsonFailNewStyleExplicitStatusAndDetails(): void {
+        [$status, $body] = $this->runInChild(
+            "json_fail(ERR_PASSWORD_EXPIRED, 'Bạn cần đổi mật khẩu.', ['field' => 'pw'], 403);"
+        );
+        $this->assertSame(403, $status);
+        $this->assertSame('PASSWORD_EXPIRED', $body['error']['code']);
+        $this->assertSame(['field' => 'pw'], $body['error']['details']);
+    }
+
+    public function testJsonValidationFailReturns422WithFields(): void {
+        [$status, $body] = $this->runInChild("json_validation_fail(['name' => 'Bắt buộc']);");
+        $this->assertSame(422, $status);
+        $this->assertSame('VALIDATION_FAILED', $body['error']['code']);
+        $this->assertSame(['name' => 'Bắt buộc'], $body['error']['details']['fields']);
+    }
+
+    /**
+     * Chạy $code trong `php -r` sau khi nạp _http_util.php (kèm _response.php,
+     * _errors.php). Trả về [mã HTTP, JSON đã decode].
+     */
+    private function runInChild(string $code): array {
+        $util = var_export(realpath(__DIR__ . '/../../public/api/_http_util.php'), true);
+        $script = 'register_shutdown_function(function () { fwrite(STDERR, (string) http_response_code()); });'
+                . "require $util;"
+                . $code;
+
+        $proc = proc_open(
+            [PHP_BINARY, '-r', $script],
+            [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+            $pipes
+        );
+        $this->assertIsResource($proc, 'Không mở được tiến trình PHP con');
+        $stdout = stream_get_contents($pipes[1]);
+        $stderr = stream_get_contents($pipes[2]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+        proc_close($proc);
+
+        $body = json_decode($stdout, true);
+        $this->assertIsArray($body, "Tiến trình con không trả JSON hợp lệ. stdout: $stdout | stderr: $stderr");
+        $this->assertMatchesRegularExpression('/^\d{3}$/', trim($stderr), "Không đọc được mã HTTP. stderr: $stderr");
+        return [(int) trim($stderr), $body];
     }
 }
-
-function assert_true($value, string $message = ''): void {
-    global $passed, $failed, $errors;
-    if ($value === true) {
-        $passed++;
-    } else {
-        $failed++;
-        $errors[] = ($message ? "$message: " : '') . "Expected true, got " . var_export($value, true);
-    }
-}
-
-function assert_array_has_key($key, array $array, string $message = ''): void {
-    global $passed, $failed, $errors;
-    if (array_key_exists($key, $array)) {
-        $passed++;
-    } else {
-        $failed++;
-        $errors[] = ($message ? "$message: " : '') . "Array missing key: $key";
-    }
-}
-
-function assert_string_starts_with($prefix, $string, string $message = ''): void {
-    global $passed, $failed, $errors;
-    if (str_starts_with($string, $prefix)) {
-        $passed++;
-    } else {
-        $failed++;
-        $errors[] = ($message ? "$message: " : '') . "String doesn't start with '$prefix': $string";
-    }
-}
-
-echo "\n=== ResponseFormatTest ===\n\n";
-
-// Test: testResponseMetaStructure
-$meta = response_meta(200);
-assert_array_has_key('timestamp', $meta);
-assert_array_has_key('requestId', $meta);
-assert_array_has_key('status', $meta);
-assert_equals('OK', $meta['status']);
-echo "testResponseMetaStructure: PASS\n";
-
-// Test: testResponseMetaCreatedStatus
-$meta201 = response_meta(201);
-assert_equals('CREATED', $meta201['status']);
-echo "testResponseMetaCreatedStatus: PASS\n";
-
-// Test: testRequestIdFormat
-$id1 = generate_request_id();
-$id2 = generate_request_id();
-assert_string_starts_with('req_', $id1);
-assert_string_starts_with('req_', $id2);
-assert_equals(20, strlen($id1));
-assert_equals(20, strlen($id2));
-assert_true($id1 !== $id2, 'IDs should be unique');
-echo "testRequestIdFormat: PASS\n";
-
-// Test: testJsonFailNewFormat
-$reflection = new ReflectionFunction('json_fail');
-$params = $reflection->getParameters();
-assert_equals(4, count($params));
-assert_equals('code', $params[0]->getName());
-assert_equals('message', $params[1]->getName());
-assert_equals('details', $params[2]->getName());
-assert_equals('status', $params[3]->getName());
-echo "testJsonFailNewFormat: PASS\n";
-
-// Test: testJsonOkExists
-assert_true(function_exists('json_ok'));
-assert_true(is_callable('json_ok'));
-echo "testJsonOkExists: PASS\n";
-
-// Test: testJsonCreatedExists
-assert_true(function_exists('json_created'));
-assert_true(is_callable('json_created'));
-echo "testJsonCreatedExists: PASS\n";
-
-// Test: testJsonFailExists
-assert_true(function_exists('json_fail'));
-assert_true(is_callable('json_fail'));
-echo "testJsonFailExists: PASS\n";
-
-// Test: testJsonValidationFailExists
-assert_true(function_exists('json_validation_fail'));
-assert_true(is_callable('json_validation_fail'));
-echo "testJsonValidationFailExists: PASS\n";
-
-// Test: testJsonPaginatedExists
-assert_true(function_exists('json_paginated'));
-assert_true(is_callable('json_paginated'));
-echo "testJsonPaginatedExists: PASS\n";
-
-// Test: testGenerateRequestIdExists
-assert_true(function_exists('generate_request_id'));
-assert_true(is_callable('generate_request_id'));
-echo "testGenerateRequestIdExists: PASS\n";
-
-// Test: testResponseMetaExists
-assert_true(function_exists('response_meta'));
-assert_true(is_callable('response_meta'));
-echo "testResponseMetaExists: PASS\n";
-
-// Test: testAllResponseFunctionsHaveNeverReturnType
-$functions = ['json_ok', 'json_created', 'json_fail', 'json_validation_fail', 'json_paginated'];
-foreach ($functions as $fnName) {
-    $reflection = new ReflectionFunction($fnName);
-    $returnType = $reflection->getReturnType();
-    assert_true($returnType !== null, "$fnName should have return type");
-    assert_equals('never', $returnType->getName(), "$fnName should return never");
-}
-echo "testAllResponseFunctionsHaveNeverReturnType: PASS\n";
-
-// Test: testJsonFailParametersHaveCorrectTypes
-$reflection = new ReflectionFunction('json_fail');
-$params = $reflection->getParameters();
-assert_equals('string', $params[0]->getType()->getName(), 'code type');
-// message param is string|int for backward compatibility
-$msgType = (string) $params[1]->getType();
-assert_equals('string|int', $msgType, 'message type (backward compatible: string|int)');
-assert_equals('array', $params[2]->getType()->getName(), 'details type');
-assert_equals('int', $params[3]->getType()->getName(), 'status type');
-echo "testJsonFailParametersHaveCorrectTypes: PASS\n";
-
-// Test: testJsonFailAcceptsStringOrIntAsMessage
-// Verify the function signature supports both old and new calling conventions
-$param = $params[1];
-$type = $param->getType();
-// UnionType has getTypes() method, simple types don't
-if (method_exists($type, 'getTypes')) {
-    $types = array_map(fn($t) => $t->getName(), $type->getTypes());
-    $hasString = in_array('string', $types);
-    $hasInt = in_array('int', $types);
-    assert_true($hasString && $hasInt, 'message type is string|int union');
-} else {
-    assert_equals('string', (string) $type, 'message type fallback');
-}
-echo "testJsonFailAcceptsStringOrIntAsMessage: PASS\n";
-
-// Test: testJsonOkParametersHaveCorrectTypes
-$reflection = new ReflectionFunction('json_ok');
-$params = $reflection->getParameters();
-assert_equals('mixed', $params[0]->getType()->getName(), 'data type');
-assert_equals('array', $params[1]->getType()->getName(), 'meta type');
-assert_equals('int', $params[2]->getType()->getName(), 'status type');
-echo "testJsonOkParametersHaveCorrectTypes: PASS\n";
-
-// Test: testJsonValidationFailParameterIsArray
-$reflection = new ReflectionFunction('json_validation_fail');
-$params = $reflection->getParameters();
-assert_equals('array', $params[0]->getType()->getName(), 'errors type');
-echo "testJsonValidationFailParameterIsArray: PASS\n";
-
-// Test: testJsonPaginatedParametersHaveCorrectTypes
-$reflection = new ReflectionFunction('json_paginated');
-$params = $reflection->getParameters();
-assert_equals('array', $params[0]->getType()->getName(), 'data type');
-assert_equals('int', $params[1]->getType()->getName(), 'page type');
-assert_equals('int', $params[2]->getType()->getName(), 'perPage type');
-assert_equals('int', $params[3]->getType()->getName(), 'total type');
-echo "testJsonPaginatedParametersHaveCorrectTypes: PASS\n";
-
-// Test: testErrorCodesAreUsed
-$reflection = new ReflectionFunction('json_validation_fail');
-$sourceFile = $reflection->getFileName();
-assert_true(str_contains($sourceFile, '_response.php'), 'Source should be _response.php');
-echo "testErrorCodesAreUsed: PASS\n";
-
-// Summary
-echo "\n=== Summary ===\n";
-echo "$passed passed, $failed failed\n";
-
-if ($failed > 0) {
-    echo "\nFailed assertions:\n";
-    foreach ($errors as $e) {
-        echo "  - $e\n";
-    }
-    exit(1);
-}
-
-exit(0);
