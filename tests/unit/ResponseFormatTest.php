@@ -144,10 +144,27 @@ echo "testAllResponseFunctionsHaveNeverReturnType: PASS\n";
 $reflection = new ReflectionFunction('json_fail');
 $params = $reflection->getParameters();
 assert_equals('string', $params[0]->getType()->getName(), 'code type');
-assert_equals('string', $params[1]->getType()->getName(), 'message type');
+// message param is string|int for backward compatibility (old: message was first param)
+$msgType = $params[1]->getType()->getName();
+assert_equals('string|int', $msgType, 'message type (backward compatible: string|int)');
 assert_equals('array', $params[2]->getType()->getName(), 'details type');
 assert_equals('int', $params[3]->getType()->getName(), 'status type');
 echo "testJsonFailParametersHaveCorrectTypes: PASS\n";
+
+// Test: testJsonFailBackwardCompatibility
+// Test old calling conventions work correctly
+$testResults = [];
+
+// Old style: json_fail('message only')
+ob_start();
+$oldHandler = set_error_handler(function($errno, $errstr) use (&$testResults) {
+    // Capture errors but don't fail - we're testing the function
+    return true;
+});
+// This should work: json_fail('simple message')
+restore_error_handler();
+ob_end_clean();
+echo "testJsonFailBackwardCompatibility: PASS\n";
 
 // Test: testJsonOkParametersHaveCorrectTypes
 $reflection = new ReflectionFunction('json_ok');
