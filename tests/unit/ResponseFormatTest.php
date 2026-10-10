@@ -144,27 +144,27 @@ echo "testAllResponseFunctionsHaveNeverReturnType: PASS\n";
 $reflection = new ReflectionFunction('json_fail');
 $params = $reflection->getParameters();
 assert_equals('string', $params[0]->getType()->getName(), 'code type');
-// message param is string|int for backward compatibility (old: message was first param)
-$msgType = $params[1]->getType()->getName();
+// message param is string|int for backward compatibility
+$msgType = (string) $params[1]->getType();
 assert_equals('string|int', $msgType, 'message type (backward compatible: string|int)');
 assert_equals('array', $params[2]->getType()->getName(), 'details type');
 assert_equals('int', $params[3]->getType()->getName(), 'status type');
 echo "testJsonFailParametersHaveCorrectTypes: PASS\n";
 
-// Test: testJsonFailBackwardCompatibility
-// Test old calling conventions work correctly
-$testResults = [];
-
-// Old style: json_fail('message only')
-ob_start();
-$oldHandler = set_error_handler(function($errno, $errstr) use (&$testResults) {
-    // Capture errors but don't fail - we're testing the function
-    return true;
-});
-// This should work: json_fail('simple message')
-restore_error_handler();
-ob_end_clean();
-echo "testJsonFailBackwardCompatibility: PASS\n";
+// Test: testJsonFailAcceptsStringOrIntAsMessage
+// Verify the function signature supports both old and new calling conventions
+$param = $params[1];
+$type = $param->getType();
+// UnionType has getTypes() method, simple types don't
+if (method_exists($type, 'getTypes')) {
+    $types = array_map(fn($t) => $t->getName(), $type->getTypes());
+    $hasString = in_array('string', $types);
+    $hasInt = in_array('int', $types);
+    assert_true($hasString && $hasInt, 'message type is string|int union');
+} else {
+    assert_equals('string', (string) $type, 'message type fallback');
+}
+echo "testJsonFailAcceptsStringOrIntAsMessage: PASS\n";
 
 // Test: testJsonOkParametersHaveCorrectTypes
 $reflection = new ReflectionFunction('json_ok');

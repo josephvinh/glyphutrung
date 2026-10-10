@@ -215,10 +215,7 @@ self.addEventListener('notificationclick', (e) => {
 });
 
 // ==========================================================
-// BACKGROUND SYNC
+// OFFLINE SYNC DISABLED
+// Background sync removed: only the page syncs, not the SW.
+// This prevents race conditions where both page and SW sync the same item.
 // ==========================================================
-self.addEventListener('sync', (e) => {
-  if (e.tag === 'offline-sync') {
-    e.waitUntil(syncManager.syncQueue('default'));
-  }
-});

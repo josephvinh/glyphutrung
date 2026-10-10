@@ -55,9 +55,11 @@ class OfflineQueue {
         console.error('[OfflineQueue] IndexedDB error:', request.error);
         reject(request.error);
       };
-      request.onsuccess = () => {
+      request.onsuccess = async () => {
         this.db = request.result;
         this.initialized = true;
+        // Reset any stuck 'syncing' items back to 'pending' on init
+        await this._resetSyncingItems();
         resolve();
       };
 
@@ -70,6 +72,36 @@ class OfflineQueue {
           store.createIndex('timestamp', 'timestamp', { unique: false });
         }
       };
+    });
+  }
+
+  /**
+   * Reset stuck 'syncing' items back to 'pending'
+   * Called on init to recover from crashed syncs
+   * @returns {Promise<void>}
+   */
+  async _resetSyncingItems() {
+    if (!this.db) return;
+
+    return new Promise((resolve) => {
+      const tx = this.db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+      const index = store.index('status');
+      const request = index.getAll('syncing');
+
+      request.onsuccess = () => {
+        const syncingItems = request.result;
+        if (syncingItems.length > 0) {
+          console.log('[OfflineQueue] Resetting', syncingItems.length, 'stuck syncing items to pending');
+          for (const item of syncingItems) {
+            item.status = 'pending';
+            store.put(item);
+          }
+        }
+        resolve();
+      };
+      request.onerror = () => resolve();
+      tx.onerror = () => resolve();
     });
   }
 
