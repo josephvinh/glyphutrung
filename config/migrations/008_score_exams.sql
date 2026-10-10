@@ -30,6 +30,10 @@ ALTER TABLE scores
     ADD COLUMN exam_id INT NULL AFTER type_code,
     ADD INDEX idx_s_exam (exam_id);
 
+-- 2b. Thêm FK cho exam_id (ON DELETE SET NULL: xóa exam không xóa scores)
+ALTER TABLE scores
+    ADD CONSTRAINT fk_sc_exam FOREIGN KEY (exam_id) REFERENCES score_exams(id) ON DELETE SET NULL;
+
 -- 3. Bỏ UNIQUE KEY cũ (term_id, student_id, type_code)
 --    MySQL yêu cầu xóa index trước khi thêm UNIQUE mới
 ALTER TABLE scores
@@ -38,10 +42,12 @@ ALTER TABLE scores
 
 -- 4. Di chuyển dữ liệu cũ: tạo 1 exam ngầm cho mỗi (term_id, type_code)
 --    rồi cập nhật exam_id cho các scores hiện có
-INSERT IGNORE INTO score_exams (year_id, term_id, type_code, name, created_at)
+--    Dùng INSERT ... ON DUPLICATE KEY để migration có thể chạy lại an toàn
+INSERT INTO score_exams (year_id, term_id, type_code, name, created_at)
 SELECT t.year_id, s.term_id, s.type_code, '', NOW()
 FROM (SELECT DISTINCT term_id, type_code FROM scores) s
-JOIN terms t ON t.id = s.term_id;
+JOIN terms t ON t.id = s.term_id
+ON DUPLICATE KEY UPDATE id = id;
 
 UPDATE scores s
 JOIN score_exams e ON e.term_id = s.term_id AND e.type_code = s.type_code
