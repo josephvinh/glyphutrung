@@ -32,6 +32,8 @@ self.addEventListener('install', (e) => {
       await Promise.allSettled([
         kho.add('/assets/css/bundle.php'),
         kho.add('/assets/js/bundle.php'),
+        // jsQR cho iPhone Safari (không có BarcodeDetector)
+        kho.add('/assets/js/vendor/jsQR.min.js'),
       ]);
     } catch (err) {
       warn('Precache failed:', err);

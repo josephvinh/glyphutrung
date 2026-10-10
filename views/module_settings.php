@@ -164,7 +164,7 @@
                             <template x-for="lv in ['none', 'view', 'edit']" :key="lv">
                                 <button @click="setPermission(m.key, permRoleTab, lv)" type="button"
                                         class="py-2.5 rounded-xl font-bold text-micro border transition-colors"
-                                        :class="permissions[m.key][permRoleTab] === lv ? permChipClass(lv) + ' ring-2 ring-offset-1 ring-slate-300' : 'bg-slate-50 text-slate-500 border-slate-200'"
+                                        :class="(permissions[m.key]?.[permRoleTab]) === lv ? permChipClass(lv) + ' ring-2 ring-offset-1 ring-slate-300' : 'bg-slate-50 text-slate-500 border-slate-200'"
                                         x-text="permLabel(lv)"></button>
                             </template>
                         </div>
