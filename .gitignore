@@ -4,9 +4,10 @@
 # Node (chỉ dùng để build minify — không cần trên host)
 node_modules/
 
-# File-based cache runtime data
+# File-based cache runtime data (di chuyển ra ngoài web root - S1)
 public/cache/*.json
 public/cache/*.txt
+storage/cache/
 
 # Script debug tạm của agent — KHÔNG đưa lên host (chạy shell_exec / lộ mã nguồn)
 public/find_modified*.php

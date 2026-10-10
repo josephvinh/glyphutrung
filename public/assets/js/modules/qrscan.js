@@ -56,23 +56,19 @@ window.TNTT.qrscan = {
     },
 
     /**
-     * PHẠM VI QUÉT — theo KHỐI, không theo lớp.
+     * PHẠM VI QUÉT — theo LỚP, nhất quán với chạm tay.
      *
-     * Lúc điểm danh các em xếp hàng theo khối. Ai được phân vào khối
-     * nào thì quét được mọi em trong khối đó; Quản Trị và Ban Điều
-     * Hành quét toàn đoàn.
-     *
-     * Khác với writableClasses (quyền SỬA hồ sơ thiếu nhi) vốn giữ
-     * theo lớp — hai việc khác nhau, đừng gộp.
+     * Ai có quyền 'edit' điểm danh trên lớp nào thì quét được em trong
+     * lớp đó; Quản Trị và Ban Điều Hành quét toàn đoàn.
      *
      * null = không giới hạn.
      */
     get qrLopQuetDuoc() {
         if (this.isUnrestrictedScope) return null;       // toàn đoàn
-        // Kiêm nhiệm: hợp mọi KHỐI mình có mặt (khớp scan_class_ids ở backend).
-        const khoi = this.myBlocks;
-        if (!khoi.length) return [];                     // chưa phân khối
-        return this.classes.filter(c => khoi.includes(c.block)).map(c => c.name);
+        // Lấy danh sách lớp mình có quyền edit điểm danh
+        const classes = this.availableClasses;
+        if (!classes.length) return [];                  // chưa phân lớp
+        return classes;
     },
 
     /**
@@ -82,11 +78,11 @@ window.TNTT.qrscan = {
      */
     get qrPhamVi() {
         if (this.isUnrestrictedScope) return 'Quét được toàn đoàn';
-        const khoi = this.myBlocks;
-        if (!khoi.length) return 'Chưa được phân khối';
-        return khoi.length === 1
-            ? 'Quét được cả khối ' + khoi[0]
-            : 'Quét được các khối ' + khoi.join(', ');
+        const lop = this.availableClasses;
+        if (!lop.length) return 'Chưa được phân lớp';
+        return lop.length === 1
+            ? 'Quét được lớp ' + lop[0]
+            : 'Quét được các lớp ' + lop.join(', ');
     },
 
     async _qrCoNative() {
@@ -101,26 +97,79 @@ window.TNTT.qrscan = {
      *
      * Máy chủ trả mảng gọn [mã, id, tên, lớp] thay vì mảng đối tượng —
      * 500 em thì tiết kiệm đáng kể đường truyền.
+     *
+     * Nếu offline, dùng bảng đã lưu từ lần mở buổi trước đó (nếu có).
      */
     async _qrTaiBangTra() {
-        const r = await this.api('attendance', 'lookup', {
-            programId: this.activeSession.programId,
-            date: this.activeSession.date
-        });
-        if (!r || !r.ok) throw new Error(r && r.error ? r.error : 'Không tải được danh sách để quét.');
+        const key = `qrlookup_${this.activeSession.programId}_${this.activeSession.date}`;
+        const cached = this._qrTaiBangTra_TuCache(key);
 
-        this._qrTraMa = new Map();
-        (r.items || []).forEach(([ma, id, ten, lop]) => {
-            const key = String(ma).trim();
-            // PHẢI giữ cả 'code' trong giá trị, không chỉ làm khoá Map:
-            // _qrNhan() đẩy em.code vào hàng đợi gửi lên máy chủ. Thiếu
-            // trường này thì gửi lên toàn null và máy chủ bỏ qua sạch.
-            this._qrTraMa.set(key, { code: key, id: id, name: ten, className: lop });
-        });
+        // Thử lấy từ server trước
+        try {
+            const r = await this.api('attendance', 'lookup', {
+                programId: this.activeSession.programId,
+                date: this.activeSession.date
+            });
+            if (r && r.ok) {
+                this._qrTraMa = new Map();
+                (r.items || []).forEach(([ma, id, ten, lop]) => {
+                    const k = String(ma).trim();
+                    this._qrTraMa.set(k, { code: k, id: id, name: ten, className: lop });
+                });
+                // Lưu cache để dùng offline
+                this._qrLuuBangTra(key, this._qrTraMa);
+                if (this._qrTraMa.size === 0) {
+                    throw new Error('Không có em nào trong phạm vi bạn quét được.\n'
+                                  + 'Hãy nhờ Ban Điều Hành kiểm lại phân công khối/lớp.');
+                }
+                return;
+            }
+        } catch (e) {
+            // Lỗi mạng — dùng cache nếu có
+        }
 
-        if (this._qrTraMa.size === 0) {
-            throw new Error('Không có em nào trong phạm vi bạn quét được.\n'
-                          + 'Hãy nhờ Ban Điều Hành kiểm lại phân công khối/lớp.');
+        // Offline: dùng cache
+        if (cached) {
+            this._qrTraMa = cached;
+            return;
+        }
+
+        // Không có cache và không có mạng
+        throw new Error('Không tải được danh sách để quét.\n'
+                      + 'Hãy mở buổi lúc có mạng trước.');
+    },
+
+    /** Lưu bảng tra vào localStorage (theo programId+date, không lưu PII nhạy cảm) */
+    _qrLuuBangTra(key, bangTra) {
+        try {
+            const items = [];
+            bangTra.forEach((em, ma) => {
+                // Chỉ lưu 4 trường cần thiết cho quét, không lưu ngày sinh/địa chỉ/SĐT
+                items.push([ma, em.id, em.name, em.className]);
+            });
+            localStorage.setItem(key, JSON.stringify({
+                items,
+                savedAt: Date.now()
+            }));
+        } catch (e) {
+            console.warn('Không lưu được bảng tra QR:', e);
+        }
+    },
+
+    /** Đọc bảng tra từ localStorage */
+    _qrTaiBangTra_TuCache(key) {
+        try {
+            const raw = localStorage.getItem(key);
+            if (!raw) return null;
+            const data = JSON.parse(raw);
+            const bangTra = new Map();
+            (data.items || []).forEach(([ma, id, ten, lop]) => {
+                const k = String(ma).trim();
+                bangTra.set(k, { code: k, id, name: ten, className: lop });
+            });
+            return bangTra.size > 0 ? bangTra : null;
+        } catch (e) {
+            return null;
         }
     },
 
@@ -247,6 +296,13 @@ window.TNTT.qrscan = {
             this.qrMo = false;
             window.TNTT.toast.error(e.message);
             return;
+        }
+
+        // Thông báo nếu dùng bảng tra cũ (offline)
+        const key = `qrlookup_${this.activeSession.programId}_${this.activeSession.date}`;
+        const cached = this._qrTaiBangTra_TuCache(key);
+        if (!navigator.onLine && cached) {
+            this.qrTrangThai = 'Đang tải danh sách từ bộ nhớ đệm…';
         }
 
         this.qrVuaGhi = [];
@@ -538,8 +594,7 @@ window.TNTT.qrscan = {
                         date: this.activeSession.date,
                         studentId: em.id,
                         studentName: em.name,
-                        action: 'toggle',
-                        createdAt: new Date().toISOString()
+                        op: 'mark'
                     });
                 }
             });
@@ -572,8 +627,7 @@ window.TNTT.qrscan = {
                         date: this.activeSession.date,
                         studentId: em.id,
                         studentName: em.name,
-                        action: 'toggle',
-                        createdAt: new Date().toISOString()
+                        op: 'mark'
                     });
                 }
             });
