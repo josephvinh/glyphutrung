@@ -271,10 +271,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'set') {
     }
     $value = round($value, 1);
 
-    db_run('INSERT INTO scores (exam_id, student_id, value, updated_by)
-            VALUES (?,?,?,?)
+    db_run('INSERT INTO scores (exam_id, student_id, term_id, type_code, value, updated_by)
+            VALUES (?,?,?,?,?,?)
             ON DUPLICATE KEY UPDATE value = VALUES(value), updated_by = VALUES(updated_by)',
-        [$examId, $studentId, $value, $me['id']]);
+        [$examId, $studentId, $termId, $type, $value, $me['id']]);
 
     Cache::flush();
     json_out(['ok' => true, 'removed' => false, 'value' => $value]);

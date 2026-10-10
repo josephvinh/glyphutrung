@@ -114,15 +114,16 @@ $soBuoiKy = count($buoiKy); // tổng số buổi đã diễn ra trong kỳ
 
 /* ---------- Điểm số trong kỳ (kèm trọng số) ----------
    KHÔNG JOIN score_types trong SQL: cột code/type_code có thể khác collation
-   giữa các máy chủ -> lỗi "Illegal mix of collations". Ghép trọng số ở PHP. */
+   giữa các máy chủ -> lỗi "Illegal mix of collations". Ghép trọng số ở PHP.
+   LEFT JOIN để giữ lại scores có exam_id NULL (dữ liệu cũ từ migration). */
 $weightOf = [];
 foreach (db_all("SELECT code, weight FROM score_types") as $st) {
     $weightOf[$st['code']] = (float) $st['weight'];
 }
 $scoreRows = $termId ? db_all(
-    "SELECT s.student_id, e.type_code, s.value
-       FROM scores s JOIN score_exams e ON e.id = s.exam_id
-      WHERE e.term_id = ?",
+    "SELECT s.student_id, COALESCE(e.type_code, s.type_code) AS type_code, s.value
+       FROM scores s LEFT JOIN score_exams e ON e.id = s.exam_id
+      WHERE e.term_id = ? OR s.exam_id IS NULL",
     [$termId]
 ) : [];
 $scoreOf = []; // id => list ['value','weight']
