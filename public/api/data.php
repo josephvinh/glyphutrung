@@ -411,7 +411,8 @@ $scores = $part === 'core' ? [] : array_map(fn($s) => [
     'at'        => substr($s['updated_at'], 0, 16),
     'by'        => $s['by_name'] ?? '',
 ], data_scoped_rows(data_scope_for($me, 'scores'),
-    // LEFT JOIN để giữ lại scores có exam_id NULL (dữ liệu cũ từ migration)
+    // LEFT JOIN để giữ lại scores có exam_id NULL (dữ liệu cũ)
+    // COALESCE: lấy type_code từ exam, fallback về giá trị cũ trong scores
     'SELECT sc.*, m.full_name AS by_name, COALESCE(e.type_code, sc.type_code) AS type_code
        FROM scores sc{JOIN}
        LEFT JOIN score_exams e ON e.id = sc.exam_id
