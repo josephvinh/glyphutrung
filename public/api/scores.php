@@ -14,8 +14,9 @@
 require __DIR__ . '/_bootstrap.php';
 
 require_write();  // hành động ghi: bắt buộc POST + CSRF
-$me   = require_permission('scores', 'edit');
-$year = current_year();
+$me    = require_permission('scores', 'edit');
+$year  = current_year();
+$method = $_SERVER['REQUEST_METHOD'];
 if (!$year) json_fail('Chưa có niên khoá nào đang mở.', 409);
 if ($year['status'] === 'đã khóa') json_fail('Niên khoá đã khoá sổ, không sửa điểm được.', 409);
 
@@ -51,15 +52,15 @@ function get_student_scope(int $studentId): ?array
 // =====================================================================
 //  GET ?action=types — danh sách loại điểm (để frontend không hardcode)
 // =====================================================================
-if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'types') {
-    $types = db_all('SELECT code AS key, label, short_label AS short, weight FROM score_types ORDER BY sort_order, code');
+if ($method === 'GET' && $action === 'types') {
+    $types = db_all('SELECT code AS `key`, label, short_label AS short, weight FROM score_types ORDER BY sort_order, code');
     json_out(['ok' => true, 'types' => $types]);
 }
 
 // =====================================================================
 //  GET ?action=exams — danh sách bài kiểm tra
 // =====================================================================
-if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'exams') {
+if ($method === 'GET' && $action === 'exams') {
     $termId  = (int) ($_GET['termId'] ?? 0);
     $classId = (int) ($_GET['classId'] ?? 0);
 
@@ -136,9 +137,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'exams') {
 }
 
 // =====================================================================
-//  POST ?action=exam — tạo bài kiểm tra mới
+//  DELETE ?action=exam — xóa bài kiểm tra (check TRƯỚC POST exam)
 // =====================================================================
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'exam') {
+if (($method === 'DELETE' && $action === 'exam') || ($method === 'POST' && $action === 'exam' && ($in['_method'] ?? '') === 'DELETE')) {
+    $examId = (int) ($in['examId'] ?? 0);
+    if (!$examId) json_fail('Thiếu examId.');
+
+    // Lấy exam để kiểm tra quyền
+    $exam = db_one('SELECT * FROM score_exams WHERE id=?', [$examId]);
+    if (!$exam) json_fail('Bài kiểm tra không tồn tại.', 404);
+    if ((int) $exam['year_id'] !== $year['id']) {
+        json_fail('Bài kiểm tra không thuộc niên khoá hiện tại.', 400);
+    }
+
+    // Chỉ người tạo exam hoặc admin mới được xóa
+    $isCreator = (int) ($exam['created_by'] ?? 0) === (int) ($me['id'] ?? 0);
+    $isAdmin = ($me['role_code'] ?? '') === 'admin';
+    if (!$isCreator && !$isAdmin) {
+        json_fail('Chỉ người tạo bài kiểm tra này hoặc Quản trị mới được xóa.', 403);
+    }
+
+    db_run('DELETE FROM score_exams WHERE id=?', [$examId]);
+    Cache::flush();
+    json_out(['ok' => true]);
+}
+
+// =====================================================================
+//  POST ?action=exam — tạo bài kiểm tra mới (chỉ khi không phải DELETE)
+// =====================================================================
+if ($method === 'POST' && $action === 'exam' && ($in['_method'] ?? '') !== 'DELETE') {
     $termId  = (int) ($in['termId'] ?? 0);
     $typeCode = trim((string) ($in['typeCode'] ?? ''));
     $name    = trim((string) ($in['name'] ?? ''));
@@ -182,7 +209,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'exam') {
 // =====================================================================
 //  DELETE ?action=exam — xóa bài kiểm tra
 // =====================================================================
-if ($_SERVER['REQUEST_METHOD'] === 'DELETE' || ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'exam' && isset($in['_method']) && $in['_method'] === 'DELETE')) {
+if ($method === 'DELETE' || ($method === 'POST' && $action === 'exam' && isset($in['_method']) && $in['_method'] === 'DELETE')) {
     $examId = (int) ($in['examId'] ?? ($_DELETE['examId'] ?? 0));
     if (!$examId) json_fail('Thiếu examId.');
 
@@ -208,7 +235,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE' || ($_SERVER['REQUEST_METHOD'] === '
 // =====================================================================
 //  POST ?action=set — lưu điểm (giữ nguyên logic cũ, thêm exam_id)
 // =====================================================================
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'set') {
+if ($method === 'POST' && $action === 'set') {
     $studentId = (int) ($in['studentId'] ?? 0);
     $termId    = (int) ($in['termId'] ?? 0);
     $type      = (string) ($in['type'] ?? '');
@@ -271,10 +298,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'set') {
     }
     $value = round($value, 1);
 
-    db_run('INSERT INTO scores (exam_id, student_id, value, updated_by)
-            VALUES (?,?,?,?)
+    db_run('INSERT INTO scores (exam_id, student_id, term_id, type_code, value, updated_by)
+            VALUES (?,?,?,?,?,?)
             ON DUPLICATE KEY UPDATE value = VALUES(value), updated_by = VALUES(updated_by)',
-        [$examId, $studentId, $value, $me['id']]);
+        [$examId, $studentId, $termId, $type, $value, $me['id']]);
 
     Cache::flush();
     json_out(['ok' => true, 'removed' => false, 'value' => $value]);

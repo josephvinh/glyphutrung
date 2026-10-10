@@ -123,13 +123,14 @@ function tracuu_scores(int $studentId, int $yearId): array
     );
 
     // Lấy điểm của em trong niên khoá (LEFT JOIN để giữ lại exam_id NULL - tương thích dữ liệu cũ)
+    // Với exam_id NULL: chỉ lấy nếu student có enrollment trong niên khoá này
     $scores = db_all(
         'SELECT sc.exam_id, sc.value
            FROM scores sc
            LEFT JOIN score_exams e ON e.id = sc.exam_id
            LEFT JOIN terms t ON t.id = e.term_id
-          WHERE sc.student_id = ? AND (t.year_id = ? OR (sc.exam_id IS NULL AND EXISTS (SELECT 1 FROM terms WHERE id = ?)))',
-        [$studentId, $yearId, $yearId]
+          WHERE sc.student_id = ? AND (t.year_id = ? OR (sc.exam_id IS NULL AND EXISTS (SELECT 1 FROM enrollments WHERE student_id = ? AND year_id = ?)))',
+        [$studentId, $yearId, $studentId, $yearId]
     );
     $scoreByExam = [];
     foreach ($scores as $s) {
