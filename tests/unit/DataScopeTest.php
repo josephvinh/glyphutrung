@@ -445,8 +445,8 @@ class DataScopeTest extends TestCase
             $this->madeStudentIds[] = $sid;
             db_run("INSERT INTO enrollments (year_id, student_id, class_id, status) VALUES (?,?,?, 'đang sinh hoạt')",
                    [$this->yearId, $sid, $class['id']]);
-            db_run('INSERT INTO scores (exam_id, student_id, value) VALUES (?,?,8.5)',
-                   [$examId, $sid]);
+            db_run('INSERT INTO scores (exam_id, student_id, term_id, type_code, value) VALUES (?,?,?,?,8.5)',
+                   [$examId, $sid, $term['id'], 'mieng']);
             db_run("INSERT INTO leave_requests (year_id, student_id, program_id, session_date, reason, status)
                     VALUES (?,?,?, CURDATE(), ?, 'chờ duyệt')", [$this->yearId, $sid, $pid, "NHAYCAM-$tag"]);
             db_run("INSERT INTO reports (term_id, student_id, remark) VALUES (?,?,?)",
