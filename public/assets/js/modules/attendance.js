@@ -43,7 +43,25 @@ window.TNTT.attendance = {
     getOfflineAttendanceQueue() {
         try {
             const raw = localStorage.getItem('tntt_offline_attendance_queue');
-            return raw ? JSON.parse(raw) : [];
+            if (!raw) return [];
+            const queue = JSON.parse(raw);
+            // Migrate legacy items (action:'toggle') → op:'mark'
+            // Legacy: { programId, date, studentId, studentName, action:'toggle', createdAt }
+            // Mới:    { programId, date, studentId, studentName, op:'mark', offlineMark:true }
+            let migrated = false;
+            const migratedQueue = queue.map(item => {
+                if (item.action === 'toggle') {
+                    migrated = true;
+                    const { action, createdAt, ...rest } = item;
+                    return { ...rest, op: 'mark', offlineMark: true };
+                }
+                return item;
+            });
+            if (migrated) {
+                this.setOfflineAttendanceQueue(migratedQueue);
+                console.log('Đã chuyển đổi queue offline từ legacy format');
+            }
+            return migratedQueue;
         } catch (e) { return []; }
     },
     setOfflineAttendanceQueue(queue) {
