@@ -3,8 +3,6 @@
  * ĐIỂM DANH
  *
  *   POST api/attendance.php?action=toggle { programId, date, studentId }
- *   POST api/attendance.php?action=mark   { programId, date, studentId }
- *        (ghi điểm danh, idempotent — dùng cho hàng đợi offline)
  *   POST api/attendance.php?action=set_status { programId, date, studentId, status }
  *        (đổi có mặt <-> đi trễ của bản ghi đã có; chỉ người có "cửa sửa")
  *
@@ -94,16 +92,16 @@ if (db_has_table('program_classes')) {
 //  Nhờ vậy data.php thu hẹp được xuống đúng phạm vi từng người xem,
 //  mà việc quét cả khối vẫn chạy.
 //
-//  Phạm vi: theo KHỐI, khớp đúng với phạm vi mà nhánh scan cho ghi.
+//  Phạm vi: theo LỚP (nhất quán với scan và chạm tay).
 // =====================================================================
 if (($_GET['action'] ?? '') === 'lookup') {
-    $ids = scan_class_ids($me);
-    if ($ids !== null && !$ids) json_out(['ok' => true, 'items' => []]);
+    $lopIds = editable_class_ids_for($me, 'attendance');
+    if ($lopIds !== null && !$lopIds) json_out(['ok' => true, 'items' => []]);
 
     $dk = ''; $tham = [$year['id']];
-    if ($ids !== null) {
-        $dk = ' AND e.class_id IN (' . implode(',', array_fill(0, count($ids), '?')) . ')';
-        $tham = array_merge($tham, $ids);
+    if ($lopIds !== null) {
+        $dk = ' AND e.class_id IN (' . implode(',', array_fill(0, count($lopIds), '?')) . ')';
+        $tham = array_merge($tham, $lopIds);
     }
     // Chỉ các lớp tham gia chương trình (nếu có gắn lớp)
     if ($progClassIds !== null) {
@@ -141,57 +139,46 @@ if (($_GET['action'] ?? '') === 'lookup') {
 if (($_GET['action'] ?? '') === 'scan') {
     if (isset($prog['allow_qr']) && !$prog['allow_qr']) json_fail('Buổi này không cho phép quét QR.');
     if ($laTuongLai) json_fail('Buổi ngày ' . $date . ' chưa diễn ra, chưa điểm danh được.', 400);
-    // Sau giờ vắng: chỉ người có "cửa sửa" được bù (giống chạm tay)
-    if ($pastAbsent && !can_override_session_lock($me, 0)) {
-        json_fail('Đã quá giờ "tính vắng" của buổi — chỉ admin, BĐH, trưởng khối hoặc GLV chủ nhiệm mới bù được.');
-    }
 
-    // Chuẩn hóa mã: trim + không phân biệt hoa/thường
-    $codesRaw = $in['codes'] ?? [];
-    if (!is_array($codesRaw) || !$codesRaw) json_fail('Không có mã nào để ghi.');
-    if (count($codesRaw) > 200) json_fail('Mỗi lần chỉ ghi tối đa 200 mã.');
+    $codes = $in['codes'] ?? [];
+    if (!is_array($codes) || !$codes) json_fail('Không có mã nào để ghi.');
+    if (count($codes) > 200) json_fail('Mỗi lần chỉ ghi tối đa 200 mã.');
 
-    // Lọc và chuẩn hóa mã
-    $codes = [];
-    foreach ($codesRaw as $ma) {
-        if (!is_string($ma) && !is_numeric($ma)) continue; // bỏ array/object
-        $ma = trim((string) $ma);
-        if ($ma !== '') $codes[] = $ma;
-    }
-    if (!$codes) json_fail('Không có mã nào hợp lệ.');
-
-    // Lấy một lượt tất cả các em tương ứng, so sánh không phân biệt hoa/thường
+    // Lấy một lượt tất cả các em tương ứng, thay vì hỏi từng em
     $ph  = implode(',', array_fill(0, count($codes), '?'));
     $ems = db_all("SELECT s.id, s.code, s.full_name, e.status, e.class_id
                      FROM students s
                      JOIN enrollments e ON e.student_id = s.id AND e.year_id = ?
-                    WHERE LOWER(s.code) IN (" . implode(',', array_fill(0, count($codes), '?')) . ")",
-                  array_merge([$year['id']], array_map('strtolower', $codes)));
+                    WHERE LOWER(s.code) IN ($ph)",
+                  array_merge([$year['id']], array_values($codes)));
 
     $theoMa = [];
-    foreach ($ems as $e) $theoMa[strtolower($e['code'])] = $e;
+    foreach ($ems as $e) $theoMa[$e['code']] = $e;
 
-    // Phạm vi quét tính theo KHỐI (xem scan_class_ids trong _bootstrap.php)
+    // Phạm vi quét: theo LỚP (nhất quán với chạm tay)
+    $lopIds = editable_class_ids_for($me, 'attendance');
+
     $them = 0; $daCo = 0; $bo = [];
 
     // Lọc trước các em hợp lệ (bỏ ra ngoài vòng ghi để chèn HÀNG LOẠT một
     // lượt, thay vì mỗi em một câu INSERT — trước đây là N+1).
-    //
-    // QUÉT THEO LỚP (nhất quán với chạm tay): chỉ quét được em thuộc lớp
-    // mà mình có quyền 'edit' điểm danh. Admin/BĐH thì quét được mọi em.
     $hopLe = [];
     foreach ($codes as $ma) {
-        $maKey = strtolower(trim((string) $ma));
-        $em = $theoMa[$maKey] ?? null;
+        $ma = trim((string) $ma);
+        $em = $theoMa[$ma] ?? null;
 
         if (!$em)                                   { $bo[] = [$ma, 'không có em nào mang mã này']; continue; }
         if ($em['status'] !== 'đang sinh hoạt')      { $bo[] = [$ma, $em['full_name'] . ' không còn sinh hoạt']; continue; }
-        // Kiểm tra quyền edit điểm danh trên LỚP của em (nhất quán với chạm tay)
-        if (!can_access_class($me, 'attendance', (int) $em['class_id'], 'edit')) {
+        // Kiểm tra phạm vi lớp
+        if ($lopIds !== null && !in_array((int) $em['class_id'], $lopIds, true)) {
             $bo[] = [$ma, $em['full_name'] . ' không thuộc lớp bạn phụ trách']; continue;
         }
         if ($progClassIds !== null && !in_array((int) $em['class_id'], $progClassIds, true)) {
             $bo[] = [$ma, $em['full_name'] . ' không thuộc lớp của buổi này']; continue;
+        }
+        // Kiểm tra sau giờ vắng theo lớp của từng em
+        if ($pastAbsent && !can_override_session_lock($me, (int) $em['class_id'])) {
+            $bo[] = [$ma, $em['full_name'] . ' đã quá giờ "tính vắng" — chỉ admin/BĐH/GLV chủ nhiệm mới bù được']; continue;
         }
         $hopLe[] = (int) $em['id'];
     }
@@ -299,74 +286,12 @@ if (($_GET['action'] ?? '') === 'set_status') {
     json_out(['ok' => true, 'status' => $moi, 'changed' => $doi]);
 }
 
-// ---------------------------------------------------------------------
-//  MARK: ghi điểm danh IDEMPOTENT (dùng cho hàng đợi offline)
-//  Khác với toggle: luôn GHI, không bao giờ XOÁ.
-//  Chạy lặp bao nhiêu lần cũng cho kết quả giống nhau.
-// ---------------------------------------------------------------------
-if (($_GET['action'] ?? '') === 'mark') {
-    $existing = db_one('SELECT id FROM attendances WHERE program_id=? AND session_date=? AND student_id=?',
-                       [$programId, $date, $studentId]);
-    if ($existing) {
-        // Đã có -> idempotent: coi như thành công, không làm gì
-        json_out(['ok' => true, 'added' => false]);
-    }
-
-    // Buổi tương lai: chặn
-    if ($laTuongLai) {
-        json_fail('Buổi ngày ' . $date . ' chưa diễn ra, chưa điểm danh được.', 400);
-    }
-    // Lớp không thuộc chương trình
-    if ($progClassIds !== null && !in_array((int) $st['class_id'], $progClassIds, true)) {
-        json_fail('Lớp của em ' . $st['full_name'] . ' không thuộc buổi này.', 400);
-    }
-    // Sau giờ vắng: không ghi có mặt, trả lỗi để client hiển thị
-    if ($pastAbsent && !can_override_session_lock($me, (int) $st['class_id'])) {
-        json_fail('Đã quá giờ "tính vắng" của buổi — em ' . $st['full_name'] . ' tính vắng.', 400);
-    }
-
-    $status = $pastCutoff ? 'đi trễ' : 'có mặt';
-    // Đánh dấu nếu ghi từ hàng đợi offline — để BĐH rà soát
-    // (phân biệt với ghi online thời gian thực)
-    $offlineFlag = !empty($in['offlineMark']) ? 1 : 0;
-    try {
-        db_run('INSERT INTO attendances (year_id, program_id, session_date, student_id, status, method, marked_by, offline_marked)
-                VALUES (?,?,?,?,?,?,?,?)',
-            [$year['id'], $programId, $date, $studentId, $status, 'tay', $me['id'], $offlineFlag]);
-        $added = true;
-    } catch (Throwable $e) {
-        if (str_contains($e->getMessage(), 'SQLSTATE[23000]')) {
-            // Race condition: bản ghi đã tồn tại — idempotent coi như thành công
-            $added = false;
-        } else {
-            json_fail(safe_error($e, 'Ghi điểm danh thất bại: '), 500);
-        }
-    }
-
-    if ($pastCutoff) {
-        log_action('diemdanh', 'attendance', 'Ghi điểm danh (mark offline) cho ' . $st['full_name'],
-                   $prog['name'] . ' · ' . $date . ' · ' . $status);
-    }
-    if ($added && program_earns_stamps($prog)) {
-        recalc_stamps_safe($studentId, $year['id']);
-    }
-    Cache::flush();
-    json_out(['ok' => true, 'added' => $added, 'status' => $status,
-              'markedAt' => date('H:i'), 'markedBy' => $me['full_name'],
-              'offlineMarked' => $offlineFlag]);
-}
-
 $existing = db_one('SELECT * FROM attendances WHERE program_id=? AND session_date=? AND student_id=?',
                    [$programId, $date, $studentId]);
 
-// GỠ bản ghi cũ:
-// - Sau giờ vắng: chỉ người có "cửa sửa" mới được gỡ (tránh GLV xóa lùi).
-// - Nếu lớp đã bị gỡ khỏi chương trình: vẫn cho gỡ để không kẹt bản ghi.
+// GỠ bản ghi cũ luôn được, KỂ CẢ khi lớp đã bị gỡ khỏi chương trình sau
+// đó — nếu chặn trước bước này thì bản ghi cũ sẽ kẹt, không tài nào xoá.
 if ($existing) {
-    $lopBiGoiKhoiProg = ($progClassIds !== null && !in_array((int) $st['class_id'], $progClassIds, true));
-    if ($pastAbsent && !$lopBiGoiKhoiProg && !can_override_session_lock($me, (int) $st['class_id'])) {
-        json_fail('Đã quá giờ "tính vắng" — chỉ admin, BĐH, trưởng khối hoặc GLV chủ nhiệm mới gỡ được điểm danh buổi này.');
-    }
     db_run('DELETE FROM attendances WHERE id = ?', [$existing['id']]);
     if ($pastCutoff) {
         log_action('diemdanh', 'attendance', 'Gỡ điểm danh của ' . $st['full_name'],
@@ -399,17 +324,9 @@ if ($pastAbsent && !can_override_session_lock($me, (int) $st['class_id'])) {
 }
 
 $status = $pastCutoff ? 'đi trễ' : 'có mặt';
-try {
-    db_run('INSERT INTO attendances (year_id, program_id, session_date, student_id, status, method, marked_by, offline_marked)
-            VALUES (?,?,?,?,?,?,?,?)',
-        [$year['id'], $programId, $date, $studentId, $status, 'tay', $me['id'], 0]);
-} catch (Throwable $e) {
-    // Race condition: nếu bản ghi đã tồn tại (duplicated key) coi như thành công
-    if (str_contains($e->getMessage(), 'SQLSTATE[23000]')) {
-        json_out(['ok' => true, 'removed' => false, 'status' => $status, 'markedAt' => date('H:i'), 'markedBy' => $me['full_name']]);
-    }
-    json_fail(safe_error($e, 'Ghi điểm danh thất bại: '), 500);
-}
+db_run('INSERT INTO attendances (year_id, program_id, session_date, student_id, status, method, marked_by)
+        VALUES (?,?,?,?,?,?,?)',
+    [$year['id'], $programId, $date, $studentId, $status, $in['method'] ?? 'tay', $me['id']]);
 
 if ($pastCutoff) {
     log_action('diemdanh', 'attendance', 'Ghi điểm danh cho ' . $st['full_name'],

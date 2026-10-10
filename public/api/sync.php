@@ -10,7 +10,7 @@ require __DIR__ . '/_bootstrap_page.php'; // Gọn nhẹ, không nạp toàn b�
 // Không cần phiên: nhả khoá session để không chặn data.php đang chạy song song.
 session_write_close();
 
-$syncFile = __DIR__ . '/../cache/sync.txt';
+$syncFile = __DIR__ . '/../../storage/cache/sync.txt';
 $ts = file_exists($syncFile) ? file_get_contents($syncFile) : '0';
 
 header('Content-Type: text/plain');
