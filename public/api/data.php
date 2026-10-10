@@ -410,15 +410,20 @@ $leaves = array_map(fn($l) => [
 // ---------------------------------------------------------------
 $scores = $part === 'core' ? [] : array_map(fn($s) => [
     'studentId' => (int) $s['student_id'],
+    'examId'    => (int) ($s['exam_id'] ?? 0),
     'termId'    => (int) $s['term_id'],
     'type'      => $s['type_code'],
     'value'     => (float) $s['value'],
     'at'        => substr($s['updated_at'], 0, 16),
     'by'        => $s['by_name'] ?? '',
 ], data_scoped_rows(data_scope_for($me, 'scores'),
-    'SELECT sc.*, m.full_name AS by_name
+    // LEFT JOIN score_exams để lấy exam info, COALESCE fallback cho dữ liệu cũ
+    'SELECT sc.*, m.full_name AS by_name,
+            COALESCE(e.type_code, sc.type_code) AS type_code,
+            COALESCE(e.term_id, sc.term_id) AS term_id
        FROM scores sc{JOIN}
-       JOIN terms t ON t.id = sc.term_id
+       LEFT JOIN score_exams e ON e.id = sc.exam_id
+       JOIN terms t ON t.id = COALESCE(e.term_id, sc.term_id)
        LEFT JOIN members m ON m.id = sc.updated_by
       WHERE t.year_id = ?', 'sc.student_id', $yid, [$yid]));
 
