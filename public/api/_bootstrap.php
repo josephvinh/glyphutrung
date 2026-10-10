@@ -29,6 +29,9 @@ ini_set('display_errors', '0');
 ini_set('log_errors', '1');
 
 require_once __DIR__ . '/_common.php';
+require_once __DIR__ . '/_errors.php';
+require_once __DIR__ . '/_response.php';
+require_once __DIR__ . '/_validator.php';
 require_once __DIR__ . '/csrf.php';
 require_once __DIR__ . '/cache.php';
 
@@ -111,14 +114,13 @@ function json_input(): array
 /**
  * Chặn cửa: mọi endpoint nghiệp vụ đều gọi hàm này trước tiên.
  * Thứ tự: chưa đăng nhập (401) → đã nghỉ (403) → đang buộc đổi mật khẩu
- * (403, code 'must_change_pw' — #83: trước đây chỉ chặn ở giao diện).
+ * (403, code 'PASSWORD_EXPIRED' — #83: trước đây chỉ chặn ở giao diện).
  */
 function require_login(): array
 {
     $me = require_login_pending_pw();
     if (!empty($me['must_change_pw'])) {
-        json_out(['ok' => false, 'code' => 'must_change_pw',
-                  'error' => 'Bạn cần đổi mật khẩu trước khi tiếp tục sử dụng.'], 403);
+        json_fail(ERR_PASSWORD_EXPIRED, 'Bạn cần đổi mật khẩu trước khi tiếp tục sử dụng.', [], 403);
     }
     return $me;
 }
@@ -127,8 +129,8 @@ function require_login(): array
 function require_login_pending_pw(): array
 {
     $me = current_member();
-    if (!$me) json_fail('Chưa đăng nhập.', 401);
-    if ($me['status'] === 'đã nghỉ') json_fail('Tài khoản đã ngưng hoạt động.', 403);
+    if (!$me) json_fail(ERR_UNAUTHORIZED, 'Chưa đăng nhập.');
+    if ($me['status'] === 'đã nghỉ') json_fail(ERR_ACCOUNT_DISABLED, 'Tài khoản đã ngưng hoạt động.', [], 403);
     return $me;
 }
 
@@ -180,13 +182,13 @@ function require_permission(string $moduleKey, string $need = 'view'): array
     $me = require_login();
     $have = permission_of($moduleKey);
 
-    if ($have === 'none') json_fail('Bạn không có quyền truy cập chức năng này.', 403);
-    if ($need === 'edit' && $have !== 'edit') json_fail('Bạn chỉ được xem, không được thay đổi.', 403);
+    if ($have === 'none') json_fail(ERR_PERMISSION_DENIED, 'Bạn không có quyền truy cập chức năng này.', [], 403);
+    if ($need === 'edit' && $have !== 'edit') json_fail(ERR_PERMISSION_DENIED, 'Bạn chỉ được xem, không được thay đổi.', [], 403);
 
     // Module đang bảo trì thì chặn tất cả trừ Quản trị
     $mod = db_one('SELECT is_enabled, label FROM modules WHERE module_key = ?', [$moduleKey]);
     if ($mod && !$mod['is_enabled'] && $me['role_code'] !== 'admin') {
-        json_fail('Chức năng "' . $mod['label'] . '" đang tạm bảo trì.', 503);
+        json_fail(ERR_SERVICE_UNAVAILABLE, 'Chức năng "' . $mod['label'] . '" đang tạm bảo trì.', [], 503);
     }
     return $me;
 }
@@ -234,9 +236,9 @@ function login_throttle(string $phone): void
                              WHERE ip = ? AND tried_at > ?', [client_ip(), $moc])['n'];
 
     if ($theoSo >= DN_TOI_DA_SO || $theoIp >= DN_TOI_DA_IP) {
-        json_fail('Bạn đã nhập sai quá nhiều lần. '
-                . 'Vui lòng đợi ' . DN_CUA_SO_PHUT . ' phút rồi thử lại, '
-                . 'hoặc nhờ Ban Điều Hành cấp lại mật khẩu.', 429);
+        json_fail(ERR_LOGIN_ATTEMPTS_EXCEEDED,
+            'Bạn đã nhập sai quá nhiều lần. Vui lòng đợi ' . DN_CUA_SO_PHUT . ' phút rồi thử lại.',
+            [], 429);
     }
 }
 
@@ -375,18 +377,13 @@ function safe_error(Throwable $e, string $chung): string
    CSRF PROTECTION
    ================================================================ */
 
-/** Bắt buộc CSRF token cho mọi POST request. */
-function require_csrf(): void {
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
-    // Sau khi require_login() chạy, session đã có csrf_token.
-    // Nếu vẫn chưa có → không hợp lệ, từ chối.
-    if (empty($_SESSION['csrf_token'])) {
-        json_fail('CSRF token not found. Please reload the page.', 403);
-    }
-    $token = $_POST['_csrf'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
-    if (!verify_csrf($token)) {
-        json_fail('Invalid CSRF token.', 403);
-    }
+/**
+ * Bắt buộc CSRF token cho mọi POST request.
+ * Sử dụng CSRFValidator từ _validator.php.
+ */
+function require_csrf(): void
+{
+    CSRFValidator::validate();
 }
 
 /* ================================================================

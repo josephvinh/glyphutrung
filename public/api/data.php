@@ -581,7 +581,7 @@ $libraryPending = (permission_of('thu_vien') === 'edit')
     ? (int) db_one('SELECT COUNT(*) n FROM library_items WHERE status = "cho_duyet"')['n']
     : 0;
 
-// Build result
+// Build result — backward compatible with ok:true at top level
 $result = [
     'ok' => true,
     'notes'         => $notes,
@@ -602,15 +602,17 @@ $result = [
     'libraryPending' => $libraryPending,
 ];
 
-// Students: nếu paginated thì trả kèm metadata, không thì trả full array (backward compatible)
+// Students: nếu paginated thì trả kèm metadata trong meta.pagination
 if ($isPaginated) {
     $result['students'] = $students['data'];
-    $result['pagination'] = [
-        'total'     => $students['total'],
-        'page'      => $students['page'],
-        'limit'     => $students['limit'],
-        'totalPages'=> ceil($students['total'] / $students['limit']),
-        'hasMore'   => $students['page'] * $students['limit'] < $students['total'],
+    $result['meta'] = [
+        'pagination' => [
+            'total'     => $students['total'],
+            'page'      => $students['page'],
+            'limit'     => $students['limit'],
+            'totalPages'=> ceil($students['total'] / $students['limit']),
+            'hasMore'   => $students['page'] * $students['limit'] < $students['total'],
+        ],
     ];
 } else {
     $result['students'] = $students['data'];

@@ -4,6 +4,19 @@
    ========================================================== */
 window.TNTT = window.TNTT || {};
 
+/**
+ * ApiError — Error class for new API response format {ok, data, error, meta}
+ * Extends Error to support try/catch and error handling
+ */
+class ApiError extends Error {
+  constructor(code, message, details = {}) {
+    super(message);
+    this.name = 'ApiError';
+    this.code = code;
+    this.details = details;
+  }
+}
+
 // Boot data from server (populated by _bootstrap_page.php)
 window.TNTT.boot = window.TNTT_BOOT || {};
 
@@ -114,6 +127,12 @@ window.TNTT.core = {
     // Nếu máy chủ từ chối thì báo lỗi và tải lại trang — dữ liệu
     // đồng bộ lại từ đầu, không để màn hình nói một đằng CSDL một nẻo.
     // ==========================================
+    /**
+     * Gọi máy chủ — hỗ trợ format mới {ok, data, error, meta}
+     * Nếu response có error.code (format mới), throw ApiError.
+     * Nếu response.ok === false, trả về object với ok: false.
+     * Luôn parse JSON và trả về {ok, data} ở format cũ để tương thích ngược.
+     */
     async api(file, action, body) {
         try {
             const headers = { 'Content-Type': 'application/json' };
@@ -126,6 +145,12 @@ window.TNTT.core = {
                 headers,
                 body: JSON.stringify(body || {})
             });
+
+            // Parse JSON response
+            let j;
+            try { j = await res.json(); } catch (e) { j = {}; }
+
+            // Xử lý HTTP status codes
             if (res.status === 401) {
                 if (window.TNTT?.toast) window.TNTT.toast.error('Phiên đăng nhập hết hạn. Đang chuyển ra màn hình đăng nhập...');
                 setTimeout(() => location.reload(), 1500);
@@ -134,27 +159,50 @@ window.TNTT.core = {
             if (res.status === 403) {
                 // Bị buộc đổi mật khẩu giữa phiên (vd vừa được cấp lại mật khẩu):
                 // bỏ bản chụp rồi tải lại -> index.php đưa vào màn đổi mật khẩu.
-                let j = null;
-                try { j = await res.json(); } catch (e) { /* 403 không phải JSON */ }
-                if (j && j.code === 'must_change_pw') {
+                // Hỗ trợ cả format cũ (j.code) và format mới (j.error.code)
+                const errorCode = j?.error?.code || j?.code;
+                if (errorCode === 'PASSWORD_EXPIRED' || errorCode === 'must_change_pw') {
                     if (window.TNTT?.toast) window.TNTT.toast.warning('Bạn cần đổi mật khẩu trước khi tiếp tục.');
                     await window.TNTT.snap.clear();
                     setTimeout(() => location.reload(), 1500);
-                    return { ok: false, error: j.error };
+                    return { ok: false, error: j?.error?.message || j?.error || 'Cần đổi mật khẩu.' };
                 }
                 // Câu "CSRF" CHỈ đúng khi lỗi thật là CSRF (hoặc không đọc được nội dung
                 // trả về). Các 403 còn lại — không đủ quyền, ngoài phạm vi lớp/khối, tài
-                // khoản đã nghỉ — máy chủ đã có câu riêng, hiện đúng câu đó. Trước đây
-                // mọi 403 đều thành "CSRF" nên người dùng bị chặn quyền lại được bảo
-                // "tải lại trang", không biết vì sao.
-                const laCsrf = !j || typeof j.error !== 'string' || !j.error || /csrf/i.test(j.error);
+                // khoản đã nghỉ — máy chủ đã có câu riêng, hiện đúng câu đó.
+                // Format cũ: j.error là string; Format mới: j.error là object
+                const errorMsg = typeof j?.error === 'string' ? j.error : (j?.error?.message || 'Không có quyền thực hiện thao tác này.');
+                const laCsrf = typeof j?.error !== 'string' && (!j?.error?.code || /csrf/i.test(j?.error?.code));
                 return {
                     ok: false,
-                    error: laCsrf ? 'Yêu cầu không hợp lệ (CSRF). Vui lòng tải lại trang.' : j.error
+                    error: laCsrf ? 'Yêu cầu không hợp lệ (CSRF). Vui lòng tải lại trang.' : errorMsg
                 };
             }
-            return await res.json();
+
+            // Format mới: {ok, data, error, meta}
+            // Nếu máy chủ trả format mới có error.code, throw ApiError
+            if (!j.ok && j.error && j.error.code) {
+                throw new ApiError(j.error.code, j.error.message || j.error, j.error.details || {});
+            }
+
+            // Format mới: {ok: false, error: {...}} hoặc {ok: false, error: 'message'}
+            if (!j.ok) {
+                const errorMsg = typeof j.error === 'string' ? j.error : (j.error?.message || 'Lỗi không xác định');
+                return { ok: false, error: errorMsg };
+            }
+
+            // Format cũ {ok: true, ...} hoặc format mới {ok: true, data: {...}}
+            // Trả về dạng cũ để tương thích ngược
+            if (j.data !== undefined) {
+                return { ok: true, ...j.data, _meta: j.meta };
+            }
+            return j;
+
         } catch (e) {
+            // ApiError đã có message đầy đủ
+            if (e instanceof ApiError) {
+                return { ok: false, error: e.message, errorCode: e.code };
+            }
             return { ok: false, networkError: true, error: 'Mất kết nối máy chủ. Kiểm tra lại mạng.' };
         }
     },
@@ -209,6 +257,7 @@ window.TNTT.core = {
 
     // Nạp một phần dữ liệu ('core' | 'heavy') kèm ETag: dữ liệu không đổi thì
     // máy chủ trả 304 và ta dùng lại bản chụp trong máy. Trả về JSON đã parse.
+    // Hỗ trợ format mới {ok, data, error, meta} với backward compatibility.
     async _fetchPart(part) {
         const key  = this._snapKey(part);
         const seq  = this._snapSeq = (this._snapSeq || 0) + 1;   // thứ tự bắt đầu nạp
@@ -224,17 +273,31 @@ window.TNTT.core = {
         if (res.status === 304 && snap) return snap.data;
         const d = await res.json();
         const etag = res.headers.get('ETag');
+
+        // Xử lý format mới {ok, data, error, meta}
+        let result = d;
+        if (d && d.ok) {
+            // Format mới: {ok: true, data: {...}}
+            if (d.data !== undefined) {
+                result = { ok: true, ...d.data };
+            }
+        } else if (d && !d.ok) {
+            // Format mới lỗi: {ok: false, error: {code, message}}
+            const errorMsg = typeof d.error === 'string' ? d.error : (d.error?.message || 'Lỗi không xác định');
+            return { ok: false, error: errorMsg };
+        }
+
         this._snapWritten = this._snapWritten || {};
-        if (d && d.ok && etag) {
+        if (result && result.ok && etag) {
             // Chỉ ghi nếu chưa có lần nạp MỚI HƠN đã ghi trước (nạp chồng nhau)
             if (seq > (this._snapWritten[key] || 0)) {
                 this._snapWritten[key] = seq;
-                await window.TNTT.snap.set(key, { etag, data: d });
+                await window.TNTT.snap.set(key, { etag, data: result });
             }
         } else {
             await window.TNTT.snap.del(key);   // lỗi máy chủ: đừng giữ bản chụp cũ làm mốc
         }
-        return d;
+        return result;
     },
     _snapKey(part) { return this.user.memberId + ':' + (this.year && this.year.id) + ':' + part; },
 

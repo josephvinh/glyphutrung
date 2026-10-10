@@ -240,6 +240,9 @@ window.TNTT.shell = {
         // Giữ bản gốc để nút "Đặt lại mặc định" có cái mà quay về
         this.defaultPermissions = JSON.parse(JSON.stringify(this.permissions));
 
+        // ---- Khởi tạo Offline Queue cho PWA ----
+        this.initOfflineSupport();
+
         // Nạp dữ liệu nghiệp vụ của niên khoá đang mở.
         this.loadData();
 
@@ -305,5 +308,38 @@ window.TNTT.shell = {
                 this._syncVersion = ts;
             } catch (e) { }
         }, 4000);
+    },
+
+    /**
+     * Khởi tạo Offline Queue cho PWA
+     * - Khởi tạo IndexedDB queue
+     * - Lắng nghe sự kiện sync/failed để thông báo người dùng
+     */
+    initOfflineSupport() {
+        // Lấy OfflineQueue từ window.TNTT.offline_queue (được gán bởi offline_queue.js)
+        const queue = window.TNTT && window.TNTT.offline_queue;
+        if (!queue) {
+            console.warn('[Shell] OfflineQueue not found in window.TNTT');
+            return;
+        }
+
+        queue.init().catch(err => {
+            console.error('[Shell] Failed to initialize offline queue:', err);
+        });
+
+        // Lắng nghe sự kiện sync để thông báo
+        queue.addListener((event, data) => {
+            if (event === 'sync' && data.synced > 0) {
+                window.TNTT.toast.success(
+                    `Đã đồng bộ ${data.synced} mục${data.failed ? `, ${data.failed} thất bại` : ''}`
+                );
+                // Refresh data sau khi sync để cập nhật UI
+                if (typeof this.refreshApp === 'function') {
+                    this.refreshApp();
+                }
+            } else if (event === 'offline') {
+                window.TNTT.toast.info('Đang offline - thao tác sẽ được lưu vào hàng đợi');
+            }
+        });
     }
 };
