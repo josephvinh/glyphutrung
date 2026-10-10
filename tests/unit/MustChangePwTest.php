@@ -72,13 +72,18 @@ class MustChangePwTest extends TestCase
         self::assertSame(403, $r['code'], "$what: phải 403 — " . $r['raw']);
         self::assertIsArray($r['json'], "$what: thân phải là JSON");
         self::assertSame(false, $r['json']['ok'] ?? null, $what);
-        self::assertSame('must_change_pw', $r['json']['code'] ?? null, "$what: phải có code=must_change_pw — " . $r['raw']);
-        self::assertSame($error, $r['json']['error'] ?? null, $what);
+        // New API format: error.code = 'PASSWORD_EXPIRED', error.message = '...'
+        $errorCode = $r['json']['error']['code'] ?? $r['json']['code'] ?? null;
+        self::assertSame('PASSWORD_EXPIRED', $errorCode, "$what: phải có code=PASSWORD_EXPIRED — " . $r['raw']);
+        // error.message = 'Bạn cần đổi mật khẩu...'
+        $errorMsg = $r['json']['error']['message'] ?? $r['json']['error'] ?? null;
+        self::assertSame($error, $errorMsg, "$what: message không khớp");
     }
 
     private function assertNotBlockedByFlag(array $r, string $what): void
     {
-        self::assertNotSame('must_change_pw', $r['json']['code'] ?? null, "$what: tài khoản must=0 không được bị chặn — " . $r['raw']);
+        $errorCode = $r['json']['error']['code'] ?? $r['json']['code'] ?? null;
+        self::assertNotSame('PASSWORD_EXPIRED', $errorCode, "$what: tài khoản must=0 không được bị chặn — " . $r['raw']);
     }
 
     // ------------------------------------------------------------------
@@ -164,13 +169,15 @@ class MustChangePwTest extends TestCase
         // Thiếu CSRF: không nới lỏng (AUTH-08b).
         $r = $this->http($id, 'POST', '/api/auth.php?action=password', ['current' => $u['password'], 'new' => 'MatKhauMoi-9'], false);
         self::assertSame(403, $r['code'], $r['raw']);
-        self::assertNotSame('must_change_pw', $r['json']['code'] ?? null, 'đây là lỗi CSRF, không phải cổng must_change_pw');
+        $errorCode = $r['json']['error']['code'] ?? $r['json']['code'] ?? null;
+        self::assertNotSame('PASSWORD_EXPIRED', $errorCode, 'đây là lỗi CSRF, không phải cổng must_change_pw');
         self::assertSame(1, $this->mustFlag($id), 'thiếu CSRF thì không được đổi');
 
         // Sai mật khẩu hiện tại: không đổi.
         $r = $this->http($id, 'POST', '/api/auth.php?action=password', ['current' => 'sai-het', 'new' => 'MatKhauMoi-9']);
         self::assertFalse($r['json']['ok'] ?? true, $r['raw']);
-        self::assertNotSame('must_change_pw', $r['json']['code'] ?? null, 'endpoint password phải tới được logic của nó');
+        $errorCode = $r['json']['error']['code'] ?? $r['json']['code'] ?? null;
+        self::assertNotSame('PASSWORD_EXPIRED', $errorCode, 'endpoint password phải tới được logic của nó');
         self::assertSame(1, $this->mustFlag($id));
 
         // Đúng: 200, cờ về 0, mật khẩu mới có hiệu lực, data.php mở.

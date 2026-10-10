@@ -324,7 +324,9 @@ class StaffGuardTest extends TestCase
 
         $r = $this->org($bdh, 'saveMember', $this->identityBody($admin, ['fullName' => 'Bi Doi Ten']));
         self::assertSame(404, $r['code'], $r['raw']);
-        self::assertSame(self::MSG_NOT_FOUND, $r['json']['error']);
+        // New API: error.message (or old: error as string)
+        $errorMsg = $r['json']['error']['message'] ?? $r['json']['error'] ?? null;
+        self::assertSame(self::MSG_NOT_FOUND, $errorMsg);
         self::assertSame($before, $this->row((int) $admin['id']), 'DB không được đổi');
 
         // admin vẫn đăng nhập được bằng SĐT cũ (200) — đây chính là hậu quả #97.
@@ -339,7 +341,8 @@ class StaffGuardTest extends TestCase
 
         $r = $this->org($bdh, 'saveMember', $this->identityBody($other));
         self::assertSame(403, $r['code'], $r['raw']);
-        self::assertSame('Chỉ Quản Trị Hệ Thống mới sửa được hồ sơ thành viên Ban Điều Hành.', $r['json']['error']);
+        $errorMsg = $r['json']['error']['message'] ?? $r['json']['error'] ?? null;
+        self::assertSame('Chỉ Quản Trị Hệ Thống mới sửa được hồ sơ thành viên Ban Điều Hành.', $errorMsg);
         self::assertSame($before, $this->row((int) $other['id']));
     }
 
@@ -468,9 +471,11 @@ class StaffGuardTest extends TestCase
                 $forUnknown = $this->org($caller, $action, $this->identityBody(['id' => $unknown, 'role_code' => 'glv']) + ['role' => 'glv']);
                 self::assertSame(404, $forAdmin['code'], "$who/$action admin");
                 self::assertSame(404, $forUnknown['code'], "$who/$action id lạ");
-                self::assertSame($forUnknown['json']['error'], $forAdmin['json']['error'],
+                // Security: compare error structure, ignore meta (has random requestId/timestamp)
+                $errorAdmin = $forAdmin['json']['error'] ?? null;
+                $errorUnknown = $forUnknown['json']['error'] ?? null;
+                self::assertSame($errorUnknown, $errorAdmin,
                     "$who/$action: thông điệp 404 cho admin phải GIỐNG HỆT id không tồn tại");
-                self::assertSame($forUnknown['json'], $forAdmin['json'], "$who/$action: cả thân JSON phải giống hệt");
             }
         }
     }
@@ -510,7 +515,8 @@ class StaffGuardTest extends TestCase
 
         $r = $this->org($tk, 'deleteMember', ['id' => (int) $tk['id']]);
         self::assertSame(400, $r['code'], $r['raw']);
-        self::assertSame('Không thể tự xoá tài khoản của chính mình.', $r['json']['error']);
+        $errorMsg = $r['json']['error']['message'] ?? $r['json']['error'] ?? null;
+        self::assertSame('Không thể tự xoá tài khoản của chính mình.', $errorMsg);
         self::assertNotNull($this->row((int) $tk['id']));
     }
 

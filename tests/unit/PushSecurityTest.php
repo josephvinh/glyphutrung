@@ -558,8 +558,10 @@ class PushSecurityTest extends TestCase
         $r2 = $this->an('pending', ['token' => $t2['token']]);
         $r3 = $this->an('pending', ['token' => push_sinh_token()]);     // token không tồn tại
         $this->assertSame([401, 401, 401], [$r1['code'], $r2['code'], $r3['code']]);
-        $this->assertSame($r3['raw'], $r1['raw'], 'Không lộ khác biệt giữa chờ duyệt và token sai');
-        $this->assertSame($r3['raw'], $r2['raw']);
+        // Security: compare ok + error (ignore meta with random requestId/timestamp)
+        $this->assertSame($r3['json']['ok'], $r1['json']['ok']);
+        $this->assertSame($r3['json']['error'], $r1['json']['error'], 'Không lộ khác biệt giữa chờ duyệt và token sai');
+        $this->assertSame($r3['json']['error'], $r2['json']['error']);
     }
 
     public function test_pending_token_sai_dinh_dang_va_dong_da_co_token_khong_nhan_endpoint(): void

@@ -7,8 +7,8 @@
  * @global IDBKeyRange - Provided by IndexedDB API
  *
  * Usage:
- *   await window.TNTT['offline-queue'].init();
- *   await window.TNTT['offline-queue'].enqueue('attendance', '/api/attendance.php', { data });
+ *   await window.TNTT.offline_queue.init();
+ *   await window.TNTT.offline_queue.enqueue('attendance', '/api/attendance.php', { data });
  *
  *   // Listen for events
  *   window.TNTTOfflineQueue.addListener((event, data) => {
@@ -474,8 +474,8 @@ class OfflineQueue {
 }
 
 // Export singleton (works in both SW and browser contexts)
-// Register as window.TNTT['offline-queue'] so app.js gopManh() can find it
+// Register as window.TNTT.offline_queue so app.js gopManh() can find it
 if (typeof window !== 'undefined') {
   window.TNTT = window.TNTT || {};
-  window.TNTT['offline-queue'] = new OfflineQueue();
+  window.TNTT.offline_queue = new OfflineQueue();
 }

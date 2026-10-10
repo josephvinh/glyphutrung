@@ -316,8 +316,8 @@ window.TNTT.shell = {
      * - Lắng nghe sự kiện sync/failed để thông báo người dùng
      */
     initOfflineSupport() {
-        // Lấy OfflineQueue từ window.TNTT['offline-queue'] (được gán bởi offline-queue.js)
-        const queue = window.TNTT && window.TNTT['offline-queue'];
+        // Lấy OfflineQueue từ window.TNTT.offline_queue (được gán bởi offline_queue.js)
+        const queue = window.TNTT && window.TNTT.offline_queue;
         if (!queue) {
             console.warn('[Shell] OfflineQueue not found in window.TNTT');
             return;
