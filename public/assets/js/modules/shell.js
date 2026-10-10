@@ -316,37 +316,30 @@ window.TNTT.shell = {
      * - Lắng nghe sự kiện sync/failed để thông báo người dùng
      */
     initOfflineSupport() {
-        // Chờ OfflineQueue khả dụng (nạp từ offline-queue.js)
-        const setupQueue = () => {
-            if (typeof window.TNTTOfflineQueue !== 'undefined') {
-                window.TNTTOfflineQueue.init().catch(err => {
-                    console.error('[Shell] Failed to initialize offline queue:', err);
-                });
+        // Lấy OfflineQueue từ window.TNTT['offline-queue'] (được gán bởi offline-queue.js)
+        const queue = window.TNTT && window.TNTT['offline-queue'];
+        if (!queue) {
+            console.warn('[Shell] OfflineQueue not found in window.TNTT');
+            return;
+        }
 
-                // Lắng nghe sự kiện sync để thông báo
-                window.TNTTOfflineQueue.addListener((event, data) => {
-                    if (event === 'sync' && data.synced > 0) {
-                        window.TNTT.toast.success(
-                            `Đã đồng bộ ${data.synced} mục${data.failed ? `, ${data.failed} thất bại` : ''}`
-                        );
-                        // Refresh data sau khi sync để cập nhật UI
-                        if (typeof this.refreshApp === 'function') {
-                            this.refreshApp();
-                        }
-                    } else if (event === 'failed' && data.failed > 0) {
-                        window.TNTT.toast.warning('Một số thao tác offline chưa đồng bộ được');
-                    } else if (event === 'online') {
-                        console.log('[Shell] Online - triggering sync');
-                    } else if (event === 'offline') {
-                        window.TNTT.toast.info('Đang offline - thao tác sẽ được lưu vào hàng đợi');
-                    }
-                });
-            } else {
-                // Thử lại sau 100ms nếu queue chưa load
-                setTimeout(setupQueue, 100);
+        queue.init().catch(err => {
+            console.error('[Shell] Failed to initialize offline queue:', err);
+        });
+
+        // Lắng nghe sự kiện sync để thông báo
+        queue.addListener((event, data) => {
+            if (event === 'sync' && data.synced > 0) {
+                window.TNTT.toast.success(
+                    `Đã đồng bộ ${data.synced} mục${data.failed ? `, ${data.failed} thất bại` : ''}`
+                );
+                // Refresh data sau khi sync để cập nhật UI
+                if (typeof this.refreshApp === 'function') {
+                    this.refreshApp();
+                }
+            } else if (event === 'offline') {
+                window.TNTT.toast.info('Đang offline - thao tác sẽ được lưu vào hàng đợi');
             }
-        };
-
-        setupQueue();
+        });
     }
 };

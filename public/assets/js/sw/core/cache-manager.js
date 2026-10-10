@@ -10,7 +10,7 @@ import { CACHE_CONFIG, log, error } from '../utils/index.js';
 export class CacheManager {
   constructor() {
     /** @type {Map<string, Cache>} Open cache instances */
-    this.caches = {};
+    this.caches = new Map();
   }
 
   /**
@@ -65,12 +65,26 @@ export class CacheManager {
   }
 
   /**
-   * Clean up old TNTT caches (different from current version)
+   * Clean up old TNTT caches
+   * Uses allowlist approach to protect critical caches
    * @param {string} currentVersion - Current cache version name
    */
   async cleanupOldCaches(currentVersion) {
+    // Allowlist of caches to NEVER delete
+    const protectedCaches = [
+      'tntt-push',  // Push notification tokens
+      'tntt-static-v1',  // Static assets cache
+      'tntt-api-v1',  // API data cache
+    ];
+
     const keys = await caches.keys();
     for (const key of keys) {
+      // Skip protected caches
+      if (protectedCaches.includes(key)) {
+        log(`Protected cache kept: ${key}`);
+        continue;
+      }
+      // Delete old TNTT caches with different version
       if (key.startsWith('tntt-') && key !== currentVersion) {
         log(`Cleaning up old cache: ${key}`);
         await caches.delete(key);

@@ -62,17 +62,45 @@ if (!function_exists('json_created')) {
 /**
  * Send error response
  *
- * Note: New format is (code, message, details, status)
- * The old json_fail() in _http_util.php had format (message, code)
+ * Supports BOTH calling conventions for backward compatibility:
+ * - Old: json_fail($message, $code) where $message is string and $code is int HTTP status
+ * - New: json_fail($code, $message, $details, $status) where $code is string error code
+ *
+ * Status is inferred from error code if not explicitly provided.
  */
 if (!function_exists('json_fail')) {
-    function json_fail(string $code, string $message, array $details = [], int $status = 400): never
+    function json_fail(string $code, string|int $message = '', array $details = [], int $status = 400): never
     {
+        // Old calling convention: json_fail($message, $code) where $message is string and $code is int
+        if (is_int($message)) {
+            $status = $message; // second param was HTTP code
+            $message = $code; // first param was message string
+            $code = 'BAD_REQUEST';
+        }
+
+        // Infer HTTP status from error code if default 400 was used
+        if ($status === 400) {
+            $codeUpper = strtoupper($code);
+            if ($codeUpper === 'AUTH_REQUIRED' || str_contains($codeUpper, 'UNAUTHORIZED')) {
+                $status = 401;
+            } elseif (str_contains($codeUpper, 'FORBIDDEN') || $codeUpper === 'CSRF_INVALID' || $codeUpper === 'ACCOUNT_DISABLED' || $codeUpper === 'PASSWORD_EXPIRED') {
+                $status = 403;
+            } elseif (str_contains($codeUpper, 'NOT_FOUND')) {
+                $status = 404;
+            } elseif (str_contains($codeUpper, 'RATE_LIMIT') || str_contains($codeUpper, 'THROTTLE')) {
+                $status = 429;
+            } elseif ($codeUpper === 'VALIDATION_FAILED' || str_contains($codeUpper, 'INVALID')) {
+                $status = 422;
+            } elseif ($codeUpper === 'CONFLICT' || str_contains($codeUpper, 'DUPLICATE')) {
+                $status = 409;
+            }
+        }
+
         $response = [
             'ok' => false,
             'error' => [
                 'code' => $code,
-                'message' => $message,
+                'message' => (string) $message,
                 'details' => $details,
             ],
             'meta' => response_meta($status),

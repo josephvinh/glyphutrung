@@ -15,7 +15,7 @@ const browser = [
   'window', 'document', 'navigator', 'location', 'history', 'screen', 'self',
   'console', 'fetch', 'Request', 'Response', 'Headers', 'URL', 'URLSearchParams',
   'FormData', 'Blob', 'File', 'FileReader', 'Image', 'Audio', 'Option',
-  'localStorage', 'sessionStorage', 'indexedDB', 'caches', 'crypto', 'performance',
+  'localStorage', 'sessionStorage', 'indexedDB', 'IDBKeyRange', 'IDBDatabase', 'IDBTransaction', 'IDBObjectStore', 'caches', 'crypto', 'performance',
   'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval',
   'requestAnimationFrame', 'cancelAnimationFrame', 'requestIdleCallback', 'queueMicrotask',
   'alert', 'confirm', 'prompt', 'open', 'print', 'matchMedia', 'getComputedStyle',
@@ -23,9 +23,9 @@ const browser = [
   'AbortController', 'IntersectionObserver', 'MutationObserver', 'ResizeObserver',
   'Event', 'CustomEvent', 'KeyboardEvent', 'MouseEvent', 'HTMLElement', 'Node', 'DOMParser',
   'Notification', 'PublicKeyCredential', 'BarcodeDetector', 'MediaRecorder',
-  'ServiceWorkerRegistration', 'CSS',
+  'ServiceWorkerRegistration', 'ServiceWorkerGlobalScope', 'CSS',
   // Service worker (public/sw.js)
-  'clients', 'skipWaiting',
+  'clients', 'skipWaiting', 'Cache', 'CacheStorage',
 ];
 
 // Thư viện nạp bằng <script> riêng (public/assets/js/vendor/*) hoặc nạp lười từ CDN

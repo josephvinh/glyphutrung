@@ -81,9 +81,11 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // PHP pages (non-API): Stale-while-revalidate
-  if (url.pathname.endsWith('.php') && !url.pathname.startsWith('/api/')) {
-    e.respondWith(staleWhileRevalidate(req, CACHE_CONFIG.API));
+  // PHP pages: NEVER cache - these may contain user-specific data (TNTT_BOOT, CSRF tokens)
+  // index.php specifically sends Cache-Control: no-store for this reason
+  if (url.pathname.endsWith('.php')) {
+    // Just fetch from network, don't cache
+    e.respondWith(fetch(req, { credentials: 'include' }));
     return;
   }
 });
@@ -175,14 +177,14 @@ async function fetchNotificationContent() {
 }
 
 async function hasFocusedClient() {
-  const clients = await self.clients.matchAll({ type: 'window' });
-  return clients.some(c => c.visibilityState === 'visible');
+  const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+  return clients.some(c => c.focused || c.visibilityState === 'visible');
 }
 
 async function notifyOpenTabs(url) {
-  const clients = await self.clients.matchAll({ type: 'window' });
+  const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
   for (const c of clients) {
-    if (c.visibilityState === 'visible') {
+    if (c.focused || c.visibilityState === 'visible') {
       c.postMessage({ action: 'RELOAD_DATA', url: url || '/' });
     }
   }
@@ -196,8 +198,8 @@ self.addEventListener('notificationclick', (e) => {
   const targetUrl = (e.notification.data && e.notification.data.url) || '/';
 
   e.waitUntil((async () => {
-    // Focus existing window if available
-    const clients = await self.clients.matchAll({ type: 'window' });
+    // Focus existing window if available (including uncontrolled tabs)
+    const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
     for (const c of clients) {
       if (c.url.includes(self.location.origin)) {
         await c.focus();
