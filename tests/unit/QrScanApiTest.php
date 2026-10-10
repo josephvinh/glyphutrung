@@ -261,10 +261,10 @@ class QrScanApiTest extends TestCase
     //  scan
     // =================================================================
 
-    public function test_scan_adds_in_scope_student_with_method_qr(): void
+    public function test_scan_adds_in_scope_class_student(): void
     {
         $pid = $this->makeProgram(); $d = $this->todaySession();
-        $em = $this->makeStudent((int) $this->classA2['id']);   // lớp khác, CÙNG khối
+        $em = $this->makeStudent((int) $this->classA['id']);   // lớp ĐƯỢC PHÂN của GLV
 
         $r = $this->scan($pid, $d, [$em['code']]);
         $this->assertSame(200, $r['code'], $r['raw']);
@@ -272,15 +272,15 @@ class QrScanApiTest extends TestCase
         $this->assertSame('qr', $this->attRow($pid, $d, $em['id'])['method']);
     }
 
-    public function test_scan_skips_student_outside_block(): void
+    public function test_scan_skips_student_outside_class(): void
     {
         $pid = $this->makeProgram(); $d = $this->todaySession();
-        $out = $this->makeStudent((int) $this->classB['id']);
+        $em = $this->makeStudent((int) $this->classB['id']);   // lớp KHÁC (khối khác)
 
-        $r = $this->scan($pid, $d, [$out['code']]);
+        $r = $this->scan($pid, $d, [$em['code']]);
         $this->assertSame(0, $r['json']['added']);
-        $this->assertContains($out['code'], $this->skippedCodes($r));
-        $this->assertNull($this->attRow($pid, $d, $out['id']), 'Em khối khác không được ghi');
+        $this->assertContains($em['code'], $this->skippedCodes($r));
+        $this->assertNull($this->attRow($pid, $d, $em['id']), 'Em lớp khác không được ghi');
     }
 
     public function test_scan_skips_inactive_enrollment(): void

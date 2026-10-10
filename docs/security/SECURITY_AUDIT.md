@@ -89,6 +89,21 @@ khai thác, và cách sửa đề xuất.
     để tên tệp không đoán được, hoặc bỏ cache tệp, chuyển sang APCu (bộ nhớ,
     không chạm đĩa web).
 
+## 🟡 S2a — PII trong localStorage của trình duyệt
+
+- **Vị trí:** `public/assets/js/modules/qrscan.js` (`_qrLuuBangTra`)
+- **Mô tả:** Bảng tra QR (mã số, họ tên, lớp) được lưu vào localStorage
+  theo `programId+date`, với `savedAt` timestamp. Họ tên trẻ em là dữ liệu cá nhân.
+- **Rủi ro:**
+  - Không xóa khi đăng xuất
+  - Không có TTL/hết hạn (dù có `savedAt`)
+  - localStorage có thể bị đọc bởi XSS attack
+- **Cách sửa:**
+  1. Xóa cache QR khi đăng xuất (`logout`)
+  2. Thêm TTL ngắn (vd 24 giờ) hoặc xóa sau khi buổi kết thúc
+  3. Giới hạn chỉ lưu mã số + id (không lưu họ tên)
+- **Trạng thái:** 📖 Chưa sửa — ghi nhận để theo dõi
+
 ## 🔴 S2 — Rò rỉ secret trong mã nguồn & lịch sử git của repo CÔNG KHAI
 
 - **Vị trí:** `config/config.php:41` (`'private' => 'E0wu…'` — khóa riêng VAPID thật,
