@@ -41,7 +41,8 @@ EXTRA_PHONES = "'0911000007','0911000008','0911000009','0911000010','0911000011'
 def cleanup():
     sql("DELETE FROM leave_requests WHERE reason LIKE 'NHAYCAM-%'")
     sql("DELETE FROM reports WHERE remark LIKE 'P1-REMARK-%'")
-    sql("DELETE FROM scores WHERE type_code='mieng' AND value=7.25")
+    sql("DELETE FROM scores WHERE value=7.25")  # xóa điểm test
+    sql(f"DELETE FROM score_exams WHERE name='P1-Test-Exam'")
     sql(f"DELETE FROM push_outbox WHERE member_id IN (SELECT id FROM members WHERE phone IN ({EXTRA_PHONES}))")
     sql(f"DELETE FROM push_subscriptions WHERE member_id IN (SELECT id FROM members WHERE phone IN ({EXTRA_PHONES}))")
     sql(f"DELETE FROM member_passkeys WHERE member_id IN (SELECT id FROM members WHERE phone IN ({EXTRA_PHONES}))")
@@ -82,7 +83,13 @@ for lab, cid in CLS.items():
         f"({CUR},{s2},{prog},'2031-06-02','NHAYCAM-{lab}-2','đã duyệt')")
     for s in (s1, s2):
         sql(f"INSERT INTO reports (term_id,student_id,remark,status) VALUES ({T1},{s},'P1-REMARK-{lab}','nháp')")
-        sql(f"INSERT INTO scores (term_id,student_id,type_code,value) VALUES ({T2},{s},'mieng',7.25)")
+        # Tạo exam test nếu chưa có, rồi chèn điểm
+        sql(f"""INSERT INTO score_exams (year_id, term_id, type_code, name)
+                SELECT {CUR}, {T2}, 'mieng', 'P1-Test-Exam'
+                WHERE NOT EXISTS (SELECT 1 FROM score_exams WHERE term_id={T2} AND type_code='mieng' AND name='P1-Test-Exam')""")
+        exam_id = sql(f"SELECT id FROM score_exams WHERE term_id={T2} AND type_code='mieng' AND name='P1-Test-Exam'")
+        if exam_id:
+            sql(f"INSERT INTO scores (exam_id, student_id, value) VALUES ({exam_id},{s},7.25)")
 
 # Người dùng bổ sung
 gAC = mk_member("T_GLVAC", "0911000007", "glv", block=bA, cls=cA)

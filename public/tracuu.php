@@ -193,25 +193,98 @@ h2{font-size:14px;font-weight:800;margin-bottom:10px}
     <?php if (!$diem['terms'] || !$diem['types']): ?>
       <div class="trong">Chưa có học kỳ hoặc cột điểm nào.</div>
     <?php else: foreach ($diem['terms'] as $t): ?>
-      <div style="margin-bottom:16px">
+      <div style="margin-bottom:20px">
         <div class="tk"><h2 style="margin:0"><?php echo e_($t['name']); ?></h2><span><?php echo e_(ngay_($t['from'])); ?> – <?php echo e_(ngay_($t['to'])); ?></span></div>
         <table class="bang">
-          <thead><tr>
-            <?php foreach ($diem['types'] as $ty): ?>
-              <th><?php echo e_($ty['label']); ?><small>hệ số <?php echo (int) $ty['weight']; ?></small></th>
-            <?php endforeach; ?>
-            <th>Trung bình</th>
-          </tr></thead>
-          <tbody><tr>
-            <?php foreach ($t['cols'] as $c): ?>
-              <td class="<?php echo $c['value'] === null ? 'chua' : ''; ?>"><?php echo e_(diem_($c['value'])); ?></td>
-            <?php endforeach; ?>
-            <td class="tb"><?php echo e_(diem_($t['avg'])); ?></td>
-          </tr></tbody>
+          <thead>
+            <tr>
+              <th class="text-left" style="min-width:140px">Điểm</th>
+              <?php foreach ($diem['types'] as $ty):
+                $bt = $t['byType'][$ty['code']] ?? null;
+                $examCount = $bt ? count($bt['exams']) : 0;
+              ?>
+                <th class="text-center<?php echo $examCount > 1 ? ' border-l-2 border-slate-200' : ''; ?>" colspan="<?php echo max(1, $examCount); ?>">
+                  <?php echo e_($ty['label']); ?><br><small>hệ số <?php echo (int) $ty['weight']; ?></small>
+                </th>
+              <?php endforeach; ?>
+              <th class="text-center border-l-2 border-slate-200">Trung bình</th>
+            </tr>
+            <?php // Hàng tên bài (nếu có nhiều bài) ?>
+            <?php $hasMultipleExams = false; foreach ($diem['types'] as $ty) { $bt = $t['byType'][$ty['code']] ?? null; if ($bt && count($bt['exams']) > 1) { $hasMultipleExams = true; break; } } ?>
+            <?php if ($hasMultipleExams): ?>
+            <tr class="bg-slate-50">
+              <td class="text-left text-micro font-semibold text-slate-400">Bài kiểm tra</td>
+              <?php foreach ($diem['types'] as $ty):
+                $bt = $t['byType'][$ty['code']] ?? null;
+                $exams = $bt ? $bt['exams'] : [];
+              ?>
+                <?php if (count($exams) > 1): ?>
+                  <?php foreach ($exams as $e): ?>
+                    <td class="text-center text-micro font-medium text-slate-500 border-l border-slate-100<?php echo $e['value'] !== null ? ' text-slate-600' : ''; ?>">
+                      <?php echo e_($e['name'] ?: ($e['examDate'] ? ngay_($e['examDate']) : 'Bài #' . $e['id'])); ?>
+                    </td>
+                  <?php endforeach; ?>
+                <?php elseif (count($exams) === 1): ?>
+                  <td class="text-center text-micro font-medium text-slate-400">
+                    <?php $e = $exams[0]; echo e_($e['name'] ?: ($e['examDate'] ? ngay_($e['examDate']) : 'Bài #' . $e['id'])); ?>
+                  </td>
+                <?php else: ?>
+                  <td class="text-center text-micro font-medium text-slate-300">—</td>
+                <?php endif; ?>
+              <?php endforeach; ?>
+              <td class="text-center text-micro font-semibold text-blue-600 border-l border-slate-200">TB loại</td>
+            </tr>
+            <?php endif; ?>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-left font-semibold text-slate-600">Điểm</td>
+              <?php foreach ($diem['types'] as $ty):
+                $bt = $t['byType'][$ty['code']] ?? null;
+                $exams = $bt ? $bt['exams'] : [];
+              ?>
+                <?php if (count($exams) > 0): ?>
+                  <?php foreach ($exams as $e): ?>
+                    <td class="<?php echo $e['value'] === null ? 'chua' : ''; ?> border-l border-slate-100"><?php echo e_(diem_($e['value'])); ?></td>
+                  <?php endforeach; ?>
+                <?php else: ?>
+                  <td class="chua">–</td>
+                <?php endif; ?>
+              <?php endforeach; ?>
+              <td class="tb border-l-2 border-slate-200"><?php echo e_(diem_($t['avg'])); ?></td>
+            </tr>
+            <?php // Hàng trung bình loại điểm (nếu có nhiều bài) ?>
+            <?php if ($hasMultipleExams): ?>
+            <tr class="bg-blue-50/50">
+              <td class="text-left font-semibold text-blue-600">TB loại điểm</td>
+              <?php foreach ($diem['types'] as $ty):
+                $bt = $t['byType'][$ty['code']] ?? null;
+                $exams = $bt ? $bt['exams'] : [];
+                $examCount = count($exams);
+              ?>
+                <?php if ($examCount > 1): ?>
+                  <?php foreach ($exams as $e): ?>
+                    <td class="border-l border-slate-100"><span class="text-slate-300">—</span></td>
+                  <?php endforeach; ?>
+                  <td class="font-black text-blue-700 border-l-2 border-slate-200"><?php echo e_(diem_($bt['avg'])); ?></td>
+                <?php elseif ($examCount === 1): ?>
+                  <td class="text-slate-400 text-slate-300">—</td>
+                  <td class="font-black text-blue-700<?php echo $examCount > 0 ? '' : ' border-l-2 border-slate-200'; ?>"><?php echo e_(diem_($bt['avg'])); ?></td>
+                <?php else: ?>
+                  <td class="text-slate-300">—</td>
+                  <td class="border-l-2 border-slate-200">—</td>
+                <?php endif; ?>
+              <?php endforeach; ?>
+            </tr>
+            <?php endif; ?>
+          </tbody>
         </table>
       </div>
     <?php endforeach; ?>
-      <p class="hs" style="font-size:11.5px;color:#94a3b8">Điểm trung bình tính theo hệ số, chỉ gồm các cột đã có điểm. Dấu – là chưa có điểm.</p>
+      <p class="hs" style="font-size:11.5px;color:#94a3b8">
+        Điểm trung bình tính: trung bình các bài cùng loại, rồi nhân hệ số (Miệng×1 · 15p×1 · GK×2 · CK×3).
+        Chỉ gồm các cột đã có điểm. Dấu – là chưa có điểm.
+      </p>
     <?php endif; ?>
   </section>
 

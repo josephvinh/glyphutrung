@@ -315,12 +315,6 @@ if ($part !== 'core') {                          // bước 'core' bỏ qua đi�
         $params = [$yid, $filterProgramId];
         // Nếu có phạm vi, lọc thêm theo lớp
         if ($attScopeIds !== null && $attScopeIds !== []) {
-            $ph = implode(',', array_fill(0, count($attScopeIds), '?'));
-            $sql .= " AND a.student_id IN (SELECT student_id FROM enrollments WHERE year_id = ? AND class_id IN ($ph))";
-            $params = array_merge([$yid], $attScopeIds, [$filterProgramId]);
-            $sql = str_replace('a.year_id = ? AND a.program_id = ?', 'a.year_id = ? AND a.program_id = ?', $sql);
-            array_unshift($params, $yid);
-            $params = [$yid, $filterProgramId];
             // Lấy studentIds trong phạm vi
             $stuInScope = db_all('SELECT student_id FROM enrollments WHERE year_id = ? AND class_id IN (' . implode(',', array_fill(0, count($attScopeIds), '?')) . ')', array_merge([$yid], $attScopeIds));
             $stuIds = array_column($stuInScope, 'student_id');
@@ -410,15 +404,17 @@ $leaves = array_map(fn($l) => [
 // ---------------------------------------------------------------
 $scores = $part === 'core' ? [] : array_map(fn($s) => [
     'studentId' => (int) $s['student_id'],
+    'examId'    => (int) ($s['exam_id'] ?? 0),
     'termId'    => (int) $s['term_id'],
     'type'      => $s['type_code'],
     'value'     => (float) $s['value'],
     'at'        => substr($s['updated_at'], 0, 16),
     'by'        => $s['by_name'] ?? '',
 ], data_scoped_rows(data_scope_for($me, 'scores'),
-    'SELECT sc.*, m.full_name AS by_name
+    'SELECT sc.*, m.full_name AS by_name, e.type_code
        FROM scores sc{JOIN}
-       JOIN terms t ON t.id = sc.term_id
+       JOIN score_exams e ON e.id = sc.exam_id
+       JOIN terms t ON t.id = e.term_id
        LEFT JOIN members m ON m.id = sc.updated_by
       WHERE t.year_id = ?', 'sc.student_id', $yid, [$yid]));
 

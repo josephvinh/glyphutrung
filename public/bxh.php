@@ -120,7 +120,9 @@ foreach (db_all("SELECT code, weight FROM score_types") as $st) {
     $weightOf[$st['code']] = (float) $st['weight'];
 }
 $scoreRows = $termId ? db_all(
-    "SELECT student_id, type_code, value FROM scores WHERE term_id = ?",
+    "SELECT s.student_id, e.type_code, s.value
+       FROM scores s JOIN score_exams e ON e.id = s.exam_id
+      WHERE e.term_id = ?",
     [$termId]
 ) : [];
 $scoreOf = []; // id => list ['value','weight']

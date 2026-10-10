@@ -157,6 +157,20 @@ $migrations = [
     "ALTER TABLE students ADD COLUMN deleted_at TIMESTAMP NULL DEFAULT NULL",
     "CREATE INDEX idx_students_hidden ON students(hidden_at)",
     "CREATE INDEX idx_students_deleted ON students(deleted_at)",
+    // 008: Hỗ trợ nhiều bài kiểm tra cùng loại
+    "CREATE TABLE IF NOT EXISTS score_exams (
+        id INT AUTO_INCREMENT PRIMARY KEY, year_id INT NOT NULL, term_id INT NOT NULL,
+        type_code VARCHAR(16) NOT NULL, name VARCHAR(64) NOT NULL DEFAULT '',
+        exam_date DATE NULL, created_by INT NULL, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_se_year (year_id), INDEX idx_se_term (term_id), INDEX idx_se_type (type_code),
+        CONSTRAINT fk_se_year FOREIGN KEY (year_id) REFERENCES school_years(id) ON DELETE CASCADE,
+        CONSTRAINT fk_se_term FOREIGN KEY (term_id) REFERENCES terms(id) ON DELETE CASCADE,
+        CONSTRAINT fk_se_type FOREIGN KEY (type_code) REFERENCES score_types(code),
+        CONSTRAINT fk_se_by FOREIGN KEY (created_by) REFERENCES members(id) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+    "ALTER TABLE scores ADD COLUMN exam_id INT NULL AFTER type_code, ADD INDEX idx_s_exam (exam_id)",
+    "ALTER TABLE scores DROP INDEX uq_score",
+    "ALTER TABLE scores ADD UNIQUE KEY uq_score (exam_id, student_id)",
 ];
 $mig = 0;
 foreach ($migrations as $sqlMig) {
