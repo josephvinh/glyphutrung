@@ -63,7 +63,7 @@ if (!function_exists('json_created')) {
  * Send error response
  *
  * Supports BOTH calling conventions for backward compatibility:
- * - Old: json_fail($message, $code) where $message is string and $code is int HTTP status
+ * - Old: json_fail($message) or json_fail($message, $code) where $message is string and $code is int HTTP status
  * - New: json_fail($code, $message, $details, $status) where $code is string error code
  *
  * Status is inferred from error code if not explicitly provided.
@@ -71,12 +71,24 @@ if (!function_exists('json_created')) {
 if (!function_exists('json_fail')) {
     function json_fail(string $code, string|int $message = '', array $details = [], int $status = 400): never
     {
-        // Old calling convention: json_fail($message, $code) where $message is string and $code is int
-        if (is_int($message)) {
-            $status = $message; // second param was HTTP code
-            $message = $code; // first param was message string
+        // Old calling convention detection:
+        // - json_fail('message') -> one param, first param is the message
+        // - json_fail('message', 401) -> two params, second param is int HTTP code
+        // - json_fail('BAD_REQUEST', 'message') -> two params, both strings = new convention
+        $argCount = func_num_args();
+
+        if ($argCount === 1) {
+            // OLD: json_fail('message') - single param is the message
+            $message = $code;
+            $code = 'BAD_REQUEST';
+            $status = 400;
+        } elseif ($argCount === 2 && is_int($message)) {
+            // OLD: json_fail('message', 401) - second param is HTTP status
+            $status = $message;
+            $message = $code;
             $code = 'BAD_REQUEST';
         }
+        // If $argCount >= 3 or second param is string, use new convention (code, message, details, status)
 
         // Infer HTTP status from error code if default 400 was used
         if ($status === 400) {

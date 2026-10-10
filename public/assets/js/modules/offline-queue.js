@@ -252,7 +252,7 @@ class OfflineQueue {
 
     await this.init();
 
-    // Prevent concurrent syncs (page and SW can both call sync())
+    // Prevent concurrent syncs
     if (this._isSyncing) {
       console.log('[OfflineQueue] Sync already in progress, skipping');
       return { synced: 0, failed: 0 };
@@ -260,26 +260,34 @@ class OfflineQueue {
     this._isSyncing = true;
 
     try {
+      // Get pending items
       const pending = await this.getPending();
       if (pending.length === 0) {
         return { synced: 0, failed: 0 };
       }
 
-      // Mark all items as 'syncing' in a single transaction to prevent duplicates
-      await this._markSyncing(pending.map(i => i.id));
-
       let synced = 0;
       let failed = 0;
 
       for (const item of pending) {
+        // Skip items that are already syncing (race condition protection)
+        if (item.status === 'syncing') continue;
+
+        // Mark as syncing immediately to prevent duplicate POSTs
+        await this.updateStatus(item.id, 'syncing');
+
         try {
           await this.syncItem(item);
           await this.remove(item.id);
           synced++;
         } catch (err) {
           console.error('[OfflineQueue] Sync failed for item', item.id, err);
+          // On failure, set back to pending so it can be retried
+          await this.updateStatus(item.id, 'pending');
           const updated = await this.incrementRetry(item.id);
           if (updated && updated.status === 'failed') {
+            // Mark as failed permanently
+            await this.updateStatus(item.id, 'failed');
             failed++;
           }
         }
@@ -293,39 +301,12 @@ class OfflineQueue {
   }
 
   /**
-   * Mark items as syncing to prevent duplicate POSTs
-   */
-  async _markSyncing(ids) {
-    if (!this.db || !ids.length) return;
-
-    return new Promise((resolve, reject) => {
-      const tx = this.db.transaction(STORE_NAME, 'readwrite');
-      const store = tx.objectStore(STORE_NAME);
-      const index = store.index('status');
-
-      const getAll = index.getAll('pending');
-      getAll.onsuccess = () => {
-        const allPending = getAll.result;
-        for (const item of allPending) {
-          if (ids.includes(item.id)) {
-            item.status = 'syncing';
-            store.put(item);
-          }
-        }
-      };
-      getAll.onerror = () => resolve();
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => reject(tx.error);
-    });
-  }
-
-  /**
    * Sync single item
    * @param {Object} item - Queue item
    * @returns {Promise<any>}
    */
   async syncItem(item) {
-    // Get current CSRF token at sync time (may have changed since enqueue)
+    // Get CSRF token from current page
     const csrfToken = this._getCsrfToken();
 
     const response = await fetch(item.endpoint, {
@@ -337,25 +318,6 @@ class OfflineQueue {
       },
       body: JSON.stringify(item.payload)
     });
-
-    // CSRF failure: refresh token and retry once
-    if (response.status === 403) {
-      await this._refreshCsrfToken();
-      const newToken = this._getCsrfToken();
-      const retryResponse = await fetch(item.endpoint, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(newToken && { 'X-CSRF-TOKEN': newToken })
-        },
-        body: JSON.stringify(item.payload)
-      });
-      if (!retryResponse.ok) {
-        throw new Error(`Sync failed after token refresh: ${retryResponse.status}`);
-      }
-      return retryResponse.json();
-    }
 
     if (!response.ok) {
       throw new Error(`Sync failed: ${response.status}`);
@@ -370,27 +332,14 @@ class OfflineQueue {
    */
   _getCsrfToken() {
     // Try various sources for CSRF token
+    if (window.TNTT_BOOT?.csrfToken) return window.TNTT_BOOT.csrfToken;
+    if (window.TNTT?.csrfToken) return window.TNTT.csrfToken;
     const meta = document?.querySelector('meta[name="csrf-token"]');
     if (meta) return meta.content;
-    return window?.TNTT?.csrfToken || window?.TNTT_BOOT?.csrfToken || null;
-  }
-
-  /**
-   * Refresh CSRF token (called on 403)
-   */
-  async _refreshCsrfToken() {
-    try {
-      const res = await fetch('/api/auth.php?action=csrf', { credentials: 'include' });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.token) {
-          if (window.TNTT) window.TNTT.csrfToken = data.token;
-          if (window.TNTT_BOOT) window.TNTT_BOOT.csrfToken = data.token;
-        }
-      }
-    } catch (e) {
-      console.warn('[OfflineQueue] Failed to refresh CSRF token:', e);
-    }
+    // Try from form inputs
+    const input = document?.querySelector('input[name="_csrf"]');
+    if (input) return input.value;
+    return null;
   }
 
   /**

@@ -178,13 +178,13 @@ async function fetchNotificationContent() {
 
 async function hasFocusedClient() {
   const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-  return clients.some(c => c.focused || c.visibilityState === 'visible');
+  return clients.some(c => c.focused);
 }
 
 async function notifyOpenTabs(url) {
   const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
   for (const c of clients) {
-    if (c.focused || c.visibilityState === 'visible') {
+    if (c.focused) {
       c.postMessage({ action: 'RELOAD_DATA', url: url || '/' });
     }
   }
