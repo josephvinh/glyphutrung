@@ -162,8 +162,11 @@ switch ($action) {
               ORDER BY c.name, s.code",
             $params);
 
-        // Get scores
-        $scores = db_all('SELECT * FROM scores WHERE term_id = ?', [$termId]);
+        // Get scores with exams
+        $scores = db_all(
+            'SELECT s.*, e.type_code FROM scores s JOIN score_exams e ON e.id = s.exam_id WHERE e.term_id = ?',
+            [$termId]
+        );
 
         json_out(['ok' => true,
             'sheet' => ['name' => 'Bảng điểm', 'rows' => build_scores_rows($students, $scores, $scoreTypes)],
@@ -503,14 +506,32 @@ function build_attendance_rows(array $students, array $sessions, array $year): a
 
 function build_scores_rows(array $students, array $scores, array $scoreTypes): array
 {
+    // Index by student_id|exam_id
     $scoreIndex = [];
     foreach ($scores as $s) {
-        $scoreIndex[$s['student_id'] . '|' . $s['type_code']] = $s['value'];
+        $scoreIndex[$s['student_id'] . '|' . $s['exam_id']] = $s['value'];
     }
+
+    // Get exams for this term
+    global $termId;
+    $exams = db_all(
+        'SELECT e.id, e.type_code FROM score_exams e WHERE e.term_id = ? ORDER BY e.type_code, e.id',
+        [$termId]
+    );
 
     $headers = ['Mã số', 'Họ tên', 'Lớp'];
     foreach ($scoreTypes as $st) {
-        $headers[] = $st['label'] ?? $st['code'];
+        // Check how many exams of this type
+        $typeExams = array_filter($exams, fn($e) => $e['type_code'] === $st['code']);
+        $cnt = count($typeExams);
+        if ($cnt <= 1) {
+            $headers[] = $st['label'] ?? $st['code'];
+        } else {
+            foreach ($typeExams as $e) {
+                $headers[] = ($st['label'] ?? $st['code']) . ' #' . $e['id'];
+            }
+            $headers[] = 'TB ' . ($st['label'] ?? $st['code']);
+        }
     }
     $headers[] = 'Trung bình';
 
@@ -524,13 +545,32 @@ function build_scores_rows(array $students, array $scores, array $scoreTypes): a
         $sum = 0;
         $count = 0;
         foreach ($scoreTypes as $stType) {
-            $val = $scoreIndex[$st['id'] . '|' . $stType['code']] ?? null;
-            if ($val !== null) {
-                $row[] = (float) $val;
-                $sum += $val;
+            $typeExams = array_filter($exams, fn($e) => $e['type_code'] === $stType['code']);
+            $typeVals = [];
+            foreach ($typeExams as $e) {
+                $val = $scoreIndex[$st['id'] . '|' . $e['id']] ?? null;
+                if ($val !== null) {
+                    $typeVals[] = (float) $val;
+                    $row[] = (float) $val;
+                } else {
+                    $row[] = '';
+                }
+            }
+            // Average of type
+            if (count($typeExams) > 1) {
+                if (count($typeVals) > 0) {
+                    $avg = round(array_sum($typeVals) / count($typeVals), 1);
+                    $row[] = $avg;
+                    $sum += $avg * (int) $stType['weight'];
+                    $count += (int) $stType['weight'];
+                } else {
+                    $row[] = '';
+                }
+            }
+            // Simple sum for 0 or 1 exam
+            if (count($typeExams) <= 1 && count($typeVals) > 0) {
+                $sum += $typeVals[0];
                 $count++;
-            } else {
-                $row[] = '';
             }
         }
         $row[] = $count > 0 ? round($sum / $count, 1) : '';

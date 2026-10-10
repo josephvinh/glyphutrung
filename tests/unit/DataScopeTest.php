@@ -424,6 +424,12 @@ class DataScopeTest extends TestCase
         self::assertNotNull($term, 'Cần học kỳ của niên khoá hiện tại.');
         self::assertNotNull($type, 'Cần loại điểm.');
 
+        // Tạo exam ngầm định cho loại điểm này
+        $examId = db_insert(
+            'INSERT INTO score_exams (year_id, term_id, type_code, name) VALUES (?,?,?,?)',
+            [$this->yearId, $term['id'], $type['code'], 'Bài test']
+        );
+
         $pid = db_insert(
             "INSERT INTO programs (year_id, name, type, status, day_of_week, start_time)
              VALUES (?, 'P1 Test Buổi', 'bắt buộc', 'kích hoạt', ?, '23:59:00')",
@@ -439,8 +445,8 @@ class DataScopeTest extends TestCase
             $this->madeStudentIds[] = $sid;
             db_run("INSERT INTO enrollments (year_id, student_id, class_id, status) VALUES (?,?,?, 'đang sinh hoạt')",
                    [$this->yearId, $sid, $class['id']]);
-            db_run('INSERT INTO scores (term_id, student_id, type_code, value) VALUES (?,?,?,8.5)',
-                   [$term['id'], $sid, $type['code']]);
+            db_run('INSERT INTO scores (exam_id, student_id, value) VALUES (?,?,8.5)',
+                   [$examId, $sid]);
             db_run("INSERT INTO leave_requests (year_id, student_id, program_id, session_date, reason, status)
                     VALUES (?,?,?, CURDATE(), ?, 'chờ duyệt')", [$this->yearId, $sid, $pid, "NHAYCAM-$tag"]);
             db_run("INSERT INTO reports (term_id, student_id, remark) VALUES (?,?,?)",
@@ -568,7 +574,7 @@ class DataScopeTest extends TestCase
         $this->seedChildren();
         $y = $this->yearId;
         $db = [
-            'scores'        => (int) db_one('SELECT COUNT(*) n FROM scores sc JOIN terms t ON t.id = sc.term_id WHERE t.year_id = ?', [$y])['n'],
+            'scores'        => (int) db_one('SELECT COUNT(*) n FROM scores sc JOIN score_exams e ON e.id = sc.exam_id JOIN terms t ON t.id = e.term_id WHERE t.year_id = ?', [$y])['n'],
             'leaveRequests' => (int) db_one('SELECT COUNT(*) n FROM leave_requests WHERE year_id = ?', [$y])['n'],
             'reports'       => (int) db_one('SELECT COUNT(*) n FROM reports r JOIN terms t ON t.id = r.term_id WHERE t.year_id = ?', [$y])['n'],
         ];

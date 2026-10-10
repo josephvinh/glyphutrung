@@ -302,20 +302,44 @@ CREATE TABLE IF NOT EXISTS score_types (
     sort_order  TINYINT     NOT NULL DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Đợt thi / bài kiểm tra — mỗi bài là 1 dòng, thuộc 1 loại điểm + 1 học kỳ
+CREATE TABLE IF NOT EXISTS score_exams (
+    id         INT AUTO_INCREMENT PRIMARY KEY,
+    year_id    INT          NOT NULL,
+    term_id    INT          NOT NULL,
+    type_code  VARCHAR(16)  NOT NULL,
+    name       VARCHAR(64)  NOT NULL DEFAULT '',
+    exam_date  DATE         NULL COMMENT 'ngày thi, tùy chọn',
+    created_by INT          NULL,
+    created_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_se_year  (year_id),
+    INDEX idx_se_term  (term_id),
+    INDEX idx_se_type  (type_code),
+    CONSTRAINT fk_se_year  FOREIGN KEY (year_id)   REFERENCES school_years(id) ON DELETE CASCADE,
+    CONSTRAINT fk_se_term  FOREIGN KEY (term_id)   REFERENCES terms(id)       ON DELETE CASCADE,
+    CONSTRAINT fk_se_type  FOREIGN KEY (type_code) REFERENCES score_types(code),
+    CONSTRAINT fk_se_by    FOREIGN KEY (created_by) REFERENCES members(id)    ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Điểm số — mỗi em mỗi bài kiểm tra (exam) có 1 điểm.
+-- exam_id NULL = bài ngầm định (tương thích dữ liệu cũ, mỗi loại chỉ 1 bài).
 CREATE TABLE IF NOT EXISTS scores (
     id         INT AUTO_INCREMENT PRIMARY KEY,
     term_id    INT           NOT NULL,
     student_id INT           NOT NULL,
-    type_code  VARCHAR(16)   NOT NULL,
-    value      DECIMAL(4,2)  NOT NULL,
+    type_code  VARCHAR(16)  NOT NULL,
+    exam_id    INT           NULL,
+    value      DECIMAL(4,2) NOT NULL,
     updated_by INT           NULL,
-    updated_at DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT fk_sc_term    FOREIGN KEY (term_id) REFERENCES terms(id) ON DELETE CASCADE,
-    CONSTRAINT fk_sc_student FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
-    CONSTRAINT fk_sc_type    FOREIGN KEY (type_code) REFERENCES score_types(code),
-    CONSTRAINT fk_sc_by      FOREIGN KEY (updated_by) REFERENCES members(id) ON DELETE SET NULL,
+    updated_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_s_exam (exam_id),
+    CONSTRAINT fk_sc_term    FOREIGN KEY (term_id)    REFERENCES terms(id)         ON DELETE CASCADE,
+    CONSTRAINT fk_sc_student FOREIGN KEY (student_id) REFERENCES students(id)      ON DELETE CASCADE,
+    CONSTRAINT fk_sc_type    FOREIGN KEY (type_code)  REFERENCES score_types(code),
+    CONSTRAINT fk_sc_exam    FOREIGN KEY (exam_id)    REFERENCES score_exams(id)   ON DELETE CASCADE,
+    CONSTRAINT fk_sc_by      FOREIGN KEY (updated_by) REFERENCES members(id)      ON DELETE SET NULL,
     CONSTRAINT chk_sc_value  CHECK (value >= 0 AND value <= 10),
-    UNIQUE KEY uq_score (term_id, student_id, type_code)
+    UNIQUE KEY uq_score (exam_id, student_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================================================

@@ -105,6 +105,7 @@ function tracuu_weighted_avg(array $cols): ?float
 
 /**
  * TAB ĐIỂM SỐ: mỗi học kỳ của niên khoá là một bảng, cột = loại điểm.
+ * Mỗi loại điểm có thể có nhiều bài kiểm tra — hiện điểm từng bài + trung bình loại.
  * @return array{types:array,terms:array}
  */
 function tracuu_scores(int $studentId, int $yearId): array
@@ -112,33 +113,96 @@ function tracuu_scores(int $studentId, int $yearId): array
     $types = db_all('SELECT code, label, short_label, weight FROM score_types ORDER BY sort_order, code');
     $terms = db_all('SELECT id, name, start_date, end_date FROM terms WHERE year_id = ? ORDER BY sort_order, start_date', [$yearId]);
 
-    $rows = db_all(
-        'SELECT sc.term_id, sc.type_code, sc.value
-           FROM scores sc JOIN terms t ON t.id = sc.term_id
-          WHERE sc.student_id = ? AND t.year_id = ?',
-        [$studentId, $yearId]
+    // Lấy exams của niên khoá
+    $exams = db_all(
+        'SELECT e.id, e.term_id, e.type_code, e.name, e.exam_date
+           FROM score_exams e JOIN terms t ON t.id = e.term_id
+          WHERE t.year_id = ?
+          ORDER BY t.sort_order, e.type_code, e.exam_date, e.id',
+        [$yearId]
     );
-    $byTerm = [];
-    foreach ($rows as $r) $byTerm[(int) $r['term_id']][$r['type_code']] = (float) $r['value'];
 
+    // Lấy điểm của em trong niên khoá (LEFT JOIN để giữ lại exam_id NULL - tương thích dữ liệu cũ)
+    $scores = db_all(
+        'SELECT sc.exam_id, sc.value
+           FROM scores sc
+           LEFT JOIN score_exams e ON e.id = sc.exam_id
+           LEFT JOIN terms t ON t.id = e.term_id
+          WHERE sc.student_id = ? AND (t.year_id = ? OR (sc.exam_id IS NULL AND EXISTS (SELECT 1 FROM terms WHERE id = ?)))',
+        [$studentId, $yearId, $yearId]
+    );
+    $scoreByExam = [];
+    foreach ($scores as $s) {
+        $key = $s['exam_id'] === null ? 'null' : (int) $s['exam_id'];
+        $scoreByExam[$key] = (float) $s['value'];
+    }
+
+    // Map exams by type
+    $examsByType = [];
+    foreach ($exams as $e) {
+        $tc = $e['type_code'];
+        if (!isset($examsByType[$tc])) $examsByType[$tc] = [];
+        $examsByType[$tc][] = [
+            'id'       => (int) $e['id'],
+            'name'     => $e['name'] ?: '',
+            'examDate' => $e['exam_date'],
+        ];
+    }
+
+    // Build type list
     $outTypes = array_map(fn($t) => [
         'code' => $t['code'], 'label' => $t['label'], 'short' => $t['short_label'], 'weight' => (int) $t['weight'],
     ], $types);
 
+    // Build terms with scores
     $outTerms = [];
     foreach ($terms as $t) {
-        $vals = $byTerm[(int) $t['id']] ?? [];
-        $cols = [];
+        $byType = [];
         foreach ($outTypes as $ty) {
-            $cols[] = ['weight' => $ty['weight'], 'value' => $vals[$ty['code']] ?? null];
+            $tc = $ty['code'];
+
+            // Lấy exams của loại này trong học kỳ
+            $termExams = [];
+            foreach ($exams as $e) {
+                if ((int) $e['term_id'] === (int) $t['id'] && $e['type_code'] === $tc) {
+                    $val = $scoreByExam[(int) $e['id']] ?? null;
+                    $termExams[] = [
+                        'id'       => (int) $e['id'],
+                        'name'     => $e['name'] ?: '',
+                        'examDate' => $e['exam_date'],
+                        'value'    => $val,
+                    ];
+                }
+            }
+
+            // Tính trung bình loại điểm
+            $vals = array_filter(array_column($termExams, 'value'), fn($v) => $v !== null);
+            $avg = count($vals) > 0 ? round(array_sum($vals) / count($vals), 2) : null;
+
+            $byType[$tc] = [
+                'typeCode' => $tc,
+                'label'    => $ty['label'],
+                'weight'   => $ty['weight'],
+                'exams'    => $termExams,
+                'avg'      => $avg,
+            ];
         }
+
+        // Tính ĐTB học kỳ
+        $cols = [];
+        foreach ($byType as $bt) {
+            if ($bt['avg'] !== null) {
+                $cols[] = ['weight' => $bt['weight'], 'value' => $bt['avg']];
+            }
+        }
+
         $outTerms[] = [
-            'id'    => (int) $t['id'],
-            'name'  => $t['name'],
-            'from'  => $t['start_date'],
-            'to'    => $t['end_date'],
-            'cols'  => $cols,                       // song song với types
-            'avg'   => tracuu_weighted_avg($cols),
+            'id'      => (int) $t['id'],
+            'name'    => $t['name'],
+            'from'    => $t['start_date'],
+            'to'      => $t['end_date'],
+            'byType'  => $byType,
+            'avg'     => tracuu_weighted_avg($cols),
         ];
     }
     return ['types' => $outTypes, 'terms' => $outTerms];

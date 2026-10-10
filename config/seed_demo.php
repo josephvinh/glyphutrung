@@ -173,15 +173,26 @@ foreach ($studentsFlat as [$sid, $cid]) {
 $nAtt = chen_nhieu($pdo, "INSERT INTO attendances (year_id, program_id, session_date, student_id, status, method, marked_by, marked_at)", $attRows, 8, 300);
 
 /* ---------- Điểm số học kỳ hiện tại ---------- */
-$types = array_column(db_all("SELECT code FROM score_types"), 'code');
+// Tạo exam ngầm định cho mỗi loại điểm
+$types = db_all("SELECT code, label FROM score_types");
+$examIds = []; // type_code => exam_id
+foreach ($types as $t) {
+    $examId = db_insert(
+        'INSERT INTO score_exams (year_id, term_id, type_code, name, created_by) VALUES (?,?,?,?,?)',
+        [$yearId, $termId, $t['code'], $t['label'] . ' số 1', $adminId]
+    );
+    $examIds[$t['code']] = $examId;
+}
+
+// Tạo điểm cho mỗi em mỗi exam
 $scoreRows = [];
 foreach ($studentsFlat as [$sid, $cid]) {
-    foreach ($types as $tc) {
+    foreach ($examIds as $tc => $eid) {
         $val = round(random_int(40, 100) / 10, 1); // 4.0 .. 10.0
-        $scoreRows[] = [$termId, $sid, $tc, $val, $adminId, $now];
+        $scoreRows[] = [$eid, $sid, $val, $adminId, $now];
     }
 }
-$nScore = chen_nhieu($pdo, "INSERT INTO scores (term_id, student_id, type_code, value, updated_by, updated_at)", $scoreRows, 6, 400);
+$nScore = chen_nhieu($pdo, "INSERT INTO scores (exam_id, student_id, value, updated_by, updated_at)", $scoreRows, 5, 400);
 
 /* ---------- Tổng kết ---------- */
 $giay = round(microtime(true) - $t0, 1);

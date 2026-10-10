@@ -133,24 +133,58 @@ function build_report_html(array $student, array $term, ?array $report): string
     $termTo = isset($term['end_date']) ? date('d/m/Y', strtotime($term['end_date'])) : '';
 
     // Lấy chi tiết điểm của em này để hiển thị trong phiếu liên lạc
+    // Query qua score_exams để hỗ trợ nhiều bài kiểm tra cùng loại
     $scores = db_all(
-        "SELECT st.code, st.label, sc.value 
-         FROM score_types st 
-         LEFT JOIN scores sc ON sc.type_code = st.code AND sc.student_id = ? AND sc.term_id = ?
-         ORDER BY st.sort_order", 
-        [$student['id'], $term['id']]
+        "SELECT st.code, st.label, st.weight,
+                e.id AS exam_id, e.name AS exam_name, e.exam_date,
+                sc.value
+         FROM score_types st
+         LEFT JOIN score_exams e ON e.type_code = st.code AND e.term_id = ?
+         LEFT JOIN scores sc ON sc.exam_id = e.id AND sc.student_id = ?
+         ORDER BY st.sort_order, e.exam_date, e.id",
+        [$term['id'], $student['id']]
     );
-    
+
+    // Nhóm điểm theo loại (nhiều bài cùng loại → trung bình)
+    $scoreByType = [];
+    $scoreTypes = [];
+    foreach ($scores as $s) {
+        $tc = $s['code'];
+        if (!isset($scoreByType[$tc])) {
+            $scoreByType[$tc] = ['label' => $s['label'], 'weight' => $s['weight'], 'vals' => [], 'exams' => []];
+            $scoreTypes[] = $tc;
+        }
+        if ($s['value'] !== null) {
+            $scoreByType[$tc]['vals'][] = (float) $s['value'];
+            $scoreByType[$tc]['exams'][] = [
+                'name' => $s['exam_name'],
+                'date' => $s['exam_date'],
+                'value' => (float) $s['value']
+            ];
+        }
+    }
+
     $scoreRows = '';
-    if (!empty($scores)) {
+    if (!empty($scoreTypes)) {
         $scoreRows .= '<div class="detailed-scores-container">';
         $scoreRows .= '<h4 class="section-subtitle">CHI TIẾT ĐIỂM</h4>';
         $scoreRows .= '<div class="detailed-scores-grid">';
-        foreach ($scores as $s) {
-            $val = $s['value'] !== null ? number_format((float)$s['value'], 1) : '-';
+        foreach ($scoreTypes as $tc) {
+            $s = $scoreByType[$tc];
+            $vals = $s['vals'];
+            $val = count($vals) > 0 ? number_format(array_sum($vals) / count($vals), 1) : '-';
             $scoreRows .= '<div class="score-box">';
             $scoreRows .= '<div class="score-val">' . $val . '</div>';
-            $scoreRows .= '<div class="score-lbl">' . htmlspecialchars($s['label'] ?: $s['code']) . '</div>';
+            $scoreRows .= '<div class="score-lbl">' . htmlspecialchars($s['label']) . '</div>';
+            // Hiện chi tiết từng bài nếu có nhiều hơn 1
+            if (count($s['exams']) > 1) {
+                $details = [];
+                foreach ($s['exams'] as $e) {
+                    $name = $e['name'] ?: ($e['date'] ? date('d/m', strtotime($e['date'])) : 'Bài');
+                    $details[] = $name . ': ' . number_format($e['value'], 1);
+                }
+                $scoreRows .= '<div class="score-detail">' . htmlspecialchars(implode(' · ', $details)) . '</div>';
+            }
             $scoreRows .= '</div>';
         }
         $scoreRows .= '</div></div>';
