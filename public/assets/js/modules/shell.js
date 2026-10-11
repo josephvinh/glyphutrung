@@ -212,9 +212,6 @@ window.TNTT.shell = {
         this.$watch('filterBlock', resetLimit);
         this.$watch('filterClass', resetLimit);
 
-        // Notification center visibility state
-        this.showNotificationCenter = false;
-
         this.attendanceDate = this.toDateInput(new Date());
         this.leaveDate = this.toDateInput(new Date());
         this.statMonth = this.toDateInput(new Date()).slice(0, 7);
@@ -261,9 +258,7 @@ window.TNTT.shell = {
         this.initOfflineSupport();
 
         // ---- Khởi tạo notification center ----
-        if (typeof window.TNTT.notifications !== 'undefined') {
-            window.TNTT.notifications.init();
-        }
+        this.notifInit();
 
         // Nạp dữ liệu nghiệp vụ của niên khoá đang mở.
         this.loadData();

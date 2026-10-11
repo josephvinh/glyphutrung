@@ -1,153 +1,133 @@
 /* ==========================================================
    NOTIFICATION CENTER
-   Quản lý notification history, badge, và nhận push từ SW
+   Quản lý lịch sử thông báo, badge, và nhận push từ SW.
+   Mảnh này được gộp PHẲNG vào component tnttApp (xem app.js) nên mọi
+   thuộc tính/hàm đều mang tiền tố notif* để không đè mảnh khác.
    ========================================================== */
 
 window.TNTT = window.TNTT || {};
 window.TNTT.notifications = {
     // State
-    items: [],
-    unreadCount: 0,
-    loading: false,
-    filter: 'all',
-    page: 1,
-    hasMore: true,
+    showNotificationCenter: false,
+    notifItems: [],
+    notifUnread: 0,
+    notifLoading: false,
+    notifFilter: 'all',
+    notifPage: 1,
+    notifHasMore: false,
+    _notifSeq: 0,
 
     /** Khởi tạo: nạp số chưa đọc + đăng ký SW message listener */
-    async init() {
-        await this.loadUnreadCount();
-
+    async notifInit() {
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.addEventListener('message', (e) => {
                 if (e.data?.action === 'PUSH_RECEIVED') {
-                    this.handlePushReceived(e.data.notification);
+                    this.notifHandlePush(e.data.notification);
                 }
             });
         }
+        await this.notifLoadUnread();
     },
 
-    /** Gọi khi SW báo có push notification mới */
-    handlePushReceived(notification) {
-        window.TNTT.toast.show(
-            `${notification.title}\n${notification.body}`,
-            'info',
-            5000
-        );
-
-        this.items.unshift({
-            id: 'temp-' + Date.now(),
-            tag: notification.tag,
-            title: notification.title,
-            body: notification.body,
-            url: notification.url,
-            is_read: false,
-            created_at: new Date().toISOString(),
-        });
-
-        this.unreadCount++;
-        this.updateBadge();
+    /** SW báo có push mới khi app đang mở: toast + đồng bộ lại với server
+     *  (hàng lịch sử đã được push_bao ghi sẵn nên không tự chèn mục giả). */
+    notifHandlePush(n) {
+        window.TNTT.toast.show(`${n.title}\n${n.body}`, 'info', 5000);
+        this.notifLoadUnread();
+        if (this.showNotificationCenter) {
+            this.notifPage = 1;
+            this.notifLoadList();
+        }
     },
 
-    async loadUnreadCount() {
+    async notifLoadUnread() {
         try {
             const r = await window.TNTT.core.api('notifications', 'unread_count');
-            if (r.ok) {
-                this.unreadCount = r.count;
-                this.updateBadge();
-            }
+            if (r.ok) this.notifUnread = r.count;
         } catch (e) {}
     },
 
-    updateBadge() {
-        const badge = document.getElementById('notif-badge');
-        if (badge) {
-            badge.textContent = this.unreadCount > 0 ?
-                (this.unreadCount > 99 ? '99+' : this.unreadCount) : '';
-            badge.style.display = this.unreadCount > 0 ? 'flex' : 'none';
-        }
+    async notifOpen() {
+        this.notifPage = 1;
+        this.notifItems = [];
+        this.notifFilter = 'all';
+        this.showNotificationCenter = true;
+        await this.notifLoadList();
     },
 
-    async open() {
-        this.page = 1;
-        this.items = [];
-        this.filter = 'all';
-        await this.loadList();
-        window.TNTT.shell.showNotificationCenter = true;
+    notifClose() {
+        this.showNotificationCenter = false;
     },
 
-    close() {
-        window.TNTT.shell.showNotificationCenter = false;
-    },
-
-    async loadList() {
-        if (this.loading) return;
-        this.loading = true;
+    async notifLoadList() {
+        const seq = ++this._notifSeq;
+        this.notifLoading = true;
         try {
+            const page = this.notifPage;
             const r = await window.TNTT.core.api('notifications', 'list', {
-                read: this.filter === 'unread' ? '0' : 'all',
-                page: this.page,
+                read: this.notifFilter === 'unread' ? '0' : 'all',
+                page,
                 limit: 20,
             });
+            if (seq !== this._notifSeq) return; // đã có yêu cầu mới hơn
             if (r.ok) {
-                if (this.page === 1) {
-                    this.items = r.items;
-                } else {
-                    this.items.push(...r.items);
-                }
-                this.hasMore = r.items.length === r.limit;
+                this.notifItems = page === 1 ? r.items : this.notifItems.concat(r.items);
+                this.notifHasMore = r.items.length === r.limit;
+            } else if (page > 1) {
+                this.notifPage = page - 1;
             }
+        } catch (e) {
+            if (seq === this._notifSeq && this.notifPage > 1) this.notifPage--;
         } finally {
-            this.loading = false;
+            if (seq === this._notifSeq) this.notifLoading = false;
         }
     },
 
-    async loadMore() {
-        if (!this.hasMore || this.loading) return;
-        this.page++;
-        await this.loadList();
+    async notifLoadMore() {
+        if (!this.notifHasMore || this.notifLoading) return;
+        this.notifPage++;
+        await this.notifLoadList();
     },
 
-    async markRead(id) {
+    async notifMarkRead(id) {
         try {
             const r = await window.TNTT.core.api('notifications', 'mark_read', { ids: [id] });
             if (r.ok) {
-                const item = this.items.find(x => x.id == id);
+                const item = this.notifItems.find(x => x.id == id);
                 if (item && !item.is_read) {
                     item.is_read = true;
-                    this.unreadCount = Math.max(0, this.unreadCount - r.count);
-                    this.updateBadge();
+                    this.notifUnread = Math.max(0, this.notifUnread - r.count);
                 }
             }
         } catch (e) {}
     },
 
-    async markAllRead() {
+    async notifMarkAllRead() {
         try {
             const r = await window.TNTT.core.api('notifications', 'mark_read', { all: true });
             if (r.ok) {
-                this.items.forEach(x => x.is_read = true);
-                this.unreadCount = 0;
-                this.updateBadge();
+                this.notifItems.forEach(x => x.is_read = true);
+                this.notifUnread = 0;
             }
         } catch (e) {}
     },
 
-    async setFilter(f) {
-        this.filter = f;
-        this.page = 1;
-        this.items = [];
-        await this.loadList();
+    async notifSetFilter(f) {
+        this.notifFilter = f;
+        this.notifPage = 1;
+        this.notifItems = [];
+        await this.notifLoadList();
     },
 
-    async openNotification(item) {
-        await this.markRead(item.id);
+    async notifOpenItem(item) {
+        await this.notifMarkRead(item.id);
         if (item.url) {
             window.TNTT.router.navigate(item.url);
         }
-        this.close();
+        this.notifClose();
     },
 
-    iconForTag(tag) {
+    notifIconForTag(tag) {
         const icons = {
             announcement: 'megaphone',
             leave: 'file-text',
@@ -161,7 +141,7 @@ window.TNTT.notifications = {
         return icons[tag] || 'bell';
     },
 
-    colorForTag(tag) {
+    notifColorForTag(tag) {
         const colors = {
             announcement: 'bg-blue-50 text-blue-600 border-blue-100',
             leave: 'bg-amber-50 text-amber-600 border-amber-100',

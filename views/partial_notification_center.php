@@ -22,7 +22,7 @@
          x-transition:leave-end="opacity-0"
          style="display: none;"
          class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"
-         @click="notifications.close()">
+         @click="notifClose()">
     </div>
 
     <!-- Sheet -->
@@ -45,20 +45,20 @@
         <div class="flex items-center justify-between px-5 pb-3 border-b border-slate-100 shrink-0">
             <div class="flex items-center gap-2">
                 <h2 class="text-base font-black text-slate-800">Thông báo</h2>
-                <span x-show="notifications.unreadCount > 0"
+                <span x-show="notifUnread > 0"
                       style="display: none;"
                       class="px-1.5 py-0.5 rounded-full bg-rose-500 text-white text-micro font-black"
-                      x-text="notifications.unreadCount"></span>
+                      x-text="notifUnread"></span>
             </div>
             <div class="flex items-center gap-1">
-                <button x-show="notifications.unreadCount > 0"
+                <button x-show="notifUnread > 0"
                         style="display: none;"
-                        @click="notifications.markAllRead()"
+                        @click="notifMarkAllRead()"
                         class="tap-safe px-3 py-1.5 rounded-xl text-micro font-bold text-blue-600 hover:bg-blue-50 active:scale-95 transition-all">
                     Đánh dấu đã đọc
                 </button>
                 <button aria-label="Đóng"
-                        @click="notifications.close()"
+                        @click="notifClose()"
                         class="tap-safe w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center active:scale-90 transition-transform shrink-0">
                     <i data-lucide="x" class="w-4 h-4 text-slate-500"></i>
                 </button>
@@ -67,30 +67,30 @@
 
         <!-- Tabs -->
         <div class="flex items-center gap-1 px-5 py-3 border-b border-slate-100 shrink-0">
-            <button @click="notifications.setFilter('all')"
+            <button @click="notifSetFilter('all')"
                     class="px-4 py-1.5 rounded-full text-micro font-bold transition-all"
-                    :class="notifications.filter === 'all'
+                    :class="notifFilter === 'all'
                         ? 'bg-blue-600 text-white shadow-sm'
                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">
                 Tất cả
             </button>
-            <button @click="notifications.setFilter('unread')"
+            <button @click="notifSetFilter('unread')"
                     class="px-4 py-1.5 rounded-full text-micro font-bold transition-all flex items-center gap-1"
-                    :class="notifications.filter === 'unread'
+                    :class="notifFilter === 'unread'
                         ? 'bg-blue-600 text-white shadow-sm'
                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200'">
                 Chưa đọc
-                <span x-show="notifications.unreadCount > 0"
+                <span x-show="notifUnread > 0"
                       style="display: none;"
                       class="w-4 h-4 rounded-full bg-rose-500 text-white text-[10px] font-black flex items-center justify-center"
-                      x-text="notifications.unreadCount > 99 ? '99+' : notifications.unreadCount"></span>
+                      x-text="notifUnread > 99 ? '99+' : notifUnread"></span>
             </button>
         </div>
 
         <!-- List -->
         <div class="flex-1 overflow-y-auto">
             <!-- Loading skeleton -->
-            <div x-show="notifications.loading && notifications.items.length === 0"
+            <div x-show="notifLoading && notifItems.length === 0"
                  style="display: none;"
                  class="p-5 space-y-3">
                 <template x-for="n in 4" :key="n">
@@ -106,14 +106,14 @@
             </div>
 
             <!-- Notification items -->
-            <template x-for="item in notifications.items" :key="item.id">
-                <div @click="notifications.openNotification(item)"
+            <template x-for="item in notifItems" :key="item.id">
+                <div @click="notifOpenItem(item)"
                      class="flex items-start gap-3 px-5 py-4 border-b border-slate-50 cursor-pointer hover:bg-slate-50 active:bg-slate-100 transition-colors"
                      :class="{ 'bg-blue-50/50': !item.is_read }">
                     <!-- Icon -->
                     <div class="w-10 h-10 rounded-xl border shrink-0 flex items-center justify-center"
-                         :class="notifications.colorForTag(item.tag)">
-                        <i :data-lucide="notifications.iconForTag(item.tag)" class="w-5 h-5"></i>
+                         :class="notifColorForTag(item.tag)">
+                        <i :data-lucide="notifIconForTag(item.tag)" class="w-5 h-5"></i>
                     </div>
                     <!-- Content -->
                     <div class="flex-1 min-w-0">
@@ -133,7 +133,7 @@
             </template>
 
             <!-- Empty state -->
-            <div x-show="!notifications.loading && notifications.items.length === 0"
+            <div x-show="!notifLoading && notifItems.length === 0"
                  style="display: none;"
                  class="flex flex-col items-center justify-center py-16 text-center">
                 <div class="w-16 h-16 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center mb-4">
@@ -144,10 +144,10 @@
             </div>
 
             <!-- Load more -->
-            <div x-show="notifications.hasMore && !notifications.loading"
+            <div x-show="notifHasMore && !notifLoading"
                  style="display: none;"
                  class="p-4 text-center">
-                <button @click="notifications.loadMore()"
+                <button @click="notifLoadMore()"
                         class="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-micro rounded-xl active:scale-95 transition-all">
                     Xem thêm
                 </button>

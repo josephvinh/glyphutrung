@@ -225,6 +225,9 @@ if (!$__dev) ob_start();
         <!-- THANH ĐIỀU HƯỚNG DƯỚI (ẩn trên máy tính, xem app.css) -->
         <?php include __DIR__ . '/../views/layout_bottomnav.php'; ?>
 
+        <!-- Notification center (trong scope tnttApp để Alpine ràng buộc state) -->
+        <?php include __DIR__ . '/../views/partial_notification_center.php'; ?>
+
     </div>
 
     <!-- ================= MODAL POPUP: XEM TÀI LIỆU THƯ VIỆN =================
@@ -354,9 +357,6 @@ if (!$__dev) ob_start();
     <!-- PRODUCTION: một tệp gộp (toast + module + app.js) cho nhẹ -->
     <script src="assets/js/bundle.php?v=<?php echo bundle_v($__jsFiles); ?>"></script>
     <?php endif; ?>
-
-    <!-- Notification center -->
-    <?php include __DIR__ . '/../views/partial_notification_center.php'; ?>
 
     <script>document.addEventListener('DOMContentLoaded', () => { lucide.createIcons(); });</script>
 </body>
