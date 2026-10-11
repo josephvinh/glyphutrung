@@ -30,6 +30,17 @@
 
         <!-- Actions -->
         <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <!-- Thong bao -->
+            <button @click="notifications.open()"
+                    class="relative tap-safe w-9 h-9 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-all active:scale-95">
+                <i data-lucide="bell" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+                <span id="notif-badge"
+                      x-show="notifications.unreadCount > 0"
+                      style="display: none;"
+                      class="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full bg-rose-500 text-white text-micro font-black flex items-center justify-center"
+                      x-text="notifications.unreadCount > 99 ? '99+' : notifications.unreadCount"></span>
+            </button>
+
             <!-- Lam moi / dong bo -->
             <button @click="refreshApp()" :disabled="syncing" type="button" aria-label="Lam moi du lieu"
                     class="w-9 h-9 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-800 flex items-center justify-center transition-all active:scale-95 disabled:opacity-50">

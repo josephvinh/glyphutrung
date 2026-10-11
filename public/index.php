@@ -355,6 +355,9 @@ if (!$__dev) ob_start();
     <script src="assets/js/bundle.php?v=<?php echo bundle_v($__jsFiles); ?>"></script>
     <?php endif; ?>
 
+    <!-- Notification center -->
+    <?php include __DIR__ . '/../views/partial_notification_center.php'; ?>
+
     <script>document.addEventListener('DOMContentLoaded', () => { lucide.createIcons(); });</script>
 </body>
 </html>
