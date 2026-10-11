@@ -17,8 +17,23 @@
 require __DIR__ . '/_bootstrap.php';
 require_once __DIR__ . '/StampService.php';
 
-require_write();
-$me   = require_permission('attendance', 'edit');
+// DEBUG: Catch any exception before require_write to debug CI
+// file_put_contents('/tmp/attendance_debug.log', "START require_write\n", FILE_APPEND);
+try {
+    require_write();
+} catch (Throwable $e) {
+    file_put_contents('/tmp/attendance_debug.log', "EXCEPTION in require_write: " . $e->getMessage() . "\n" . $e->getTraceAsString() . "\n", FILE_APPEND);
+    throw $e;
+}
+// file_put_contents('/tmp/attendance_debug.log', "OK require_write\n", FILE_APPEND);
+// DEBUG: Catch any exception after require_permission
+try {
+    $me   = require_permission('attendance', 'edit');
+} catch (Throwable $e) {
+    file_put_contents('/tmp/attendance_debug.log', "EXCEPTION in require_permission: " . $e->getMessage() . "\n" . $e->getTraceAsString() . "\n", FILE_APPEND);
+    throw $e;
+}
+// file_put_contents('/tmp/attendance_debug.log', "OK require_permission\n", FILE_APPEND);
 $year = current_year();
 if (!$year) json_fail('Chưa có niên khoá nào đang mở.', 409);
 if ($year['status'] === 'đã khóa') json_fail('Niên khoá đã khoá sổ, không điểm danh được.', 409);
