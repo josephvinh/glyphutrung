@@ -21,11 +21,11 @@ chỉ hướng dẫn và kiểm phần trong repo.
   security headers, cache asset. ⚠️ **Bổ sung:** chặn `.json` (cache — S1).
   Mọi chỉ thị bọc `<IfModule>` để không sập toàn site trên host thiếu module.
 - **Thư mục ngoài web root:** `config/`, `views/`, `storage/library` đã ngoài
-  `public/`. ⚠️ **Chuyển `public/cache/` ra ngoài** (S1).
+  `public/`. ✅ Cache đã chuyển ra `storage/cache/` (S1, #261); cần quyền ghi cho PHP.
 - **PHP ini (kiểm trên host):** `display_errors=0` (đã set ở `_bootstrap`),
   `log_errors=1`, `expose_php=Off`, `session.cookie_httponly/secure/samesite`
   (đã set ở code), giới hạn `upload_max_filesize`/`post_max_size` hợp lý.
-- **Quyền thư mục:** `storage/`, `logs/`, `public/cache/` ghi được bởi PHP; mã
+- **Quyền thư mục:** `storage/` (gồm `storage/cache/`), `logs/` ghi được bởi PHP; mã
   nguồn **chỉ đọc**; `config/config.local.php` quyền chặt (600).
 
 ## 3. HTTPS & secret
