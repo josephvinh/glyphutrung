@@ -187,6 +187,8 @@ if ($action === 'scan') {
         db()->commit();
     } catch (Throwable $e) {
         db()->rollBack();
+        // DEBUG: Log exception details
+        error_log('[QR_SCAN_DEBUG] INSERT failed: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
         json_fail(safe_error($e, 'Ghi điểm danh thất bại, đã hoàn tác: '), 500);
     }
     $daCo = count($hopLe) - $them;
