@@ -46,6 +46,9 @@ window.TNTT.qrscan = {
     _qrHenGui: null,
     _qrTiengAm: null,
     _qrTraMa: null,         // Map: mã số -> em, tra O(1) thay vì quét mảng
+    _qrJsQrNho: null,       // lần tải jsQR đang chạy (dùng chung)
+    _qrCho: [],             // bản ghi vừa quét, chưa đẩy vào sổ điểm danh (xem _qrGhiTamThoi)
+    _qrChoIds: new Set(),   // id các em trong _qrCho, để chặn quét trùng
 
     CHAN_TRUNG_MS: 700,
     LO_TOI_DA: 25,
@@ -126,13 +129,17 @@ window.TNTT.qrscan = {
 
     _qrTaiJsQR() {
         if (window.jsQR) return Promise.resolve();
-        return new Promise((ok, hong) => {
+        // Dùng chung MỘT lần tải: moQuetQR tải sẵn từ đầu (song song với bảng tra
+        // và camera), nơi khác gọi lại thì đợi cùng lần tải đó, không tải đôi.
+        if (this._qrJsQrNho) return this._qrJsQrNho;
+        this._qrJsQrNho = new Promise((ok, hong) => {
             const s = document.createElement('script');
             s.src = 'assets/js/vendor/jsQR.min.js';
             s.onload = ok;
-            s.onerror = () => hong(new Error('Không tải được bộ giải mã QR.'));
+            s.onerror = () => { this._qrJsQrNho = null; hong(new Error('Không tải được bộ giải mã QR.')); };
             document.head.appendChild(s);
         });
+        return this._qrJsQrNho;
     },
 
     /* ---------- Tiếng bíp ----------
@@ -234,28 +241,27 @@ window.TNTT.qrscan = {
             return;
         }
 
-        // Bảng tra riêng cho máy quét: chỉ mã số / tên / lớp.
-        //
-        // KHÔNG dùng this.students — danh sách đó chỉ gồm các em trong
-        // phạm vi mình được XEM (lớp mình), trong khi máy quét cần cả
-        // khối. Và nó chứa ngày sinh, địa chỉ, số điện thoại cha mẹ —
-        // những thứ việc quét không cần tới.
-        this.qrTrangThai = 'Đang tải danh sách…';
-        try {
-            await this._qrTaiBangTra();
-        } catch (e) {
-            this.qrMo = false;
-            window.TNTT.toast.error(e.message);
-            return;
-        }
-
         this.qrVuaGhi = [];
         this.qrDaQuet = 0;
         this.qrDangGui = 0;
         this._qrLan = {};
         this._qrHang = [];
+        this._qrCho = [];
+        this._qrChoIds = new Set();
         this.qrTrangThai = 'Đang mở camera…';
         this.qrMo = true;
+
+        // Ba việc chậm chạy SONG SONG thay vì nối đuôi nhau: tải bảng tra từ máy
+        // chủ, bật camera, và (máy không có BarcodeDetector) tải bộ giải mã jsQR.
+        //
+        // Bảng tra riêng cho máy quét: chỉ mã số / tên / lớp.
+        // KHÔNG dùng this.students — danh sách đó chỉ gồm các em trong
+        // phạm vi mình được XEM (lớp mình), trong khi máy quét cần cả
+        // khối. Và nó chứa ngày sinh, địa chỉ, số điện thoại cha mẹ —
+        // những thứ việc quét không cần tới.
+        const bangTra = this._qrTaiBangTra();
+        bangTra.catch(() => {});          // lỗi được xử lý ở chỗ await bên dưới
+        this._qrCoNative().then(n => { if (!n) this._qrTaiJsQR().catch(() => {}); });
 
         await this.$nextTick();
 
@@ -308,6 +314,17 @@ window.TNTT.qrscan = {
         const cap = (track && track.getCapabilities) ? track.getCapabilities() : {};
         this.qrCoDenPin = !!cap.torch;
         this.qrDenPin = false;
+
+        // Camera đã sẵn sàng; bảng tra phải về đủ mới nhận mã được.
+        this.qrTrangThai = 'Đang tải danh sách…';
+        try {
+            await bangTra;
+        } catch (e) {
+            this._qrTatCamera();
+            this.qrMo = false;
+            window.TNTT.toast.error(e.message);
+            return;
+        }
 
         // Chạm mở camera cũng là một cử chỉ người dùng — mượn luôn để
         // "đánh thức" âm thanh, nếu không iOS chặn tiếng bíp đầu tiên.
@@ -447,8 +464,7 @@ window.TNTT.qrscan = {
             this._qrBipLoi(); this._qrRung(150);
             return;
         }
-        const truoc = this.studentSessionStatus(em.id);
-        if (truoc === 'có mặt' || truoc === 'đi trễ') {
+        if (this._qrChoIds.has(em.id) || this.attendanceRecord(em.id)) {
             this.qrTrangThai = em.name + ' — đã điểm danh';
             return;                      // im lặng, không bíp: chuyện bình thường
         }
@@ -471,16 +487,33 @@ window.TNTT.qrscan = {
     },
 
     /**
-     * Ghi vào danh sách trên máy NGAY, không đợi máy chủ trả lời.
-     * GLV thấy con số nhảy tức thì; máy chủ đồng bộ ở nền.
+     * Ghi nhận trên máy NGAY, không đợi máy chủ trả lời — nhưng chỉ vào
+     * hàng chờ _qrCho, CHƯA đụng sổ điểm danh (this.attendances).
+     *
+     * Mỗi lần thêm vào sổ, Alpine tính lại mọi chỗ đang đọc sổ (danh sách
+     * hàng trăm em, huy hiệu việc cần làm, số liệu...) — hàng trăm mili giây
+     * mỗi lượt trên điện thoại, nên quét bị khựng. Máy quét phủ kín màn hình
+     * nên danh sách bên dưới chưa cần cập nhật; con số GLV thấy là qrDaQuet.
+     * Đóng máy quét thì _qrDayRaSo() đẩy cả lô vào sổ MỘT lần.
      */
     _qrGhiTamThoi(em) {
         const s = this.activeSession;
-        if (this.attendanceRecord(em.id, s)) return;   // đã có -> bỏ
-        this._attThem({
+        if (this._qrChoIds.has(em.id) || this.attendanceRecord(em.id, s)) return;   // đã có -> bỏ
+        this._qrChoIds.add(em.id);
+        this._qrCho.push({
             programId: s.programId, date: s.date, studentId: em.id,
             status: this.isPastCutoff ? 'đi trễ' : 'có mặt',
             method: 'qr', markedBy: this.user.fullName, markedAt: this.currentTime()
+        });
+    },
+
+    /** Đẩy các em vừa quét vào sổ điểm danh trên máy (một lần, khi đóng máy quét) */
+    _qrDayRaSo() {
+        const cho = this._qrCho;
+        this._qrCho = [];
+        this._qrChoIds = new Set();
+        cho.forEach(rec => {
+            if (!this.attendanceRecord(rec.studentId, rec)) this._attThem(rec);
         });
     },
 
@@ -525,6 +558,7 @@ window.TNTT.qrscan = {
             vong++;
         }
 
+        this._qrDayRaSo();
         const sot = this._qrHang.length;
         const daGhi = this.qrDaQuet;
 
@@ -580,6 +614,7 @@ window.TNTT.qrscan = {
             this._qrHang = [];
             this.qrDangGui = 0;
         }
+        this._qrDayRaSo();
         this._qrTatCamera();
         this.qrMo = false;
     },
