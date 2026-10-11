@@ -153,7 +153,7 @@ if ($action === 'scan') {
     $them = 0; $daCo = 0; $bo = [];
 
     foreach ($codes as $ma) {
-        $em = $theoMa[$ma] ?? null;
+        $em = $theoMa[strtolower($ma)] ?? null;
 
         if (!$em)                                        { $bo[] = [$ma, 'không có em nào mang mã này']; continue; }
         if ($em['status'] !== 'đang sinh hoạt')         { $bo[] = [$ma, $em['full_name'] . ' không còn sinh hoạt']; continue; }
