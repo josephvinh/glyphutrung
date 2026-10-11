@@ -37,6 +37,12 @@ window.TNTT.qrscan = {
     qrDenPin: false,        // trạng thái bật/tắt đèn flash pin
     qrCoDenPin: false,      // camera máy có hỗ trợ đèn flash hay không
     qrChanDoan: '',         // dòng thông số camera (tạm thời), không bị ghi đè
+    qrHienThanhCong: false, // trigger animation thành công
+    qrTenThanhCong: '',     // tên em vừa quét thành công
+    qrHienLoi: false,       // trigger animation lỗi
+    qrLoiMessage: '',       // thông báo lỗi
+    qrDaXemHuongDan: false, // đã xem hướng dẫn chưa (dùng localStorage)
+    qrHienHuongDan: false,  // hiện overlay hướng dẫn
     _qrDuong: '',           // đường giải mã đang dùng: BarcodeDetector | jsQR
 
     _qrStream: null,
@@ -46,10 +52,13 @@ window.TNTT.qrscan = {
     _qrHenGui: null,
     _qrTiengAm: null,
     _qrTraMa: null,         // Map: mã số -> em, tra O(1) thay vì quét mảng
+    _qrJsQrPromise: null,  // Promise đang tải jsQR, null = chưa/chưa tải
+    _qrAnimTimer: null, // Timer cho animation
 
     CHAN_TRUNG_MS: 700,
     LO_TOI_DA: 25,
     CHU_KY_GUI_MS: 1200,
+    QR_DECODE_INTERVAL_MS: 50,
 
     get qrHoTro() {
         return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
@@ -64,11 +73,11 @@ window.TNTT.qrscan = {
      * null = không giới hạn.
      */
     get qrLopQuetDuoc() {
-        if (this.isUnrestrictedScope) return null;       // toàn đoàn
-        // Lấy danh sách lớp mình có quyền edit điểm danh
-        const classes = this.availableClasses;
-        if (!classes.length) return [];                  // chưa phân lớp
-        return classes;
+        // Dùng writableClasses thay vì availableClasses để KHÔNG bị bộ lọc
+        // filterBlock thu hẹp — quyền quét không đổi theo lớp đang chọn.
+        const classes = this.writableClasses;
+        if (classes === null) return null;              // toàn đoàn
+        return classes.length ? classes : [];
     },
 
     /**
@@ -78,8 +87,8 @@ window.TNTT.qrscan = {
      */
     get qrPhamVi() {
         if (this.isUnrestrictedScope) return 'Quét được toàn đoàn';
-        const lop = this.availableClasses;
-        if (!lop.length) return 'Chưa được phân lớp';
+        const lop = this.writableClasses;
+        if (lop === null || !lop.length) return 'Chưa được phân lớp';
         return lop.length === 1
             ? 'Quét được lớp ' + lop[0]
             : 'Quét được các lớp ' + lop.join(', ');
@@ -125,10 +134,12 @@ window.TNTT.qrscan = {
                 return;
             }
         } catch (e) {
-            // Lỗi mạng — dùng cache nếu có
+            // Chỉ rơi về cache khi là lỗi mạng. Lỗi nghiệp vụ (401/403)
+            // phải được thông báo, không dùng bảng tra cũ.
+            if (!e.networkError) throw e;
         }
 
-        // Offline: dùng cache
+        // Offline: dùng cache nếu có
         if (cached) {
             this._qrTraMa = cached;
             return;
@@ -156,12 +167,18 @@ window.TNTT.qrscan = {
         }
     },
 
-    /** Đọc bảng tra từ localStorage */
+    /** Đọc bảng tra từ localStorage (hết hạn sau 24 giờ) */
     _qrTaiBangTra_TuCache(key) {
         try {
             const raw = localStorage.getItem(key);
             if (!raw) return null;
             const data = JSON.parse(raw);
+            // Kiểm tra TTL: 24 giờ = 86400000 ms
+            const MAX_AGE = 86400000;
+            if (Date.now() - data.savedAt > MAX_AGE) {
+                localStorage.removeItem(key);
+                return null;
+            }
             const bangTra = new Map();
             (data.items || []).forEach(([ma, id, ten, lop]) => {
                 const k = String(ma).trim();
@@ -175,13 +192,15 @@ window.TNTT.qrscan = {
 
     _qrTaiJsQR() {
         if (window.jsQR) return Promise.resolve();
-        return new Promise((ok, hong) => {
+        if (this._qrJsQrPromise) return this._qrJsQrPromise; // đang tải rồi
+        this._qrJsQrPromise = new Promise((ok, hong) => {
             const s = document.createElement('script');
             s.src = 'assets/js/vendor/jsQR.min.js';
-            s.onload = ok;
-            s.onerror = () => hong(new Error('Không tải được bộ giải mã QR.'));
+            s.onload = () => { this._qrJsQrPromise = null; ok(); };
+            s.onerror = () => { this._qrJsQrPromise = null; hong(new Error('Không tải được bộ giải mã QR.')); };
             document.head.appendChild(s);
         });
+        return this._qrJsQrPromise;
     },
 
     /* ---------- Tiếng bíp ----------
@@ -209,6 +228,17 @@ window.TNTT.qrscan = {
     _qrBipOk()  { this._qrBip(1180, 90); },
     _qrBipLoi() { this._qrBip(320, 220); },
     _qrRung(ms) { if (navigator.vibrate) { try { navigator.vibrate(ms); } catch (e) {} } },
+
+    /** Clear timer animation để tránh conflict khi quét liên tiếp */
+    _clearQRTimers() {
+        if (this._qrAnimTimer) {
+            clearTimeout(this._qrAnimTimer);
+            this._qrAnimTimer = null;
+        }
+        // Reset cả cờ để tránh animation bị kẹt
+        this.qrHienThanhCong = false;
+        this.qrHienLoi = false;
+    },
 
     /* ---------- CHẨN ĐOÁN camera (tạm thời) ----------
        Ghi thông số camera vào qrChanDoan (dòng chữ nhỏ dưới danh sách, KHÔNG
@@ -312,6 +342,20 @@ window.TNTT.qrscan = {
         this._qrHang = [];
         this.qrTrangThai = 'Đang mở camera…';
         this.qrMo = true;
+
+        // Hiện hướng dẫn lần đầu (dùng localStorage để nhớ)
+        try {
+            if (!this.qrDaXemHuongDan) {
+                this.qrDaXemHuongDan = localStorage.getItem('tntt_qr_huongdan') === '1';
+            }
+            if (!this.qrDaXemHuongDan) {
+                this.qrHienHuongDan = true;
+            }
+        } catch (e) {
+            // Chế độ ẩn danh hoặc bị chặn lưu trữ → hiện hướng dẫn mặc định
+            this.qrDaXemHuongDan = false;
+            this.qrHienHuongDan = true;
+        }
 
         await this.$nextTick();
 
@@ -436,8 +480,8 @@ window.TNTT.qrscan = {
             const s = Math.min(vw, vh);
             ctx.drawImage(video, Math.floor((vw - s) / 2), Math.floor((vh - s) / 2), s, s, 0, 0, N, N);
 
-            // Giải mã ~20 lần/giây; chạy hết sức chỉ làm máy nóng và chậm đi
-            if (gio - laiDoc >= 50) {
+            // Giải mã với interval cố định 50ms (~20 lần/giây)
+            if (gio - laiDoc >= this.QR_DECODE_INTERVAL_MS) {
                 laiDoc = gio;
                 if (det) {
                     if (!dangDoc) {
@@ -486,7 +530,12 @@ window.TNTT.qrscan = {
 
         const em = this._qrTraMa.get(ma);
         if (!em) {
-            this.qrTrangThai = 'Không có em nào mang mã "' + ma + '"';
+            // Animation lỗi: mã không tìm thấy
+            this._clearQRTimers();
+            this.qrLoiMessage = 'Không có em nào mang mã "' + ma + '"';
+            this.qrHienLoi = true;
+            this._qrAnimTimer = setTimeout(() => { this.qrHienLoi = false; }, 800);
+            this.qrTrangThai = this.qrLoiMessage;
             this._qrBipLoi(); this._qrRung(150);
             return;
         }
@@ -499,7 +548,11 @@ window.TNTT.qrscan = {
         // đổi này muốn bỏ.
         const lopQuet = this.qrLopQuetDuoc;   // null = toàn đoàn
         if (lopQuet !== null && !lopQuet.includes(em.className)) {
-            this.qrTrangThai = em.name + ' — ngoài khối bạn phụ trách';
+            this._clearQRTimers();
+            this.qrLoiMessage = em.name + ' — ngoài khối bạn phụ trách';
+            this.qrHienLoi = true;
+            this._qrAnimTimer = setTimeout(() => { this.qrHienLoi = false; }, 800);
+            this.qrTrangThai = this.qrLoiMessage;
             this._qrBipLoi(); this._qrRung(150);
             return;
         }
@@ -518,6 +571,12 @@ window.TNTT.qrscan = {
         this.qrVuaGhi.unshift({ id: em.id, ten: em.name, lop: em.className, luc: this.currentTime() });
         if (this.qrVuaGhi.length > 4) this.qrVuaGhi.pop();
         this._qrBipOk(); this._qrRung(60);
+
+        // Animation thành công: hiện tên bay lên
+        this._clearQRTimers();
+        this.qrTenThanhCong = em.name;
+        this.qrHienThanhCong = true;
+        this._qrAnimTimer = setTimeout(() => { this.qrHienThanhCong = false; }, 600);
 
         // Đủ lô thì gửi ngay, chưa đủ thì hẹn giờ
         if (this._qrHang.length >= this.LO_TOI_DA) this._qrGuiLo();
@@ -638,6 +697,13 @@ window.TNTT.qrscan = {
         this.qrMo = false;
     },
 
+    /** Đóng hướng dẫn và lưu lại đã xem */
+    dongHuongDanQR() {
+        this.qrHienHuongDan = false;
+        this.qrDaXemHuongDan = true;
+        try { localStorage.setItem('tntt_qr_huongdan', '1'); } catch (e) { /* ignore */ }
+    },
+
     /** Bật / Tắt Đèn pin (Torch/Flashlight) camera */
     async toggleTorch() {
         if (!this._qrStream) return;
@@ -657,6 +723,8 @@ window.TNTT.qrscan = {
     _qrTatCamera() {
         this.qrDenPin = false;
         this.qrCoDenPin = false;
+        this.qrHienHuongDan = false;
+        this._clearQRTimers(); // reset qrHienThanhCong, qrHienLoi
         if (this._qrStream) {
             this._qrStream.getTracks().forEach(t => t.stop());   // tắt đèn camera
             this._qrStream = null;

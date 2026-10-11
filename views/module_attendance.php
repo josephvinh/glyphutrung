@@ -497,13 +497,81 @@
 
             <!-- Vùng ngắm: khớp đúng phần được giải mã (75% cạnh ngắn) -->
             <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div class="w-3/4 h-3/4 rounded-2xl border-4 border-white/90"></div>
+                <!-- Viền khung ngắm: xanh khi quét thành công, đỏ khi lỗi -->
+                <div class="w-3/4 h-3/4 rounded-2xl border-4 transition-all duration-200"
+                     :class="qrHienThanhCong ? 'border-emerald-400 animate-pulse shadow-lg shadow-emerald-500/50' :
+                             (qrHienLoi ? 'border-red-400 animate-pulse shadow-lg shadow-red-500/50' : 'border-white/90')">
+                </div>
+            </div>
+
+            <!-- Animation thành công: tên em bay lên -->
+            <div x-show="qrHienThanhCong" x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 translate-y-4 scale-90"
+                 x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                 x-transition:leave="transition ease-in duration-150"
+                 x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                 x-transition:leave-end="opacity-0 -translate-y-4 scale-90"
+                 class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div class="bg-emerald-500/95 text-white font-black text-xl px-6 py-3 rounded-2xl shadow-xl max-w-[80%] text-center truncate"
+                     x-text="qrTenThanhCong"></div>
+            </div>
+
+            <!-- Animation lỗi -->
+            <div x-show="qrHienLoi" x-transition:enter="transition ease-out duration-150"
+                 x-transition:enter-start="opacity-0 scale-95"
+                 x-transition:enter-end="opacity-100 scale-100"
+                 x-transition:leave="transition ease-in duration-100"
+                 x-transition:leave-start="opacity-100 scale-100"
+                 x-transition:leave-end="opacity-0 scale-95"
+                 class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div class="bg-red-500/95 text-white font-bold text-sm px-4 py-2 rounded-xl shadow-xl max-w-[85%] text-center"
+                     x-text="qrLoiMessage"></div>
             </div>
 
             <!-- KHÔNG backdrop-blur ở đây: phần tử có backdrop-filter nằm đè
                  lên camera trực tiếp là nguyên nhân khung đen trên iOS. -->
             <p class="absolute left-3 right-3 bottom-3 text-center text-white font-bold text-xs bg-slate-900/95 rounded-xl px-3 py-2 truncate"
                x-text="qrTrangThai"></p>
+        </div>
+
+        <!-- Hướng dẫn sử dụng lần đầu -->
+        <div x-show="qrHienHuongDan" x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="absolute inset-x-0 bottom-0 z-10 pointer-events-auto">
+            <div class="bg-gradient-to-t from-slate-900/98 to-transparent p-4 pt-12">
+                <div class="bg-white rounded-2xl p-4 shadow-xl">
+                    <div class="flex items-start gap-3">
+                        <div class="w-10 h-10 shrink-0 bg-blue-100 rounded-xl flex items-center justify-center">
+                            <i data-lucide="info" class="w-5 h-5 text-blue-600"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h4 class="font-black text-slate-800 text-sm mb-2">Cách quét thẻ QR</h4>
+                            <ul class="space-y-1.5 text-xs text-slate-600">
+                                <li class="flex items-start gap-2">
+                                    <i data-lucide="check-circle" class="w-4 h-4 text-emerald-500 shrink-0 mt-0.5"></i>
+                                    <span>Đưa mã QR vào <strong class="text-slate-800">trong khung ngắm</strong></span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <i data-lucide="check-circle" class="w-4 h-4 text-emerald-500 shrink-0 mt-0.5"></i>
+                                    <span>Đợi <strong class="text-slate-800">1-2 giây</strong> để máy nhận diện</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <i data-lucide="check-circle" class="w-4 h-4 text-emerald-500 shrink-0 mt-0.5"></i>
+                                    <span>Máy sẽ <strong class="text-slate-800">bíp và hiện tên</strong> khi quét thành công</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <button @click="dongHuongDanQR()" type="button"
+                            class="w-full mt-3 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-sm active:scale-[0.98] transition-transform">
+                        Đã hiểu, bắt đầu quét
+                    </button>
+                </div>
+            </div>
         </div>
 
         <!-- Số đếm + vài em gần nhất -->

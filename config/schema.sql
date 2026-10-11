@@ -258,7 +258,7 @@ CREATE TABLE IF NOT EXISTS attendances (
     marked_by       INT  NULL,
     marked_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     offline_marked  TINYINT(1) NOT NULL DEFAULT 0
-        COMMENT '1 = ghi offline khi chưa tới giờ chốt, để BĐH rà soát',
+        COMMENT '1 = ghi khi đã qua giờ chốt, có thể cần BĐH rà soát',
     CONSTRAINT fk_att_year    FOREIGN KEY (year_id) REFERENCES school_years(id) ON DELETE CASCADE,
     CONSTRAINT fk_att_prog    FOREIGN KEY (program_id) REFERENCES programs(id) ON DELETE CASCADE,
     CONSTRAINT fk_att_student FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
