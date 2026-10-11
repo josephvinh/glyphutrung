@@ -2,15 +2,16 @@
 /**
  * TRẢ VỀ MỐC THỜI GIAN CẬP NHẬT GẦN NHẤT
  *
- * Dùng cho cơ chế Short Polling (10s/lần). 
+ * Dùng cho cơ chế Short Polling (10s/lần).
  * Cực kỳ nhẹ, không kết nối Database, chỉ đọc file tĩnh.
+ * Cache stored in storage/cache/sync.txt (outside web root).
  */
-require __DIR__ . '/_bootstrap_page.php'; // Gọn nhẹ, không nạp toàn bộ framework nặng
+require __DIR__ . '/_bootstrap_page.php'; // Gọi nhẹ, không nạp toàn bộ framework nặng
 
 // Không cần phiên: nhả khoá session để không chặn data.php đang chạy song song.
 session_write_close();
 
-$syncFile = __DIR__ . '/../cache/sync.txt';
+$syncFile = dirname(__DIR__, 2) . '/storage/cache/sync.txt';
 $ts = file_exists($syncFile) ? file_get_contents($syncFile) : '0';
 
 header('Content-Type: text/plain');
