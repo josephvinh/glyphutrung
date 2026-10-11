@@ -129,6 +129,7 @@ if ($action === 'scan') {
     if (!is_array($codes) || !$codes) json_fail('Không có mã nào để ghi.');
     if (count($codes) > 200) json_fail('Mỗi lần chỉ ghi tối đa 200 mã.');
 
+
     // Chuẩn hóa mã: lowercase để khớp với DB
     $codes = array_values(array_unique(array_map(
         fn($v) => strtolower(trim((string) $v)),
