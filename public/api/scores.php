@@ -13,12 +13,11 @@
 
 require __DIR__ . '/_bootstrap.php';
 
-require_write();  // hành động ghi: bắt buộc POST + CSRF
-$me    = require_permission('scores', 'edit');
+$me    = require_permission('scores', 'view');  // view permission cho tất cả
 $year  = current_year();
 $method = $_SERVER['REQUEST_METHOD'];
 if (!$year) json_fail('Chưa có niên khoá nào đang mở.', 409);
-if ($year['status'] === 'đã khóa') json_fail('Niên khoá đã khoá sổ, không sửa điểm được.', 409);
+if ($year['status'] === 'đã khóa' && $method !== 'GET') json_fail('Niên khoá đã khoá sổ, không sửa điểm được.', 409);
 
 $in     = json_input();
 $action = $in['action'] ?? ($_GET['action'] ?? '');
@@ -140,6 +139,8 @@ if ($method === 'GET' && $action === 'exams') {
 //  DELETE ?action=exam — xóa bài kiểm tra (check TRƯỚC POST exam)
 // =====================================================================
 if (($method === 'DELETE' && $action === 'exam') || ($method === 'POST' && $action === 'exam' && ($in['_method'] ?? '') === 'DELETE')) {
+    require_write();
+    $me = require_permission('scores', 'edit');
     $examId = (int) ($in['examId'] ?? 0);
     if (!$examId) json_fail('Thiếu examId.');
 
@@ -166,6 +167,8 @@ if (($method === 'DELETE' && $action === 'exam') || ($method === 'POST' && $acti
 //  POST ?action=exam — tạo bài kiểm tra mới (chỉ khi không phải DELETE)
 // =====================================================================
 if ($method === 'POST' && $action === 'exam' && ($in['_method'] ?? '') !== 'DELETE') {
+    require_write();
+    $me = require_permission('scores', 'edit');
     $termId  = (int) ($in['termId'] ?? 0);
     $typeCode = trim((string) ($in['typeCode'] ?? ''));
     $name    = trim((string) ($in['name'] ?? ''));
@@ -210,6 +213,8 @@ if ($method === 'POST' && $action === 'exam' && ($in['_method'] ?? '') !== 'DELE
 //  POST ?action=set — lưu điểm (giữ nguyên logic cũ, thêm exam_id)
 // =====================================================================
 if ($method === 'POST' && $action === 'set') {
+    require_write();
+    $me = require_permission('scores', 'edit');
     $studentId = (int) ($in['studentId'] ?? 0);
     $termId    = (int) ($in['termId'] ?? 0);
     $type      = (string) ($in['type'] ?? '');
