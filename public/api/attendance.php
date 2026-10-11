@@ -129,21 +129,6 @@ if ($action === 'scan') {
     if (!is_array($codes) || !$codes) json_fail('Không có mã nào để ghi.');
     if (count($codes) > 200) json_fail('Mỗi lần chỉ ghi tối đa 200 mã.');
 
-    // DEBUG: Return what we have so far
-    $progCheck = db_one("SELECT * FROM programs WHERE id = ? AND year_id = ?", [$programId, $year['id']]);
-    json_out([
-        'debug' => true,
-        'codes_received' => $codes,
-        'codes_is_array' => is_array($codes),
-        'codes_count' => count($codes),
-        'programId' => $programId,
-        'date' => $date,
-        'yearId' => $year['id'],
-        'program' => $progCheck ? "id={$progCheck['id']} name={$progCheck['name']} type={$progCheck['type']}" : 'NOT FOUND',
-        'allow_qr' => $progCheck['allow_qr'] ?? 'null',
-    ]);
-
-
     // Chuẩn hóa mã: lowercase để khớp với DB
     $codes = array_values(array_unique(array_map(
         fn($v) => strtolower(trim((string) $v)),
