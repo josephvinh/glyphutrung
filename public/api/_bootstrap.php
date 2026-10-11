@@ -538,6 +538,31 @@ function scan_class_ids(array $me): ?array
         db_all("SELECT id FROM classes WHERE block_id IN ($ph)", $blockIds), 'id'));
 }
 
+/**
+ * Các lớp mà user có quyền EDIT trên module chỉ định.
+ * Khác với scan_class_ids (theo khối): hàm này trả về CHÍNH XÁC các lớp
+ * được phân công, không mở rộng ra cả khối.
+ *
+ * Dùng cho: lookup (bảng tra QR), scan (quét QR) — nhất quán với chạm tay.
+ */
+function editable_class_ids_for(array $me, string $module): ?array
+{
+    if (in_array($me['role_code'] ?? '', ['admin', 'bdh'], true)) return null;
+
+    $classIds = [];
+    foreach (member_scopes($me) as $a) {
+        if (permission_of_role($a['role_code'] ?? '', $module) !== 'edit') continue;
+        if (($a['role_scope'] ?? '') === 'toàn đoàn') return null;
+        if (!empty($a['class_id'])) {
+            $classIds[] = (int) $a['class_id'];
+        }
+        // Vai trò theo khối: chỉ lấy lớp CHÍNH của mình (is_primary=1)
+        // Không mở rộng ra cả khối như scan_class_ids
+    }
+    if (!$classIds) return [];
+    return array_values(array_unique($classIds));
+}
+
 /* ============================================================================
    KIÊM NHIỆM — truy vấn bảng member_assignments
 

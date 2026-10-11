@@ -427,6 +427,11 @@ window.TNTT.core = {
             await fetch('api/auth.php?action=logout', { method: 'POST' });
         } catch (e) { /* mất mạng thì vẫn chuyển về trang chủ */ }
         try { await window.TNTT.snap.clear(); } catch (e) {}   // máy dùng chung: xoá dữ liệu lưu trong máy
+        // Xóa cache QR lookup (PII trẻ em trên thiết bị dùng chung)
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+            const k = localStorage.key(i);
+            if (k && k.startsWith('qrlookup_')) localStorage.removeItem(k);
+        }
         // Về TRANG CHỦ (landing) thay vì tải lại: tải lại tại chỗ sẽ rơi vào form
         // đăng nhập, và app lưu ra màn hình chính cũng mở lại đúng chỗ đó.
         location.replace('index.php');

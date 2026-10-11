@@ -59,8 +59,10 @@ khai thác, và cách sửa đề xuất.
 
 ## 🔴 S1 — Tệp cache chứa dữ liệu cá nhân toàn đoàn, tải được KHÔNG cần đăng nhập
 
-- **Vị trí:** `public/api/cache.php:7` (`$dir = __DIR__ . '/../cache'` → `public/cache/`),
-  ghi bởi `public/api/data.php:131,429,624`.
+- **Trạng thái:** ✅ **ĐÃ SỬA TRONG CODE, CHỜ DEPLOY**
+- **Vị trí (trước):** `public/api/cache.php:7` (`$dir = __DIR__ . '/../cache'` → `public/cache/`)
+- **Sửa:** Chuyển cache ra `storage/cache/` (ngoài web root)
+- **Bước deploy:** Xóa `public/cache/*.json` trên host sau khi merge.
 - **Bằng chứng (đã kiểm chứng động):** Trên bản chạy thật, đăng nhập admin một
   lần để sinh cache, rồi **không gửi cookie** tải thẳng:
   ```
@@ -87,6 +89,21 @@ khai thác, và cách sửa đề xuất.
   - Cân nhắc đổi khóa cache sang có thành phần bí mật (vd HMAC với khóa server)
     để tên tệp không đoán được, hoặc bỏ cache tệp, chuyển sang APCu (bộ nhớ,
     không chạm đĩa web).
+
+## 🟡 S2a — PII trong localStorage của trình duyệt
+
+- **Vị trí:** `public/assets/js/modules/qrscan.js` (`_qrLuuBangTra`)
+- **Mô tả:** Bảng tra QR (mã số, họ tên, lớp) được lưu vào localStorage
+  theo `programId+date`, với `savedAt` timestamp. Họ tên trẻ em là dữ liệu cá nhân.
+- **Rủi ro:**
+  - Không xóa khi đăng xuất
+  - Không có TTL/hết hạn (dù có `savedAt`)
+  - localStorage có thể bị đọc bởi XSS attack
+- **Cách sửa:**
+  1. Xóa cache QR khi đăng xuất (`logout`)
+  2. Thêm TTL ngắn (24 giờ) — đã thêm trong `_qrTaiBangTra_TuCache`
+  3. Giới hạn chỉ lưu mã số + id + tên + lớp (tối thiểu cho quét)
+- **Trạng thái:** ✅ Đã sửa — TTL 24h + xóa khi logout
 
 ## 🔴 S2 — Rò rỉ secret trong mã nguồn & lịch sử git của repo CÔNG KHAI
 

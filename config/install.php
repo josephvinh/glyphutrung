@@ -157,6 +157,8 @@ $migrations = [
     "ALTER TABLE students ADD COLUMN deleted_at TIMESTAMP NULL DEFAULT NULL",
     "CREATE INDEX idx_students_hidden ON students(hidden_at)",
     "CREATE INDEX idx_students_deleted ON students(deleted_at)",
+    // #244: đánh dấu điểm danh offline để BĐH rà soát
+    "ALTER TABLE attendances ADD COLUMN offline_marked TINYINT(1) NOT NULL DEFAULT 0",
 ];
 $mig = 0;
 foreach ($migrations as $sqlMig) {

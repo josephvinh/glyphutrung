@@ -43,7 +43,25 @@ window.TNTT.attendance = {
     getOfflineAttendanceQueue() {
         try {
             const raw = localStorage.getItem('tntt_offline_attendance_queue');
-            return raw ? JSON.parse(raw) : [];
+            if (!raw) return [];
+            const queue = JSON.parse(raw);
+            // Migrate legacy items (action:'toggle') → op:'mark'
+            // Legacy: { programId, date, studentId, studentName, action:'toggle', createdAt }
+            // Mới:    { programId, date, studentId, studentName, op:'mark', offlineMark:true }
+            let migrated = false;
+            const migratedQueue = queue.map(item => {
+                if (item.action === 'toggle') {
+                    migrated = true;
+                    const { action, createdAt, ...rest } = item;
+                    return { ...rest, op: 'mark', offlineMark: true };
+                }
+                return item;
+            });
+            if (migrated) {
+                this.setOfflineAttendanceQueue(migratedQueue);
+                console.log('Đã chuyển đổi queue offline từ legacy format');
+            }
+            return migratedQueue;
         } catch (e) { return []; }
     },
     setOfflineAttendanceQueue(queue) {
@@ -94,18 +112,20 @@ window.TNTT.attendance = {
         try {
             for (const item of queue) {
                 try {
-                    const r = await this.api('attendance', 'toggle', {
+                    const r = await this.api('attendance', item.op || 'mark', {
                         programId: item.programId,
                         date: item.date,
-                        studentId: item.studentId
+                        studentId: item.studentId,
+                        offlineMark: item.op === 'mark' ? true : undefined
                     });
                     if (r && r.ok) {
                         successCount++;
                     } else if (r && r.networkError) {
                         failedQueue.push(item);
                     } else {
-                        // Lỗi nghiệp vụ từ server (đã khoá sổ hoặc không có quyền), bỏ qua
-                        console.warn('Bỏ qua bản ghi điểm danh offline:', item, r?.error);
+                        // Lỗi nghiệp vụ: báo cho người dùng, không nuốt im lặng
+                        const ten = item.studentName || ('HS' + item.studentId);
+                        window.TNTT.toast.error('Đồng bộ lỗi: ' + ten + ' — ' + (r?.error || 'lý do không rõ'));
                     }
                 } catch (err) {
                     failedQueue.push(item);
@@ -480,14 +500,8 @@ window.TNTT.attendance = {
                                this.sessionProgram.name + ' · ' + this.formatDate(this.activeSession.date) + ' · đang là ' + cu.status);
             }
             if (!navigator.onLine) {
-                this.pushOfflineAttendance({
-                    programId: this.activeSession.programId,
-                    date: this.activeSession.date,
-                    studentId: student.id,
-                    studentName: student.name,
-                    action: 'toggle',
-                    createdAt: new Date().toISOString()
-                });
+                window.TNTT.toast.warning('Cần có mạng để gỡ điểm danh. '
+                    + 'Bản ghi vẫn còn trên máy chủ.');
                 return;
             }
             this.save('attendance', 'toggle', {
@@ -497,14 +511,7 @@ window.TNTT.attendance = {
             }).then(r => {
                 if (!r || !r.ok) {
                     if (r && r.networkError) {
-                        this.pushOfflineAttendance({
-                            programId: this.activeSession.programId,
-                            date: this.activeSession.date,
-                            studentId: student.id,
-                            studentName: student.name,
-                            action: 'toggle',
-                            createdAt: new Date().toISOString()
-                        });
+                        window.TNTT.toast.warning('Mất kết nối. Bản ghi vẫn còn trên máy chủ.');
                     } else {
                         this._attThem(cu);
                     }
@@ -533,33 +540,35 @@ window.TNTT.attendance = {
         }
 
         if (!navigator.onLine) {
+            // Dùng 'mark' thay vì 'toggle' — mark là idempotent, không xóa
             this.pushOfflineAttendance({
                 programId: this.activeSession.programId,
                 date: this.activeSession.date,
                 studentId: student.id,
                 studentName: student.name,
-                action: 'toggle',
-                createdAt: new Date().toISOString()
+                op: 'mark'
             });
             return;
         }
 
-        this.save('attendance', 'toggle', {
+        this.save('attendance', 'mark', {
             programId: this.activeSession.programId,
             date: this.activeSession.date,
-            studentId: student.id
+            studentId: student.id,
+            offlineMark: !navigator.onLine
         }).then(r => {
             if (!r || !r.ok) {
                 if (r && r.networkError) {
+                    // Mất mạng: dùng mark để đồng bộ sau
                     this.pushOfflineAttendance({
                         programId: this.activeSession.programId,
                         date: this.activeSession.date,
                         studentId: student.id,
                         studentName: student.name,
-                        action: 'toggle',
-                        createdAt: new Date().toISOString()
+                        op: 'mark'
                     });
                 } else {
+                    // Lỗi nghiệp vụ: rollback bản ghi tạm
                     this._attXoa(this.activeSession.programId, this.activeSession.date, student.id);
                 }
             } else if (r.status) {

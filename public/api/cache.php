@@ -4,7 +4,7 @@
  */
 
 class Cache {
-    private static string $dir = __DIR__ . '/../cache';
+    private static string $dir = __DIR__ . '/../../storage/cache';
 
     public static function init(): void {
         if (!is_dir(self::$dir)) {
