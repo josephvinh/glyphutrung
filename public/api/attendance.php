@@ -135,12 +135,12 @@ if ($action === 'scan') {
         $codes
     )));
 
-    // Lấy một lượt tất cả các em tương ứng
+    // Lấy một lượt tất cả các em tương ứng (LOWER để khớp với codes đã chuẩn hóa lowercase)
     $ph  = implode(',', array_fill(0, count($codes), '?'));
     $ems = db_all("SELECT s.id, s.code, s.full_name, e.status, e.class_id
                      FROM students s
                      JOIN enrollments e ON e.student_id = s.id AND e.year_id = ?
-                    WHERE s.code IN ($ph)",
+                    WHERE LOWER(s.code) IN ($ph)",
                   array_merge([$year['id']], $codes));
 
     // Key bằng lowercase để khớp chuẩn hóa
