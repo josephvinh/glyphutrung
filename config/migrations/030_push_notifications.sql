@@ -15,7 +15,7 @@ SET @stmt = (SELECT IF(
     'SELECT 1',
     CONCAT('CREATE TABLE push_notifications (
         id         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-        member_id  INT UNSIGNED NOT NULL,
+        member_id  INT NOT NULL,
         tag        VARCHAR(50) NOT NULL,
         title      VARCHAR(120) NOT NULL,
         body       VARCHAR(255) NOT NULL,
