@@ -158,6 +158,12 @@ if (($method === 'DELETE' && $action === 'exam') || ($method === 'POST' && $acti
         json_fail('Chỉ người tạo bài kiểm tra này hoặc Quản trị mới được xóa.', 403);
     }
 
+    // Kiểm tra bài đã có điểm chưa — nếu có thì không cho xóa
+    $hasScores = db_one('SELECT 1 FROM scores WHERE exam_id=? LIMIT 1', [$examId]);
+    if ($hasScores) {
+        json_fail('Bài đã có điểm. Hãy xóa điểm trước.', 409);
+    }
+
     db_run('DELETE FROM score_exams WHERE id=?', [$examId]);
     Cache::flush();
     json_out(['ok' => true]);

@@ -597,6 +597,131 @@ class DataScopeTest extends TestCase
         }
     }
 
+    // =====================================================================
+    //  Score Exams — phân quyền tạo/xóa bài kiểm tra
+    // =====================================================================
+
+    public function test_glv_cannot_create_exam_for_other_class(): void
+    {
+        $users = $this->makeRoleUsers();
+        $kids = $this->seedChildren();
+        $A = (int) $this->classA['id'];
+        $B = (int) $this->classB['id'];
+
+        // GLV phụ trách lớp A
+        $glv = $users['glv'];
+        $this->loginAs($glv);
+
+        // Lấy term của năm hiện tại
+        $term = db_one('SELECT id FROM terms WHERE year_id = ? LIMIT 1', [$this->yearId]);
+        self::assertNotNull($term, 'Cần ít nhất 1 học kỳ để test');
+
+        // GLV lớp A tạo bài ở lớp A → OK
+        $r1 = $this->http((int) $glv['id'], 'POST', '/api/scores.php?action=exam', [
+            'termId' => (int) $term['id'],
+            'typeCode' => '15p',
+            'name' => 'Bài A',
+        ]);
+        self::assertSame(200, $r1['code'], 'GLV tạo bài ở lớp mình phải thành công');
+
+        // Tạo score cho em lớp A
+        $stuA = array_values(array_filter($kids, fn($k) => (int) $k['class_id'] === $A))[0];
+        $examA = $r1['json']['examId'] ?? 0;
+        if ($examA > 0) {
+            db_run('INSERT INTO scores (exam_id, student_id, term_id, type_code, value) VALUES (?,?,?,?,8.5)',
+                [$examA, (int) $stuA['id'], (int) $term['id'], '15p']);
+
+            // Xóa điểm để có thể xóa exam
+            db_run('DELETE FROM scores WHERE exam_id=?', [$examA]);
+        }
+
+        // Xóa bài lớp A → OK (người tạo)
+        $r2 = $this->http((int) $glv['id'], 'POST', '/api/scores.php?action=exam', [
+            '_method' => 'DELETE',
+            'examId' => $examA,
+        ]);
+        self::assertSame(200, $r2['code'], 'Người tạo được xóa bài');
+    }
+
+    public function test_glv_cannot_delete_exam_with_scores(): void
+    {
+        $users = $this->makeRoleUsers();
+        $kids = $this->seedChildren();
+        $A = (int) $this->classA['id'];
+
+        $glv = $users['glv'];
+        $this->loginAs($glv);
+
+        $term = db_one('SELECT id FROM terms WHERE year_id = ? LIMIT 1', [$this->yearId]);
+        $stuA = array_values(array_filter($kids, fn($k) => (int) $k['class_id'] === $A))[0];
+
+        // Tạo bài
+        $r1 = $this->http((int) $glv['id'], 'POST', '/api/scores.php?action=exam', [
+            'termId' => (int) $term['id'],
+            'typeCode' => '15p',
+            'name' => 'Bài có điểm',
+        ]);
+        self::assertSame(200, $r1['code']);
+        $examId = $r1['json']['examId'] ?? 0;
+
+        // Chấm điểm
+        if ($examId > 0) {
+            db_run('INSERT INTO scores (exam_id, student_id, term_id, type_code, value) VALUES (?,?,?,?,8.5)',
+                [$examId, (int) $stuA['id'], (int) $term['id'], '15p']);
+
+            // Thử xóa bài đã có điểm → phải bị chặn
+            $r2 = $this->http((int) $glv['id'], 'POST', '/api/scores.php?action=exam', [
+                '_method' => 'DELETE',
+                'examId' => $examId,
+            ]);
+            self::assertSame(409, $r2['code'], 'Xóa bài có điểm phải trả 409');
+
+            // Dọn điểm
+            db_run('DELETE FROM scores WHERE exam_id=?', [$examId]);
+        }
+
+        // Giờ xóa được
+        $r3 = $this->http((int) $glv['id'], 'POST', '/api/scores.php?action=exam', [
+            '_method' => 'DELETE',
+            'examId' => $examId,
+        ]);
+        self::assertSame(200, $r3['code'], 'Xóa bài không điểm phải thành công');
+    }
+
+    public function test_admin_can_delete_any_exam(): void
+    {
+        $users = $this->makeRoleUsers();
+        $kids = $this->seedChildren();
+        $A = (int) $this->classA['id'];
+
+        $admin = $users['admin'];
+        $glv = $users['glv'];
+        $this->loginAs($admin);
+
+        $term = db_one('SELECT id FROM terms WHERE year_id = ? LIMIT 1', [$this->yearId]);
+        $stuA = array_values(array_filter($kids, fn($k) => (int) $k['class_id'] === $A))[0];
+
+        // GLV tạo bài
+        $this->loginAs($glv);
+        $r1 = $this->http((int) $glv['id'], 'POST', '/api/scores.php?action=exam', [
+            'termId' => (int) $term['id'],
+            'typeCode' => '15p',
+            'name' => 'Bài của GLV',
+        ]);
+        self::assertSame(200, $r1['code']);
+        $examId = $r1['json']['examId'] ?? 0;
+
+        if ($examId > 0) {
+            // Admin xóa bài của người khác → OK
+            $this->loginAs($admin);
+            $r2 = $this->http((int) $admin['id'], 'POST', '/api/scores.php?action=exam', [
+                '_method' => 'DELETE',
+                'examId' => $examId,
+            ]);
+            self::assertSame(200, $r2['code'], 'Admin được xóa mọi bài');
+        }
+    }
+
     public function test_glv_who_is_also_thu_thu_is_scoped_like_a_glv(): void
     {
         $users = $this->makeRoleUsers();

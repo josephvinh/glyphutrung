@@ -126,11 +126,12 @@ $scoreRows = $termId ? db_all(
       WHERE COALESCE(e.term_id, s.term_id) = ?",
     [$termId]
 ) : [];
-$scoreOf = []; // id => list ['value','weight']
+$scoreOf = []; // id => list ['value','weight','type']
 foreach ($scoreRows as $r) {
     $scoreOf[(int) $r['student_id']][] = [
         'value'  => (float) $r['value'],
         'weight' => $weightOf[$r['type_code']] ?? 1.0,
+        'type'   => $r['type_code'],
     ];
 }
 
@@ -145,7 +146,7 @@ foreach ($students as $s) {
     } else {
         // Mẫu số là TỔNG số buổi đã diễn ra (không phải số dòng của em)
         $tyLe    = td_ty_le_co_mat($a['tCM'], $a['tDT'], $a['tCP'], $soBuoiKy);
-        $hocTap  = td_hoc_tap_100($scoreOf[$sid] ?? []);
+        $hocTap  = td_hoc_tap_100_by_type($scoreOf[$sid] ?? [], $weightOf);
         $diem    = td_diem_ky($tyLe, $hocTap);
         $ht10 = rtrim(rtrim(number_format($hocTap / 10, 1), '0'), '.'); // Thang 10
         $detail = "Chuyên cần: {$tyLe}% · Học tập: {$ht10}";

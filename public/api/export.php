@@ -556,21 +556,16 @@ function build_scores_rows(array $students, array $scores, array $scoreTypes): a
                     $row[] = '';
                 }
             }
-            // Average of type
-            if (count($typeExams) > 1) {
-                if (count($typeVals) > 0) {
-                    $avg = round(array_sum($typeVals) / count($typeVals), 1);
-                    $row[] = $avg;
-                    $sum += $avg * (int) $stType['weight'];
-                    $count += (int) $stType['weight'];
-                } else {
-                    $row[] = '';
-                }
-            }
-            // Simple sum for 0 or 1 exam
-            if (count($typeExams) <= 1 && count($typeVals) > 0) {
-                $sum += $typeVals[0];
-                $count++;
+            // Average of type (nếu nhiều bài) hoặc dùng trực tiếp (1 bài)
+            if (count($typeVals) > 0) {
+                $avg = count($typeVals) > 1
+                    ? round(array_sum($typeVals) / count($typeVals), 1)
+                    : $typeVals[0];
+                $row[] = $avg;
+                $sum += $avg * (int) $stType['weight'];
+                $count += (int) $stType['weight'];
+            } else {
+                $row[] = '';
             }
         }
         $row[] = $count > 0 ? round($sum / $count, 1) : '';

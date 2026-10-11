@@ -86,4 +86,33 @@ class ThiDuaTest extends TestCase
         $this->assertSame(3, $xh[2]['rank']);        // nhảy hạng (không có hạng 2)
         $this->assertSame('dong', $xh[2]['medal']);  // hạng 3 -> đồng
     }
+
+    public function test_hoc_tap_100_by_type_tinh_tb_theo_loai_roi_nhan_trong_so(): void
+    {
+        // Loại A (w=1): 3 bài điểm 6,7,8 -> TB loại A = 7
+        // Loại B (w=3): 1 bài điểm 9 -> TB loại B = 9
+        // TB có trọng số = (7*1 + 9*3) / (1+3) = 34/4 = 8.5 (thang 10) -> 85
+        $d = td_hoc_tap_100_by_type([
+            ['value' => 6, 'type' => 'A'],
+            ['value' => 7, 'type' => 'A'],
+            ['value' => 8, 'type' => 'A'],
+            ['value' => 9, 'type' => 'B'],
+        ], ['A' => 1, 'B' => 3]);
+        $this->assertEqualsWithDelta(85.0, $d, 0.001);
+    }
+
+    public function test_hoc_tap_100_by_type_loai_1_bai_khong_nang_gap_3(): void
+    {
+        // Loại A (w=1): 1 bài điểm 9 -> TB loại A = 9
+        // Loại B (w=3): 3 bài điểm 9,9,9 -> TB loại B = 9
+        // Mỗi loại chỉ tính TB 1 lần, không phụ thuộc số bài
+        // TB = (9*1 + 9*3) / (1+3) = 36/4 = 9 -> 90
+        $d = td_hoc_tap_100_by_type([
+            ['value' => 9, 'type' => 'A'],
+            ['value' => 9, 'type' => 'B'],
+            ['value' => 9, 'type' => 'B'],
+            ['value' => 9, 'type' => 'B'],
+        ], ['A' => 1, 'B' => 3]);
+        $this->assertEqualsWithDelta(90.0, $d, 0.001);
+    }
 }

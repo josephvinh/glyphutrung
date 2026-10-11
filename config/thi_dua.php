@@ -37,6 +37,48 @@ function td_hoc_tap_100(array $scores): float
 }
 
 /**
+ * Điểm học tập: trung bình THEO TỪNG LOẠI trước, rồi nhân trọng số.
+ * Công thức: Σ(TB_loại × hệ_số) / Σhệ_số × 10
+ * Đảm bảo 3 bài 15p cùng loại không nặng gấp 3 lần 1 bài GK.
+ * @param array $scores  list các ['value' => float, 'weight' => int|float, 'type' => string]
+ * @param array $weightsByType  map type => weight (lấy từ score_types)
+ * @return float 0..100 (chưa có điểm -> 0.0)
+ */
+function td_hoc_tap_100_by_type(array $scores, array $weightsByType): float
+{
+    // Gom điểm theo loại
+    $byType = [];
+    foreach ($scores as $s) {
+        $type = $s['type'] ?? '_default';
+        if (!isset($byType[$type])) {
+            $byType[$type] = ['sum' => 0.0, 'count' => 0];
+        }
+        $byType[$type]['sum']   += (float) ($s['value'] ?? 0);
+        $byType[$type]['count']++;
+    }
+
+    // TB mỗi loại
+    $typeAvgs = [];
+    foreach ($byType as $type => $data) {
+        $typeAvgs[$type] = $data['count'] > 0 ? $data['sum'] / $data['count'] : 0.0;
+    }
+
+    // Nhân trọng số theo LOẠI (không phải theo dòng)
+    $tongDiem = 0.0;
+    $tongTrong = 0.0;
+    foreach ($typeAvgs as $type => $avg) {
+        $w = (float) ($weightsByType[$type] ?? 1.0);
+        if ($w <= 0) $w = 1.0;
+        $tongDiem  += $avg * $w;
+        $tongTrong += $w;
+    }
+    if ($tongTrong <= 0) return 0.0;
+    $tb10 = $tongDiem / $tongTrong;
+    $d = $tb10 * 10;
+    return max(0.0, min(100.0, $d));
+}
+
+/**
  * Điểm học kỳ (thang 100) = 60% chuyên cần + 40% học tập.
  * @param float $tyLeCoMat100  tỷ lệ có mặt cả kỳ, 0..100
  * @param float $hocTap100     điểm học tập, 0..100

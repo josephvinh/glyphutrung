@@ -169,8 +169,19 @@ $migrations = [
         CONSTRAINT fk_se_by FOREIGN KEY (created_by) REFERENCES members(id) ON DELETE SET NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
     "ALTER TABLE scores ADD COLUMN exam_id INT NULL AFTER type_code, ADD INDEX idx_s_exam (exam_id)",
+    "ALTER TABLE scores ADD CONSTRAINT fk_sc_exam FOREIGN KEY (exam_id) REFERENCES score_exams(id) ON DELETE RESTRICT",
     "ALTER TABLE scores DROP INDEX uq_score",
     "ALTER TABLE scores ADD UNIQUE KEY uq_score (exam_id, student_id)",
+    // Backfill: tạo exam ngầm cho mỗi (term_id, type_code) rồi cập nhật exam_id
+    "INSERT INTO score_exams (year_id, term_id, type_code, name, created_at)
+     SELECT t.year_id, s.term_id, s.type_code, '', NOW()
+     FROM (SELECT DISTINCT term_id, type_code FROM scores WHERE exam_id IS NULL) s
+     JOIN terms t ON t.id = s.term_id
+     ON DUPLICATE KEY UPDATE id = id",
+    "UPDATE scores s
+     JOIN score_exams e ON e.term_id = s.term_id AND e.type_code = s.type_code
+     SET s.exam_id = e.id
+     WHERE s.exam_id IS NULL",
 ];
 $mig = 0;
 foreach ($migrations as $sqlMig) {

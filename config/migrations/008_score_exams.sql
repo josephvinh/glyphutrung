@@ -30,9 +30,9 @@ ALTER TABLE scores
     ADD COLUMN exam_id INT NULL AFTER type_code,
     ADD INDEX idx_s_exam (exam_id);
 
--- 2b. Thêm FK cho exam_id (ON DELETE SET NULL: xóa exam không xóa scores)
+-- 2b. Thêm FK cho exam_id (ON DELETE RESTRICT: không cho xóa bài đã có điểm)
 ALTER TABLE scores
-    ADD CONSTRAINT fk_sc_exam FOREIGN KEY (exam_id) REFERENCES score_exams(id) ON DELETE SET NULL;
+    ADD CONSTRAINT fk_sc_exam FOREIGN KEY (exam_id) REFERENCES score_exams(id) ON DELETE RESTRICT;
 
 -- 3. Bỏ UNIQUE KEY cũ (term_id, student_id, type_code)
 --    MySQL yêu cầu xóa index trước khi thêm UNIQUE mới
@@ -40,16 +40,18 @@ ALTER TABLE scores
     DROP INDEX uq_score,
     ADD UNIQUE KEY uq_score (exam_id, student_id);
 
+-- 3. Thêm UNIQUE KEY để INSERT ON DUPLICATE KEY hoạt động
+ALTER TABLE score_exams
+    ADD UNIQUE KEY uq_se_implicit (term_id, type_code, name);
+
 -- 4. Di chuyển dữ liệu cũ: tạo 1 exam ngầm cho mỗi (term_id, type_code)
---    rồi cập nhật exam_id cho các scores hiện có
---    Dùng INSERT ... ON DUPLICATE KEY để migration có thể chạy lại an toàn
-INSERT INTO score_exams (year_id, term_id, type_code, name, created_at)
+--    Dùng INSERT IGNORE cho idempotency (chỉ chạy khi chưa có bài ngầm)
+INSERT IGNORE INTO score_exams (year_id, term_id, type_code, name, created_at)
 SELECT t.year_id, s.term_id, s.type_code, '', NOW()
-FROM (SELECT DISTINCT term_id, type_code FROM scores) s
-JOIN terms t ON t.id = s.term_id
-ON DUPLICATE KEY UPDATE id = id;
+FROM (SELECT DISTINCT term_id, type_code FROM scores WHERE exam_id IS NULL) s
+JOIN terms t ON t.id = s.term_id;
 
 UPDATE scores s
-JOIN score_exams e ON e.term_id = s.term_id AND e.type_code = s.type_code
+JOIN score_exams e ON e.term_id = s.term_id AND e.type_code = s.type_code AND e.name = ''
 SET s.exam_id = e.id
 WHERE s.exam_id IS NULL;

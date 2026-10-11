@@ -336,7 +336,7 @@ CREATE TABLE IF NOT EXISTS scores (
     CONSTRAINT fk_sc_term    FOREIGN KEY (term_id)    REFERENCES terms(id)         ON DELETE CASCADE,
     CONSTRAINT fk_sc_student FOREIGN KEY (student_id) REFERENCES students(id)      ON DELETE CASCADE,
     CONSTRAINT fk_sc_type    FOREIGN KEY (type_code)  REFERENCES score_types(code),
-    CONSTRAINT fk_sc_exam    FOREIGN KEY (exam_id)    REFERENCES score_exams(id)   ON DELETE CASCADE,
+    CONSTRAINT fk_sc_exam    FOREIGN KEY (exam_id)    REFERENCES score_exams(id)   ON DELETE RESTRICT,
     CONSTRAINT fk_sc_by      FOREIGN KEY (updated_by) REFERENCES members(id)      ON DELETE SET NULL,
     CONSTRAINT chk_sc_value  CHECK (value >= 0 AND value <= 10),
     UNIQUE KEY uq_score (exam_id, student_id)
