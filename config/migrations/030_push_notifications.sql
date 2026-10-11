@@ -58,3 +58,16 @@ SET @stmt = (SELECT IF(
 PREPARE stmt FROM @stmt;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
+
+-- Index cho cleanup query (xóa notification cũ hơn 60 ngày)
+SET @tablename = 'push_notifications';
+SET @indexname = 'idx_created_at';
+SET @stmt = (SELECT IF(
+    (SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS
+     WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = @tablename AND INDEX_NAME = @indexname) > 0,
+    'SELECT 1',
+    'ALTER TABLE push_notifications ADD INDEX idx_created_at (created_at)'
+));
+PREPARE stmt FROM @stmt;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
