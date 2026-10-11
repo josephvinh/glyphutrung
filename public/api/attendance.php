@@ -138,12 +138,14 @@ if ($action === 'scan') {
         $codes
     )));
 
-    // Lấy một lượt tất cả các em tương ứng (collation cs_as là case-insensitive)
+    // Lấy một lượt tất cả các em tương ứng. students.code là utf8mb4_unicode_ci
+    // (không phân biệt hoa thường) nên không cần LOWER()/COLLATE, và so thẳng
+    // cột thì dùng được chỉ mục. KHÔNG đặt COLLATE sau danh sách IN (...): sai cú pháp.
     $ph  = implode(',', array_fill(0, count($codes), '?'));
     $ems = db_all("SELECT s.id, s.code, s.full_name, e.status, e.class_id
                      FROM students s
                      JOIN enrollments e ON e.student_id = s.id AND e.year_id = ?
-                    WHERE s.code IN ($ph) COLLATE utf8mb4_unicode_ci",
+                    WHERE s.code IN ($ph)",
                   array_merge([$year['id']], $codes));
 
     // Key bằng lowercase để khớp chuẩn hóa
