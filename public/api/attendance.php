@@ -129,6 +129,9 @@ if ($action === 'scan') {
     if (!is_array($codes) || !$codes) json_fail('Không có mã nào để ghi.');
     if (count($codes) > 200) json_fail('Mỗi lần chỉ ghi tối đa 200 mã.');
 
+    // Lưu mã gốc (giữ nguyên hoa/thường) để trả về trong skipped array
+    $originalCodes = $codes;
+
     // Chuẩn hóa mã: lowercase để khớp với DB
     $codes = array_values(array_unique(array_map(
         fn($v) => strtolower(trim((string) $v)),
@@ -147,6 +150,12 @@ if ($action === 'scan') {
     $theoMa = [];
     foreach ($ems as $e) $theoMa[strtolower($e['code'])] = $e;
 
+    // Map từ lowercase -> original để trả về mã gốc trong skipped
+    $lowerToOriginal = [];
+    foreach ($codes as $idx => $lc) {
+        $lowerToOriginal[$lc] = $originalCodes[$idx] ?? $lc;
+    }
+
     // Phạm vi quét: theo LỚP (dùng accessible_class_ids)
     $lopIds = accessible_class_ids($me, 'attendance', 'edit');
 
@@ -154,14 +163,15 @@ if ($action === 'scan') {
 
     foreach ($codes as $ma) {
         $em = $theoMa[strtolower($ma)] ?? null;
+        $origMa = $lowerToOriginal[$ma] ?? $ma;
 
-        if (!$em)                                        { $bo[] = [$ma, 'không có em nào mang mã này']; continue; }
-        if ($em['status'] !== 'đang sinh hoạt')         { $bo[] = [$ma, $em['full_name'] . ' không còn sinh hoạt']; continue; }
+        if (!$em)                                        { $bo[] = [$origMa, 'không có em nào mang mã này']; continue; }
+        if ($em['status'] !== 'đang sinh hoạt')         { $bo[] = [$origMa, $em['full_name'] . ' không còn sinh hoạt']; continue; }
         if ($lopIds !== null && !in_array((int) $em['class_id'], $lopIds, true)) {
-            $bo[] = [$ma, $em['full_name'] . ' không thuộc lớp bạn phụ trách']; continue;
+            $bo[] = [$origMa, $em['full_name'] . ' không thuộc lớp bạn phụ trách']; continue;
         }
         if ($progClassIds !== null && !in_array((int) $em['class_id'], $progClassIds, true)) {
-            $bo[] = [$ma, $em['full_name'] . ' không thuộc lớp của buổi này']; continue;
+            $bo[] = [$origMa, $em['full_name'] . ' không thuộc lớp của buổi này']; continue;
         }
         $hopleIds[] = (int) $em['id'];
     }
