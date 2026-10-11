@@ -64,11 +64,11 @@ window.TNTT.qrscan = {
      * null = không giới hạn.
      */
     get qrLopQuetDuoc() {
-        if (this.isUnrestrictedScope) return null;       // toàn đoàn
-        // Lấy danh sách lớp mình có quyền edit điểm danh
-        const classes = this.availableClasses;
-        if (!classes.length) return [];                  // chưa phân lớp
-        return classes;
+        // Dùng writableClasses thay vì availableClasses để KHÔNG bị bộ lọc
+        // filterBlock thu hẹp — quyền quét không đổi theo lớp đang chọn.
+        const classes = this.writableClasses;
+        if (classes === null) return null;              // toàn đoàn
+        return classes.length ? classes : [];
     },
 
     /**
@@ -125,10 +125,12 @@ window.TNTT.qrscan = {
                 return;
             }
         } catch (e) {
-            // Lỗi mạng — dùng cache nếu có
+            // Chỉ rơi về cache khi là lỗi mạng. Lỗi nghiệp vụ (401/403)
+            // phải được thông báo, không dùng bảng tra cũ.
+            if (!e.networkError) throw e;
         }
 
-        // Offline: dùng cache
+        // Offline: dùng cache nếu có
         if (cached) {
             this._qrTraMa = cached;
             return;
@@ -156,12 +158,18 @@ window.TNTT.qrscan = {
         }
     },
 
-    /** Đọc bảng tra từ localStorage */
+    /** Đọc bảng tra từ localStorage (hết hạn sau 24 giờ) */
     _qrTaiBangTra_TuCache(key) {
         try {
             const raw = localStorage.getItem(key);
             if (!raw) return null;
             const data = JSON.parse(raw);
+            // Kiểm tra TTL: 24 giờ = 86400000 ms
+            const MAX_AGE = 86400000;
+            if (Date.now() - data.savedAt > MAX_AGE) {
+                localStorage.removeItem(key);
+                return null;
+            }
             const bangTra = new Map();
             (data.items || []).forEach(([ma, id, ten, lop]) => {
                 const k = String(ma).trim();
