@@ -154,12 +154,8 @@ window.TNTT.core = {
             if (res.status === 401) {
                 if (window.TNTT?.toast) window.TNTT.toast.error('Phiên đăng nhập hết hạn. Đang chuyển ra màn hình đăng nhập...');
                 setTimeout(() => location.reload(), 1500);
-                // Trả networkError để client xử lý đúng (không xóa hàng đợi offline)
-                // Đồng thời xóa cache QR lookup (PII trẻ em trên thiết bị dùng chung)
-                for (let i = localStorage.length - 1; i >= 0; i--) {
-                    const k = localStorage.key(i);
-                    if (k && k.startsWith('qrlookup_')) localStorage.removeItem(k);
-                }
+                // networkError: vòng đồng bộ hàng đợi offline giữ lại các lượt chưa gửi
+                // (nếu coi là lỗi nghiệp vụ, chúng bị bỏ khỏi hàng đợi và mất).
                 return { ok: false, networkError: true, error: 'Phiên đăng nhập đã hết hạn.' };
             }
             if (res.status === 403) {
@@ -433,11 +429,6 @@ window.TNTT.core = {
             await fetch('api/auth.php?action=logout', { method: 'POST' });
         } catch (e) { /* mất mạng thì vẫn chuyển về trang chủ */ }
         try { await window.TNTT.snap.clear(); } catch (e) {}   // máy dùng chung: xoá dữ liệu lưu trong máy
-        // Xóa cache QR lookup (PII trẻ em trên thiết bị dùng chung)
-        for (let i = localStorage.length - 1; i >= 0; i--) {
-            const k = localStorage.key(i);
-            if (k && k.startsWith('qrlookup_')) localStorage.removeItem(k);
-        }
         // Về TRANG CHỦ (landing) thay vì tải lại: tải lại tại chỗ sẽ rơi vào form
         // đăng nhập, và app lưu ra màn hình chính cũng mở lại đúng chỗ đó.
         location.replace('index.php');
