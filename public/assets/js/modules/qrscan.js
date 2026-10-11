@@ -46,6 +46,10 @@ window.TNTT.qrscan = {
     _qrHenGui: null,
     _qrTiengAm: null,
     _qrTraMa: null,         // Map: mã số -> em, tra O(1) thay vì quét mảng
+    _qrJsQrNho: null,       // lần tải jsQR đang chạy (dùng chung)
+    _qrDong: 0,             // tăng mỗi lần tắt camera: moQuetQR đang chờ thì biết mình đã bị đóng
+    _qrCho: [],             // bản ghi vừa quét, chưa đẩy vào sổ điểm danh (xem _qrGhiTamThoi)
+    _qrChoIds: new Set(),   // id các em trong _qrCho, để chặn quét trùng
 
     CHAN_TRUNG_MS: 700,
     LO_TOI_DA: 25,
@@ -126,13 +130,17 @@ window.TNTT.qrscan = {
 
     _qrTaiJsQR() {
         if (window.jsQR) return Promise.resolve();
-        return new Promise((ok, hong) => {
+        // Dùng chung MỘT lần tải: moQuetQR tải sẵn từ đầu (song song với bảng tra
+        // và camera), nơi khác gọi lại thì đợi cùng lần tải đó, không tải đôi.
+        if (this._qrJsQrNho) return this._qrJsQrNho;
+        this._qrJsQrNho = new Promise((ok, hong) => {
             const s = document.createElement('script');
             s.src = 'assets/js/vendor/jsQR.min.js';
             s.onload = ok;
-            s.onerror = () => hong(new Error('Không tải được bộ giải mã QR.'));
+            s.onerror = () => { this._qrJsQrNho = null; hong(new Error('Không tải được bộ giải mã QR.')); };
             document.head.appendChild(s);
         });
+        return this._qrJsQrNho;
     },
 
     /* ---------- Tiếng bíp ----------
@@ -234,33 +242,38 @@ window.TNTT.qrscan = {
             return;
         }
 
-        // Bảng tra riêng cho máy quét: chỉ mã số / tên / lớp.
-        //
-        // KHÔNG dùng this.students — danh sách đó chỉ gồm các em trong
-        // phạm vi mình được XEM (lớp mình), trong khi máy quét cần cả
-        // khối. Và nó chứa ngày sinh, địa chỉ, số điện thoại cha mẹ —
-        // những thứ việc quét không cần tới.
-        this.qrTrangThai = 'Đang tải danh sách…';
-        try {
-            await this._qrTaiBangTra();
-        } catch (e) {
-            this.qrMo = false;
-            window.TNTT.toast.error(e.message);
-            return;
-        }
-
         this.qrVuaGhi = [];
         this.qrDaQuet = 0;
         this.qrDangGui = 0;
         this._qrLan = {};
         this._qrHang = [];
+        this._qrCho = [];
+        this._qrChoIds = new Set();
         this.qrTrangThai = 'Đang mở camera…';
         this.qrMo = true;
+        // Người dùng có thể bấm X trong lúc moQuetQR còn đang chờ (camera, bảng tra).
+        // Sau mỗi await, _qrDong đổi nghĩa là đã đóng (hoặc đã mở lại) -> bỏ dở,
+        // không bật lại vòng giải mã trên một màn hình đã đóng.
+        const dong = this._qrDong;
+
+        // Ba việc chậm chạy SONG SONG thay vì nối đuôi nhau: tải bảng tra từ máy
+        // chủ, bật camera, và (máy không có BarcodeDetector) tải bộ giải mã jsQR.
+        //
+        // Bảng tra riêng cho máy quét: chỉ mã số / tên / lớp.
+        // KHÔNG dùng this.students — danh sách đó chỉ gồm các em trong
+        // phạm vi mình được XEM (lớp mình), trong khi máy quét cần cả
+        // khối. Và nó chứa ngày sinh, địa chỉ, số điện thoại cha mẹ —
+        // những thứ việc quét không cần tới.
+        const bangTra = this._qrTaiBangTra();
+        bangTra.catch(() => {});          // lỗi được xử lý ở chỗ await bên dưới
+        this._qrCoNative().then(n => { if (!n) this._qrTaiJsQR().catch(() => {}); });
 
         await this.$nextTick();
+        if (this._qrDong !== dong) return;
 
+        let luong;
         try {
-            this._qrStream = await navigator.mediaDevices.getUserMedia({
+            luong = await navigator.mediaDevices.getUserMedia({
                 video: {
                     facingMode: { ideal: 'environment' },
                     width:  { ideal: 1280 },
@@ -269,12 +282,17 @@ window.TNTT.qrscan = {
                 audio: false
             });
         } catch (e) {
+            if (this._qrDong !== dong) return;
             this.qrMo = false;
             window.TNTT.toast.error(e && e.name === 'NotAllowedError'
                 ? 'Bạn đã từ chối quyền camera. Vào cài đặt trình duyệt để bật lại.'
                 : 'Không mở được camera: ' + (e && e.message ? e.message : e));
             return;
         }
+        // Đã đóng trong lúc chờ camera: tắt luồng vừa về (chỉ luồng của lần gọi này),
+        // không gán vào _qrStream kẻo đè lên phiên mở lại.
+        if (this._qrDong !== dong) { luong.getTracks().forEach(t => t.stop()); return; }
+        this._qrStream = luong;
 
         const video = this.$refs.qrVideo;
 
@@ -303,11 +321,26 @@ window.TNTT.qrscan = {
             try { await video.play(); } catch (e2) { /* khung ngắm vẫn dùng được */ }
         }
 
+        if (this._qrDong !== dong) return;
+
         // Kiểm tra khả năng bật đèn Flash (Torch) của camera thiết bị
         const track = this._qrStream ? this._qrStream.getVideoTracks()[0] : null;
         const cap = (track && track.getCapabilities) ? track.getCapabilities() : {};
         this.qrCoDenPin = !!cap.torch;
         this.qrDenPin = false;
+
+        // Camera đã sẵn sàng; bảng tra phải về đủ mới nhận mã được.
+        this.qrTrangThai = 'Đang tải danh sách…';
+        try {
+            await bangTra;
+        } catch (e) {
+            if (this._qrDong !== dong) return;
+            this._qrTatCamera();
+            this.qrMo = false;
+            window.TNTT.toast.error(e.message);
+            return;
+        }
+        if (this._qrDong !== dong) return;
 
         // Chạm mở camera cũng là một cử chỉ người dùng — mượn luôn để
         // "đánh thức" âm thanh, nếu không iOS chặn tiếng bíp đầu tiên.
@@ -447,8 +480,7 @@ window.TNTT.qrscan = {
             this._qrBipLoi(); this._qrRung(150);
             return;
         }
-        const truoc = this.studentSessionStatus(em.id);
-        if (truoc === 'có mặt' || truoc === 'đi trễ') {
+        if (this._qrChoIds.has(em.id) || this.attendanceRecord(em.id)) {
             this.qrTrangThai = em.name + ' — đã điểm danh';
             return;                      // im lặng, không bíp: chuyện bình thường
         }
@@ -471,16 +503,33 @@ window.TNTT.qrscan = {
     },
 
     /**
-     * Ghi vào danh sách trên máy NGAY, không đợi máy chủ trả lời.
-     * GLV thấy con số nhảy tức thì; máy chủ đồng bộ ở nền.
+     * Ghi nhận trên máy NGAY, không đợi máy chủ trả lời — nhưng chỉ vào
+     * hàng chờ _qrCho, CHƯA đụng sổ điểm danh (this.attendances).
+     *
+     * Mỗi lần thêm vào sổ, Alpine tính lại mọi chỗ đang đọc sổ (danh sách
+     * hàng trăm em, huy hiệu việc cần làm, số liệu...) — hàng trăm mili giây
+     * mỗi lượt trên điện thoại, nên quét bị khựng. Máy quét phủ kín màn hình
+     * nên danh sách bên dưới chưa cần cập nhật; con số GLV thấy là qrDaQuet.
+     * Đóng máy quét thì _qrDayRaSo() đẩy cả lô vào sổ MỘT lần.
      */
     _qrGhiTamThoi(em) {
         const s = this.activeSession;
-        if (this.attendanceRecord(em.id, s)) return;   // đã có -> bỏ
-        this._attThem({
+        if (this._qrChoIds.has(em.id) || this.attendanceRecord(em.id, s)) return;   // đã có -> bỏ
+        this._qrChoIds.add(em.id);
+        this._qrCho.push({
             programId: s.programId, date: s.date, studentId: em.id,
             status: this.isPastCutoff ? 'đi trễ' : 'có mặt',
             method: 'qr', markedBy: this.user.fullName, markedAt: this.currentTime()
+        });
+    },
+
+    /** Đẩy các em vừa quét vào sổ điểm danh trên máy (một lần, khi đóng máy quét) */
+    _qrDayRaSo() {
+        const cho = this._qrCho;
+        this._qrCho = [];
+        this._qrChoIds = new Set();
+        cho.forEach(rec => {
+            if (!this.attendanceRecord(rec.studentId, rec)) this._attThem(rec);
         });
     },
 
@@ -525,6 +574,7 @@ window.TNTT.qrscan = {
             vong++;
         }
 
+        this._qrDayRaSo();
         const sot = this._qrHang.length;
         const daGhi = this.qrDaQuet;
 
@@ -555,6 +605,14 @@ window.TNTT.qrscan = {
                 + 'Trong đó ' + sot + ' em đã được lưu tạm trên máy do mất mạng.\n'
                 + 'Hệ thống sẽ tự động gửi lên máy chủ ngay khi có mạng trở lại!', 7000);
         } else if (daGhi) {
+            // Chốt mốc đồng bộ TRƯỚC khi nạp lại: các lô vừa gửi đã làm mốc đổi, nếu
+            // không thì vòng hỏi 4 giây (shell.js) nạp lại thêm một lần ngay sau đây.
+            // Máy khác ghi sau mốc này vẫn được thấy ở lần hỏi kế tiếp.
+            try {
+                const r = await window.TNTT.csrfFetch('api/sync.php', { cache: 'no-store' });
+                const moc = await r.text();
+                if (moc && moc !== '0') this._syncVersion = moc;
+            } catch (e) { /* không chốt được thì chỉ thừa một lần nạp, không sai */ }
             await this.loadData();      // lấy lại số liệu chuẩn từ máy chủ
             window.TNTT.toast.success('Xong. Đã điểm danh ' + daGhi + ' em bằng thẻ QR.');
         }
@@ -580,6 +638,7 @@ window.TNTT.qrscan = {
             this._qrHang = [];
             this.qrDangGui = 0;
         }
+        this._qrDayRaSo();
         this._qrTatCamera();
         this.qrMo = false;
     },
@@ -601,6 +660,7 @@ window.TNTT.qrscan = {
     },
 
     _qrTatCamera() {
+        this._qrDong++;
         this.qrDenPin = false;
         this.qrCoDenPin = false;
         if (this._qrStream) {
