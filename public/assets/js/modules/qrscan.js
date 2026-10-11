@@ -47,6 +47,7 @@ window.TNTT.qrscan = {
     _qrTiengAm: null,
     _qrTraMa: null,         // Map: mã số -> em, tra O(1) thay vì quét mảng
     _qrJsQrNho: null,       // lần tải jsQR đang chạy (dùng chung)
+    _qrDong: 0,             // tăng mỗi lần tắt camera: moQuetQR đang chờ thì biết mình đã bị đóng
     _qrCho: [],             // bản ghi vừa quét, chưa đẩy vào sổ điểm danh (xem _qrGhiTamThoi)
     _qrChoIds: new Set(),   // id các em trong _qrCho, để chặn quét trùng
 
@@ -250,6 +251,10 @@ window.TNTT.qrscan = {
         this._qrChoIds = new Set();
         this.qrTrangThai = 'Đang mở camera…';
         this.qrMo = true;
+        // Người dùng có thể bấm X trong lúc moQuetQR còn đang chờ (camera, bảng tra).
+        // Sau mỗi await, _qrDong đổi nghĩa là đã đóng (hoặc đã mở lại) -> bỏ dở,
+        // không bật lại vòng giải mã trên một màn hình đã đóng.
+        const dong = this._qrDong;
 
         // Ba việc chậm chạy SONG SONG thay vì nối đuôi nhau: tải bảng tra từ máy
         // chủ, bật camera, và (máy không có BarcodeDetector) tải bộ giải mã jsQR.
@@ -264,9 +269,11 @@ window.TNTT.qrscan = {
         this._qrCoNative().then(n => { if (!n) this._qrTaiJsQR().catch(() => {}); });
 
         await this.$nextTick();
+        if (this._qrDong !== dong) return;
 
+        let luong;
         try {
-            this._qrStream = await navigator.mediaDevices.getUserMedia({
+            luong = await navigator.mediaDevices.getUserMedia({
                 video: {
                     facingMode: { ideal: 'environment' },
                     width:  { ideal: 1280 },
@@ -275,12 +282,17 @@ window.TNTT.qrscan = {
                 audio: false
             });
         } catch (e) {
+            if (this._qrDong !== dong) return;
             this.qrMo = false;
             window.TNTT.toast.error(e && e.name === 'NotAllowedError'
                 ? 'Bạn đã từ chối quyền camera. Vào cài đặt trình duyệt để bật lại.'
                 : 'Không mở được camera: ' + (e && e.message ? e.message : e));
             return;
         }
+        // Đã đóng trong lúc chờ camera: tắt luồng vừa về (chỉ luồng của lần gọi này),
+        // không gán vào _qrStream kẻo đè lên phiên mở lại.
+        if (this._qrDong !== dong) { luong.getTracks().forEach(t => t.stop()); return; }
+        this._qrStream = luong;
 
         const video = this.$refs.qrVideo;
 
@@ -309,6 +321,8 @@ window.TNTT.qrscan = {
             try { await video.play(); } catch (e2) { /* khung ngắm vẫn dùng được */ }
         }
 
+        if (this._qrDong !== dong) return;
+
         // Kiểm tra khả năng bật đèn Flash (Torch) của camera thiết bị
         const track = this._qrStream ? this._qrStream.getVideoTracks()[0] : null;
         const cap = (track && track.getCapabilities) ? track.getCapabilities() : {};
@@ -320,11 +334,13 @@ window.TNTT.qrscan = {
         try {
             await bangTra;
         } catch (e) {
+            if (this._qrDong !== dong) return;
             this._qrTatCamera();
             this.qrMo = false;
             window.TNTT.toast.error(e.message);
             return;
         }
+        if (this._qrDong !== dong) return;
 
         // Chạm mở camera cũng là một cử chỉ người dùng — mượn luôn để
         // "đánh thức" âm thanh, nếu không iOS chặn tiếng bíp đầu tiên.
@@ -636,6 +652,7 @@ window.TNTT.qrscan = {
     },
 
     _qrTatCamera() {
+        this._qrDong++;
         this.qrDenPin = false;
         this.qrCoDenPin = false;
         if (this._qrStream) {
