@@ -163,10 +163,10 @@ if ($action === 'scan') {
         if ($progClassIds !== null && !in_array((int) $em['class_id'], $progClassIds, true)) {
             $bo[] = [$ma, $em['full_name'] . ' không thuộc lớp của buổi này']; continue;
         }
-        $hopLe[] = (int) $em['id'];
+        $hopleIds[] = (int) $em['id'];
     }
 
-    if (empty($hopLe)) {
+    if (empty($hopleIds)) {
         Cache::flush();
         json_out(['ok' => true, 'added' => 0, 'already' => 0, 'skipped' => $bo, 'status' => $pastCutoff ? 'đi trễ' : 'có mặt']);
     }
@@ -174,7 +174,7 @@ if ($action === 'scan') {
     $status = $pastCutoff ? 'đi trễ' : 'có mặt';
     db()->beginTransaction();
     try {
-        foreach (array_chunk($hopLe, 200) as $lo) {
+        foreach (array_chunk($hopleIds, 200) as $lo) {
             $vals   = implode(',', array_fill(0, count($lo), '(?,?,?,?,?,?,?)'));
             $params = [];
             foreach ($lo as $sid) {
@@ -189,10 +189,10 @@ if ($action === 'scan') {
         db()->rollBack();
         json_fail(safe_error($e, 'Ghi điểm danh thất bại, đã hoàn tác: '), 500);
     }
-    $daCo = count($hopLe) - $them;
+    $daCo = count($hopleIds) - $them;
 
     if (program_earns_stamps($prog)) {
-        foreach ($hopLe as $sid) recalc_stamps_safe($sid, $year['id']);
+        foreach ($hopleIds as $sid) recalc_stamps_safe($sid, $year['id']);
     }
 
     if ($them > 0) {
