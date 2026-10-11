@@ -125,11 +125,30 @@ self.addEventListener('push', (e) => {
       }
     }
 
-    // Notify open tabs
-    await notifyOpenTabs(notification.data.url);
+    // Check if any client window is open
+    const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    const hasOpenClients = clients.length > 0;
 
-    // Show notification if no focused tab
-    if (!await hasFocusedClient()) {
+    if (hasOpenClients) {
+      // App is open → send message to page for in-app toast
+      for (const client of clients) {
+        client.postMessage({
+          action: 'PUSH_RECEIVED',
+          notification: {
+            title: notification.title,
+            body: notification.body,
+            tag: notification.tag,
+            url: notification.data?.url || '/',
+            icon: notification.icon || '/assets/img/icon.svg',
+          }
+        });
+      }
+      // Navigate open tab to target URL if provided
+      if (notification.data?.url) {
+        await notifyOpenTabs(notification.data.url);
+      }
+    } else {
+      // App is closed → show native notification
       await self.registration.showNotification(notification.title, {
         body: notification.body,
         icon: notification.icon,
@@ -173,11 +192,6 @@ async function fetchNotificationContent() {
     }
   }
   throw new Error('Failed to fetch notification');
-}
-
-async function hasFocusedClient() {
-  const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-  return clients.some(c => c.focused);
 }
 
 async function notifyOpenTabs(url) {
