@@ -83,9 +83,62 @@ $pastAbsent = !empty($prog['absent_time'] ?? '')
 
 // Lớp tham gia chương trình (rỗng/NULL = áp dụng toàn đoàn)
 $progClassIds = null;
-if (db_has_table('program_classes')) {
-    $pcRows = db_all('SELECT class_id FROM program_classes WHERE program_id=?', [$programId]);
-    if ($pcRows) $progClassIds = array_map(fn($r) => (int) $r['class_id'], $pcRows);
+$pcRows = db_all('SELECT class_id FROM program_classes WHERE program_id=?', [$programId]);
+if ($pcRows) $progClassIds = array_map(fn($r) => (int) $r['class_id'], $pcRows);
+
+// =====================================================================
+//  Helper: Kẹp mốc quét thật vào khoảng hợp lệ
+//
+//  Client gửi scannedAt khi điểm danh offline. Server kẹp giá trị này
+//  vào khoảng [00:00 ngày buổi, giờ máy chủ hiện tại] — không tin
+//  tuyệt đối đồng hồ máy khách (có thể lệch phút/giờ/ngày).
+//
+//  Giá trị ngoài khoảng thì dùng cận gần nhất (đầu ngày hoặc hiện tại).
+//  Bản ghi có scannedAt lệch rõ (> 5 phút) so với giờ máy chủ thì
+//  đặt offline_marked = 1 để BĐH rà soát.
+// =====================================================================
+function clampScannedAt($scannedAt, $date) {
+    if (!$scannedAt) return null;
+    $ts = is_numeric($scannedAt) ? (int) $scannedAt : strtotime($scannedAt);
+    if (!$ts) return null;
+
+    $dayStart = strtotime($date . ' 00:00:00');
+    $now = time();
+
+    // Nếu scannedAt nằm ngoài khoảng, kẹp về cận gần nhất
+    if ($ts < $dayStart) $ts = $dayStart;
+    if ($ts > $now) $ts = $now;
+
+    return date('Y-m-d H:i:s', $ts);
+}
+
+/**
+ * Kiểm tra mốc quét có lệch rõ so với giờ máy chủ.
+ * Lệch > 5 phút thì coi là điểm danh offline.
+ */
+function isOfflineMarked($scannedAt) {
+    if (!$scannedAt) return false;
+    $ts = is_numeric($scannedAt) ? (int) $scannedAt : strtotime($scannedAt);
+    if (!$ts) return false;
+    return abs(time() - $ts) > 300; // 5 phút
+}
+
+/**
+ * Kiểm tra cột có tồn tại trong bảng không.
+ * Dùng cache tĩnh để tránh truy vấn lặp lại.
+ */
+function tableHasColumn($table, $column) {
+    static $cache = [];
+    $key = $table . '.' . $column;
+    if (!isset($cache[$key])) {
+        try {
+            $result = db()->query("SHOW COLUMNS FROM $table LIKE '$column'");
+            $cache[$key] = $result->rowCount() > 0;
+        } catch (Throwable $e) {
+            $cache[$key] = false;
+        }
+    }
+    return $cache[$key];
 }
 
 // =====================================================================
@@ -251,6 +304,10 @@ if ($action === 'scan') {
 
 // =====================================================================
 //  MARK — ghi một em (idempotent, cho hàng đợi offline)
+//
+//  Client gửi scannedAt để ghi lại giờ quét thật. Server kẹp vào
+//  khoảng hợp lệ và đánh dấu offline_marked nếu mốc lệch rõ với giờ
+//  máy chủ (cách nhau > 5 phút).
 // =====================================================================
 if ($action === 'mark') {
     if ($laTuongLai) json_fail('Buổi ngày ' . $date . ' chưa diễn ra, chưa điểm danh được.', 400);
@@ -279,6 +336,11 @@ if ($action === 'mark') {
         json_fail('Đã quá giờ "tính vắng" của buổi — em ' . $st['full_name'] . ' tính vắng, không ghi được.');
     }
 
+    // Xử lý mốc quét thật từ client
+    $scannedAt = $in['scannedAt'] ?? null;
+    $clampedAt = clampScannedAt($scannedAt, $date);
+    $offlineMarked = isOfflineMarked($clampedAt) ? 1 : 0;
+
     // Kiểm tra đã có bản ghi chưa
     $existing = db_one('SELECT status FROM attendances
                          WHERE program_id=? AND session_date=? AND student_id=?',
@@ -290,10 +352,24 @@ if ($action === 'mark') {
     $status = $pastCutoff ? 'đi trễ' : 'có mặt';
     $added  = false;
 
+    // Ghi kèm scanned_at và offline_marked nếu có cột
+    $cols = 'year_id, program_id, session_date, student_id, status, method, marked_by';
+    $vals = '?,?,?,?,?,?,?';
+    $params = [$year['id'], $programId, $date, $studentId, $status, 'tay', $me['id']];
+
+    if (tableHasColumn('attendances', 'scanned_at')) {
+        $cols .= ', scanned_at';
+        $vals .= ', ?';
+        $params[] = $clampedAt;
+    }
+    if (tableHasColumn('attendances', 'offline_marked')) {
+        $cols .= ', offline_marked';
+        $vals .= ', ?';
+        $params[] = $offlineMarked;
+    }
+
     try {
-        db_run('INSERT INTO attendances (year_id, program_id, session_date, student_id, status, method, marked_by)
-                VALUES (?,?,?,?,?,?,?)',
-            [$year['id'], $programId, $date, $studentId, $status, 'tay', $me['id']]);
+        db_run("INSERT INTO attendances ($cols) VALUES ($vals)", $params);
         $added = true;
     } catch (Throwable $e) {
         // Race condition: hai request cùng lúc đều INSERT — một thắng, kia bị trùng khóa

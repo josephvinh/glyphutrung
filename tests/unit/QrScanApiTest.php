@@ -223,7 +223,7 @@ class QrScanApiTest extends TestCase
 
     private function attRow(int $programId, string $date, int $studentId): ?array
     {
-        return db_one("SELECT status, method FROM attendances
+        return db_one("SELECT status, method, scanned_at, offline_marked FROM attendances
                         WHERE program_id=? AND session_date=? AND student_id=?", [$programId, $date, $studentId]);
     }
 

@@ -94,10 +94,14 @@ window.TNTT.attendance = {
         try {
             for (const item of queue) {
                 try {
-                    const r = await this.api('attendance', 'toggle', {
+                    // Dùng 'mark' thay vì 'toggle': mark là idempotent — gửi lại
+                    // sẽ không gỡ bản ghi như toggle (ghi mới rồi lần sau gỡ).
+                    // Gửi kèm scannedAt để server ghi lại giờ quét thật.
+                    const r = await this.api('attendance', 'mark', {
                         programId: item.programId,
                         date: item.date,
-                        studentId: item.studentId
+                        studentId: item.studentId,
+                        scannedAt: item.scannedAt || null
                     });
                     if (r && r.ok) {
                         successCount++;
@@ -485,8 +489,9 @@ window.TNTT.attendance = {
                     date: this.activeSession.date,
                     studentId: student.id,
                     studentName: student.name,
-                    action: 'toggle',
-                    createdAt: new Date().toISOString()
+                    action: 'mark',
+                    createdAt: new Date().toISOString(),
+                    scannedAt: Date.now()
                 });
                 return;
             }
@@ -502,8 +507,9 @@ window.TNTT.attendance = {
                             date: this.activeSession.date,
                             studentId: student.id,
                             studentName: student.name,
-                            action: 'toggle',
-                            createdAt: new Date().toISOString()
+                            action: 'mark',
+                            createdAt: new Date().toISOString(),
+                            scannedAt: Date.now()
                         });
                     } else {
                         this._attThem(cu);
@@ -538,8 +544,9 @@ window.TNTT.attendance = {
                 date: this.activeSession.date,
                 studentId: student.id,
                 studentName: student.name,
-                action: 'toggle',
-                createdAt: new Date().toISOString()
+                action: 'mark',
+                createdAt: new Date().toISOString(),
+                scannedAt: Date.now()
             });
             return;
         }
@@ -556,8 +563,9 @@ window.TNTT.attendance = {
                         date: this.activeSession.date,
                         studentId: student.id,
                         studentName: student.name,
-                        action: 'toggle',
-                        createdAt: new Date().toISOString()
+                        action: 'mark',
+                        createdAt: new Date().toISOString(),
+                        scannedAt: Date.now()
                     });
                 } else {
                     this._attXoa(this.activeSession.programId, this.activeSession.date, student.id);

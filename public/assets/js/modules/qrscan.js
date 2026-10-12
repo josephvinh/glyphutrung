@@ -588,8 +588,9 @@ window.TNTT.qrscan = {
                         date: this.activeSession.date,
                         studentId: em.id,
                         studentName: em.name,
-                        action: 'toggle',
-                        createdAt: new Date().toISOString()
+                        action: 'mark',
+                        createdAt: new Date().toISOString(),
+                        scannedAt: Date.now()  // giờ quét thật (epoch ms)
                     });
                 }
             });
@@ -630,8 +631,9 @@ window.TNTT.qrscan = {
                         date: this.activeSession.date,
                         studentId: em.id,
                         studentName: em.name,
-                        action: 'toggle',
-                        createdAt: new Date().toISOString()
+                        action: 'mark',
+                        createdAt: new Date().toISOString(),
+                        scannedAt: Date.now()  // giờ quét thật (epoch ms)
                     });
                 }
             });

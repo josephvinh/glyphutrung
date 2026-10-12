@@ -156,7 +156,7 @@ window.TNTT.core = {
                 setTimeout(() => location.reload(), 1500);
                 // networkError: vòng đồng bộ hàng đợi offline giữ lại các lượt chưa gửi
                 // (nếu coi là lỗi nghiệp vụ, chúng bị bỏ khỏi hàng đợi và mất).
-                return { ok: false, networkError: true, error: 'Phiên đăng nhập đã hết hạn.' };
+                return { ok: false, networkError: true, unauthorized: true, error: 'Phiên đăng nhập đã hết hạn.' };
             }
             if (res.status === 403) {
                 // Bị buộc đổi mật khẩu giữa phiên (vd vừa được cấp lại mật khẩu):
@@ -270,7 +270,7 @@ window.TNTT.core = {
             // Phiên hết hạn / bị thu hồi: bỏ dữ liệu lưu trong máy rồi về màn đăng nhập
             await window.TNTT.snap.clear();
             setTimeout(() => location.reload(), 300);
-            return { ok: false, error: 'Phiên đăng nhập đã hết hạn.' };
+            return { ok: false, unauthorized: true, error: 'Phiên đăng nhập đã hết hạn.' };
         }
         if (res.status === 304 && snap) return snap.data;
         const d = await res.json();
