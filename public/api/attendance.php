@@ -106,11 +106,11 @@ if (db_has_table('program_classes')) {
 // =====================================================================
 function clampScannedAt($scannedAt, $date) {
     if (!$scannedAt) return null;
-    // Client gửi epoch milliseconds từ JS (Date.now()), nên nhân 1000
-    // để thành epoch seconds. Nếu giá trị > 1 tỷ thì coi là milliseconds.
+    // Client gửi epoch milliseconds từ JS (Date.now()). Nếu giá trị > 1e11
+    // thì coi là milliseconds và chia 1000 để thành epoch seconds.
     $val = is_numeric($scannedAt) ? (int) $scannedAt : strtotime($scannedAt);
     if (!$val) return null;
-    $ts = $val > 10000000000 ? (int) ($val / 1000) : $val; // ms → s
+    $ts = $val > 100000000000 ? (int) ($val / 1000) : $val; // ms → s
     if (!$ts) return null;
 
     $dayStart = strtotime($date . ' 00:00:00');
@@ -346,18 +346,21 @@ if ($action === 'mark') {
         json_fail('Lớp của em ' . $st['full_name'] . ' không thuộc buổi này.', 400);
     }
 
-    // Sau giờ vắng: chỉ "cửa sửa" mới bù được
-    if ($pastAbsent && !can_override_session_lock($me, (int) $st['class_id'])) {
-        json_fail('Đã quá giờ "tính vắng" của buổi — em ' . $st['full_name'] . ' tính vắng, không ghi được.');
-    }
-
-    // Xử lý mốc quét thật từ client: kẹp vào khoảng hợp lệ rồi
-    // quyết định status theo MỐC ĐÃ KẸP, không theo giờ đồng bộ.
+    // Kẹp mốc quét thật TRƯỚC: để kiểm tra giờ vắng và tính
+    // status theo MỐC CLIENT GỬI (offline), không theo giờ đồng bộ.
     $scannedAt = $in['scannedAt'] ?? null;
     $clampedAt = clampScannedAt($scannedAt, $date);
-    // Chuyểi datetime string thành epoch seconds để so sánh với cutoffTs
-    $clampedTs = $clampedAt ? strtotime($clampedAt) : null;
+    $clampedTs = $clampedAt ? strtotime($clampedAt) : null; // epoch seconds
     $offlineMarked = isOfflineMarked($clampedTs) ? 1 : 0;
+
+    // Kiểm tra giờ vắng từ MỐC ĐÃ KẸP: nếu scannedAt quá giờ absent thì
+    // không ghi được (tính vắng rồi). Dùng clampedTs nếu có, không thì time().
+    $checkTs = $clampedTs ?? time();
+    $pastAbsentForMark = !empty($prog['absent_time'] ?? '')
+        && $checkTs >= strtotime($date . ' ' . $prog['absent_time']);
+    if ($pastAbsentForMark && !can_override_session_lock($me, (int) $st['class_id'])) {
+        json_fail('Đã quá giờ "tính vắng" của buổi — em ' . $st['full_name'] . ' tính vắng, không ghi được.');
+    }
 
     // Kiểm tra đã có bản ghi chưa
     $existing = db_one('SELECT status FROM attendances
@@ -368,8 +371,6 @@ if ($action === 'mark') {
     }
 
     // Status: so mốc ĐÃ KẸP với giờ chốt, không so thời điểm đồng bộ.
-    // Nếu không có scannedAt (đồng bộ online) thì clampedTs = null → dùng time().
-    $checkTs = $clampedTs ?? time();
     $status = $checkTs >= $cutoffTs ? 'đi trễ' : 'có mặt';
     $added  = false;
 
