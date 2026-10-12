@@ -24,6 +24,14 @@ const KHO = 'tntt-tinh-' + PHIEN_BAN;
 // in fetch). It holds no personal data, so it may live in the cache.
 const TRANG_MAT_MANG = '/offline.html';
 
+// Tải sẵn một tệp tĩnh vào kho STATIC (cùng kho với chiến lược cache-first bên dưới).
+async function precacheStatic(path) {
+  const req = new Request(path);
+  const res = await fetch(req);
+  if (!res.ok) throw new Error('precache ' + path + ' → ' + res.status);
+  await cacheManager.put(req, res, CACHE_CONFIG.STATIC);
+}
+
 // ==========================================================
 // INSTALL
 // ==========================================================
@@ -37,6 +45,10 @@ self.addEventListener('install', (e) => {
         kho.add('/assets/css/bundle.php'),
         kho.add('/assets/js/bundle.php'),
         kho.add(TRANG_MAT_MANG),
+        // jsQR: bộ giải mã QR dự phòng cho iPhone Safari (không có BarcodeDetector). Đặt vào kho
+        // STATIC (kho mà cacheFirst đọc), không phải kho phiên bản ở trên, để mở máy quét lần
+        // đầu khi mất mạng vẫn có bộ giải mã.
+        precacheStatic('/assets/js/vendor/jsQR.min.js'),
       ]);
     } catch (err) {
       warn('Precache failed:', err);

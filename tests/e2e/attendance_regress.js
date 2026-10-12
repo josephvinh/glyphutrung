@@ -15,6 +15,8 @@
 //   OFF-01 Hàng đợi offline: chạm rồi chạm lại (gỡ) khi mất mạng; online lại thì DB đúng, hàng đợi rỗng.
 //   OFF-02 Quét QR lúc mất mạng: lượt quét được giữ trong hàng đợi, đồng bộ ghi method=qr và scanned_at.
 //   OFF-03 Đồng bộ chỉ xoá đúng mục đã gửi xong (mục chen vào giữa chừng không mất), 401 thì dừng.
+//   OFF-04 Lượt bị máy chủ từ chối khi đồng bộ được báo đích danh (tên em + lý do), không im lặng.
+//   SW-01  Service worker tải sẵn jsQR vào kho STATIC để quét QR trên iPhone lúc mất mạng.
 //   SCOPE  GLV chỉ quét được lớp mình; trưởng khối quét được cả khối; chữ phạm vi hiển thị đúng.
 //   SYNC   Máy A ghi điểm danh: máy B chỉ nạp lại phần điểm danh (heavy), không nạp core; chính máy A không nạp lại.
 //
@@ -282,6 +284,38 @@ async function shot(page, name) {
     rec('OFF-03b', 'Hết phiên (401): dừng ở lượt đầu lỗi, giữ phần còn lại',
       JSON.stringify(off3.goi401) === JSON.stringify([1, 2]) && JSON.stringify(off3.hang401) === JSON.stringify([2, 3]),
       `đã gọi ${JSON.stringify(off3.goi401)}, còn ${JSON.stringify(off3.hang401)}`);
+
+    // ---- OFF-04: lượt bị máy chủ từ chối khi đồng bộ phải được báo đích danh (không im lặng)
+    const off4 = await pa.evaluate(async () => {
+      const app = Alpine.$data(document.querySelector('[x-data="tnttApp"]'));
+      const hop = [];
+      const goc = { api: app.api, loi: window.TNTT.toast.error };
+      window.TNTT.toast.error = (m) => { hop.push(String(m)); };
+      localStorage.removeItem('tntt_offline_attendance_queue');
+      app.pushOfflineAttendance({ programId: 1, date: '2000-01-01', studentId: 77, studentName: 'Em Bi Tu Choi', action: 'mark', createdAt: 'Z', scannedAt: 1 });
+      app.api = async () => ({ ok: false, error: 'Đã quá giờ tính vắng' });
+      await app.syncOfflineAttendance();
+      app.api = goc.api; window.TNTT.toast.error = goc.loi;
+      const con = app.getOfflineAttendanceQueue().length;
+      app.setOfflineAttendanceQueue([]);
+      return { hop, con };
+    });
+    rec('OFF-04', 'Lượt bị máy chủ từ chối: báo lỗi nêu tên em và lý do; mục bị bỏ khỏi hàng đợi',
+      off4.hop.length === 1 && off4.hop[0].includes('Em Bi Tu Choi') && off4.hop[0].includes('Đã quá giờ tính vắng') && off4.con === 0,
+      JSON.stringify(off4));
+
+    // ---- SW-01: service worker tải sẵn jsQR vào kho STATIC (quét QR trên iPhone lúc mất mạng)
+    const sw = await pa.evaluate(async () => {
+      if (!('serviceWorker' in navigator)) return { ho_tro: false };
+      await navigator.serviceWorker.ready;
+      for (let i = 0; i < 40; i++) {
+        const c = await caches.open('tntt-static-v1');
+        if (await c.match('/assets/js/vendor/jsQR.min.js')) return { ho_tro: true, co: true };
+        await new Promise((r) => setTimeout(r, 250));
+      }
+      return { ho_tro: true, co: false };
+    });
+    rec('SW-01', 'Service worker đã tải sẵn jsQR.min.js vào kho tntt-static-v1', sw.ho_tro && sw.co, JSON.stringify(sw));
 
     // =============== SYNC: máy B (quản trị thứ hai) ========================================
     const B = await newDevice(browser, '0901000001');
