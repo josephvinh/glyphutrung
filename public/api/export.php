@@ -479,7 +479,7 @@ function build_attendance_rows(array $students, array $sessions, array $year): a
         if ($s['session_date']) {
             // Thêm tên chương trình vào tiêu đề để phân biệt các buổi cùng ngày
             $shortName = mb_substr($s['name'] ?? 'CT', 0, 3);
-            $headers[] = $shortName . ' ' . ' ' . date('d/m', strtotime($s['session_date'])); // space prefix prevents Excel auto-format
+            $headers[] = $shortName . ' ' . date('d/m', strtotime($s['session_date'])); // space prefix prevents Excel auto-format
             $sessionCols[] = $s;
         }
     }

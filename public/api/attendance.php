@@ -138,24 +138,6 @@ function isOfflineMarked($scannedAt) {
     return abs(time() - $ts) > 300; // 5 phút
 }
 
-/**
- * Kiểm tra cột có tồn tại trong bảng không.
- * Dùng cache tĩnh để tránh truy vấn lặp lại.
- */
-function tableHasColumn($table, $column) {
-    static $cache = [];
-    $key = $table . '.' . $column;
-    if (!isset($cache[$key])) {
-        try {
-            $result = db()->query("SHOW COLUMNS FROM $table LIKE '$column'");
-            $cache[$key] = $result->rowCount() > 0;
-        } catch (Throwable $e) {
-            $cache[$key] = false;
-        }
-    }
-    return $cache[$key];
-}
-
 // =====================================================================
 //  BẢNG TRA CHO MÁY QUÉT
 //
@@ -271,7 +253,6 @@ if ($action === 'scan') {
     }
 
     if (empty($hopleIds)) {
-        Cache::flush();
         json_out(['ok' => true, 'added' => 0, 'already' => 0, 'skipped' => $bo, 'status' => $pastCutoff ? 'đi trễ' : 'có mặt']);
     }
 
@@ -283,13 +264,13 @@ if ($action === 'scan') {
         // đè bản cũ. rowCount() trả về SỐ DÒNG THẬT SỰ CHÈN -> "thêm mới";
         // phần còn lại là "đã có". Chia lô 200 (đã giới hạn từ trên).
         foreach (array_chunk($hopleIds, 200) as $lo) {
-            $vals   = implode(',', array_fill(0, count($lo), '(?,?,?,?,?,?,?)'));
+            $vals   = implode(',', array_fill(0, count($lo), '(?,?,?,?,?,?,?,?,?)'));
             $params = [];
             foreach ($lo as $sid) {
-                array_push($params, $year['id'], $programId, $date, $sid, $status, 'qr', $me['id']);
+                array_push($params, $year['id'], $programId, $date, $sid, $status, 'qr', $me['id'], null, 0);
             }
             $them += db_run("INSERT IGNORE INTO attendances
-                                (year_id, program_id, session_date, student_id, status, method, marked_by)
+                                (year_id, program_id, session_date, student_id, status, method, marked_by, scanned_at, offline_marked)
                              VALUES $vals", $params);
         }
         db()->commit();
@@ -354,6 +335,10 @@ if ($action === 'mark') {
     $clampedTs = $clampedAt ? strtotime($clampedAt) : null; // epoch seconds
     $offlineMarked = isOfflineMarked($clampedTs) ? 1 : 0;
 
+    // method: 'qr' hoặc 'tay' (whitelist). Client QR gửi 'qr', tay gửi 'tay'.
+    $method = strtolower(trim((string) ($in['method'] ?? '')));
+    if (!in_array($method, ['qr', 'tay'], true)) $method = 'tay';
+
     // Kiểm tra giờ vắng từ MỐC ĐÃ KẸP: nếu scannedAt quá giờ absent thì
     // không ghi được (tính vắng rồi). Dùng clampedTs nếu có, không thì time().
     $checkTs = $clampedTs ?? time();
@@ -375,21 +360,10 @@ if ($action === 'mark') {
     $status = $checkTs >= $cutoffTs ? 'đi trễ' : 'có mặt';
     $added  = false;
 
-    // Ghi kèm scanned_at và offline_marked nếu có cột
-    $cols = 'year_id, program_id, session_date, student_id, status, method, marked_by';
-    $vals = '?,?,?,?,?,?,?';
-    $params = [$year['id'], $programId, $date, $studentId, $status, 'tay', $me['id']];
-
-    if (tableHasColumn('attendances', 'scanned_at')) {
-        $cols .= ', scanned_at';
-        $vals .= ', ?';
-        $params[] = $clampedAt;
-    }
-    if (tableHasColumn('attendances', 'offline_marked')) {
-        $cols .= ', offline_marked';
-        $vals .= ', ?';
-        $params[] = $offlineMarked;
-    }
+    // Ghi kèm scanned_at và offline_marked (migration đảm bảo cột tồn tại)
+    $cols = 'year_id, program_id, session_date, student_id, status, method, marked_by, scanned_at, offline_marked';
+    $vals = '?,?,?,?,?,?,?,?,?';
+    $params = [$year['id'], $programId, $date, $studentId, $status, $method, $me['id'], $clampedAt, $offlineMarked];
 
     try {
         db_run("INSERT INTO attendances ($cols) VALUES ($vals)", $params);
@@ -405,7 +379,7 @@ if ($action === 'mark') {
         json_fail(safe_error($e, 'Ghi điểm danh thất bại: '), 500);
     }
 
-    if ($added && $pastCutoff) {
+    if ($added && $status === 'đi trễ') {
         log_action('diemdanh', 'attendance', 'Ghi điểm danh cho ' . $st['full_name'],
                    $prog['name'] . ' · ' . $date . ' · ' . $status);
     }
@@ -414,13 +388,14 @@ if ($action === 'mark') {
         recalc_stamps_safe($studentId, $year['id']);
     }
 
-    Cache::flush();
+    $att = Cache::flushAttendance(program_earns_stamps($prog));
     json_out([
         'ok'       => true,
         'added'    => $added,
         'status'   => $status,
         'markedAt' => date('H:i'),
         'markedBy' => $me['full_name'],
+        'att'      => $att,
     ]);
 }
 
@@ -449,11 +424,15 @@ if ($action === 'unmark') {
     }
 
     db_run('DELETE FROM attendances WHERE id = ?', [$existing['id']]);
+    if ($pastCutoff) {
+        log_action('diemdanh', 'attendance', 'Gỡ điểm danh của ' . $st['full_name'],
+                   $prog['name'] . ' · ' . $date . ' · ' . $existing['status']);
+    }
     if (program_earns_stamps($prog)) {
         recalc_stamps_safe($studentId, $year['id']);
     }
-    Cache::flush();
-    json_out(['ok' => true, 'removed' => true]);
+    $att = Cache::flushAttendance(program_earns_stamps($prog));
+    json_out(['ok' => true, 'removed' => true, 'att' => $att]);
 }
 
 // ---------------------------------------------------------------------
@@ -559,9 +538,9 @@ $status = $pastCutoff ? 'đi trễ' : 'có mặt';
 $added  = false;
 
 try {
-    db_run('INSERT INTO attendances (year_id, program_id, session_date, student_id, status, method, marked_by)
-            VALUES (?,?,?,?,?,?,?)',
-        [$year['id'], $programId, $date, $studentId, $status, 'tay', $me['id']]);
+    db_run('INSERT INTO attendances (year_id, program_id, session_date, student_id, status, method, marked_by, scanned_at, offline_marked)
+            VALUES (?,?,?,?,?,?,?,?,?)',
+        [$year['id'], $programId, $date, $studentId, $status, 'tay', $me['id'], null, 0]);
     $added = true;
 } catch (Throwable $e) {
     // Race condition: hai request cùng lúc đều INSERT — một thắng, kia bị trùng khóa
@@ -574,7 +553,7 @@ try {
     json_fail(safe_error($e, 'Ghi điểm danh thất bại: '), 500);
 }
 
-if ($added && $pastCutoff) {
+if ($added && $status === 'đi trễ') {
     log_action('diemdanh', 'attendance', 'Ghi điểm danh cho ' . $st['full_name'],
                $prog['name'] . ' · ' . $date . ' · ' . $status);
 }

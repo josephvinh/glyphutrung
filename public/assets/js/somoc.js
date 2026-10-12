@@ -36,7 +36,7 @@ function somocDinhDangNgay(s) {
     const d = new Date(String(s).replace(' ', 'T'));
     if (isNaN(d.getTime())) return s;
     const p = (n) => String(n).padStart(2, '0');
-    return p(d.getHours()) + ':' + p(d.getMinutes()) + ' · ' + p(d.getDate()) + '/' + p(d.getMonth() + 1) + '/' + d.getFullYear() + ' '; // space suffix to prevent Excel auto-format
+    return p(d.getHours()) + ':' + p(d.getMinutes()) + ' · ' + ' ' + p(d.getDate()) + '/' + p(d.getMonth() + 1) + '/' + d.getFullYear(); // space prefix prevents Excel auto-format
 }
 
 /** Phòng thủ chiều sâu: chỉ nhận ảnh http(s) hợp lệ để bind vào :src — quà

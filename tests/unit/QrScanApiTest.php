@@ -487,9 +487,9 @@ class QrScanApiTest extends TestCase
         $em = $this->makeStudent((int) $this->classA['id']);
 
         // Tạo bản ghi với status "đi trễ"
-        db_run("INSERT INTO attendances (year_id,program_id,session_date,student_id,status,method,marked_by)
-                VALUES (?,?,?,?,?,?,?)",
-            [$this->yearId, $pid, $d, $em['id'], 'đi trễ', 'tay', $this->adminId]);
+        db_run("INSERT INTO attendances (year_id,program_id,session_date,student_id,status,method,marked_by,scanned_at,offline_marked)
+                VALUES (?,?,?,?,?,?,?,?,?)",
+            [$this->yearId, $pid, $d, $em['id'], 'đi trễ', 'tay', $this->adminId, null, 0]);
 
         // mark lần 2 → phải trả đúng status "đi trễ", không phải "có mặt"
         $r = $this->mark($pid, $d, $em['id']);
@@ -523,36 +523,35 @@ class QrScanApiTest extends TestCase
 
     public function test_mark_respects_scanned_at_for_status(): void
     {
-        // Buổi đã quá giờ chốt (start_time = 00:01, cutoff_time = 00:01),
-        // nhưng scannedAt trước giờ chốt → phải là 'có mặt'.
-        $pid = $this->makeProgram(['start_time' => '00:01:00', 'cutoff_time' => '00:01:00']);
+        // cutoff=00:01:00 → max(now-1800, 00:01) = now-1800 (vì 23:xx > 00:01 luôn).
+        // scannedAt=00:00:00 < cutoff → 'có mặt'.
         $d = $this->todaySession();
+        $pid = $this->makeProgram(['start_time' => '00:01:00', 'cutoff_time' => '00:01:00']);
         $em = $this->makeStudent((int) $this->classA['id']);
 
-        // Gửi scannedAt 01:00 sáng (trước giờ chốt)
-        $dayStart = strtotime($d . ' 01:00:00');
-        $r = $this->mark($pid, $d, $em['id'], ['scannedAt' => $dayStart * 1000]);
+        $r = $this->mark($pid, $d, $em['id'], ['scannedAt' => strtotime($d . ' 00:00:00') * 1000]);
         $this->assertSame(200, $r['code'], $r['raw']);
         $this->assertSame('có mặt', $r['json']['status'], 'Quét trước giờ chốt phải là có mặt');
     }
 
     public function test_mark_status_late_for_scanned_after_cutoff(): void
     {
-        // Quét SAU giờ chốt → phải là 'đi trễ'
-        $pid = $this->makeProgram(['start_time' => '00:01:00', 'cutoff_time' => '00:01:00']);
+        // cutoff=00:01:00 → max(now-1800, 00:01) = now-1800.
+        // scannedAt=00:02:00 > cutoff (now-1800) → 'đi trễ'.
         $d = $this->todaySession();
+        $pid = $this->makeProgram(['start_time' => '00:01:00', 'cutoff_time' => '00:01:00']);
         $em = $this->makeStudent((int) $this->classA['id']);
 
-        // Gửi scannedAt 10:00 sáng (sau giờ chốt)
-        $dayStart = strtotime($d . ' 10:00:00');
-        $r = $this->mark($pid, $d, $em['id'], ['scannedAt' => $dayStart * 1000]);
+        $r = $this->mark($pid, $d, $em['id'], ['scannedAt' => strtotime($d . ' 00:02:00') * 1000]);
         $this->assertSame(200, $r['code'], $r['raw']);
         $this->assertSame('đi trễ', $r['json']['status'], 'Quét sau giờ chốt phải là đi trễ');
     }
 
     public function test_mark_scanned_at_clamped_from_future(): void
     {
-        // scannedAt trong tương lai → bị kẹp về hiện tại, status tính theo giờ chốt
+        // cutoff=00:01:00 → max(now-1800, 00:01) = now-1800.
+        // scannedAt tương lai → bị kẹp về now, now > cutoff → 'đi trễ'.
+        $d = $this->todaySession();
         $pid = $this->makeProgram(['start_time' => '00:01:00', 'cutoff_time' => '00:01:00']);
         $d = $this->todaySession();
         $em = $this->makeStudent((int) $this->classA['id']);
@@ -567,7 +566,9 @@ class QrScanApiTest extends TestCase
 
     public function test_mark_scanned_at_clamped_from_other_day(): void
     {
-        // scannedAt của ngày khác → bị kẹp về 00:00 ngày buổi
+        // cutoff=00:01:00 → max(now-1800, 00:01) = now-1800.
+        // scannedAt ngày khác → kẹp về 00:00 ngày buổi < cutoff → 'có mặt'.
+        $d = $this->todaySession();
         $pid = $this->makeProgram(['start_time' => '00:01:00', 'cutoff_time' => '00:01:00']);
         $d = $this->todaySession();
         $em = $this->makeStudent((int) $this->classA['id']);
