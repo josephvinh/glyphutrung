@@ -191,6 +191,13 @@ window.TNTT.core = {
                 return { ok: false, error: errorMsg };
             }
 
+            // Điểm danh: nhớ mốc do CHÍNH lần ghi này tạo ra. Vòng hỏi 4 giây
+            // (shell.js) thấy mốc đó thì biết thay đổi là của mình, khỏi nạp lại.
+            if (file === 'attendance') {
+                const att = j.att ?? (j.data && j.data.att);
+                if (att) this._ownAtt = String(att);
+            }
+
             // Format cũ {ok: true, ...} hoặc format mới {ok: true, data: {...}}
             // Trả về dạng cũ để tương thích ngược
             if (j.data !== undefined) {
@@ -401,12 +408,25 @@ window.TNTT.core = {
     async loadHeavy() {
         try {
             const d = await this._fetchPart('heavy');
-            if (!d.ok) return;
+            if (!d.ok) return false;
             this._applyHeavy(d, true);
             this.$nextTick(() => lucide.createIcons());
+            return true;
         } catch (e) {
             // Im lặng: lần đồng bộ sau (bấm Làm mới / mở lại app) sẽ tải lại.
+            return false;
         }
+    },
+
+    // Máy khác vừa ghi ĐIỂM DANH: chỉ nạp lại phần điểm danh/điểm (bước 2),
+    // không đụng tới bước 1. Khoá ghi tạm như loadData() để bản nạp về không đè
+    // lên một lần chạm tay đang bay; nạp lỗi thì trả lại trạng thái cũ để khỏi
+    // khoá ghi vĩnh viễn.
+    async refreshAttendance() {
+        if (this.syncing || !this.heavyLoaded) return;
+        const truoc = this.heavyFresh;
+        this.heavyFresh = false;
+        if (!await this.loadHeavy()) this.heavyFresh = truoc;
     },
 
     // Làm mới thủ công — thay cho thao tác "kéo xuống" mà PWA cài ra màn hình
