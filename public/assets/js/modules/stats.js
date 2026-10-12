@@ -371,7 +371,7 @@ window.TNTT.stats = {
 
         const dow  = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
         const ddmm = ds => ds.slice(8, 10) + '/' + ds.slice(5, 7);
-        const dayLabel = ds => dow[new Date(ds + 'T00:00:00').getDay()] + ' ' + ddmm(ds);
+        const dayLabel = ds => dow[new Date(ds + 'T00:00:00').getDay()] + ' ' + ddmm(ds) + ' '; // space suffix prevents Excel auto-format
         const esc = v => (v === null || v === undefined ? '' : String(v))
             .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
