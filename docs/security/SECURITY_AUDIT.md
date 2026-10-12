@@ -25,7 +25,8 @@ có hệ quả bảo mật.
 
 **5 việc nên làm trong 24 giờ:**
 
-1. Đưa cache ra khỏi `public/` + xóa `public/cache/*.json` trên host (**S1**).
+1. Đưa cache ra khỏi `public/` + xóa `public/cache/*.json` trên host (**S1**) — ✅ code đã sửa ở #261
+   (cache ở `storage/cache/`); còn bước **triển khai trên host** (xem mục S1).
 2. Tạo khóa VAPID mới, bỏ `default_password` cứng, coi secret đã-commit là đã lộ (**S2**).
 3. Bắt cổng đặt/hủy đơn đổi quà công khai xác thực bằng mã **+ ngày sinh** (**S4**).
 4. Chặn/bỏ tham số `classId`/`programId` không kiểm phạm vi trong `data.php` (**S3**).
@@ -58,6 +59,13 @@ khai thác, và cách sửa đề xuất.
 ---
 
 ## 🔴 S1 — Tệp cache chứa dữ liệu cá nhân toàn đoàn, tải được KHÔNG cần đăng nhập
+
+> **Trạng thái: ✅ đã sửa trong code (#261).** `Cache::$dir` và `sync.php` dùng `storage/cache/`
+> (ngoài web root); ghi lỗi vào `error_log` nếu không tạo/ghi được thư mục.
+> **Việc còn lại trên host:** tạo `storage/cache/` cho tài khoản web ghi được; xóa
+> `public/cache/*.json` và `public/cache/sync.txt` cũ (tệp cũ vẫn tải được cho tới lúc xóa);
+> kiểm `curl -I https://<host>/cache/sync.txt` phải ra 403/404. Phòng thủ chiều sâu
+> (chặn `.json` ở `.htaccess` gốc, đổi khóa cache sang có thành phần bí mật) **chưa làm**.
 
 - **Vị trí:** `public/api/cache.php:7` (`$dir = __DIR__ . '/../cache'` → `public/cache/`),
   ghi bởi `public/api/data.php:131,429,624`.
@@ -300,7 +308,7 @@ Ghi lại để lần sau khỏi nghi oan — các chốt sau đã xác minh là
 
 ## Thứ tự vá đề xuất
 
-1. **S1** (cache lộ PII) — chặn ngay, một dòng đổi đường dẫn + `.htaccess`.
+1. **S1** (cache lộ PII) — ✅ code đã sửa ở #261; chặn ngay, một dòng đổi đường dẫn + `.htaccess`.
 2. **S2** (xoay secret, bỏ default_password cứng).
 3. **S3, S4** (IDOR data.php + định danh cổng đổi quà).
 4. **S5, S6, S7, S8** (rate-limit XFF, XSS landing, lỗi lộ, CSRF logout).
