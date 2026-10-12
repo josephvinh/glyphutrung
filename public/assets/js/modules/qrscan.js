@@ -609,9 +609,9 @@ window.TNTT.qrscan = {
             // không thì vòng hỏi 4 giây (shell.js) nạp lại thêm một lần ngay sau đây.
             // Máy khác ghi sau mốc này vẫn được thấy ở lần hỏi kế tiếp.
             try {
-                const r = await window.TNTT.csrfFetch('api/sync.php', { cache: 'no-store' });
+                const r = await window.TNTT.csrfFetch('api/sync.php?att=1', { cache: 'no-store' });
                 const moc = await r.text();
-                if (moc && moc !== '0') this._syncVersion = moc;
+                if (moc && moc !== '0:0') this._syncVersion = moc;
             } catch (e) { /* không chốt được thì chỉ thừa một lần nạp, không sai */ }
             await this.loadData();      // lấy lại số liệu chuẩn từ máy chủ
             window.TNTT.toast.success('Xong. Đã điểm danh ' + daGhi + ' em bằng thẻ QR.');
