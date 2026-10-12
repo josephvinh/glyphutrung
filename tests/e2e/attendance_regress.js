@@ -59,7 +59,12 @@ async function launch() {
 }
 
 async function newDevice(browser, phone) {
-  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, permissions: ['camera'] });
+  // Múi giờ Việt Nam như máy chủ (db.php đặt +07:00, PHP Asia/Ho_Chi_Minh). Trình duyệt chạy
+  // theo UTC trên CI sẽ gửi NGÀY CŨ lúc 00:00-07:00 giờ Việt Nam (17:00-24:00 UTC), lệch với
+  // CURDATE() của truy vấn kiểm DB -> các ca "DB có bản ghi" đỏ theo giờ chạy.
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 }, permissions: ['camera'], timezoneId: 'Asia/Ho_Chi_Minh',
+  });
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));

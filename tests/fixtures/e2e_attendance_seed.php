@@ -19,6 +19,10 @@
 
 require __DIR__ . '/../../config/db.php';
 
+// Cùng múi giờ với máy chủ (_bootstrap.php đặt Asia/Ho_Chi_Minh; CLI không nạp nó). Thiếu dòng
+// này, date('w') chạy theo UTC và "hôm nay" của buổi lệch ngày với máy chủ lúc 00:00-07:00 giờ VN.
+date_default_timezone_set('Asia/Ho_Chi_Minh');
+
 function e2e_fail(string $msg): never
 {
     fwrite(STDERR, "e2e_attendance_seed: LỖI: $msg\n");
