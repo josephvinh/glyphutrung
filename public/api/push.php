@@ -63,6 +63,15 @@ switch ($action) {
 
         db_run('UPDATE push_outbox SET taken_at = NOW() WHERE id = ?', [$t['id']]);
 
+        // Legacy: dòng outbox cũ (tạo trước khi có notification_id) cần tạo
+        // notification record. Dòng có notification_id thì notification đã được
+        // tạo trong push_bao() — không cần làm gì.
+        if (empty($t['notification_id'])) {
+            db_run('INSERT INTO push_notifications (member_id, tag, title, body, url, created_at)
+                    VALUES (?,?,?,?,?,?)',
+                [$me['id'], $t['tag'] ?? 'tntt-chung', $t['title'], $t['body'], $t['url'], $t['created_at']]);
+        }
+
         // Còn dòng nào nữa thì ghi vào tiêu đề, đỡ phải dội chuông nhiều lần
         $con = (int) (db_one('SELECT COUNT(*) c FROM push_outbox
                               WHERE member_id = ? AND taken_at IS NULL', [$me['id']])['c'] ?? 0);

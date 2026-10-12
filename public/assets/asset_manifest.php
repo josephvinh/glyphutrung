@@ -20,7 +20,7 @@ return [
         // Core modules (loaded on startup)
         'router', 'core', 'xlsx_io', 'programs', 'access', 'students', 'student_profile', 'attendance', 'qrscan', 'qrcard',
         'leave', 'birthdays', 'announcements', 'stats', 'analytics', 'scores',
-        'reports', 'promotion', 'org', 'push', 'dashboard', 'shell',
+        'reports', 'promotion', 'org', 'push', 'notifications', 'dashboard', 'shell',
         'calendar', 'notes', 'library', 'gifts', 'rewards',
         // PWA: offline queue loaded early (before shell.initOfflineSupport runs)
         'offline_queue',
