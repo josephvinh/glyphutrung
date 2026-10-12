@@ -42,6 +42,7 @@ REVIEW_RESULTS/
 scratch/
 
 # PHPUnit (bản PHAR tải về — không track)
+phpunit.phar
 phpunit10.phar
 
 # Kết quả chạy test trên máy (không commit)
