@@ -600,8 +600,14 @@ function push_bao(array $memberIds, string $title, string $body,
         $now   = date('Y-m-d H:i:s');
 
         foreach ($ids as $mid) {
-            db_run('INSERT INTO push_outbox (member_id, title, body, url, tag, created_at)
-                    VALUES (?,?,?,?,?,?)', [$mid, $title, $body, $url, $tag, $now]);
+            // 1. Tạo notification record để lưu lịch sử
+            db_run('INSERT INTO push_notifications (member_id, tag, title, body, url, created_at)
+                    VALUES (?,?,?,?,?,?)', [$mid, $tag, $title, $body, $url, $now]);
+            $notifId = db()->lastInsertId();
+
+            // 2. Tạo outbox record với notification_id link tới notification
+            db_run('INSERT INTO push_outbox (member_id, title, body, url, tag, created_at, notification_id)
+                    VALUES (?,?,?,?,?,?,?)', [$mid, $title, $body, $url, $tag, $now, $notifId]);
         }
 
         // Cùng giao dịch với outbox: nếu bên ngoài rollback thì cả hai cùng rollback

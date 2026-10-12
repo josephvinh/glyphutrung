@@ -225,6 +225,9 @@ if (!$__dev) ob_start();
         <!-- THANH ĐIỀU HƯỚNG DƯỚI (ẩn trên máy tính, xem app.css) -->
         <?php include __DIR__ . '/../views/layout_bottomnav.php'; ?>
 
+        <!-- Notification center (trong scope tnttApp để Alpine ràng buộc state) -->
+        <?php include __DIR__ . '/../views/partial_notification_center.php'; ?>
+
     </div>
 
     <!-- ================= MODAL POPUP: XEM TÀI LIỆU THƯ VIỆN =================

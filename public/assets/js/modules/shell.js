@@ -112,6 +112,20 @@ window.TNTT.shell = {
         return p(d.getHours()) + ':' + p(d.getMinutes());
     },
 
+    // 'X phút trước' / 'X giờ trước' / v.v. cho notification center
+    formatRelativeTime(dateStr) {
+        if (!dateStr) return '';
+        const date = new Date(dateStr);
+        const now = new Date();
+        const diff = (now - date) / 1000;
+
+        if (diff < 60) return 'Vừa xong';
+        if (diff < 3600) return Math.floor(diff / 60) + ' phút trước';
+        if (diff < 86400) return Math.floor(diff / 3600) + ' giờ trước';
+        if (diff < 604800) return Math.floor(diff / 86400) + ' ngày trước';
+        return this.formatDate(dateStr);
+    },
+
     // Date -> 'yyyy-mm-dd' theo giờ địa phương (toISOString sẽ lệch ngày vì quy về UTC)
     toDateInput(date) {
         const p = n => String(n).padStart(2, '0');
@@ -243,6 +257,9 @@ window.TNTT.shell = {
         // ---- Khởi tạo Offline Queue cho PWA ----
         this.initOfflineSupport();
 
+        // ---- Khởi tạo notification center ----
+        this.notifInit();
+
         // Nạp dữ liệu nghiệp vụ của niên khoá đang mở.
         this.loadData();
 
@@ -293,21 +310,30 @@ window.TNTT.shell = {
         }
 
         // Short Polling 4s/lần: Cập nhật dữ liệu nếu Server có thay đổi (sync.txt).
-        // sync.php cực nhẹ (chỉ đọc 1 file, không đụng DB) nên 4s vẫn rẻ mà bàn
+        // sync.php cực nhẹ (chỉ đọc 2 file, không đụng DB) nên 4s vẫn rẻ mà bàn
         // công tác/điểm số/thông báo của người khác hiện gần như tức thì.
+        // Trả về "chung:điểm danh": mốc CHUNG đổi thì nạp lại cả gói; chỉ mốc
+        // ĐIỂM DANH đổi (máy khác ghi điểm danh) thì chỉ nạp phần điểm danh.
         this._syncVersion = null;
         setInterval(async () => {
-            // Đang quét QR thì KHÔNG nạp lại: mỗi lô gửi lên làm mốc sync.txt đổi,
-            // nên chính máy đang quét sẽ nạp lại toàn bộ dữ liệu (đứng hình ~1 giây,
-            // và khoá ghi tạm vì heavyFresh=false). Bỏ qua thì không cập nhật
-            // _syncVersion, nên lần hỏi đầu tiên sau khi đóng máy quét sẽ thấy thay đổi.
+            // Đang quét QR thì KHÔNG nạp lại: mỗi lô gửi lên làm mốc đổi, nên chính
+            // máy đang quét sẽ nạp lại dữ liệu (đứng hình ~1 giây, và khoá ghi tạm vì
+            // heavyFresh=false). Bỏ qua thì không cập nhật _syncVersion, nên lần hỏi
+            // đầu tiên sau khi đóng máy quét sẽ thấy thay đổi.
             if (this.syncing || this.qrMo || document.visibilityState !== 'visible') return;
             try {
-                const r = await window.TNTT.csrfFetch('api/sync.php', { cache: 'no-store' });
+                const r = await window.TNTT.csrfFetch('api/sync.php?att=1', { cache: 'no-store' });
                 const ts = await r.text();
-                if (this._syncVersion && ts !== '0' && ts !== this._syncVersion) {
-                    this._lastLoadAt = 0;
-                    this.loadData();
+                const [chung, att] = ts.split(':');
+                if (this._syncVersion && chung !== undefined && att !== undefined) {
+                    const [chungCu, attCu] = this._syncVersion.split(':');
+                    if (chung !== '0' && chung !== chungCu) {
+                        this._lastLoadAt = 0;
+                        this.loadData();
+                    } else if (att !== '0' && att !== attCu && att !== this._ownAtt) {
+                        // Khác mốc cũ và không phải do chính máy này ghi -> máy khác ghi.
+                        this.refreshAttendance();
+                    }
                 }
                 this._syncVersion = ts;
             } catch (e) { }

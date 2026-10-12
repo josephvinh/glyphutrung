@@ -161,6 +161,23 @@ $migrations = [
     "ALTER TABLE attendances ADD COLUMN scanned_at DATETIME NULL",
     "ALTER TABLE attendances ADD COLUMN offline_marked TINYINT(1) NOT NULL DEFAULT 0",
 ];
+// PR-4: Notification Center - chạy migration 030 (tạo push_notifications + cột notification_id)
+$migration030 = __DIR__ . '/migrations/030_push_notifications.sql';
+if (file_exists($migration030)) {
+    $mig030 = file_get_contents($migration030);
+    $mig030 = preg_replace('/^\s*--.*$/m', '', $mig030);
+    $mig030Parts = array_filter(array_map('trim', explode(';', $mig030)), fn($s) => $s !== '');
+    foreach ($mig030Parts as $stmt) {
+        try { $pdo->exec($stmt); } catch (PDOException $e) {
+            $msg = strtolower($e->getMessage());
+            if (!str_contains($msg, 'duplicate column name') && !str_contains($msg, 'already exists')
+                && !str_contains($msg, 'duplicate key name') && !str_contains($msg, 'duplicate foreign key')) {
+                say('LỖI migration 030: ' . $e->getMessage());
+                exit(1);
+            }
+        }
+    }
+}
 $mig = 0;
 foreach ($migrations as $sqlMig) {
     try { $pdo->exec($sqlMig); $mig++; }

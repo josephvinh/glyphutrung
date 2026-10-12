@@ -122,5 +122,9 @@ function page_bootstrap(array $me): array
             'passScore'      => app_config('pass_score'),
             'passAttendance' => app_config('pass_attendance'),
         ],
+        // Unread notification count - avoid extra API call on page load
+        'unreadNotifications' => (int) (db_one(
+            'SELECT COUNT(*) c FROM push_notifications WHERE member_id = ? AND is_read = 0',
+            [(int) $me['id']])['c'] ?? 0),
     ];
 }
