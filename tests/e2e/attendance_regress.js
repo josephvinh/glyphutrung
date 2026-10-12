@@ -287,7 +287,13 @@ async function shot(page, name) {
     const B = await newDevice(browser, '0901000001');
     const reqB = track(B.page);
     await openSession(B.page);
-    await sleep(1500);
+    // Vòng hỏi đồng bộ của B phải đã ghi nhận mốc đầu tiên (_syncVersion) rồi A mới ghi; nếu không, lần hỏi
+    // đầu của B chỉ "nhớ" mốc mới và bỏ lỡ thay đổi (máy CI chậm hơn nên dễ gặp).
+    await B.page.waitForFunction(() => {
+      const el = document.querySelector('[x-data="tnttApp"]');
+      const a = el && window.Alpine.$data(el);
+      return !!(a && a._syncVersion);
+    }, null, { timeout: 20000 });
     reqB.length = 0; reqA.length = 0;
     await pa.evaluate(async () => {
       const app = Alpine.$data(document.querySelector('[x-data="tnttApp"]'));
