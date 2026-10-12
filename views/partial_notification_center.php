@@ -34,7 +34,7 @@
          x-transition:leave-start="translate-y-0 opacity-100"
          x-transition:leave-end="translate-y-full opacity-0"
          style="display: none;"
-         class="sheet-panel absolute bottom-0 left-0 right-0 bg-white rounded-t-sheet shadow-2xl flex flex-col max-h-[85dvh]">
+         class="sheet-panel modal-sheet absolute bottom-0 left-0 right-0 bg-white rounded-t-sheet shadow-2xl flex flex-col max-h-[85dvh]">
 
         <!-- Drag handle -->
         <div class="flex justify-center pt-3 pb-2 shrink-0">
