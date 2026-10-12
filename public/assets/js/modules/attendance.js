@@ -94,6 +94,7 @@ window.TNTT.attendance = {
         // vẫn nằm lại hàng đợi thay vì bị ghi đè bằng danh sách cũ.
         const khoaMuc = it => [it.programId, it.date, it.studentId, it.createdAt].join('|');
         const daXong = new Set();
+        const biTuChoi = [];    // lượt máy chủ từ chối (khoá sổ, không đủ quyền...): phải báo cho người dùng biết
 
         try {
             for (const item of queue) {
@@ -117,6 +118,7 @@ window.TNTT.attendance = {
                     } else {
                         // Lỗi nghiệp vụ từ server (đã khoá sổ hoặc không có quyền), bỏ qua
                         console.warn('Bỏ qua bản ghi điểm danh offline:', item, r?.error);
+                        biTuChoi.push({ ten: item.studentName || ('HS' + item.studentId), ly: (r && r.error) || 'lý do không rõ' });
                         daXong.add(khoaMuc(item));
                     }
                 } catch (err) {
@@ -127,6 +129,15 @@ window.TNTT.attendance = {
             this.setOfflineAttendanceQueue(
                 this.getOfflineAttendanceQueue().filter(it => !daXong.has(khoaMuc(it))));
             this._isSyncingOffline = false;
+        }
+
+        // Lượt bị từ chối sẽ bị bỏ khỏi hàng đợi (gửi lại cũng vẫn bị từ chối), nên PHẢI báo
+        // đích danh em nào để GLV điểm danh lại bằng tay hoặc nhờ người có quyền sửa.
+        if (biTuChoi.length) {
+            const toiDa = 3;
+            const dong = biTuChoi.slice(0, toiDa).map(x => x.ten + ' — ' + x.ly).join('\n');
+            const them = biTuChoi.length > toiDa ? '\n… và ' + (biTuChoi.length - toiDa) + ' em khác' : '';
+            window.TNTT?.toast?.error('Không đồng bộ được ' + biTuChoi.length + ' lượt điểm danh:\n' + dong + them, 10000);
         }
 
         if (successCount > 0) {
