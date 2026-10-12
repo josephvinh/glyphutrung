@@ -17,8 +17,18 @@ window.TNTT.notifications = {
     notifHasMore: false,
     _notifSeq: 0,
 
-    /** Khởi tạo: nạp số chưa đọc + đăng ký SW message listener */
+    /** Khởi tạo: đọc unread count từ bootstrap + đăng ký SW message listener */
     async notifInit() {
+        // Đọc unread count từ bootstrap để tránh API call thừa
+        const boot = window.TNTT_BOOT;
+        if (boot && typeof boot.unreadNotifications === 'number') {
+            this.notifUnread = boot.unreadNotifications;
+            this._updateBadge();
+        } else {
+            // Fallback: gọi API nếu bootstrap không có (legacy)
+            await this.notifLoadUnread();
+        }
+
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.addEventListener('message', (e) => {
                 if (e.data?.action === 'PUSH_RECEIVED') {
@@ -26,14 +36,15 @@ window.TNTT.notifications = {
                 }
             });
         }
-        await this.notifLoadUnread();
     },
 
-    /** SW báo có push mới khi app đang mở: toast + đồng bộ lại với server
-     *  (hàng lịch sử đã được push_bao ghi sẵn nên không tự chèn mục giả). */
+    /** SW báo có push mới khi app đang mở: toast + optimistic update
+     *  Dùng optimistic update thay vì gọi API (tránh HTTP request thừa). */
     notifHandlePush(n) {
         window.TNTT.toast.show(`${n.title}\n${n.body}`, 'info', 5000);
-        this.notifLoadUnread();
+        // Optimistic update: tăng badge count ngay
+        this.notifUnread++;
+        this._updateBadge();
         if (this.showNotificationCenter) {
             this.notifPage = 1;
             this.notifLoadList();

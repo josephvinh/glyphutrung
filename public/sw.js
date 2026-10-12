@@ -125,15 +125,13 @@ self.addEventListener('push', (e) => {
       }
     }
 
-    // Báo các tab đang mở điều hướng tới URL đích (hành vi cũ)
-    await notifyOpenTabs(notification.data.url);
-
-    // Tab đang được xem → toast trong trang; không có tab nào focus → thông báo hệ thống
+    // Check if any client window is open
     const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-    const focused = clients.filter(c => c.focused);
+    const hasOpenClients = clients.length > 0;
 
-    if (focused.length > 0) {
-      for (const client of focused) {
+    if (hasOpenClients) {
+      // App is open → send message to page for in-app toast
+      for (const client of clients) {
         client.postMessage({
           action: 'PUSH_RECEIVED',
           notification: {
@@ -145,6 +143,7 @@ self.addEventListener('push', (e) => {
           }
         });
       }
+      // Navigate open tab to target URL if provided (handled by PUSH_RECEIVED message)
     } else {
       await self.registration.showNotification(notification.title, {
         body: notification.body,
@@ -199,7 +198,6 @@ async function notifyOpenTabs(url) {
     }
   }
 }
-
 // ==========================================================
 // NOTIFICATION CLICK
 // ==========================================================
