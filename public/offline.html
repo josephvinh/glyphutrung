@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#c8203a">
+<title>Mất kết nối · Gia Đình Giáo Lý Phú Trung</title>
+<!-- Trang TĨNH do service worker trả khi mở app lúc mất mạng. KHÔNG chứa dữ
+     liệu cá nhân nào — chỉ báo mất mạng và tự tải lại khi có mạng. -->
+<style>
+  html, body { margin: 0; height: 100%; }
+  body {
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px; box-sizing: border-box;
+    background: #f8fafc; color: #1e293b;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    text-align: center;
+  }
+  .the { max-width: 360px; }
+  .bieu-tuong {
+    width: 64px; height: 64px; margin: 0 auto 16px; border-radius: 20px;
+    background: #fff1f2; color: #c8203a;
+    display: flex; align-items: center; justify-content: center;
+  }
+  h1 { font-size: 20px; margin: 0 0 8px; }
+  p  { font-size: 15px; line-height: 1.5; color: #475569; margin: 0 0 20px; }
+  button {
+    font: inherit; font-weight: 700; color: #fff; background: #c8203a;
+    border: 0; border-radius: 14px; padding: 12px 24px; cursor: pointer;
+  }
+  button:active { transform: scale(0.98); }
+</style>
+</head>
+<body>
+  <main class="the">
+    <div class="bieu-tuong" aria-hidden="true">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h.01"/><path d="M8.5 16.43a5 5 0 0 1 7 0"/><path d="M2 8.82a15 15 0 0 1 4.17-2.65"/><path d="M10.66 5c4.01-.36 8.14.9 11.34 3.76"/><path d="M16.85 11.25a10 10 0 0 1 2.22 1.68"/><path d="M5 12.86a10 10 0 0 1 5.17-2.69"/><path d="m2 2 20 20"/></svg>
+    </div>
+    <h1>Mất kết nối mạng</h1>
+    <p>Không mở được app vì thiết bị đang không có mạng. Kiểm tra Wi-Fi hoặc dữ liệu di động rồi thử lại — app sẽ tự mở lại khi có mạng.</p>
+    <button type="button" onclick="location.reload()">Thử lại</button>
+  </main>
+  <script>
+    window.addEventListener('online', function () { location.reload(); });
+  </script>
+</body>
+</html>

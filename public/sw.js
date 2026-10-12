@@ -20,6 +20,10 @@ import { CACHE_CONFIG, API_PATTERNS, log, warn } from './assets/js/sw/utils/inde
 const PHIEN_BAN = new URL(self.location.href).searchParams.get('v') || 'tntt-sw-dev';
 const KHO = 'tntt-tinh-' + PHIEN_BAN;
 
+// Static page shown when the app is opened offline (see the 'navigate' branch
+// in fetch). It holds no personal data, so it may live in the cache.
+const TRANG_MAT_MANG = '/offline.html';
+
 // ==========================================================
 // INSTALL
 // ==========================================================
@@ -32,6 +36,7 @@ self.addEventListener('install', (e) => {
       await Promise.allSettled([
         kho.add('/assets/css/bundle.php'),
         kho.add('/assets/js/bundle.php'),
+        kho.add(TRANG_MAT_MANG),
       ]);
     } catch (err) {
       warn('Precache failed:', err);
@@ -73,6 +78,20 @@ self.addEventListener('fetch', (e) => {
 
   // Skip service worker
   if (url.pathname.endsWith('/sw.js')) return;
+
+  // Page navigations (/, index.php, tracuu.php…): ALWAYS network, NEVER cached —
+  // pages carry TNTT_BOOT, the CSRF token and children's data. Only when the
+  // network fails, answer with the static offline page instead of the browser's
+  // error screen.
+  if (req.mode === 'navigate') {
+    e.respondWith(fetch(req).catch(async () =>
+      (await caches.match(TRANG_MAT_MANG)) ||
+      new Response('Không có mạng. Vui lòng thử lại.', {
+        status: 503, headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+      })
+    ));
+    return;
+  }
 
   // Static assets: Cache-first
   if (API_PATTERNS.STATIC.test(url.pathname) || API_PATTERNS.BUNDLE.test(url.pathname)) {
