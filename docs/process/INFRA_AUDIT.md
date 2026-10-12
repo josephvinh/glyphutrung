@@ -62,6 +62,8 @@ tar czf library_$(date +%F).tgz storage/library
   .github/ node_modules/ *.md package*.json` — xem `GITHUB_SETUP.md` §10).
 - Sau deploy có đổi schema: chạy `php config/install.php` (idempotent) / migration
   trên host; **sao lưu DB TRƯỚC** khi migrate.
+  Thứ tự và cách kiểm DB đã đủ migration: xem [DEPLOY.md](DEPLOY.md)
+  (`php scripts/kiem_schema.php`).
 - `sw.js` phải `no-cache` (đã set) để cập nhật app không kẹt bản cũ.
 - Sau deploy: mở app thật một lượt (đăng nhập, đổi màn, một thao tác ghi) +
   xác nhận `/cache/*.json` **không** tải được từ ngoài.

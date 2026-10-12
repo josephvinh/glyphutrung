@@ -10,6 +10,7 @@ agent là `CLAUDE.md` (gốc repo).
 | [FEATURE_WORKFLOW.md](FEATURE_WORKFLOW.md) | Phát triển một tính năng: ý tưởng → ship, dùng subagent, Definition of Done |
 | [TESTING.md](TESTING.md) | Các tầng test, **cách chạy**: DB, phpunit, eslint, smoke trình duyệt, kiểm trùng module |
 | [GITHUB_SETUP.md](GITHUB_SETUP.md) | Branch protection, CI bắt buộc, secret scan, Dependabot, merge, deploy |
+| [DEPLOY.md](DEPLOY.md) | **Thứ tự triển khai lên host**: sao lưu → kiểm/chạy migration → đưa mã; lệnh kiểm DB đã đủ migration chưa |
 | [AGENT_RULES.md](AGENT_RULES.md) | Quy định cho agent (đặc biệt Claude): phạm vi, an toàn, kiểm chứng, cấm đoán |
 
 ## Bảy loại audit (rà **cái gì** để khẳng định chất lượng)
