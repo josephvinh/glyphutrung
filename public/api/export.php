@@ -316,7 +316,7 @@ switch ($action) {
             elseif ($r['status'] === 'vắng không phép') $statusLabel = 'Vắng mặt';
 
             $rows[] = [
-                'date'      => date('d/m/Y', strtotime($r['session_date'])),
+                'date'      => ' ' . date('d/m/Y', strtotime($r['session_date'])), // space prefix prevents Excel auto-format
                 'code'      => $r['student_code'],
                 'name'      => $r['full_name'],
                 'class'     => $r['class_name'],
@@ -332,7 +332,7 @@ switch ($action) {
             $key = $lr['student_code'] . '|' . $lr['session_date'] . '|' . $lr['program_name'];
             if (!isset($attendedKeys[$key])) {
                 $rows[] = [
-                    'date'      => date('d/m/Y', strtotime($lr['session_date'])),
+                    'date'      => ' ' . date('d/m/Y', strtotime($lr['session_date'])), // space prefix prevents Excel auto-format
                     'code'      => $lr['student_code'],
                     'name'      => $lr['full_name'],
                     'class'     => $lr['class_name'],
@@ -479,7 +479,7 @@ function build_attendance_rows(array $students, array $sessions, array $year): a
         if ($s['session_date']) {
             // Thêm tên chương trình vào tiêu đề để phân biệt các buổi cùng ngày
             $shortName = mb_substr($s['name'] ?? 'CT', 0, 3);
-            $headers[] = $shortName . ' ' . date('d/m', strtotime($s['session_date']));
+            $headers[] = $shortName . ' ' . ' ' . date('d/m', strtotime($s['session_date'])); // space prefix prevents Excel auto-format
             $sessionCols[] = $s;
         }
     }

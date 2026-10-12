@@ -69,7 +69,7 @@ window.TNTT.xlsx_io = {
             if (v instanceof Date) {
                 // SheetJS dựng Date theo giờ địa phương; bù 12 giờ để giây lẻ không lùi sang ngày trước
                 const d = new Date(v.getTime() + 12 * 3600 * 1000);
-                return p2(d.getDate()) + '/' + p2(d.getMonth() + 1) + '/' + d.getFullYear();
+                return ' ' + p2(d.getDate()) + '/' + p2(d.getMonth() + 1) + '/' + d.getFullYear(); // space prefix prevents Excel auto-format
             }
             if (typeof v === 'number') return String(v);
             return String(v === null || v === undefined ? '' : v).trim();

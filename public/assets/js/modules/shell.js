@@ -94,7 +94,7 @@ window.TNTT.shell = {
         if (!dateStr) return '';
         const parts = dateStr.split('-');
         if (parts.length !== 3) return dateStr;
-        return parts[2] + '/' + parts[1] + '/' + parts[0];
+        return ' ' + parts[2] + '/' + parts[1] + '/' + parts[0]; // space prefix prevents Excel auto-format
     },
 
     // Cộng phút vào chuỗi 'HH:MM', tự cuộn qua nửa đêm nếu cần
