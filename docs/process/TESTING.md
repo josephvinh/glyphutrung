@@ -238,7 +238,8 @@ test mới vào cùng khuôn. Khi thêm endpoint mới, thêm ngay một ca "l�
 - [ ] Nếu đổi schema: đã chuẩn bị `install.php`/migration chạy trên host.
 - [ ] `config/config.local.php` trên host có secret thật (VAPID, DB) — **không**
       lấy từ `config.php` trong git.
-- [ ] `public/cache/` không phục vụ được từ ngoài (xem S1).
+- [ ] `storage/cache/` ghi được bởi PHP; `public/cache/*.json` cũ đã xóa và `/cache/*.json`
+      không tải được từ ngoài (xem S1).
 - [ ] Sau deploy: mở app thật một lượt (đăng nhập, đổi màn, một thao tác ghi).
 
 ---
