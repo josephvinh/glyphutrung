@@ -18,18 +18,13 @@
                 </button>
                 <div x-show="exportOpen" @click.outside="exportOpen = false" x-transition style="display:none"
                      class="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-200 p-2 z-30">
-                    <p class="px-2 pt-1 pb-1.5 text-micro text-slate-500 leading-snug">Chọn mảng báo cáo và định dạng để xuất:</p>
-                    <template x-for="c in [{k:'chuyen_can',l:'Chuyên cần'},{k:'thi_dua',l:'Thi đua đi lễ'}]" :key="c.k">
-                        <div class="mb-1 last:mb-0 border-t border-slate-100 first:border-0 pt-1 first:pt-0">
-                            <p class="px-2 pt-1.5 pb-0.5 text-micro font-black text-slate-500 uppercase tracking-wide" x-text="c.l"></p>
-                            <button @click="exportAttendanceGridXLS(c.k); exportOpen = false" type="button" class="w-full flex items-center gap-2 px-2 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 active:scale-[0.98] transition">
-                                <i data-lucide="table-2" class="w-4 h-4"></i> Sổ điểm danh <span class="text-slate-400 font-normal">(.xls)</span>
-                            </button>
-                            <button @click="exportStatsExcel(c.k); exportOpen = false" type="button" class="w-full flex items-center gap-2 px-2 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-700 active:scale-[0.98] transition">
-                                <i data-lucide="file-text" class="w-4 h-4"></i> Bảng tổng kết <span class="text-slate-400 font-normal">(.xlsx)</span>
-                            </button>
-                        </div>
-                    </template>
+                    <p class="px-2 pt-1 pb-1.5 text-micro text-slate-500 leading-snug">Chọn định dạng để xuất:</p>
+                    <button @click="exportAttendanceGridXLS(); exportOpen = false" type="button" class="w-full flex items-center gap-2 px-2 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 active:scale-[0.98] transition">
+                        <i data-lucide="table-2" class="w-4 h-4"></i> Sổ điểm danh <span class="text-slate-400 font-normal">(.xls)</span>
+                    </button>
+                    <button @click="exportStatsExcel(); exportOpen = false" type="button" class="w-full flex items-center gap-2 px-2 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-700 active:scale-[0.98] transition">
+                        <i data-lucide="file-text" class="w-4 h-4"></i> Bảng tổng kết <span class="text-slate-400 font-normal">(.xlsx)</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -45,18 +40,6 @@
         </div>
 
         <!-- CHỌN MẢNG BÁO CÁO: Chuyên cần vs Thi đua đi lễ (hai cờ độc lập) -->
-        <div>
-            <div class="flex bg-slate-200/60 p-1 rounded-2xl">
-                <button @click="statCategory = 'chuyen_can'" type="button" class="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition-all" :class="statCategory === 'chuyen_can' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'">
-                    <i data-lucide="calendar-check" class="w-4 h-4"></i> Chuyên cần
-                </button>
-                <button @click="statCategory = 'thi_dua'" type="button" class="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition-all" :class="statCategory === 'thi_dua' ? 'bg-white text-amber-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'">
-                    <i data-lucide="trophy" class="w-4 h-4"></i> Thi đua đi lễ
-                </button>
-            </div>
-            <p class="text-[10px] text-slate-400 leading-snug mt-1.5 px-1"
-               x-text="statCategory === 'thi_dua' ? 'Chỉ tính các buổi được đánh dấu “tính thi đua đi lễ”.' : 'Chỉ tính các buổi được đánh dấu “tính chuyên cần”.'"></p>
-        </div>
     </div>
 
     <!-- TABS MENU -->
