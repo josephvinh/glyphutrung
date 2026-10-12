@@ -23,7 +23,6 @@ window.TNTT.notifications = {
         const boot = window.TNTT_BOOT;
         if (boot && typeof boot.unreadNotifications === 'number') {
             this.notifUnread = boot.unreadNotifications;
-            this._updateBadge();
         } else {
             // Fallback: gọi API nếu bootstrap không có (legacy)
             await this.notifLoadUnread();
@@ -42,9 +41,8 @@ window.TNTT.notifications = {
      *  Dùng optimistic update thay vì gọi API (tránh HTTP request thừa). */
     notifHandlePush(n) {
         window.TNTT.toast.show(`${n.title}\n${n.body}`, 'info', 5000);
-        // Optimistic update: tăng badge count ngay
+        // Optimistic update: tăng badge count ngay (Alpine tự cập nhật UI)
         this.notifUnread++;
-        this._updateBadge();
         if (this.showNotificationCenter) {
             this.notifPage = 1;
             this.notifLoadList();

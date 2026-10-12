@@ -189,15 +189,6 @@ async function fetchNotificationContent() {
   }
   throw new Error('Failed to fetch notification');
 }
-
-async function notifyOpenTabs(url) {
-  const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-  for (const c of clients) {
-    if (c.focused) {
-      c.postMessage({ action: 'RELOAD_DATA', url: url || '/' });
-    }
-  }
-}
 // ==========================================================
 // NOTIFICATION CLICK
 // ==========================================================
