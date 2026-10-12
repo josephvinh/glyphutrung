@@ -179,6 +179,12 @@ class QrScanApiTest extends TestCase
             ['programId' => $programId, 'date' => $date]);
     }
 
+    private function mark(int $programId, string $date, int $studentId, array $extra = []): array
+    {
+        return $this->http('POST', '/api/attendance.php?action=mark',
+            array_merge(['programId' => $programId, 'date' => $date, 'studentId' => $studentId], $extra));
+    }
+
     // ---------------- Dữ liệu ----------------
 
     private function makeStudent(int $classId, string $status = 'đang sinh hoạt'): array
@@ -217,7 +223,7 @@ class QrScanApiTest extends TestCase
 
     private function attRow(int $programId, string $date, int $studentId): ?array
     {
-        return db_one("SELECT status, method FROM attendances
+        return db_one("SELECT status, method, scanned_at, offline_marked FROM attendances
                         WHERE program_id=? AND session_date=? AND student_id=?", [$programId, $date, $studentId]);
     }
 
@@ -261,10 +267,10 @@ class QrScanApiTest extends TestCase
     //  scan
     // =================================================================
 
-    public function test_scan_adds_in_scope_student_with_method_qr(): void
+    public function test_scan_adds_in_scope_class_student(): void
     {
         $pid = $this->makeProgram(); $d = $this->todaySession();
-        $em = $this->makeStudent((int) $this->classA2['id']);   // lớp khác, CÙNG khối
+        $em = $this->makeStudent((int) $this->classA['id']);   // lớp ĐƯỢC PHÂN của GLV
 
         $r = $this->scan($pid, $d, [$em['code']]);
         $this->assertSame(200, $r['code'], $r['raw']);
@@ -272,15 +278,15 @@ class QrScanApiTest extends TestCase
         $this->assertSame('qr', $this->attRow($pid, $d, $em['id'])['method']);
     }
 
-    public function test_scan_skips_student_outside_block(): void
+    public function test_scan_skips_student_outside_class(): void
     {
         $pid = $this->makeProgram(); $d = $this->todaySession();
-        $out = $this->makeStudent((int) $this->classB['id']);
+        $em = $this->makeStudent((int) $this->classB['id']);   // lớp KHÁC (khối khác)
 
-        $r = $this->scan($pid, $d, [$out['code']]);
+        $r = $this->scan($pid, $d, [$em['code']]);
         $this->assertSame(0, $r['json']['added']);
-        $this->assertContains($out['code'], $this->skippedCodes($r));
-        $this->assertNull($this->attRow($pid, $d, $out['id']), 'Em khối khác không được ghi');
+        $this->assertContains($em['code'], $this->skippedCodes($r));
+        $this->assertNull($this->attRow($pid, $d, $em['id']), 'Em lớp khác không được ghi');
     }
 
     public function test_scan_skips_inactive_enrollment(): void
@@ -330,6 +336,7 @@ class QrScanApiTest extends TestCase
     public function test_scan_rejected_after_absent_time(): void
     {
         // Buổi đã qua + mốc "vắng" 00:01 => đã quá giờ tính vắng.
+        // Scan từ chối toàn bộ request (không phải ok + skipped).
         $pid = $this->makeProgram(['absent_time' => '00:01:00']); $d = $this->pastSession();
         $em = $this->makeStudent((int) $this->classA['id']);
 
@@ -402,22 +409,24 @@ class QrScanApiTest extends TestCase
     //  lookup
     // =================================================================
 
-    public function test_lookup_scoped_to_block_and_active_only(): void
+    public function test_lookup_scoped_to_class_and_active_only(): void
     {
+        // Lookup giờ theo LỚP (nhất quán với scan và chạm tay).
+        // GLV chỉ có classA được phân → classA2 và classB KHÔNG có trong bảng tra.
         $pid = $this->makeProgram(); $d = $this->todaySession();
-        $inBlock  = $this->makeStudent((int) $this->classA2['id']);
-        $outBlock = $this->makeStudent((int) $this->classB['id']);
+        $inScope  = $this->makeStudent((int) $this->classA['id']);     // lớp ĐƯỢC PHÂN
+        $outScope = $this->makeStudent((int) $this->classA2['id']);    // lớp KHÁC
         $inactive = $this->makeStudent((int) $this->classA['id'], 'dừng sinh hoạt');
 
         $r = $this->lookup($pid, $d);
         $this->assertSame(200, $r['code'], $r['raw']);
         $codes = array_column($r['json']['items'], 0);
-        $this->assertContains($inBlock['code'], $codes);
-        $this->assertNotContains($outBlock['code'], $codes, 'Em khối khác không được lọt vào bảng tra');
+        $this->assertContains($inScope['code'], $codes);
+        $this->assertNotContains($outScope['code'], $codes, 'Em lớp khác không được lọt vào bảng tra');
         $this->assertNotContains($inactive['code'], $codes, 'Em không còn sinh hoạt không được lọt vào');
 
         // Bảng tra chỉ có 4 trường gọn [mã, id, tên, lớp] — không lộ ngày sinh/địa chỉ/SĐT.
-        $row = array_values(array_filter($r['json']['items'], fn($x) => $x[0] === $inBlock['code']))[0];
+        $row = array_values(array_filter($r['json']['items'], fn($x) => $x[0] === $inScope['code']))[0];
         $this->assertCount(4, $row);
     }
 
@@ -432,5 +441,254 @@ class QrScanApiTest extends TestCase
         $this->assertContains($inProg['code'], $codes);
         $this->assertNotContains($outProg['code'], $codes,
             'Lớp không tham gia chương trình không được có trong bảng tra');
+    }
+
+    // =================================================================
+    //  mark
+    // =================================================================
+
+    public function test_mark_adds_student_in_scope(): void
+    {
+        $pid = $this->makeProgram(); $d = $this->todaySession();
+        $em = $this->makeStudent((int) $this->classA['id']);
+
+        $r = $this->mark($pid, $d, $em['id']);
+        $this->assertSame(200, $r['code'], $r['raw']);
+        $this->assertSame(true, $r['json']['ok']);
+        $this->assertSame(true, $r['json']['added']);
+        $this->assertSame('có mặt', $r['json']['status']);
+        $this->assertNotNull($this->attRow($pid, $d, $em['id']));
+    }
+
+    public function test_mark_is_idempotent(): void
+    {
+        $pid = $this->makeProgram(); $d = $this->todaySession();
+        $em = $this->makeStudent((int) $this->classA['id']);
+
+        // Lần 1: thêm mới
+        $r1 = $this->mark($pid, $d, $em['id']);
+        $this->assertSame(true, $r1['json']['added']);
+
+        // Lần 2: trùng khóa → báo không thêm, không lỗi
+        $r2 = $this->mark($pid, $d, $em['id']);
+        $this->assertSame(true, $r2['json']['ok']);
+        $this->assertSame(false, $r2['json']['added']);
+
+        // Chỉ có 1 bản ghi
+        $count = db_one("SELECT COUNT(*) AS n FROM attendances
+                         WHERE program_id=? AND session_date=? AND student_id=?",
+                         [$pid, $d, $em['id']])['n'];
+        $this->assertSame(1, $count);
+    }
+
+    public function test_mark_idempotent_preserves_status(): void
+    {
+        $pid = $this->makeProgram(); $d = $this->todaySession();
+        $em = $this->makeStudent((int) $this->classA['id']);
+
+        // Tạo bản ghi với status "đi trễ"
+        db_run("INSERT INTO attendances (year_id,program_id,session_date,student_id,status,method,marked_by,scanned_at,offline_marked)
+                VALUES (?,?,?,?,?,?,?,?,?)",
+            [$this->yearId, $pid, $d, $em['id'], 'đi trễ', 'tay', $this->adminId, null, 0]);
+
+        // mark lần 2 → phải trả đúng status "đi trễ", không phải "có mặt"
+        $r = $this->mark($pid, $d, $em['id']);
+        $this->assertSame(true, $r['json']['ok']);
+        $this->assertSame(false, $r['json']['added']);
+        $this->assertSame('đi trễ', $r['json']['status']);
+    }
+
+    public function test_mark_rejects_student_outside_class(): void
+    {
+        $pid = $this->makeProgram(); $d = $this->todaySession();
+        $em = $this->makeStudent((int) $this->classB['id']);   // lớp KHÁC
+
+        $r = $this->mark($pid, $d, $em['id']);
+        // Lớp khác → 403 (luật 6: phạm vi lớp nghiêm ngặt)
+        $this->assertSame(403, $r['code']);
+    }
+
+    public function test_mark_rejects_after_absent_time(): void
+    {
+        $pid = $this->makeProgram(['absent_time' => '00:01:00']); $d = $this->pastSession();
+        $em = $this->makeStudent((int) $this->classA['id']);
+
+        $r = $this->mark($pid, $d, $em['id']);
+        $this->assertSame(false, $r['json']['ok'] ?? null);
+    }
+
+    // =================================================================
+    //  scannedAt — giờ quét thật từ client
+    // =================================================================
+
+    public function test_mark_respects_scanned_at_for_status(): void
+    {
+        // Giờ chốt cố định 00:01 (sớm nhất trong ngày) nên kết quả không phụ thuộc giờ chạy test.
+        // scannedAt=00:00:00 < cutoff → 'có mặt'.
+        $d = $this->todaySession();
+        $pid = $this->makeProgram(['start_time' => '00:01:00', 'cutoff_time' => '00:01:00']);
+        $em = $this->makeStudent((int) $this->classA['id']);
+
+        $r = $this->mark($pid, $d, $em['id'], ['scannedAt' => strtotime($d . ' 00:00:00') * 1000]);
+        $this->assertSame(200, $r['code'], $r['raw']);
+        $this->assertSame('có mặt', $r['json']['status'], 'Quét trước giờ chốt phải là có mặt');
+    }
+
+    public function test_mark_status_late_for_scanned_after_cutoff(): void
+    {
+        // Giờ chốt cố định 00:01. scannedAt=00:02:00 > cutoff → 'đi trễ'.
+        $d = $this->todaySession();
+        $pid = $this->makeProgram(['start_time' => '00:01:00', 'cutoff_time' => '00:01:00']);
+        $em = $this->makeStudent((int) $this->classA['id']);
+
+        $r = $this->mark($pid, $d, $em['id'], ['scannedAt' => strtotime($d . ' 00:02:00') * 1000]);
+        $this->assertSame(200, $r['code'], $r['raw']);
+        $this->assertSame('đi trễ', $r['json']['status'], 'Quét sau giờ chốt phải là đi trễ');
+    }
+
+    public function test_mark_scanned_at_clamped_from_future(): void
+    {
+        // Giờ chốt cố định 00:01. scannedAt tương lai → bị kẹp về now (> cutoff) → 'đi trễ'.
+        $d = $this->todaySession();
+        $pid = $this->makeProgram(['start_time' => '00:01:00', 'cutoff_time' => '00:01:00']);
+        $em = $this->makeStudent((int) $this->classA['id']);
+
+        // Gửi mốc tương lai (ngày mai)
+        $future = strtotime('+1 day midnight') * 1000;
+        $r = $this->mark($pid, $d, $em['id'], ['scannedAt' => $future]);
+        $this->assertSame(200, $r['code'], $r['raw']);
+        // Bị kẹp về now, mà now > cutoff → đi trễ
+        $this->assertSame('đi trễ', $r['json']['status']);
+    }
+
+    public function test_mark_scanned_at_clamped_from_other_day(): void
+    {
+        // Giờ chốt cố định 00:01. scannedAt ngày khác → kẹp về 00:00 ngày buổi < cutoff → 'có mặt'.
+        $d = $this->todaySession();
+        $pid = $this->makeProgram(['start_time' => '00:01:00', 'cutoff_time' => '00:01:00']);
+        $em = $this->makeStudent((int) $this->classA['id']);
+
+        // Gửi mốc ngày hôm qua
+        $yesterday = strtotime('-1 day 10:00:00') * 1000;
+        $r = $this->mark($pid, $d, $em['id'], ['scannedAt' => $yesterday]);
+        $this->assertSame(200, $r['code'], $r['raw']);
+        // Bị kẹp về 00:00 ngày hôm nay, trước cutoff → có mặt
+        $this->assertSame('có mặt', $r['json']['status']);
+    }
+
+    public function test_mark_detects_offline_marked_when_clocked_late(): void
+    {
+        // scannedAt lệch >5 phút so với giờ server → offline_marked = 1
+        $pid = $this->makeProgram(); $d = $this->todaySession();
+        $em = $this->makeStudent((int) $this->classA['id']);
+
+        // Gửi mốc cách đây 10 phút (offline)
+        $offlineTs = (time() - 600) * 1000; // 10 phút trước, ms
+        $r = $this->mark($pid, $d, $em['id'], ['scannedAt' => $offlineTs]);
+        $this->assertSame(200, $r['code'], $r['raw']);
+
+        // Kiểm tra DB: offline_marked = 1
+        $row = $this->attRow($pid, $d, $em['id']);
+        $this->assertNotNull($row, 'Phải có bản ghi');
+        $this->assertSame(1, (int) $row['offline_marked'],
+            'Mốc lệch >5 phút phải đánh dấu offline_marked');
+        $this->assertNotNull($row['scanned_at'], 'Phải có scanned_at');
+    }
+
+    public function test_mark_stores_method_qr_from_offline_queue_and_defaults_to_tay(): void
+    {
+        $pid = $this->makeProgram(); $d = $this->todaySession();
+        $a = $this->makeStudent((int) $this->classA['id']);
+        $b = $this->makeStudent((int) $this->classA['id']);
+        $c = $this->makeStudent((int) $this->classA['id']);
+
+        $this->assertSame(200, $this->mark($pid, $d, $a['id'], ['method' => 'qr'])['code']);
+        $this->assertSame('qr', $this->attRow($pid, $d, $a['id'])['method'], 'Lượt quét QR phát lại phải giữ nguồn qr');
+
+        $this->assertSame(200, $this->mark($pid, $d, $b['id'])['code']);
+        $this->assertSame('tay', $this->attRow($pid, $d, $b['id'])['method'], 'Không gửi method thì là tay');
+
+        $this->assertSame(200, $this->mark($pid, $d, $c['id'], ['method' => 'hack'])['code']);
+        $this->assertSame('tay', $this->attRow($pid, $d, $c['id'])['method'], 'method ngoài whitelist phải về tay');
+    }
+
+    // =================================================================
+    //  scan: phạm vi theo LỚP (accessible_class_ids)
+    // =================================================================
+
+    public function test_scan_skips_student_in_same_block_but_other_class(): void
+    {
+        // GLV chỉ được phân vào classA (cùng khối với classA2).
+        // Quét em classA2 → bị bỏ, không ghi được.
+        $pid = $this->makeProgram(); $d = $this->todaySession();
+        $em = $this->makeStudent((int) $this->classA2['id']);
+
+        $r = $this->scan($pid, $d, [$em['code']]);
+        $this->assertSame(0, $r['json']['added']);
+        $this->assertContains($em['code'], $this->skippedCodes($r),
+            'Em cùng khối nhưng lớp khác phải bị bỏ qua');
+        $this->assertNull($this->attRow($pid, $d, $em['id']),
+            'Em cùng khối lớp khác không được ghi');
+    }
+
+    // =================================================================
+    //  unmark — gỡ điểm danh (cho hàng đợi offline)
+    // =================================================================
+
+    public function test_unmark_removes_attendance(): void
+    {
+        $pid = $this->makeProgram(); $d = $this->todaySession();
+        $em = $this->makeStudent((int) $this->classA['id']);
+
+        // Trước tiên ghi
+        $r1 = $this->mark($pid, $d, $em['id']);
+        $this->assertSame(200, $r1['code']);
+        $this->assertNotNull($this->attRow($pid, $d, $em['id']), 'Phải có bản ghi sau mark');
+
+        // Rồi gỡ
+        $r2 = $this->http('POST', '/api/attendance.php?action=unmark',
+            ['programId' => $pid, 'date' => $d, 'studentId' => $em['id']]);
+        $this->assertSame(200, $r2['code'], $r2['raw']);
+        $this->assertSame(true, $r2['json']['removed']);
+        $this->assertNull($this->attRow($pid, $d, $em['id']), 'Phải không còn bản ghi sau unmark');
+    }
+
+    public function test_unmark_is_idempotent(): void
+    {
+        $pid = $this->makeProgram(); $d = $this->todaySession();
+        $em = $this->makeStudent((int) $this->classA['id']);
+
+        // Gỡ khi không có bản ghi → vẫn ok, removed = false
+        $r = $this->http('POST', '/api/attendance.php?action=unmark',
+            ['programId' => $pid, 'date' => $d, 'studentId' => $em['id']]);
+        $this->assertSame(200, $r['code']);
+        $this->assertSame(true, $r['json']['ok']);
+        $this->assertSame(false, $r['json']['removed']);
+    }
+
+    public function test_unmark_rejects_student_outside_class(): void
+    {
+        $pid = $this->makeProgram(); $d = $this->todaySession();
+        $em = $this->makeStudent((int) $this->classB['id']);   // lớp KHÁC
+
+        $r = $this->http('POST', '/api/attendance.php?action=unmark',
+            ['programId' => $pid, 'date' => $d, 'studentId' => $em['id']]);
+        $this->assertSame(403, $r['code'], 'Lớp khác phải từ chối');
+    }
+
+    public function test_unmark_recalculates_stamps(): void
+    {
+        // Buổi tính Mộc: unmark phải tính lại ví của em
+        $pid = $this->makeProgram(['count_for_emulation' => 1]);
+        $d = $this->todaySession();
+        $em = $this->makeStudent((int) $this->classA['id']);
+
+        // Ghi rồi gỡ — không lỗi, không cần kiểm số Mộc cụ thể
+        $this->mark($pid, $d, $em['id']);
+        $r = $this->http('POST', '/api/attendance.php?action=unmark',
+            ['programId' => $pid, 'date' => $d, 'studentId' => $em['id']]);
+        $this->assertSame(200, $r['code'], $r['raw']);
+        $this->assertTrue($r['json']['removed']);
+        $this->assertNull($this->attRow($pid, $d, $em['id']));
     }
 }

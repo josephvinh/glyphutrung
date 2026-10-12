@@ -277,6 +277,29 @@ class AttendanceSyncMarkerTest extends TestCase
         $this->assertSame(Cache::marker('sync_att.txt'), (string) $r1['json']['att']);
     }
 
+    public function test_mark_and_unmark_change_only_attendance_marker(): void
+    {
+        $admin = $this->makeMember('admin');
+        $this->loginAs($admin);
+        $pid = $this->makeProgram(false);
+        $em  = $this->makeStudent();
+        $d   = date('Y-m-d');
+        $this->markerFile('sync.txt', '1');
+        $this->markerFile('sync_att.txt', '5000');
+
+        $r = $this->attApi($admin, 'mark', ['programId' => $pid, 'date' => $d, 'studentId' => $em['id']]);
+        $this->assertSame(200, $r['code'], $r['raw']);
+        $this->assertTrue($r['json']['added']);
+        $this->assertSame('1', Cache::marker('sync.txt'), 'mark không được đổi mốc chung');
+        $this->assertSame(Cache::marker('sync_att.txt'), (string) $r['json']['att']);
+
+        $u = $this->attApi($admin, 'unmark', ['programId' => $pid, 'date' => $d, 'studentId' => $em['id']]);
+        $this->assertSame(200, $u['code'], $u['raw']);
+        $this->assertTrue($u['json']['removed']);
+        $this->assertSame('1', Cache::marker('sync.txt'), 'unmark không được đổi mốc chung');
+        $this->assertGreaterThan((int) $r['json']['att'], (int) $u['json']['att']);
+    }
+
     public function test_stamp_earning_program_also_changes_general_marker(): void
     {
         $admin = $this->makeMember('admin');

@@ -397,11 +397,13 @@ function require_csrf(): void
                             cha mẹ, không có lý do để GLV lớp này đọc
                             hồ sơ em lớp khác.
 
-     scan_class_ids()     — QUÉT ĐIỂM DANH. Cả khối.
-                            Lúc điểm danh các em xếp hàng theo khối, ai
-                            trong khối cũng phải quét được mọi em ở đó.
-                            Dữ liệu dùng cho việc này chỉ gồm mã số, tên
-                            và lớp — không kèm thông tin riêng tư nào.
+     scan_class_ids()     — phạm vi theo KHỐI, nay chỉ còn dùng cho Sổ Mộc /
+                            phân công (assignments.php, rewards). QUÉT
+                            ĐIỂM DANH KHÔNG dùng nó nữa: api/attendance.php
+                            (lookup, scan, mark, unmark, toggle) theo
+                            VAI / PHÂN CÔNG qua accessible_class_ids(
+                            ..., 'attendance', 'edit'): trưởng khối cả khối,
+                            GLV chủ nhiệm / GLV / dự bị chỉ lớp mình.
 
    Cả hai trả null nghĩa là không giới hạn.
    ================================================================ */
@@ -510,7 +512,8 @@ function allowed_class_names(?array $ids): string
 }
 
 /**
- * Các lớp mà người này được QUÉT điểm danh — tính theo KHỐI.
+ * Các lớp tính theo KHỐI của người này (dùng cho Sổ Mộc / phân công).
+ * KHÔNG dùng cho điểm danh: điểm danh theo accessible_class_ids() (vai / phân công).
  * Chưa gắn khối thì suy từ lớp được phân công.
  */
 function scan_class_ids(array $me): ?array
