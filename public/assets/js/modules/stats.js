@@ -120,6 +120,18 @@ window.TNTT.stats = {
     // Dùng Map để tra cứu O(1) thay vì find() lồng nhau, tránh chậm khi
     // đoàn có cả ngàn em nhân với vài chục buổi.
     get statSummary() {
+        // Các màn dùng số liệu này (Báo cáo, Hồ sơ trong Cài đặt) luôn nằm sẵn
+        // trong trang, chỉ bị ẩn bằng x-show — nên mỗi lần ghi điểm danh, TẤT CẢ
+        // biểu thức của chúng chạy lại, mỗi biểu thức tính cả bảng thống kê
+        // từ đầu. Quét QR vì thế khựng ~1 giây mỗi lượt. Màn không hiện thì
+        // không cần số: đọc currentModule trước để vẫn tính lại khi mở màn đó.
+        if (this.currentModule !== 'reporthub' && this.currentModule !== 'settings') {
+            const rong = () => ({ present: 0, late: 0, excused: 0, unexcused: 0, total: 0 });
+            return {
+                students: 0, sessionCount: 0, countedSessions: 0, untakenSessions: 0,
+                total: rong(), rate: 0, byClass: [], byBlock: [], byStudent: {}
+            };
+        }
         return this.summaryFor(this.statCategory);
     },
 

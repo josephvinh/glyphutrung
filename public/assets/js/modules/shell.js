@@ -297,7 +297,11 @@ window.TNTT.shell = {
         // công tác/điểm số/thông báo của người khác hiện gần như tức thì.
         this._syncVersion = null;
         setInterval(async () => {
-            if (this.syncing || document.visibilityState !== 'visible') return;
+            // Đang quét QR thì KHÔNG nạp lại: mỗi lô gửi lên làm mốc sync.txt đổi,
+            // nên chính máy đang quét sẽ nạp lại toàn bộ dữ liệu (đứng hình ~1 giây,
+            // và khoá ghi tạm vì heavyFresh=false). Bỏ qua thì không cập nhật
+            // _syncVersion, nên lần hỏi đầu tiên sau khi đóng máy quét sẽ thấy thay đổi.
+            if (this.syncing || this.qrMo || document.visibilityState !== 'visible') return;
             try {
                 const r = await window.TNTT.csrfFetch('api/sync.php', { cache: 'no-store' });
                 const ts = await r.text();
