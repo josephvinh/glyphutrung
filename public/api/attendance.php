@@ -6,12 +6,17 @@
  *   POST api/attendance.php?action=lookup     — bảng tra cho máy quét
  *   POST api/attendance.php?action=scan      — quét QR (theo lô)
  *   POST api/attendance.php?action=mark     — ghi một em (idempotent, cho offline)
+ *   POST api/attendance.php?action=unmark   — gỡ một em (idempotent, cho offline)
  *   POST api/attendance.php?action=toggle   — bật/tắt một em (chạm tay)
  *   POST api/attendance.php?action=set_status — đổi có mặt ↔ đi trễ (cần "cửa sửa")
  *
  * Trạng thái có mặt hay đi trễ do MÁY CHỦ quyết định theo giờ chốt,
  * không nhận từ trình duyệt — nếu không thì đổi giờ máy điện thoại là
  * biến đi trễ thành có mặt.
+ *
+ * Giờ quét thật: client gửi scannedAt (epoch ms), server kẹp vào khoảng
+ * [00:00 ngày buổi, giờ hiện tại] rồi dùng mốc đó quyết định status
+ * thay vì thời điểm đồng bộ.
  */
 
 require __DIR__ . '/_bootstrap.php';
@@ -29,7 +34,7 @@ $rawDate   = $in['date'] ?? '';
 $action    = $_GET['action'] ?? '';
 
 // Chặn action không hợp lệ — không rơi xuống toggle
-$VALID_ACTIONS = ['lookup', 'scan', 'mark', 'toggle', 'set_status'];
+$VALID_ACTIONS = ['lookup', 'scan', 'mark', 'unmark', 'toggle', 'set_status'];
 if (!in_array($action, $VALID_ACTIONS, true)) {
     json_fail('Action không hợp lệ.', 400);
 }
@@ -83,8 +88,10 @@ $pastAbsent = !empty($prog['absent_time'] ?? '')
 
 // Lớp tham gia chương trình (rỗng/NULL = áp dụng toàn đoàn)
 $progClassIds = null;
-$pcRows = db_all('SELECT class_id FROM program_classes WHERE program_id=?', [$programId]);
-if ($pcRows) $progClassIds = array_map(fn($r) => (int) $r['class_id'], $pcRows);
+if (db_has_table('program_classes')) {
+    $pcRows = db_all('SELECT class_id FROM program_classes WHERE program_id=?', [$programId]);
+    if ($pcRows) $progClassIds = array_map(fn($r) => (int) $r['class_id'], $pcRows);
+}
 
 // =====================================================================
 //  Helper: Kẹp mốc quét thật vào khoảng hợp lệ
@@ -99,7 +106,11 @@ if ($pcRows) $progClassIds = array_map(fn($r) => (int) $r['class_id'], $pcRows);
 // =====================================================================
 function clampScannedAt($scannedAt, $date) {
     if (!$scannedAt) return null;
-    $ts = is_numeric($scannedAt) ? (int) $scannedAt : strtotime($scannedAt);
+    // Client gửi epoch milliseconds từ JS (Date.now()), nên nhân 1000
+    // để thành epoch seconds. Nếu giá trị > 1 tỷ thì coi là milliseconds.
+    $val = is_numeric($scannedAt) ? (int) $scannedAt : strtotime($scannedAt);
+    if (!$val) return null;
+    $ts = $val > 10000000000 ? (int) ($val / 1000) : $val; // ms → s
     if (!$ts) return null;
 
     $dayStart = strtotime($date . ' 00:00:00');
@@ -115,10 +126,14 @@ function clampScannedAt($scannedAt, $date) {
 /**
  * Kiểm tra mốc quét có lệch rõ so với giờ máy chủ.
  * Lệch > 5 phút thì coi là điểm danh offline.
+ * $scannedAt: epoch seconds, datetime string, hoặc null
  */
 function isOfflineMarked($scannedAt) {
     if (!$scannedAt) return false;
-    $ts = is_numeric($scannedAt) ? (int) $scannedAt : strtotime($scannedAt);
+    $val = is_numeric($scannedAt) ? (int) $scannedAt : strtotime($scannedAt);
+    if (!$val) return false;
+    // Nếu > 10 tỷ thì là milliseconds (từ JS Date.now()), chia 1000
+    $ts = $val > 10000000000 ? (int) ($val / 1000) : $val;
     if (!$ts) return false;
     return abs(time() - $ts) > 300; // 5 phút
 }
@@ -336,10 +351,13 @@ if ($action === 'mark') {
         json_fail('Đã quá giờ "tính vắng" của buổi — em ' . $st['full_name'] . ' tính vắng, không ghi được.');
     }
 
-    // Xử lý mốc quét thật từ client
+    // Xử lý mốc quét thật từ client: kẹp vào khoảng hợp lệ rồi
+    // quyết định status theo MỐC ĐÃ KẸP, không theo giờ đồng bộ.
     $scannedAt = $in['scannedAt'] ?? null;
     $clampedAt = clampScannedAt($scannedAt, $date);
-    $offlineMarked = isOfflineMarked($clampedAt) ? 1 : 0;
+    // Chuyểi datetime string thành epoch seconds để so sánh với cutoffTs
+    $clampedTs = $clampedAt ? strtotime($clampedAt) : null;
+    $offlineMarked = isOfflineMarked($clampedTs) ? 1 : 0;
 
     // Kiểm tra đã có bản ghi chưa
     $existing = db_one('SELECT status FROM attendances
@@ -349,7 +367,10 @@ if ($action === 'mark') {
         json_out(['ok' => true, 'added' => false, 'status' => $existing['status'] ?? 'có mặt']);
     }
 
-    $status = $pastCutoff ? 'đi trễ' : 'có mặt';
+    // Status: so mốc ĐÃ KẸP với giờ chốt, không so thời điểm đồng bộ.
+    // Nếu không có scannedAt (đồng bộ online) thì clampedTs = null → dùng time().
+    $checkTs = $clampedTs ?? time();
+    $status = $checkTs >= $cutoffTs ? 'đi trễ' : 'có mặt';
     $added  = false;
 
     // Ghi kèm scanned_at và offline_marked nếu có cột
@@ -399,6 +420,38 @@ if ($action === 'mark') {
         'markedAt' => date('H:i'),
         'markedBy' => $me['full_name'],
     ]);
+}
+
+// =====================================================================
+//  UNMARK — gỡ điểm danh (cho hàng đợi offline)
+// =====================================================================
+if ($action === 'unmark') {
+    $studentId = (int) ($in['studentId'] ?? 0);
+    if (!$studentId) json_fail('Thiếu thông tin em cần điểm danh.');
+
+    $st = db_one('SELECT s.full_name, e.class_id
+                    FROM enrollments e JOIN students s ON s.id = e.student_id
+                   WHERE e.year_id = ? AND e.student_id = ?', [$year['id'], $studentId]);
+    if (!$st) json_fail('Em này không có trong danh sách năm nay.', 404);
+
+    // Phạm vi: phải có quyền edit trên lớp của em
+    if (!can_access_class($me, 'attendance', (int) $st['class_id'], 'edit')) {
+        json_fail('Bạn không phụ trách lớp của em ' . $st['full_name'] . '.', 403);
+    }
+
+    $existing = db_one('SELECT id FROM attendances WHERE program_id=? AND session_date=? AND student_id=?',
+                       [$programId, $date, $studentId]);
+    if (!$existing) {
+        // Không có bản ghi → coi như đã gỡ, idempotent
+        json_out(['ok' => true, 'removed' => false]);
+    }
+
+    db_run('DELETE FROM attendances WHERE id = ?', [$existing['id']]);
+    if (program_earns_stamps($prog)) {
+        recalc_stamps_safe($studentId, $year['id']);
+    }
+    Cache::flush();
+    json_out(['ok' => true, 'removed' => true]);
 }
 
 // ---------------------------------------------------------------------

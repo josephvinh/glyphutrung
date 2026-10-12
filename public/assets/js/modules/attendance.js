@@ -94,10 +94,9 @@ window.TNTT.attendance = {
         try {
             for (const item of queue) {
                 try {
-                    // Dùng 'mark' thay vì 'toggle': mark là idempotent — gửi lại
-                    // sẽ không gỡ bản ghi như toggle (ghi mới rồi lần sau gỡ).
-                    // Gửi kèm scannedAt để server ghi lại giờ quét thật.
-                    const r = await this.api('attendance', 'mark', {
+                    // Hàng đợi chứa cả 'mark' (thêm) và 'unmark' (gỡ).
+                    // Dùng action đúng để server xử lý.
+                    const r = await this.api('attendance', item.action || 'mark', {
                         programId: item.programId,
                         date: item.date,
                         studentId: item.studentId,
@@ -489,9 +488,8 @@ window.TNTT.attendance = {
                     date: this.activeSession.date,
                     studentId: student.id,
                     studentName: student.name,
-                    action: 'mark',
-                    createdAt: new Date().toISOString(),
-                    scannedAt: Date.now()
+                    action: 'unmark',
+                    createdAt: new Date().toISOString()
                 });
                 return;
             }
@@ -507,9 +505,8 @@ window.TNTT.attendance = {
                             date: this.activeSession.date,
                             studentId: student.id,
                             studentName: student.name,
-                            action: 'mark',
-                            createdAt: new Date().toISOString(),
-                            scannedAt: Date.now()
+                            action: 'unmark',
+                            createdAt: new Date().toISOString()
                         });
                     } else {
                         this._attThem(cu);

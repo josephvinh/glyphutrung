@@ -516,4 +516,87 @@ class QrScanApiTest extends TestCase
         $r = $this->mark($pid, $d, $em['id']);
         $this->assertSame(false, $r['json']['ok'] ?? null);
     }
+
+    // =================================================================
+    //  scannedAt — giờ quét thật từ client
+    // =================================================================
+
+    public function test_mark_respects_scanned_at_for_status(): void
+    {
+        // Quét TRƯỚC giờ chốt nhưng đồng bộ SAU giờ chốt
+        // → status phải là 'có mặt' (theo mốc quét, không theo lúc đồng bộ)
+        $pid = $this->makeProgram(); $d = $this->todaySession();
+        $em = $this->makeStudent((int) $this->classA['id']);
+
+        // Gửi scannedAt trước giờ chốt (giả sử 01:00 sáng epoch = 1 AM)
+        $dayStart = strtotime($d . ' 01:00:00');
+        $r = $this->mark($pid, $d, $em['id'], ['scannedAt' => $dayStart * 1000]);
+        $this->assertSame(200, $r['code'], $r['raw']);
+        $this->assertSame('có mặt', $r['json']['status'], 'Quét trước giờ chốt phải là có mặt');
+    }
+
+    public function test_mark_detects_offline_marked_when_clocked_late(): void
+    {
+        // scannedAt lệch >5 phút so với giờ server → offline_marked = 1
+        $pid = $this->makeProgram(); $d = $this->todaySession();
+        $em = $this->makeStudent((int) $this->classA['id']);
+
+        // Gửi mốc cách đây 10 phút (offline)
+        $offlineTs = (time() - 600) * 1000; // 10 phút trước, ms
+        $r = $this->mark($pid, $d, $em['id'], ['scannedAt' => $offlineTs]);
+        $this->assertSame(200, $r['code'], $r['raw']);
+
+        // Kiểm tra DB: offline_marked = 1
+        $row = $this->attRow($pid, $d, $em['id']);
+        $this->assertNotNull($row, 'Phải có bản ghi');
+        if (property_exists($row, 'offline_marked') || array_key_exists('offline_marked', $row)) {
+            $this->assertSame(1, (int) ($row['offline_marked'] ?? $row->offline_marked),
+                'Mốc lệch >5 phút phải đánh dấu offline_marked');
+        }
+    }
+
+    // =================================================================
+    //  unmark — gỡ điểm danh (cho hàng đợi offline)
+    // =================================================================
+
+    public function test_unmark_removes_attendance(): void
+    {
+        $pid = $this->makeProgram(); $d = $this->todaySession();
+        $em = $this->makeStudent((int) $this->classA['id']);
+
+        // Trước tiên ghi
+        $r1 = $this->mark($pid, $d, $em['id']);
+        $this->assertSame(200, $r1['code']);
+        $this->assertNotNull($this->attRow($pid, $d, $em['id']), 'Phải có bản ghi sau mark');
+
+        // Rồi gỡ
+        $r2 = $this->http('POST', '/api/attendance.php?action=unmark',
+            ['programId' => $pid, 'date' => $d, 'studentId' => $em['id']]);
+        $this->assertSame(200, $r2['code'], $r2['raw']);
+        $this->assertSame(true, $r2['json']['removed']);
+        $this->assertNull($this->attRow($pid, $d, $em['id']), 'Phải không còn bản ghi sau unmark');
+    }
+
+    public function test_unmark_is_idempotent(): void
+    {
+        $pid = $this->makeProgram(); $d = $this->todaySession();
+        $em = $this->makeStudent((int) $this->classA['id']);
+
+        // Gỡ khi không có bản ghi → vẫn ok, removed = false
+        $r = $this->http('POST', '/api/attendance.php?action=unmark',
+            ['programId' => $pid, 'date' => $d, 'studentId' => $em['id']]);
+        $this->assertSame(200, $r['code']);
+        $this->assertSame(true, $r['json']['ok']);
+        $this->assertSame(false, $r['json']['removed']);
+    }
+
+    public function test_unmark_rejects_student_outside_class(): void
+    {
+        $pid = $this->makeProgram(); $d = $this->todaySession();
+        $em = $this->makeStudent((int) $this->classB['id']);   // lớp KHÁC
+
+        $r = $this->http('POST', '/api/attendance.php?action=unmark',
+            ['programId' => $pid, 'date' => $d, 'studentId' => $em['id']]);
+        $this->assertSame(403, $r['code'], 'Lớp khác phải từ chối');
+    }
 }
