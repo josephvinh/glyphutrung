@@ -225,6 +225,7 @@ jobs:
       TNTT_DB_PASS: tntt
       E2E_BASE: http://127.0.0.1:8080
       UI_OUT: ${{ github.workspace }}/ui-matrix-out
+      E2E_OUT: ${{ github.workspace }}/attendance-regress-out
 
     steps:
       - name: Checkout
@@ -279,11 +280,20 @@ jobs:
       - name: Kiểm giao diện
         run: node tests/e2e/ui_matrix.js
 
+      # Hồi quy điểm danh trên trình duyệt thật (quét QR, offline, phạm vi theo vai, đồng bộ):
+      # mỗi ca giữ một lỗi đã gặp. Xem đầu tests/e2e/attendance_regress.js.
+      - name: Hồi quy điểm danh (trình duyệt)
+        run: |
+          php tests/fixtures/e2e_attendance_seed.php
+          node tests/e2e/attendance_regress.js
+
       - name: Tải ảnh lỗi + báo cáo
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ui-matrix
-          path: ui-matrix-out
+          path: |
+            ui-matrix-out
+            attendance-regress-out
           if-no-files-found: ignore
           retention-days: 14
