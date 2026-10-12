@@ -312,9 +312,10 @@ if ($action === 'scan') {
                    $prog['name'] . ' · ' . $date . ' · ' . $status);
     }
 
-    Cache::flush();
+    // Chỉ đổi mốc ĐIỂM DANH (không đổi mốc chung): máy khác chỉ nạp lại phần điểm danh.
+    $att = Cache::flushAttendance(program_earns_stamps($prog));
     json_out(['ok' => true, 'added' => $them, 'already' => $daCo,
-              'skipped' => $bo, 'status' => $status]);
+              'skipped' => $bo, 'status' => $status, 'att' => $att]);
 }
 
 // =====================================================================
@@ -500,6 +501,7 @@ if ($action === 'set_status') {
     }
 
     $doi = ($cu['status'] !== $moi);
+    $att = null;
     if ($doi) {
         db_run('UPDATE attendances SET status = ? WHERE id = ?', [$moi, $cu['id']]);
         log_action('diemdanh', 'attendance', 'Sửa trạng thái điểm danh của ' . $st['full_name'],
@@ -508,9 +510,9 @@ if ($action === 'set_status') {
         if (program_earns_stamps($prog)) {
             recalc_stamps_safe($studentId, $year['id']);
         }
-        Cache::flush();
+        $att = Cache::flushAttendance(program_earns_stamps($prog));
     }
-    json_out(['ok' => true, 'status' => $moi, 'changed' => $doi]);
+    json_out(['ok' => true, 'status' => $moi, 'changed' => $doi, 'att' => $att]);
 }
 
 // ---------------------------------------------------------------------
@@ -531,8 +533,8 @@ if ($existing) {
     if (program_earns_stamps($prog)) {
         recalc_stamps_safe($studentId, $year['id']);
     }
-    Cache::flush();
-    json_out(['ok' => true, 'removed' => true]);
+    $att = Cache::flushAttendance(program_earns_stamps($prog));
+    json_out(['ok' => true, 'removed' => true, 'att' => $att]);
 }
 
 // GHI MỚI cho buổi tương lai bị chặn. (Đặt SAU nhánh gỡ ở trên: lỡ đã có
@@ -582,9 +584,10 @@ if (program_earns_stamps($prog)) {
     recalc_stamps_safe($studentId, $year['id']);
 }
 
-Cache::flush();
+$att = Cache::flushAttendance(program_earns_stamps($prog));
 json_out([
     'ok'       => true,
+    'att'      => $att,
     'removed'  => false,
     'status'   => $status,
     'markedAt' => date('H:i'),
