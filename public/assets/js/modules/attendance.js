@@ -89,33 +89,43 @@ window.TNTT.attendance = {
 
         this._isSyncingOffline = true;
         let successCount = 0;
-        const failedQueue = [];
+        // Mỗi mục được nhận diện bằng (buổi, ngày, em, giờ tạo): chỉ XOÁ đúng mục đã
+        // gửi xong. Một mục được thêm/ghi đè trong lúc đang đồng bộ (giờ tạo khác)
+        // vẫn nằm lại hàng đợi thay vì bị ghi đè bằng danh sách cũ.
+        const khoaMuc = it => [it.programId, it.date, it.studentId, it.createdAt].join('|');
+        const daXong = new Set();
 
         try {
             for (const item of queue) {
                 try {
                     // Hàng đợi chứa cả 'mark' (thêm) và 'unmark' (gỡ).
                     // Dùng action đúng để server xử lý.
-                    const r = await this.api('attendance', item.action || 'mark', {
+                    const r = await this.api('attendance', item.action === 'unmark' ? 'unmark' : 'mark', {
                         programId: item.programId,
                         date: item.date,
                         studentId: item.studentId,
-                        scannedAt: item.scannedAt || null
+                        scannedAt: item.scannedAt || null,
+                        method: item.method || undefined
                     });
                     if (r && r.ok) {
                         successCount++;
+                        daXong.add(khoaMuc(item));
+                    } else if (r && r.unauthorized) {
+                        break;      // hết phiên: dừng, giữ nguyên phần còn lại để gửi sau khi đăng nhập lại
                     } else if (r && r.networkError) {
-                        failedQueue.push(item);
+                        // giữ lại trong hàng đợi, thử lần sau
                     } else {
                         // Lỗi nghiệp vụ từ server (đã khoá sổ hoặc không có quyền), bỏ qua
                         console.warn('Bỏ qua bản ghi điểm danh offline:', item, r?.error);
+                        daXong.add(khoaMuc(item));
                     }
                 } catch (err) {
-                    failedQueue.push(item);
+                    // giữ lại trong hàng đợi
                 }
             }
         } finally {
-            this.setOfflineAttendanceQueue(failedQueue);
+            this.setOfflineAttendanceQueue(
+                this.getOfflineAttendanceQueue().filter(it => !daXong.has(khoaMuc(it))));
             this._isSyncingOffline = false;
         }
 

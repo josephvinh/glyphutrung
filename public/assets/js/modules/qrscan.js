@@ -60,37 +60,37 @@ window.TNTT.qrscan = {
     },
 
     /**
-     * PHẠM VI QUÉT — theo KHỐI, không theo lớp.
+     * PHẠM VI QUÉT — theo VAI / PHÂN CÔNG, giống chạm tay (BĐH chốt).
      *
-     * Lúc điểm danh các em xếp hàng theo khối. Ai được phân vào khối
-     * nào thì quét được mọi em trong khối đó; Quản Trị và Ban Điều
-     * Hành quét toàn đoàn.
+     * Trưởng khối quét được cả khối mình; GLV chủ nhiệm, GLV, dự bị chỉ
+     * quét lớp mình; Quản Trị và Ban Điều Hành quét toàn đoàn. Máy chủ
+     * (accessible_class_ids) là nơi quyết định thật sự, ở đây chỉ để lọc
+     * sớm và báo đúng trên màn hình.
      *
-     * Khác với writableClasses (quyền SỬA hồ sơ thiếu nhi) vốn giữ
-     * theo lớp — hai việc khác nhau, đừng gộp.
-     *
-     * null = không giới hạn.
+     * Trả về TÊN LỚP; null = không giới hạn.
      */
     get qrLopQuetDuoc() {
         if (this.isUnrestrictedScope) return null;       // toàn đoàn
-        // Kiêm nhiệm: hợp mọi KHỐI mình có mặt (khớp scan_class_ids ở backend).
-        const khoi = this.myBlocks;
-        if (!khoi.length) return [];                     // chưa phân khối
-        return this.classes.filter(c => khoi.includes(c.block)).map(c => c.name);
+        return this.myClasses;                           // trưởng khối: cả khối; còn lại: lớp mình
     },
 
     /**
      * Chữ dưới tiêu đề màn quét — nói đúng phạm vi MÁY QUÉT nhận,
-     * không phải lớp đang chọn ở danh sách tay. Hai thứ khác nhau, ghi
-     * nhầm là GLV tưởng chỉ quét được lớp mình.
+     * không phải lớp đang chọn ở danh sách tay.
      */
     get qrPhamVi() {
         if (this.isUnrestrictedScope) return 'Quét được toàn đoàn';
-        const khoi = this.myBlocks;
-        if (!khoi.length) return 'Chưa được phân khối';
-        return khoi.length === 1
-            ? 'Quét được cả khối ' + khoi[0]
-            : 'Quét được các khối ' + khoi.join(', ');
+        const lop = this.myClasses;
+        if (!lop.length) return 'Chưa được phân lớp';
+        const khoi = this.myHeadBlocks;                  // khối mình làm trưởng
+        const rieng = lop.filter(ten => {
+            const c = this.classes.find(cc => cc.name === ten);
+            return !(c && khoi.includes(c.block));
+        });
+        const phan = [];
+        if (khoi.length) phan.push((khoi.length === 1 ? 'cả khối ' : 'các khối ') + khoi.join(', '));
+        if (rieng.length) phan.push((rieng.length === 1 ? 'lớp ' : 'các lớp ') + rieng.join(', '));
+        return 'Quét được ' + phan.join(' và ');
     },
 
     async _qrCoNative() {
@@ -225,11 +225,10 @@ window.TNTT.qrscan = {
             return;
         }
 
-        // KHÔNG bắt chọn lớp. Các em xếp hàng theo khối, bắt dừng lại
-        // đổi lớp mỗi lần là hỏng cả nhịp. Quét theo khối của mình.
+        // KHÔNG bắt chọn lớp: quét theo phạm vi phân công của mình (xem qrLopQuetDuoc).
         const lopQuet = this.qrLopQuetDuoc;
         if (lopQuet !== null && lopQuet.length === 0) {
-            window.TNTT.toast.warning('Bạn chưa được phân vào khối nào nên chưa quét được.\n'
+            window.TNTT.toast.warning('Bạn chưa được phân vào lớp nào nên chưa quét được.\n'
                 + 'Hãy nhờ Ban Điều Hành phân công lớp hoặc khối.');
             return;
         }
@@ -467,16 +466,11 @@ window.TNTT.qrscan = {
             this._qrBipLoi(); this._qrRung(150);
             return;
         }
-        // Đã chọn lớp -> chỉ nhận đúng lớp đó (tránh điểm danh nhầm lớp).
-        // Máy quét LUÔN theo phạm vi khối, KHÔNG theo ô chọn lớp.
-        //
-        // Ô chọn lớp là để lọc danh sách điểm danh tay, và với GLV nó bị
-        // khoá cứng vào lớp mình. Nếu máy quét cũng nghe theo ô đó thì
-        // GLV không bao giờ quét được em lớp bên cạnh — đúng cái mà thay
-        // đổi này muốn bỏ.
+        // Chỉ nhận em thuộc phạm vi phân công của mình (tránh điểm danh nhầm lớp);
+        // KHÔNG theo ô chọn lớp của danh sách tay.
         const lopQuet = this.qrLopQuetDuoc;   // null = toàn đoàn
         if (lopQuet !== null && !lopQuet.includes(em.className)) {
-            this.qrTrangThai = em.name + ' — ngoài khối bạn phụ trách';
+            this.qrTrangThai = em.name + ' — ngoài lớp bạn phụ trách';
             this._qrBipLoi(); this._qrRung(150);
             return;
         }
@@ -590,7 +584,8 @@ window.TNTT.qrscan = {
                         studentName: em.name,
                         action: 'mark',
                         createdAt: new Date().toISOString(),
-                        scannedAt: Date.now()  // giờ quét thật (epoch ms)
+                        scannedAt: Date.now(),  // giờ quét thật (epoch ms)
+                        method: 'qr'  // whitelist: 'qr'|'tay'
                     });
                 }
             });
@@ -633,7 +628,8 @@ window.TNTT.qrscan = {
                         studentName: em.name,
                         action: 'mark',
                         createdAt: new Date().toISOString(),
-                        scannedAt: Date.now()  // giờ quét thật (epoch ms)
+                        scannedAt: Date.now(),  // giờ quét thật (epoch ms)
+                        method: 'qr'  // whitelist: 'qr'|'tay'
                     });
                 }
             });

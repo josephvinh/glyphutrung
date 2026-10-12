@@ -319,7 +319,7 @@
 | **URL** | `/#/attendance` |
 | **Bước thực hiện** | 1. Vào "Điểm Danh"<br>2. Chọn ngày hôm nay<br>3. Chọn chương trình<br>4. Bấm "Bắt đầu" |
 | **Kết quả mong đợi** | - Danh sách thiếu nhi hiển thị<br>- Có thể bấm chọn từng em |
-| **Backend logic** | `SELECT * FROM students WHERE class_id IN (scan_class_ids)` |
+| **Backend logic** | `SELECT ... WHERE e.class_id IN (accessible_class_ids(me,'attendance','edit'))` — trưởng khối cả khối; GLV chủ nhiệm / GLV / dự bị chỉ lớp mình; Admin / BĐH toàn đoàn |
 
 | Mã | TC-38 |
 |-----|-------|
