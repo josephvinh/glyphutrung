@@ -8,30 +8,25 @@
 -- 5. attendance_thresholds: bảng mới cho các mốc xếp loại CC
 -- ============================================================
 
--- 1. Thêm cột vào score_types (lỗi trùng cột bị nuốt bởi migration runner)
-ALTER TABLE score_types ADD COLUMN category VARCHAR(32) NOT NULL DEFAULT 'homework'
+-- 1. Thêm cột vào score_types (idempotent — chạy lại không lỗi)
+ALTER TABLE score_types ADD COLUMN IF NOT EXISTS category VARCHAR(32) NOT NULL DEFAULT 'homework'
     COMMENT 'homework=điểm BT, exam=điểm thi, attendance=chuyên cần';
-ALTER TABLE score_types ADD COLUMN max_exams TINYINT NOT NULL DEFAULT 1
+ALTER TABLE score_types ADD COLUMN IF NOT EXISTS max_exams TINYINT NOT NULL DEFAULT 1
     COMMENT 'Số bài kiểm tra tối đa cho loại này (1-20)';
 
--- 2. Thêm exam_num vào scores (lỗi trùng cột bị nuốt)
-ALTER TABLE scores ADD COLUMN exam_num TINYINT NOT NULL DEFAULT 1
+-- 2. Thêm exam_num vào scores (idempotent)
+ALTER TABLE scores ADD COLUMN IF NOT EXISTS exam_num TINYINT NOT NULL DEFAULT 1
     COMMENT 'Số thứ tự bài KT trong loại (1, 2, 3...)';
 
 -- 3. Cập nhật unique key của scores: (term_id, student_id, type_code) → (term_id, student_id, type_code, exam_num)
---    Dùng temp table vì MariaDB không cho DROP unique key đang có FK tham chiếu
---    Mọi lỗi trùng bảng/cột đều bị nuốt bởi migration runner
-CREATE TABLE scores_tmp LIKE scores;
-ALTER TABLE scores_tmp DROP COLUMN IF EXISTS exam_num, ADD COLUMN exam_num TINYINT NOT NULL DEFAULT 1;
-ALTER TABLE scores_tmp DROP INDEX uq_score, ADD UNIQUE KEY uq_score (term_id, student_id, type_code, exam_num);
-INSERT INTO scores_tmp
-    (id, term_id, student_id, type_code, value, updated_by, updated_at, exam_num)
-    SELECT id, term_id, student_id, type_code, value, updated_by, updated_at, 1 FROM scores;
-RENAME TABLE scores TO scores_old, scores_tmp TO scores;
-DROP TABLE IF EXISTS scores_old;
--- FK đã tồn tại trên bảng cũ (fk_sc_student, fk_sc_type) nên chỉ cần đảm bảo
--- bảng mới có exam_num; không cần thêm lại FK vì chúng vẫn còn trên bảng mới
--- sau RENAME TABLE. Nếu muốn thêm CHECK constraint thì làm riêng:
+--    ALTER tại chỗ (bỏ CREATE TABLE LIKE + RENAME cũ vì làm mất FK + không idempotent).
+--    Có FK tham chiếu uq_score nên thêm index thay thế trước, sau đó mới drop — theo
+--    gợi ý của review #285 mục 2. MariaDB báo lỗi nếu DROP INDEX khi FK còn cần nó.
+--    IF EXISTS / IF NOT EXISTS để chạy lại an toàn (luật #5).
+ALTER TABLE scores ADD INDEX IF NOT EXISTS idx_sc_term_student (term_id, student_id);
+ALTER TABLE scores DROP INDEX IF EXISTS uq_score;
+ALTER TABLE scores ADD UNIQUE KEY uq_score (term_id, student_id, type_code, exam_num);
+-- Nếu muốn thêm CHECK constraint thì làm riêng:
 -- ALTER TABLE scores ADD CONSTRAINT chk_sc_value CHECK (value >= 0 AND value <= 10);
 
 -- 4. Tạo bảng score_rules
