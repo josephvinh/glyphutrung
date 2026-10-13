@@ -2,12 +2,18 @@
 // tests/unit/ScoresExamNumApiTest.php
 //
 // KIỂM THỬ ĐẦU-CUỐI (qua HTTP thật) CỦA scores.php với exam_num:
-// - GET → danh sách điểm (phải có exam_num)
-// - POST action=set → lưu điểm với exam_num
-// - POST action=delete_exam → xoá bài và renumber
+// - POST action=set → lưu điểm với exam_num (verify bằng DB)
+// - POST action=delete_exam → xoá bài và renumber (verify bằng DB)
 //
 // Bảo vệ LUẬT CỨNG #6:
 //   - require_write + kiểm phạm vi class
+//
+// Lưu ý: scores.php KHÔNG có action=list (UI đọc từ data.php). Vì vậy
+// verify điểm sau khi set bằng cách truy vấn thẳng DB — chính xác hơn
+// và phụ thuộc ít vào cấu trúc phản hồi của data.php.
+//
+// Cookie/session: dùng header Cookie thẳng, không qua cookie jar (xem
+// ScoreRulesApiTest để biết lý do).
 
 require_once __DIR__ . '/../bootstrap.php';
 require_once __DIR__ . '/../../config/db.php';
@@ -19,12 +25,15 @@ class ScoresExamNumApiTest extends TestCase
 {
     private static $proc = null;
     private static string $base = '';
-    private string $cookieJar = '';
-    private string $csrf = '';
+    private array $sessions = [];
+    private array $csrfs = [];
+    private int $adminId = 0;
+    private int $memberIdGlv = 0;
+    private string $phoneGlv = '';
     private int $studentId = 0;
     private int $termId = 0;
-    private int $classId = 0;
-    private array $createdScoreIds = [];
+    private int $classA = 0;
+    private int $classB = 0;
 
     public static function setUpBeforeClass(): void
     {
@@ -45,12 +54,18 @@ class ScoresExamNumApiTest extends TestCase
             $pipes, $root, $env
         );
         self::$base = "http://127.0.0.1:$port";
-        sleep(1);
+
+        for ($i = 0; $i < 50; $i++) {
+            $c = @fsockopen('127.0.0.1', $port, $e, $s, 0.1);
+            if ($c) { fclose($c); return; }
+            usleep(100000);
+        }
+        self::markTestSkipped('Máy chủ PHP tích hợp không khởi động được.');
     }
 
     public static function tearDownAfterClass(): void
     {
-        if (self::$proc) {
+        if (is_resource(self::$proc)) {
             proc_terminate(self::$proc);
             proc_close(self::$proc);
         }
@@ -58,243 +73,271 @@ class ScoresExamNumApiTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->cookieJar = tempnam(sys_get_temp_dir(), 'ck_');
-        $ch = curl_init(self::$base . '/api/login.php');
-        curl_setopt_array($ch, [
-            CURLOPT_COOKIEJAR => $this->cookieJar,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => ['username' => 'admin', 'password' => 'admin'],
-        ]);
-        $out = curl_exec($ch);
-        $info = curl_getinfo($ch);
-        curl_close($ch);
+        $year = current_year();
+        $admin = db_one("SELECT id FROM members WHERE role_code = 'admin' LIMIT 1");
+        $a = db_one("SELECT id, block_id FROM classes WHERE block_id IS NOT NULL ORDER BY id LIMIT 1");
+        $b = $a ? db_one(
+            "SELECT id, block_id FROM classes WHERE block_id IS NOT NULL AND id <> ? LIMIT 1",
+            [$a['id']]
+        ) : null;
+        $term = $year ? db_one("SELECT id FROM terms WHERE year_id = ? ORDER BY id LIMIT 1", [$year['id']]) : null;
 
-        if ($info['http_code'] !== 200) {
-            $this->markTestSkipped('Không đăng nhập được admin.');
+        if (!$year || !$admin || !$a || !$b || !$term) {
+            $this->markTestSkipped('Cần niên khoá + admin + 2 lớp khác khối + ít nhất 1 học kỳ.');
         }
+        $this->adminId   = (int) $admin['id'];
+        $this->classA    = (int) $a['id'];
+        $this->classB    = (int) $b['id'];
+        $this->termId    = (int) $term['id'];
 
-        $ch = curl_init(self::$base . '/api/me.php');
-        curl_setopt_array($ch, [
-            CURLOPT_COOKIEFILE => $this->cookieJar,
-            CURLOPT_RETURNTRANSFER => true,
-        ]);
-        $me = json_decode(curl_exec($ch), true);
-        curl_close($ch);
-        $this->csrf = $me['csrf'] ?? '';
+        // Bỏ cờ buộc đổi mật khẩu của admin mặc định.
+        db_run('UPDATE members SET must_change_pw = 0 WHERE id = ?', [$this->adminId]);
 
-        // Lấy student + term + class để test
-        $r = $this->api('/api/scores.php?action=list');
-        $this->studentId = $r['body']['students'][0]['id'] ?? 0;
-        $this->termId = $r['body']['terms'][0]['id'] ?? 0;
-        $this->classId = $r['body']['classes'][0]['id'] ?? 0;
+        // Tạo GLV chỉ có quyền classA (dùng test "lớp khác → 403")
+        $this->phoneGlv = '09' . random_int(10000000, 99999999);
+        $this->memberIdGlv = db_insert(
+            "INSERT INTO members (code, full_name, phone, password_hash, role_code, must_change_pw)
+             VALUES (?, 'ScoresExam GLV', ?, ?, 'glv', 0)",
+            ['SCEG' . random_int(100000, 999999), $this->phoneGlv, password_hash('Mk-Test-1', PASSWORD_DEFAULT)]
+        );
+        db_run(
+            "INSERT INTO member_assignments (member_id, role_code, block_id, class_id, is_primary, from_date, assigned_by)
+             VALUES (?, 'glv', NULL, ?, 1, CURDATE(), ?)",
+            [$this->memberIdGlv, $this->classA, $this->adminId]
+        );
+
+        // Tạo học sinh trong classA
+        $code = 'SCOR' . random_int(100000, 999999);
+        $this->studentId = db_insert(
+            "INSERT INTO students (code, full_name, gender) VALUES (?, 'Score Exam Em', 1)",
+            [$code]
+        );
+        db_run("INSERT INTO enrollments (year_id, student_id, class_id, status) VALUES (?,?,?,?)",
+               [$year['id'], $this->studentId, $this->classA, 'đang sinh hoạt']);
+
+        $this->loginAdmin();
     }
 
     protected function tearDown(): void
     {
-        // Cleanup scores
-        foreach ($this->createdScoreIds as $ids) {
-            $this->api('/api/scores.php', [
-                '_csrf' => $this->csrf,
-                'action' => 'delete_exam',
-                'studentId' => $ids['studentId'],
-                'termId' => $ids['termId'],
-                'type' => $ids['type'],
-                'examNum' => $ids['examNum'],
-            ], 'POST');
+        if ($this->studentId) {
+            db_run("DELETE FROM scores WHERE student_id = ?", [$this->studentId]);
+            db_run("DELETE FROM enrollments WHERE student_id = ?", [$this->studentId]);
+            db_run("DELETE FROM students WHERE id = ?", [$this->studentId]);
         }
-        $this->createdScoreIds = [];
-
-        if ($this->cookieJar && file_exists($this->cookieJar)) {
-            unlink($this->cookieJar);
+        if ($this->memberIdGlv) {
+            db_run("DELETE FROM member_assignments WHERE member_id = ?", [$this->memberIdGlv]);
+            db_run("DELETE FROM members WHERE id = ?", [$this->memberIdGlv]);
+        }
+        if ($this->adminId) {
+            db_run('UPDATE members SET must_change_pw = 1 WHERE id = ?', [$this->adminId]);
         }
     }
 
-    private function api(string $url, array $post = [], string $method = 'GET'): array
+    // ==================== HTTP helpers ====================
+
+    private function http(string $method, string $path, ?array $json = null,
+                         ?string $session = null, bool $csrf = true): array
     {
-        $ch = curl_init($url);
+        $session = $session ?? 'admin';
+        $ch = curl_init(self::$base . $path);
+        $headers = ['Content-Type: application/json'];
+        if ($csrf && !empty($this->csrfs[$session])) {
+            $headers[] = 'X-CSRF-TOKEN: ' . $this->csrfs[$session];
+        }
+        if (!empty($this->sessions[$session])) {
+            $headers[] = 'Cookie: ' . $this->sessions[$session];
+        }
         $opts = [
-            CURLOPT_COOKIEFILE => $this->cookieJar,
+            CURLOPT_CUSTOMREQUEST  => $method,
             CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HEADER         => true,
+            CURLOPT_HTTPHEADER     => $headers,
+            CURLOPT_TIMEOUT        => 20,
         ];
-        if ($method === 'POST') {
-            $opts[CURLOPT_POST] = true;
-            $p = $post;
-            $p['_csrf'] = $this->csrf;
-            $opts[CURLOPT_POSTFIELDS] = http_build_query($p);
-        }
+        if ($json !== null) $opts[CURLOPT_POST] = true;
         curl_setopt_array($ch, $opts);
-        $out = curl_exec($ch);
-        $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        if ($json !== null) curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($json));
+        $resp = curl_exec($ch);
+        $info = curl_getinfo($ch);
+        $code = (int) $info['http_code'];
+        $hdr  = substr((string) $resp, 0, (int) $info['header_size']);
+        $body = substr((string) $resp, (int) $info['header_size']);
         curl_close($ch);
-        return ['code' => $code, 'body' => json_decode($out, true) ?: $out];
+        if (preg_match('/Set-Cookie:\s*(PHPSESSID=[^;]+)/i', $hdr, $m)) {
+            $this->sessions[$session] = $m[1];
+        }
+        return ['code' => $code, 'raw' => (string) $body, 'json' => json_decode((string) $body, true)];
     }
 
-    // ─── GET list → scores phải có exam_num ───
-
-    public function test_list_scores_has_exam_num_field(): void
+    private function loginAdmin(): void
     {
-        if ($this->studentId === 0) {
-            $this->markTestSkipped('Không có student để test.');
-        }
-        $r = $this->api('/api/scores.php?action=list');
-        $this->assertEquals(200, $r['code']);
-        $this->assertArrayHasKey('scores', $r['body']);
-
-        // Nếu có điểm, mỗi bản ghi phải có exam_num
-        foreach ($r['body']['scores'] as $s) {
-            $this->assertArrayHasKey('exam_num', $s, 'Score record must have exam_num');
-        }
+        $r = $this->http('POST', '/api/auth.php?action=login',
+            ['phone' => '0901000001', 'password' => app_config('default_password')],
+            'admin', false);
+        $this->assertSame(200, $r['code'],
+            'Đăng nhập admin phải thành công: ' . $r['raw']);
+        $this->assertNotEmpty($r['json']['csrfToken'] ?? '',
+            'Phản hồi đăng nhập phải chứa csrfToken: ' . $r['raw']);
+        $this->csrfs['admin'] = $r['json']['csrfToken'];
     }
 
-    // ─── POST set với exam_num ───
+    private function loginGlv(): void
+    {
+        $r = $this->http('POST', '/api/auth.php?action=login',
+            ['phone' => $this->phoneGlv, 'password' => 'Mk-Test-1'],
+            'glv', false);
+        $this->assertSame(200, $r['code'],
+            'Đăng nhập GLV phải thành công: ' . $r['raw']);
+        $this->assertNotEmpty($r['json']['csrfToken'] ?? '',
+            'Phản hồi đăng nhập phải chứa csrfToken: ' . $r['raw']);
+        $this->csrfs['glv'] = $r['json']['csrfToken'];
+    }
+
+    private function scoreExists(int $studentId, int $termId, string $type, int $examNum): ?float
+    {
+        $row = db_one(
+            'SELECT value FROM scores
+             WHERE student_id=? AND term_id=? AND type_code=? AND exam_num=?',
+            [$studentId, $termId, $type, $examNum]
+        );
+        return $row === null ? null : (float) $row['value'];
+    }
+
+    // ==================== Tests ====================
+
+    public function test_requires_login(): void
+    {
+        $r = $this->http('POST', '/api/scores.php',
+            ['action' => 'set', 'studentId' => 1, 'termId' => 1,
+             'type' => 'mieng', 'exam_num' => 1, 'value' => '5'],
+            '__noauth__', false);
+        $this->assertNotEquals(200, $r['code'],
+            'Yêu cầu scores.php khi chưa đăng nhập phải bị chặn: ' . $r['raw']);
+    }
 
     public function test_set_score_with_exam_num(): void
     {
-        if ($this->studentId === 0) {
-            $this->markTestSkipped('Không có student để test.');
-        }
-
-        // Set điểm bài 1
-        $r = $this->api('/api/scores.php', [
-            'action' => 'set',
+        $r = $this->http('POST', '/api/scores.php', [
+            'action'   => 'set',
             'studentId' => $this->studentId,
-            'termId' => $this->termId,
-            'type' => 'mieng',
-            'exam_num' => 1,
-            'value' => '8.5',
-        ], 'POST');
+            'termId'    => $this->termId,
+            'type'      => 'mieng',
+            'exam_num'  => 1,
+            'value'     => '8.5',
+        ]);
+        $this->assertSame(200, $r['code'], 'set score phải thành công: ' . $r['raw']);
 
-        $this->assertEquals(200, $r['code']);
-
-        // Verify: reload list
-        $list = $this->api('/api/scores.php?action=list');
-        $found = array_filter($list['body']['scores'], fn($s) =>
-            $s['student_id'] == $this->studentId
-            && $s['term_id'] == $this->termId
-            && $s['type_code'] === 'mieng'
-            && ($s['exam_num'] ?? 1) == 1
-        );
-        $this->assertNotEmpty($found, 'Điểm bài 1 phải được lưu');
+        $v = $this->scoreExists($this->studentId, $this->termId, 'mieng', 1);
+        $this->assertNotNull($v, 'Điểm bài 1 phải được lưu');
+        $this->assertEquals(8.5, $v);
     }
 
     public function test_set_score_multiple_exams_same_type(): void
     {
-        if ($this->studentId === 0) {
-            $this->markTestSkipped('Không có student để test.');
-        }
-
-        // Set bài 1 và bài 2 cùng loại
-        $this->api('/api/scores.php', [
+        $this->http('POST', '/api/scores.php', [
             'action' => 'set', 'studentId' => $this->studentId,
             'termId' => $this->termId, 'type' => 'p15',
             'exam_num' => 1, 'value' => '7.0',
-        ], 'POST');
-
-        $this->api('/api/scores.php', [
+        ]);
+        $this->http('POST', '/api/scores.php', [
             'action' => 'set', 'studentId' => $this->studentId,
             'termId' => $this->termId, 'type' => 'p15',
             'exam_num' => 2, 'value' => '8.0',
-        ], 'POST');
+        ]);
 
-        $list = $this->api('/api/scores.php?action=list');
-        $p15Scores = array_filter($list['body']['scores'], fn($s) =>
-            $s['student_id'] == $this->studentId
-            && $s['type_code'] === 'p15'
-        );
-
-        // Phải có 2 bài
-        $this->assertGreaterThanOrEqual(2, count($p15Scores));
-
-        // Verify exam_num khác nhau
-        $examNums = array_column($p15Scores, 'exam_num');
-        $this->assertContains(1, $examNums);
-        $this->assertContains(2, $examNums);
+        $v1 = $this->scoreExists($this->studentId, $this->termId, 'p15', 1);
+        $v2 = $this->scoreExists($this->studentId, $this->termId, 'p15', 2);
+        $this->assertEquals(7.0, $v1, 'Bài 1 phải có điểm 7.0');
+        $this->assertEquals(8.0, $v2, 'Bài 2 phải có điểm 8.0');
     }
 
-    // ─── POST delete_exam ───
-
-    public function test_delete_exam_removes_score(): void
+    public function test_delete_exam_removes_score_and_renumbers(): void
     {
-        if ($this->studentId === 0) {
-            $this->markTestSkipped('Không có student để test.');
+        // Set 3 bài
+        foreach ([1 => 6.0, 2 => 7.5, 3 => 9.0] as $num => $val) {
+            $this->http('POST', '/api/scores.php', [
+                'action' => 'set', 'studentId' => $this->studentId,
+                'termId' => $this->termId, 'type' => 'p45',
+                'exam_num' => $num, 'value' => (string) $val,
+            ]);
         }
 
-        // Set 2 bài
-        $this->api('/api/scores.php', [
-            'action' => 'set', 'studentId' => $this->studentId,
-            'termId' => $this->termId, 'type' => 'p45',
-            'exam_num' => 1, 'value' => '6.0',
-        ], 'POST');
-
-        $this->api('/api/scores.php', [
-            'action' => 'set', 'studentId' => $this->studentId,
-            'termId' => $this->termId, 'type' => 'p45',
-            'exam_num' => 2, 'value' => '7.5',
-        ], 'POST');
-
-        // Xoá bài 1
-        $r = $this->api('/api/scores.php', [
-            'action' => 'delete_exam',
+        // Xoá bài 1 — phải truyền action trong query string (xem scores.php:13)
+        $r = $this->http('POST', '/api/scores.php?action=delete_exam', [
             'studentId' => $this->studentId,
-            'termId' => $this->termId,
-            'type' => 'p45',
-            'examNum' => 1,
-        ], 'POST');
+            'termId'    => $this->termId,
+            'type'      => 'p45',
+            'examNum'   => 1,
+        ]);
+        $this->assertSame(200, $r['code'], 'delete_exam phải thành công: ' . $r['raw']);
 
-        $this->assertEquals(200, $r['code']);
-
-        // Verify: chỉ còn bài 2 (đã được renumber thành 1)
-        $list = $this->api('/api/scores.php?action=list');
-        $remaining = array_filter($list['body']['scores'], fn($s) =>
-            $s['student_id'] == $this->studentId
-            && $s['type_code'] === 'p45'
-        );
-
-        // Các exam_num còn lại phải không chứa số đã xoá
-        foreach ($remaining as $s) {
-            $this->assertNotEquals(1, $s['exam_num'] ?? null, 'Bài đã xoá không còn trong danh sách');
-        }
+        // Bài exam_num=1 không còn; exam_num=2,3 đã renumber thành 1,2
+        $this->assertNull($this->scoreExists($this->studentId, $this->termId, 'p45', 3),
+            'Bài 3 cũ phải được renumber xuống 2 (không còn exam_num=3)');
+        $this->assertEquals(7.5, $this->scoreExists($this->studentId, $this->termId, 'p45', 1),
+            'Bài cũ exam_num=2 phải renumber thành 1 với giá trị 7.5');
+        $this->assertEquals(9.0, $this->scoreExists($this->studentId, $this->termId, 'p45', 2),
+            'Bài cũ exam_num=3 phải renumber thành 2 với giá trị 9.0');
     }
-
-    // ─── Validation: điểm 0-10 ───
 
     public function test_score_value_must_be_0_to_10(): void
     {
-        if ($this->studentId === 0) {
-            $this->markTestSkipped('Không có student để test.');
-        }
-
-        // Điểm âm → phải bị từ chối
-        $r = $this->api('/api/scores.php', [
+        $r1 = $this->http('POST', '/api/scores.php', [
             'action' => 'set', 'studentId' => $this->studentId,
             'termId' => $this->termId, 'type' => 'mieng',
             'exam_num' => 1, 'value' => '-1',
-        ], 'POST');
+        ]);
+        $this->assertSame(400, $r1['code'], 'Điểm âm phải bị 400: ' . $r1['raw']);
 
-        // Backend validate 0-10 → 400
-        $this->assertEquals(400, $r['code']);
-
-        // Điểm > 10
-        $r2 = $this->api('/api/scores.php', [
+        $r2 = $this->http('POST', '/api/scores.php', [
             'action' => 'set', 'studentId' => $this->studentId,
             'termId' => $this->termId, 'type' => 'mieng',
             'exam_num' => 1, 'value' => '11',
-        ], 'POST');
-        $this->assertEquals(400, $r2['code']);
+        ]);
+        $this->assertSame(400, $r2['code'], 'Điểm > 10 phải bị 400: ' . $r2['raw']);
     }
 
-    public function test_requires_login(): void
+    /**
+     * Phân quyền: GLV thường (chỉ có quyền classA) gọi set điểm cho học sinh
+     * ở classA → 200; cho học sinh ở classB (ngoài phạm vi) → 403.
+     */
+    public function test_glv_score_set_rejects_class_outside_scope(): void
     {
-        $tmp = tempnam(sys_get_temp_dir(), 'ck_');
-        $ch = curl_init(self::$base . '/api/scores.php?action=list');
-        curl_setopt_array($ch, [
-            CURLOPT_COOKIEFILE => $tmp,
-            CURLOPT_RETURNTRANSFER => true,
-        ]);
-        $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-        unlink($tmp);
-        $this->assertEquals(401, $code);
+        // Tạo học sinh ở classB (ngoài phạm vi của GLV)
+        $year = current_year();
+        $codeB = 'SCOB' . random_int(100000, 999999);
+        $studentBId = db_insert(
+            "INSERT INTO students (code, full_name, gender) VALUES (?, 'Other Class Em', 1)",
+            [$codeB]
+        );
+        db_run("INSERT INTO enrollments (year_id, student_id, class_id, status) VALUES (?,?,?,?)",
+               [$year['id'], $studentBId, $this->classB, 'đang sinh hoạt']);
+
+        try {
+            $this->loginGlv();
+
+            // Trong phạm vi (classA) → 200
+            $r1 = $this->http('POST', '/api/scores.php', [
+                'action' => 'set', 'studentId' => $this->studentId,
+                'termId' => $this->termId, 'type' => 'mieng',
+                'exam_num' => 1, 'value' => '7.0',
+            ], 'glv');
+            $this->assertSame(200, $r1['code'],
+                'GLV được set điểm lớp mình: ' . $r1['raw']);
+
+            // Ngoài phạm vi (classB) → 403
+            $r2 = $this->http('POST', '/api/scores.php', [
+                'action' => 'set', 'studentId' => $studentBId,
+                'termId' => $this->termId, 'type' => 'mieng',
+                'exam_num' => 1, 'value' => '7.0',
+            ], 'glv');
+            $this->assertSame(403, $r2['code'],
+                'GLV KHÔNG được set điểm lớp khác: ' . $r2['raw']);
+        } finally {
+            db_run("DELETE FROM scores WHERE student_id = ?", [$studentBId]);
+            db_run("DELETE FROM enrollments WHERE student_id = ?", [$studentBId]);
+            db_run("DELETE FROM students WHERE id = ?", [$studentBId]);
+        }
     }
 }

@@ -9,6 +9,10 @@
 //
 // Bảo vệ LUẬT CỨNG #6:
 //   - chỉ admin/bdh mới được POST/PUT/DELETE
+//
+// Đăng nhập đi qua /api/auth.php?action=login với JSON {phone, password},
+// CSRF lấy từ JSON response, session cookie trích từ header Set-Cookie
+// (cookie jar file không đáng tin trên PHP/curl này — HttpOnly không được ghi).
 
 require_once __DIR__ . '/../bootstrap.php';
 require_once __DIR__ . '/../../config/db.php';
@@ -20,9 +24,13 @@ class ScoreTypesApiTest extends TestCase
 {
     private static $proc = null;
     private static string $base = '';
-    private string $cookieJar = '';
-    private string $csrf = '';
+    /** Map từ tên phiên (admin / nonAdmin) → chuỗi cookie và CSRF token. */
+    private array $sessions = [];
+    private array $csrfs = [];
     private array $cleanupCodes = [];
+    private int $adminId = 0;
+    private int $memberIdNonAdmin = 0;
+    private string $phoneNonAdmin = '';
 
     public static function setUpBeforeClass(): void
     {
@@ -43,12 +51,18 @@ class ScoreTypesApiTest extends TestCase
             $pipes, $root, $env
         );
         self::$base = "http://127.0.0.1:$port";
-        sleep(1);
+
+        for ($i = 0; $i < 50; $i++) {
+            $c = @fsockopen('127.0.0.1', $port, $e, $s, 0.1);
+            if ($c) { fclose($c); return; }
+            usleep(100000);
+        }
+        self::markTestSkipped('Máy chủ PHP tích hợp không khởi động được.');
     }
 
     public static function tearDownAfterClass(): void
     {
-        if (self::$proc) {
+        if (is_resource(self::$proc)) {
             proc_terminate(self::$proc);
             proc_close(self::$proc);
         }
@@ -56,231 +70,220 @@ class ScoreTypesApiTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->cookieJar = tempnam(sys_get_temp_dir(), 'ck_');
-        $ch = curl_init(self::$base . '/api/login.php');
-        curl_setopt_array($ch, [
-            CURLOPT_COOKIEJAR => $this->cookieJar,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => ['username' => 'admin', 'password' => 'admin'],
-        ]);
-        $out = curl_exec($ch);
-        $info = curl_getinfo($ch);
-        curl_close($ch);
-
-        if ($info['http_code'] !== 200) {
-            $this->markTestSkipped('Không đăng nhập được admin.');
+        $admin = db_one("SELECT id FROM members WHERE role_code = 'admin' LIMIT 1");
+        if (!$admin) {
+            $this->markTestSkipped('Cần admin để chạy test.');
         }
+        $this->adminId = (int) $admin['id'];
 
-        $ch = curl_init(self::$base . '/api/me.php');
-        curl_setopt_array($ch, [
-            CURLOPT_COOKIEFILE => $this->cookieJar,
-            CURLOPT_RETURNTRANSFER => true,
-        ]);
-        $me = json_decode(curl_exec($ch), true);
-        curl_close($ch);
-        $this->csrf = $me['csrf'] ?? '';
+        // Bỏ cờ buộc đổi mật khẩu của admin mặc định.
+        db_run('UPDATE members SET must_change_pw = 0 WHERE id = ?', [$this->adminId]);
+
+        $this->phoneNonAdmin = '09' . random_int(10000000, 99999999);
+        $this->memberIdNonAdmin = db_insert(
+            "INSERT INTO members (code, full_name, phone, password_hash, role_code, must_change_pw)
+             VALUES (?, 'ScoreTypes GLV', ?, ?, 'glv', 0)",
+            ['STGL' . random_int(100000, 999999), $this->phoneNonAdmin, password_hash('Mk-Test-1', PASSWORD_DEFAULT)]
+        );
+
+        $this->loginAdmin();
     }
 
     protected function tearDown(): void
     {
         // Cleanup: xoá các test type đã tạo
         foreach ($this->cleanupCodes as $code) {
-            $post = ['_csrf' => $this->csrf];
-            $ch = curl_init(self::$base . '/api/score_types.php?code=' . urlencode($code));
-            curl_setopt_array($ch, [
-                CURLOPT_COOKIEFILE => $this->cookieJar,
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_CUSTOMREQUEST => 'DELETE',
-            ]);
-            curl_exec($ch);
-            curl_close($ch);
+            $this->http('DELETE', '/api/score_types.php?code=' . urlencode($code));
         }
         $this->cleanupCodes = [];
 
-        if ($this->cookieJar && file_exists($this->cookieJar)) {
-            unlink($this->cookieJar);
+        if ($this->adminId) {
+            db_run('UPDATE members SET must_change_pw = 1 WHERE id = ?', [$this->adminId]);
+        }
+        if ($this->memberIdNonAdmin) {
+            db_run("DELETE FROM member_assignments WHERE member_id = ?", [$this->memberIdNonAdmin]);
+            db_run("DELETE FROM members WHERE id = ?", [$this->memberIdNonAdmin]);
         }
     }
 
-    private function api(string $url, array $post = [], string $method = 'GET'): array
+    // ==================== HTTP helpers ====================
+
+    private function http(string $method, string $path, ?array $json = null,
+                         ?string $session = null, bool $csrf = true): array
     {
-        $ch = curl_init($url);
-        $opts = [
-            CURLOPT_COOKIEFILE => $this->cookieJar,
-            CURLOPT_RETURNTRANSFER => true,
-        ];
-        if ($method === 'POST') {
-            $opts[CURLOPT_POST] = true;
-            $p = $post;
-            $p['_csrf'] = $this->csrf;
-            $opts[CURLOPT_POSTFIELDS] = http_build_query($p);
-        } elseif ($method === 'PUT') {
-            $opts[CURLOPT_CUSTOMREQUEST] = 'PUT';
-            $opts[CURLOPT_POST] = true;
-            $p = $post;
-            $p['_csrf'] = $this->csrf;
-            $opts[CURLOPT_POSTFIELDS] = http_build_query($p);
-        } elseif ($method === 'DELETE') {
-            $opts[CURLOPT_CUSTOMREQUEST] = 'DELETE';
+        $session = $session ?? 'admin';
+        $ch = curl_init(self::$base . $path);
+        $headers = ['Content-Type: application/json'];
+        if ($csrf && !empty($this->csrfs[$session])) {
+            $headers[] = 'X-CSRF-TOKEN: ' . $this->csrfs[$session];
         }
+        if (!empty($this->sessions[$session])) {
+            $headers[] = 'Cookie: ' . $this->sessions[$session];
+        }
+        $opts = [
+            CURLOPT_CUSTOMREQUEST  => $method,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HEADER         => true,
+            CURLOPT_HTTPHEADER     => $headers,
+            CURLOPT_TIMEOUT        => 20,
+        ];
+        if ($json !== null) $opts[CURLOPT_POST] = true;
         curl_setopt_array($ch, $opts);
-        $out = curl_exec($ch);
-        $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        if ($json !== null) curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($json));
+        $resp = curl_exec($ch);
+        $info = curl_getinfo($ch);
+        $code = (int) $info['http_code'];
+        $hdr  = substr((string) $resp, 0, (int) $info['header_size']);
+        $body = substr((string) $resp, (int) $info['header_size']);
         curl_close($ch);
-        return ['code' => $code, 'body' => json_decode($out, true) ?: $out];
+        if (preg_match('/Set-Cookie:\s*(PHPSESSID=[^;]+)/i', $hdr, $m)) {
+            $this->sessions[$session] = $m[1];
+        }
+        return ['code' => $code, 'raw' => (string) $body, 'json' => json_decode((string) $body, true)];
     }
 
-    // ─── GET ───
+    private function loginAdmin(): void
+    {
+        $r = $this->http('POST', '/api/auth.php?action=login',
+            ['phone' => '0901000001', 'password' => app_config('default_password')],
+            'admin', false);
+        $this->assertSame(200, $r['code'],
+            'Đăng nhập admin phải thành công: ' . $r['raw']);
+        $this->assertNotEmpty($r['json']['csrfToken'] ?? '',
+            'Phản hồi đăng nhập phải chứa csrfToken: ' . $r['raw']);
+        $this->csrfs['admin'] = $r['json']['csrfToken'];
+    }
+
+    private function loginNonAdmin(): void
+    {
+        $r = $this->http('POST', '/api/auth.php?action=login',
+            ['phone' => $this->phoneNonAdmin, 'password' => 'Mk-Test-1'],
+            'nonAdmin', false);
+        $this->assertSame(200, $r['code'],
+            'Đăng nhập non-admin phải thành công: ' . $r['raw']);
+        $this->assertNotEmpty($r['json']['csrfToken'] ?? '',
+            'Phản hồi đăng nhập phải chứa csrfToken: ' . $r['raw']);
+        $this->csrfs['nonAdmin'] = $r['json']['csrfToken'];
+    }
+
+    // ==================== Tests ====================
 
     public function test_get_score_types_requires_login(): void
     {
-        $tmp = tempnam(sys_get_temp_dir(), 'ck_');
-        $ch = curl_init(self::$base . '/api/score_types.php');
-        curl_setopt_array($ch, [
-            CURLOPT_COOKIEFILE => $tmp,
-            CURLOPT_RETURNTRANSFER => true,
-        ]);
-        $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-        unlink($tmp);
-        $this->assertEquals(401, $code);
+        $r = $this->http('GET', '/api/score_types.php', null, '__noauth__', false);
+        $this->assertSame(401, $r['code']);
     }
 
     public function test_get_score_types_returns_array(): void
     {
-        $r = $this->api(self::$base . '/api/score_types.php');
-        $this->assertEquals(200, $r['code']);
-        $this->assertIsArray($r['body']);
+        $r = $this->http('GET', '/api/score_types.php');
+        $this->assertSame(200, $r['code']);
+        $this->assertIsArray($r['json']);
 
-        $first = $r['body'][0] ?? null;
-        $this->assertNotNull($first);
+        $first = $r['json'][0] ?? null;
+        $this->assertNotNull($first, 'Phải có ít nhất 1 loại điểm');
         $this->assertArrayHasKey('code', $first);
         $this->assertArrayHasKey('label', $first);
         $this->assertArrayHasKey('weight', $first);
         $this->assertArrayHasKey('max_exams', $first);
     }
 
-    // ─── POST — thêm loại mới ───
-
     public function test_post_score_types_creates_new_type(): void
     {
-        $testCode = 'test_' . time();
+        // Mã tối đa 16 ký tự: t(time_5) + rand_3 = ~10 ký tự
+        $testCode = 't' . substr((string) time(), -5) . random_int(100, 999);
         $this->cleanupCodes[] = $testCode;
 
-        $r = $this->api(self::$base . '/api/score_types.php', [
-            'code' => $testCode,
-            'label' => 'Kiểm tra',
+        $r = $this->http('POST', '/api/score_types.php', [
+            'code'        => $testCode,
+            'label'       => 'Kiểm tra',
             'short_label' => 'KT',
-            'weight' => 1,
-            'max_exams' => 2,
-            'category' => 'homework',
-        ], 'POST');
-
-        $this->assertEquals(200, $r['code']);
-        $this->assertArrayHasKey('id', $r['body']);
+            'weight'      => 1,
+            'max_exams'   => 2,
+            'category'    => 'homework',
+        ]);
+        $this->assertSame(200, $r['code'], 'POST score_types phải thành công: ' . $r['raw']);
+        $this->assertSame($testCode, $r['json']['code'] ?? null, 'POST phải trả về code vừa tạo');
 
         // Verify: GET lại phải thấy type mới
-        $list = $this->api(self::$base . '/api/score_types.php');
-        $found = array_filter($list['body'], fn($t) => $t['code'] === $testCode);
+        $list = $this->http('GET', '/api/score_types.php');
+        $found = array_filter($list['json'], fn($t) => $t['code'] === $testCode);
         $this->assertCount(1, $found);
-        $this->assertEquals('Kiểm tra', array_values($found)[0]['label']);
-        $this->assertEquals(2, array_values($found)[0]['max_exams']);
+        $first = array_values($found)[0];
+        $this->assertEquals('Kiểm tra', $first['label']);
+        $this->assertEquals(2, $first['max_exams']);
     }
 
-    public function test_post_score_types_requires_admin(): void
+    public function test_post_score_types_rejects_non_admin(): void
     {
-        $ck = tempnam(sys_get_temp_dir(), 'ck2_');
-        $ch = curl_init(self::$base . '/api/login.php');
-        curl_setopt_array($ch, [
-            CURLOPT_COOKIEJAR => $ck,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => ['username' => 'thuky', 'password' => 'thuky'],
-        ]);
-        curl_exec($ch);
-        curl_close($ch);
-
-        $ch = curl_init(self::$base . '/api/score_types.php');
-        curl_setopt_array($ch, [
-            CURLOPT_COOKIEFILE => $ck,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => ['code' => 'test_fail', 'label' => 'X', 'weight' => 1, 'max_exams' => 1],
-        ]);
-        $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-        unlink($ck);
-
-        $this->assertEquals(403, $code);
+        $this->loginNonAdmin();
+        $r = $this->http('POST', '/api/score_types.php', [
+            'code'      => 'f' . substr((string) time(), -5) . random_int(100, 999),
+            'label'     => 'X',
+            'weight'    => 1,
+            'max_exams' => 1,
+        ], 'nonAdmin');
+        $this->assertSame(403, $r['code'],
+            'GLV thường phải bị 403 khi POST score_types, body: ' . $r['raw']);
     }
 
     public function test_post_score_types_validates_required_fields(): void
     {
-        $r = $this->api(self::$base . '/api/score_types.php', [
-            'code' => '',
+        $r = $this->http('POST', '/api/score_types.php', [
+            'code'  => '',
             'label' => '',
-        ], 'POST');
-
-        $this->assertEquals(400, $r['code']);
-        $this->assertArrayHasKey('error', $r['body']);
+        ]);
+        $this->assertSame(400, $r['code']);
+        $this->assertArrayHasKey('error', $r['json']);
     }
-
-    // ─── PUT — cập nhật weight và max_exams ───
 
     public function test_put_score_types_updates_weight_and_max_exams(): void
     {
-        // Tạo type tạm
-        $testCode = 'test_put_' . time();
+        $testCode = 'p' . substr((string) time(), -5) . random_int(100, 999);
         $this->cleanupCodes[] = $testCode;
 
-        $this->api(self::$base . '/api/score_types.php', [
-            'code' => $testCode,
-            'label' => 'Test Put',
+        $this->http('POST', '/api/score_types.php', [
+            'code'        => $testCode,
+            'label'       => 'Test Put',
             'short_label' => 'TP',
-            'weight' => 1,
-            'max_exams' => 1,
-            'category' => 'homework',
-        ], 'POST');
+            'weight'      => 1,
+            'max_exams'   => 1,
+            'category'    => 'homework',
+        ]);
 
-        // Cập nhật
-        $r = $this->api(self::$base . '/api/score_types.php?code=' . urlencode($testCode), [
-            'weight' => 3,
+        $r = $this->http('PUT', '/api/score_types.php?code=' . urlencode($testCode), [
+            'weight'    => 3,
             'max_exams' => 5,
-        ], 'PUT');
+        ]);
+        $this->assertSame(200, $r['code'], 'PUT phải thành công: ' . $r['raw']);
 
-        $this->assertEquals(200, $r['code']);
-
-        // Verify
-        $list = $this->api(self::$base . '/api/score_types.php');
-        $found = array_filter($list['body'], fn($t) => $t['code'] === $testCode);
+        $list = $this->http('GET', '/api/score_types.php');
+        $found = array_filter($list['json'], fn($t) => $t['code'] === $testCode);
         $this->assertCount(1, $found);
-        $this->assertEquals(3, array_values($found)[0]['weight']);
-        $this->assertEquals(5, array_values($found)[0]['max_exams']);
+        $first = array_values($found)[0];
+        $this->assertEquals(3, $first['weight']);
+        $this->assertEquals(5, $first['max_exams']);
     }
-
-    // ─── DELETE ───
 
     public function test_delete_score_types_removes_type(): void
     {
-        $testCode = 'test_del_' . time();
+        $testCode = 'd' . substr((string) time(), -5) . random_int(100, 999);
+        // Không thêm vào cleanup vì sẽ xoá trong test
 
-        $this->api(self::$base . '/api/score_types.php', [
-            'code' => $testCode,
-            'label' => 'Test Delete',
+        $this->http('POST', '/api/score_types.php', [
+            'code'        => $testCode,
+            'label'       => 'Test Delete',
             'short_label' => 'TD',
-            'weight' => 1,
-            'max_exams' => 1,
-            'category' => 'homework',
-        ], 'POST');
-        // Không cần cleanup vì sẽ xoá
+            'weight'      => 1,
+            'max_exams'   => 1,
+            'category'    => 'homework',
+        ]);
 
-        $r = $this->api(self::$base . '/api/score_types.php?code=' . urlencode($testCode), [], 'DELETE');
-        $this->assertEquals(200, $r['code']);
+        $r = $this->http('DELETE', '/api/score_types.php?code=' . urlencode($testCode));
+        $this->assertSame(200, $r['code'], 'DELETE phải thành công: ' . $r['raw']);
 
-        // Verify đã xoá
-        $list = $this->api(self::$base . '/api/score_types.php');
-        $found = array_filter($list['body'], fn($t) => $t['code'] === $testCode);
+        $list = $this->http('GET', '/api/score_types.php');
+        $found = array_filter($list['json'], fn($t) => $t['code'] === $testCode);
         $this->assertCount(0, $found);
     }
 }

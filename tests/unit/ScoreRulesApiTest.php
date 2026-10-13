@@ -8,6 +8,13 @@
 //
 // Bảo vệ LUẬT CỨNG #6:
 //   - chỉ admin/bdh mới được POST (require_write)
+//
+// Lưu ý: login đi qua /api/auth.php?action=login với JSON {phone, password},
+// CSRF lấy từ JSON response, session cookie (PHPSESSID) trích từ header
+// Set-Cookie và gửi lại qua CURLOPT_COOKIE ở mỗi request sau.
+// Vì sao không dùng cookie jar file: trên môi trường PHP/curl này,
+// COOKIEJAR không ghi cookie HttpOnly (chỉ "Added cookie" trong verbose
+// nhưng file trống) nên phiên bị mất giữa các request.
 
 require_once __DIR__ . '/../bootstrap.php';
 require_once __DIR__ . '/../../config/db.php';
@@ -19,8 +26,12 @@ class ScoreRulesApiTest extends TestCase
 {
     private static $proc = null;
     private static string $base = '';
-    private string $cookieJar = '';
-    private string $csrf = '';
+    /** Map từ "tên phiên" (admin / nonAdmin) → chuỗi cookie gửi kèm request. */
+    private array $sessions = [];
+    private array $csrfs = [];
+    private int $adminId = 0;
+    private int $memberIdNonAdmin = 0;
+    private string $phoneNonAdmin = '';
 
     public static function setUpBeforeClass(): void
     {
@@ -41,12 +52,18 @@ class ScoreRulesApiTest extends TestCase
             $pipes, $root, $env
         );
         self::$base = "http://127.0.0.1:$port";
-        sleep(1);
+
+        for ($i = 0; $i < 50; $i++) {
+            $c = @fsockopen('127.0.0.1', $port, $e, $s, 0.1);
+            if ($c) { fclose($c); return; }
+            usleep(100000);
+        }
+        self::markTestSkipped('Máy chủ PHP tích hợp không khởi động được.');
     }
 
     public static function tearDownAfterClass(): void
     {
-        if (self::$proc) {
+        if (is_resource(self::$proc)) {
             proc_terminate(self::$proc);
             proc_close(self::$proc);
         }
@@ -54,88 +71,123 @@ class ScoreRulesApiTest extends TestCase
 
     protected function setUp(): void
     {
-        // Đăng nhập admin
-        $this->cookieJar = tempnam(sys_get_temp_dir(), 'ck_');
-        $ch = curl_init(self::$base . '/api/login.php');
-        curl_setopt_array($ch, [
-            CURLOPT_COOKIEJAR => $this->cookieJar,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => ['username' => 'admin', 'password' => 'admin'],
-        ]);
-        $out = curl_exec($ch);
-        $info = curl_getinfo($ch);
-        curl_close($ch);
-
-        if ($info['http_code'] !== 200) {
-            $this->markTestSkipped('Không đăng nhập được admin.');
+        $year = current_year();
+        $admin = db_one("SELECT id FROM members WHERE role_code = 'admin' LIMIT 1");
+        if (!$year || !$admin) {
+            $this->markTestSkipped('Cần niên khoá hiện tại + admin để chạy test.');
         }
+        $this->adminId = (int) $admin['id'];
 
-        // Lấy CSRF
-        $ch = curl_init(self::$base . '/api/me.php');
-        curl_setopt_array($ch, [
-            CURLOPT_COOKIEFILE => $this->cookieJar,
-            CURLOPT_RETURNTRANSFER => true,
-        ]);
-        $me = json_decode(curl_exec($ch), true);
-        curl_close($ch);
-        $this->csrf = $me['csrf'] ?? '';
+        // Bỏ cờ buộc đổi mật khẩu của admin (cờ này chặn mọi hành động trừ
+        // auth.php?action=password). Phục hồi trong tearDown.
+        db_run('UPDATE members SET must_change_pw = 0 WHERE id = ?', [$this->adminId]);
+
+        // Tạo tài khoản non-admin để test phân quyền.
+        $this->phoneNonAdmin = '09' . random_int(10000000, 99999999);
+        $this->memberIdNonAdmin = db_insert(
+            "INSERT INTO members (code, full_name, phone, password_hash, role_code, must_change_pw)
+             VALUES (?, 'Rules GLV', ?, ?, 'glv', 0)",
+            ['RULG' . random_int(100000, 999999), $this->phoneNonAdmin, password_hash('Mk-Test-1', PASSWORD_DEFAULT)]
+        );
+
+        $this->loginAdmin();
     }
 
     protected function tearDown(): void
     {
-        if ($this->cookieJar && file_exists($this->cookieJar)) {
-            unlink($this->cookieJar);
+        if ($this->adminId) {
+            db_run('UPDATE members SET must_change_pw = 1 WHERE id = ?', [$this->adminId]);
+        }
+        if ($this->memberIdNonAdmin) {
+            db_run("DELETE FROM member_assignments WHERE member_id = ?", [$this->memberIdNonAdmin]);
+            db_run("DELETE FROM members WHERE id = ?", [$this->memberIdNonAdmin]);
         }
     }
 
-    private function api(string $path, array $data = [], string $method = 'GET'): array
+    // ==================== HTTP helpers ====================
+
+    /**
+     * Gọi HTTP tới server đã spawn. Nhận cả header để bắt Set-Cookie.
+     *
+     * @param string|null $session Tên phiên ('admin' mặc định, 'nonAdmin' cho user phụ)
+     */
+    private function http(string $method, string $path, ?array $json = null,
+                         ?string $session = null, bool $csrf = true): array
     {
-        $url = self::$base . $path;
-        $ch = curl_init($url);
-        $opts = [
-            CURLOPT_COOKIEFILE => $this->cookieJar,
-            CURLOPT_RETURNTRANSFER => true,
-        ];
-        if ($method === 'POST') {
-            $opts[CURLOPT_POST] = true;
-            $post = $data;
-            $post['_csrf'] = $this->csrf;
-            $opts[CURLOPT_POSTFIELDS] = http_build_query($post);
+        $session = $session ?? 'admin';
+        $ch = curl_init(self::$base . $path);
+        $headers = ['Content-Type: application/json'];
+        if ($csrf && !empty($this->csrfs[$session])) {
+            $headers[] = 'X-CSRF-TOKEN: ' . $this->csrfs[$session];
         }
+        if (!empty($this->sessions[$session])) {
+            // Gửi cookie bằng header thẳng (không qua COOKIEFILE/COOKIEJAR — xem docblock).
+            $headers[] = 'Cookie: ' . $this->sessions[$session];
+        }
+        $opts = [
+            CURLOPT_CUSTOMREQUEST  => $method,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HEADER         => true,
+            CURLOPT_HTTPHEADER     => $headers,
+            CURLOPT_TIMEOUT        => 20,
+        ];
+        if ($json !== null) $opts[CURLOPT_POST] = true;
         curl_setopt_array($ch, $opts);
-        $out = curl_exec($ch);
-        $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        if ($json !== null) curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($json));
+        $resp = curl_exec($ch);
+        $info = curl_getinfo($ch);
+        $code = (int) $info['http_code'];
+        $hdr  = substr((string) $resp, 0, (int) $info['header_size']);
+        $body = substr((string) $resp, (int) $info['header_size']);
         curl_close($ch);
-        return ['code' => $code, 'body' => json_decode($out, true) ?: $out];
+        // Lưu PHPSESSID mới (session_regenerate_id sau login) cho request sau.
+        if (preg_match('/Set-Cookie:\s*(PHPSESSID=[^;]+)/i', $hdr, $m)) {
+            $this->sessions[$session] = $m[1];
+        }
+        return ['code' => $code, 'raw' => (string) $body, 'json' => json_decode((string) $body, true)];
     }
 
-    // ─── GET rules.php?type=score ───
+    private function loginAdmin(): void
+    {
+        $r = $this->http('POST', '/api/auth.php?action=login',
+            ['phone' => '0901000001', 'password' => app_config('default_password')],
+            'admin', false);
+        $this->assertSame(200, $r['code'],
+            'Đăng nhập admin phải thành công: ' . $r['raw']);
+        $this->assertNotEmpty($r['json']['csrfToken'] ?? '',
+            'Phản hồi đăng nhập phải chứa csrfToken: ' . $r['raw']);
+        $this->csrfs['admin'] = $r['json']['csrfToken'];
+    }
+
+    private function loginNonAdmin(): void
+    {
+        $r = $this->http('POST', '/api/auth.php?action=login',
+            ['phone' => $this->phoneNonAdmin, 'password' => 'Mk-Test-1'],
+            'nonAdmin', false);
+        $this->assertSame(200, $r['code'],
+            'Đăng nhập non-admin phải thành công: ' . $r['raw']);
+        $this->assertNotEmpty($r['json']['csrfToken'] ?? '',
+            'Phản hồi đăng nhập phải chứa csrfToken: ' . $r['raw']);
+        $this->csrfs['nonAdmin'] = $r['json']['csrfToken'];
+    }
+
+    // ==================== Tests ====================
 
     public function test_get_score_rules_requires_login(): void
     {
-        $tmp = tempnam(sys_get_temp_dir(), 'ck_');
-        $ch = curl_init(self::$base . '/api/rules.php?type=score');
-        curl_setopt_array($ch, [
-            CURLOPT_COOKIEFILE => $tmp,
-            CURLOPT_RETURNTRANSFER => true,
-        ]);
-        $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-        unlink($tmp);
-        $this->assertEquals(401, $code);
+        $r = $this->http('GET', '/api/rules.php?type=score', null, '__noauth__', false);
+        $this->assertSame(401, $r['code']);
     }
 
     public function test_get_score_rules_returns_score_types(): void
     {
-        $r = $this->api('/api/rules.php?type=score');
-        $this->assertEquals(200, $r['code']);
-        $this->assertArrayHasKey('score_types', $r['body']);
-        $this->assertIsArray($r['body']['score_types']);
+        $r = $this->http('GET', '/api/rules.php?type=score');
+        $this->assertSame(200, $r['code']);
+        $this->assertArrayHasKey('score_types', $r['json']);
+        $this->assertIsArray($r['json']['score_types']);
 
-        // score_types phải có: code, label, weight, max_exams
-        $first = $r['body']['score_types'][0] ?? null;
-        $this->assertNotNull($first);
+        $first = $r['json']['score_types'][0] ?? null;
+        $this->assertNotNull($first, 'Phải có ít nhất 1 loại điểm');
         $this->assertArrayHasKey('code', $first);
         $this->assertArrayHasKey('label', $first);
         $this->assertArrayHasKey('weight', $first);
@@ -144,95 +196,74 @@ class ScoreRulesApiTest extends TestCase
 
     public function test_get_score_rules_returns_rank_thresholds(): void
     {
-        $r = $this->api('/api/rules.php?type=score');
-        $this->assertEquals(200, $r['code']);
-        $this->assertArrayHasKey('rules', $r['body']);
-        $this->assertArrayHasKey('rank_thresholds', $r['body']['rules']);
+        $r = $this->http('GET', '/api/rules.php?type=score');
+        $this->assertSame(200, $r['code']);
+        $this->assertArrayHasKey('rules', $r['json']);
+        $this->assertArrayHasKey('rank_thresholds', $r['json']['rules']);
 
-        $thresholds = $r['body']['rules']['rank_thresholds'];
+        // rule_value là chuỗi JSON; cần decode để kiểm tra các ngưỡng bên trong.
+        $thresholds = json_decode($r['json']['rules']['rank_thresholds']['rule_value'] ?? '{}', true);
+        $this->assertIsArray($thresholds, 'rank_thresholds.rule_value phải là JSON hợp lệ');
         $this->assertArrayHasKey('gioi', $thresholds);
         $this->assertArrayHasKey('kha', $thresholds);
         $this->assertArrayHasKey('tb', $thresholds);
     }
 
-    // ─── GET rules.php?type=attendance ───
-
     public function test_get_attendance_rules_returns_thresholds(): void
     {
-        $r = $this->api('/api/rules.php?type=attendance');
-        $this->assertEquals(200, $r['code']);
-        $this->assertArrayHasKey('thresholds', $r['body']);
-        $this->assertIsArray($r['body']['thresholds']);
+        $r = $this->http('GET', '/api/rules.php?type=attendance');
+        $this->assertSame(200, $r['code']);
+        $this->assertArrayHasKey('thresholds', $r['json']);
+        $this->assertIsArray($r['json']['thresholds']);
 
-        // Mỗi threshold phải có: label, min_percent
-        foreach ($r['body']['thresholds'] as $t) {
+        foreach ($r['json']['thresholds'] as $t) {
             $this->assertArrayHasKey('label', $t);
             $this->assertArrayHasKey('min_percent', $t);
             $this->assertIsNumeric($t['min_percent']);
         }
     }
 
-    // ─── POST rules.php — cập nhật rank_thresholds ───
-
     public function test_post_rules_updates_rank_thresholds(): void
     {
         $newVal = json_encode(['gioi' => 8.5, 'kha' => 6.0, 'tb' => 5.0, 'yeu' => 0]);
-        $r = $this->api('/api/rules.php', [
-            'rule_key' => 'rank_thresholds',
+        $r = $this->http('POST', '/api/rules.php', [
+            'rule_key'   => 'rank_thresholds',
             'rule_value' => $newVal,
             'rule_label' => 'Ngưỡng xếp loại học lực',
-            'rule_type' => 'threshold',
-        ], 'POST');
-
-        $this->assertEquals(200, $r['code']);
+            'rule_type'  => 'threshold',
+        ]);
+        $this->assertSame(200, $r['code'], 'POST rule phải thành công: ' . $r['raw']);
 
         // Verify đã lưu
-        $check = $this->api('/api/rules.php?type=score');
-        $saved = json_decode($check['body']['rules']['rank_thresholds']['rule_value'] ?? '{}', true);
+        $check = $this->http('GET', '/api/rules.php?type=score');
+        $saved = json_decode($check['json']['rules']['rank_thresholds']['rule_value'] ?? '{}', true);
         $this->assertEquals(8.5, $saved['gioi']);
 
         // Restore default
-        $this->api('/api/rules.php', [
-            'rule_key' => 'rank_thresholds',
+        $this->http('POST', '/api/rules.php', [
+            'rule_key'   => 'rank_thresholds',
             'rule_value' => json_encode(['gioi' => 8, 'kha' => 6.5, 'tb' => 5, 'yeu' => 0]),
             'rule_label' => 'Ngưỡng xếp loại học lực',
-            'rule_type' => 'threshold',
-        ], 'POST');
+            'rule_type'  => 'threshold',
+        ]);
     }
 
-    // ─── Permission: non-admin không được POST ───
-
-    public function test_post_rules_requires_admin(): void
+    /**
+     * Phân quyền: GLV thường (không có quyền scores.edit) → 403 khi POST rules
+     * (mục 5 — bảo vệ luật cứng #6).
+     */
+    public function test_post_rules_rejects_non_admin(): void
     {
-        // Tạo tài khoản non-admin
-        $ch = curl_init(self::$base . '/api/login.php');
-        $ck = tempnam(sys_get_temp_dir(), 'ck2_');
-        curl_setopt_array($ch, [
-            CURLOPT_COOKIEJAR => $ck,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => ['username' => 'thuky', 'password' => 'thuky'],
-        ]);
-        $loginCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
+        $this->loginNonAdmin();
 
-        if ($loginCode !== 200) {
-            $this->markTestSkipped('Không có tài khoản thuky để test.');
-        }
-
-        $ch = curl_init(self::$base . '/api/me.php');
-        curl_setopt_array($ch, [CURLOPT_COOKIEFILE => $ck, CURLOPT_RETURNTRANSFER => true]);
-        $me = json_decode(curl_exec($ch), true);
-        curl_close($ch);
-
-        $r = $this->api('/api/rules.php', [
-            'rule_key' => 'rank_thresholds',
+        $r = $this->http('POST', '/api/rules.php', [
+            'rule_key'   => 'rank_thresholds',
             'rule_value' => '{"gioi":9}',
             'rule_label' => 'Test',
-            'rule_type' => 'threshold',
-        ], 'POST');
+            'rule_type'  => 'threshold',
+        ], 'nonAdmin');
         // require_write → 403 cho non-admin
-        $this->assertEquals(403, $r['code']);
-        unlink($ck);
+        $this->assertSame(403, $r['code'],
+            'GLV thường phải bị 403 khi POST rules, body: ' . $r['raw']);
     }
 }
