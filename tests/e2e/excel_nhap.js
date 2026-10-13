@@ -6,7 +6,7 @@
 // định dạng dựng sẵn m/d/yy, ngày giờ, hệ ngày 1904, chữ dd/mm/yyyy, ô chỉ có giờ, số thường...), rồi đọc lại bằng
 // ĐÚNG xlsx_io.readXlsxRows. Mỗi lần chạy lặp lại trong nhiều múi giờ của máy (biến môi trường TZ) vì lỗi cũ là
 // SheetJS dựng Date theo múi giờ máy. Cuối cùng chạy kết quả qua parseDate của app: dd/mm/yyyy -> yyyy-mm-dd.
-// (Vòng xuất -> nhập lại file do app xuất đã có trong tests/e2e/excel_xuat.js.)
+// Ca N-6 chạy vòng xuất (buildXlsxSheet) -> nhập (readXlsxRows); excel_xuat.js kiểm thêm bằng trình duyệt thật.
 // Kết quả: PASS/FAIL từng ca, thoát mã 1 nếu có ca FAIL.
 
 const { spawnSync } = require('child_process');
@@ -94,6 +94,15 @@ async function chay() {
   // 4. Đường nhập của app: dd/mm/yyyy -> yyyy-mm-dd qua parseDate
   const iso = ['01/03/2016', '04/09/2017', '13/10/2026', '29/02/2024', '5/9/2017'].map(x => shell.parseDate.call({}, x));
   ket('N-5', 'parseDate: dd/mm/yyyy -> yyyy-mm-dd', JSON.stringify(iso) === JSON.stringify(['2016-03-01', '2017-09-04', '2026-10-13', '2024-02-29', '2017-09-05']), JSON.stringify(iso));
+
+  // 5. Vòng xuất -> nhập: ô ngày thật do buildXlsxSheet (tests/e2e/excel_xuat.js, #280) ghi ra đọc lại đúng
+  const sh = { name: 'Danh sách', rows: [['Mã', 'Ngày sinh'], ['A', { d: '2016-03-01' }], ['B', { d: '1999-12-31' }], ['C', { d: '' }], ['D', { dt: '2026-10-13 23:59' }]] };
+  const ws = io.buildXlsxSheet.call(io, X, sh);
+  const wb = X.utils.book_new(); X.utils.book_append_sheet(wb, ws, 'Danh sách');
+  const buf = X.write(wb, { type: 'buffer', bookType: 'xlsx', cellStyles: true });
+  const rt = await io.readXlsxRows.call({ loadXlsxLib: async () => X }, { arrayBuffer: async () => buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) }, 'Danh sách');
+  ket('N-6', 'xuất rồi nhập lại: ngày sinh nguyên vẹn, ô trống vẫn trống, ngày giờ 23:59 không nhảy sang ngày sau',
+      rt[1][1] === '01/03/2016' && rt[2][1] === '31/12/1999' && rt[3][1] === '' && rt[4][1] === '13/10/2026', JSON.stringify(rt));
 
   console.log('');
   return fails;

@@ -22,7 +22,7 @@
             <div>
                 <p class="text-slate-800 font-semibold text-sm leading-snug line-clamp-2"
                    x-text="latestAnnouncement ? latestAnnouncement.title : 'Chưa có thông báo nào.'"></p>
-                <p class="text-slate-400 text-xs mt-1" x-text="latestAnnouncement ? latestAnnouncement.publishedAt : ''"></p>
+                <p class="text-slate-400 text-xs mt-1" x-text="latestAnnouncement ? vnFmtDateTime(latestAnnouncement.publishedAt) : ''"></p>
             </div>
         </button>
 

@@ -631,7 +631,7 @@ window.TNTT.students = {
         this.filteredStudents.forEach(s => {
             rows.push(this.importColumns.map(c => {
                 if (c.key === 'gender')    return this.genderLabel(s.gender);
-                if (c.key === 'birthDate') return this.formatDate(s.birthDate);
+                if (c.key === 'birthDate') return s.birthDate ? { d: s.birthDate } : '';   // ô ngày thật, hiện dd/mm/yyyy
                 const v = s[c.key];
                 return v === null || v === undefined ? '' : String(v);
             }));

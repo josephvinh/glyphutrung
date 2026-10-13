@@ -29,16 +29,15 @@ window.TNTT.xlsx_io = {
      * @param {Array<{name:string, rows:any[][], widths?:number[]}>} sheets
      *        rows là mảng các dòng, dòng đầu là tiêu đề. Chuỗi luôn được
      *        ghi là VĂN BẢN (giữ số 0 đầu của SĐT, không bị hiểu thành công thức).
+     *        Ô NGÀY: truyền { d: 'yyyy-mm-dd' } hoặc { dt: 'yyyy-mm-dd HH:mm' } (máy chủ cũng trả dạng này)
+     *        -> ghi thành ô ngày THẬT hiện dd/mm/yyyy (sắp xếp, lọc, tính toán đúng trong Excel).
      */
     async downloadXlsx(sheets, fileName) {
         try {
             const X = await this.loadXlsxLib();
             const wb = X.utils.book_new();
             sheets.forEach(sh => {
-                const ws = X.utils.aoa_to_sheet(sh.rows);
-                const widths = sh.widths || (sh.rows[0] || []).map((_, ci) =>
-                    Math.min(40, Math.max(8, ...sh.rows.slice(0, 200).map(r => String(r[ci] ?? '').length)) + 2));
-                ws['!cols'] = widths.map(w => ({ wch: w }));
+                const ws = this.buildXlsxSheet(X, sh);
                 // Tên sheet: tối đa 31 ký tự, không chứa : \ / ? * [ ]
                 const ten = String(sh.name || 'Sheet1').replace(/[:\\/?*\[\]]/g, ' ').slice(0, 31);
                 X.utils.book_append_sheet(wb, ws, ten);
@@ -49,6 +48,31 @@ window.TNTT.xlsx_io = {
             window.TNTT.toast.error('Không tạo được file Excel. Vui lòng thử lại.');
             return false;
         }
+    },
+
+    /** Dựng một sheet SheetJS từ { rows, widths }; tách riêng để kiểm thử được mà không cần tải file. */
+    buildXlsxSheet(X, sh) {
+        const vn = window.TNTT.vn;
+        const ngay = [];
+        const laNgay = v => v !== null && typeof v === 'object' && (v.d !== undefined || v.dt !== undefined);
+        const rows = sh.rows.map((row, r) => row.map((v, c) => {
+            if (!laNgay(v)) return v;
+            const s = v.dt !== undefined ? v.dt : v.d;
+            if (s === '' || s === null || s === undefined) return '';
+            const x = vn.excel(s);
+            if (!x) return vn.fmtDateTime(s);          // không đổi được thành ngày thật -> chữ dd/mm/yyyy
+            ngay.push({ r: r, c: c, v: x.v, z: x.z });
+            return null;
+        }));
+        const ws = X.utils.aoa_to_sheet(rows);
+        ngay.forEach(n => { ws[X.utils.encode_cell({ r: n.r, c: n.c })] = { t: 'n', v: n.v, z: n.z }; });
+        const soCot = Math.max(0, ...sh.rows.map(r => r.length));
+        ws['!ref'] = X.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: Math.max(0, rows.length - 1), c: Math.max(0, soCot - 1) } });
+        const dai = v => !laNgay(v) ? String(v ?? '').length : (v.dt !== undefined ? 16 : 10);
+        const widths = sh.widths || (sh.rows[0] || []).map((_, ci) =>
+            Math.min(40, Math.max(8, ...sh.rows.slice(0, 200).map(r => dai(r[ci]))) + 2));
+        ws['!cols'] = widths.map(w => ({ wch: w }));
+        return ws;
     },
 
     /**

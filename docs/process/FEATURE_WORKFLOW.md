@@ -112,6 +112,9 @@ Quy tắc đặc thù repo khi code:
   (`modules/vntime.js`, giờ Việt Nam), **không** dùng `new Date().getHours()/getDate()/toLocale*()`,
   `toDateInput(new Date())` hay `toISOString().slice()` (theo múi giờ máy, lệch ngày). Hiển thị ngày
   `dd/mm/yyyy` bằng `this.formatDate()` / `this.vnFmtDateTime()`. `VnTimeUsageTest` chặn các kiểu cũ.
+- **Xuất Excel:** cột ngày là ô ngày THẬT hiện dd/mm/yyyy, không phải chuỗi chữ: truyền `{ d: 'yyyy-mm-dd' }`
+  (hoặc `{ dt: 'yyyy-mm-dd HH:mm' }`) vào `rows` của `downloadXlsx`; máy chủ trả ô đó bằng `excel_date_cell()`
+  trong `api/export.php`. Tên tệp dùng `dd-mm-yyyy`.
 - **Nhập Excel:** `readXlsxRows` đọc số ngày Excel rồi đổi bằng số học (`vn.fromExcel`), trả `dd/mm/yyyy`;
   KHÔNG bật `cellDates` của SheetJS (dựng `Date` theo múi giờ máy, từng làm ô có giờ ≥ 12:00 nhảy sang ngày sau).
 - **Schema:** đổi cấu trúc DB qua `config/migrations/NNN_*.sql` (đánh số tăng).

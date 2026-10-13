@@ -46,6 +46,30 @@ if (!headers_sent()) {
     }
 }
 
+/**
+ * Ngày hiển thị dd/mm/yyyy từ 'yyyy-mm-dd' (hoặc 'yyyy-mm-dd HH:mm[:ss]'). Cắt chuỗi thuần, KHÔNG qua
+ * strtotime/Date nên không dính múi giờ. Rỗng hoặc không đúng dạng thì trả nguyên văn.
+ * Cùng quy ước với window.TNTT.vn.fmtDate ở trình duyệt (modules/vntime.js).
+ */
+function fmt_ngay(?string $s): string
+{
+    $s = trim((string) $s);
+    if (preg_match('/\A(\d{4})-(\d{2})-(\d{2})(?:[ T]\d{2}:\d{2}(?::\d{2})?)?\z/', $s, $m)) {
+        return $m[3] . '/' . $m[2] . '/' . $m[1];
+    }
+    return $s;
+}
+
+/** 'yyyy-mm-dd HH:mm[:ss]' -> 'dd/mm/yyyy HH:mm' (chỉ có ngày thì 'dd/mm/yyyy'). */
+function fmt_ngay_gio(?string $s): string
+{
+    $s = trim((string) $s);
+    if (preg_match('/\A(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::\d{2})?)?\z/', $s, $m)) {
+        return $m[3] . '/' . $m[2] . '/' . $m[1] . (isset($m[4]) ? ' ' . $m[4] . ':' . $m[5] : '');
+    }
+    return $s;
+}
+
 /** Người đang đăng nhập, hoặc null. Kết quả nhớ lại trong một request. */
 function current_member(): ?array
 {
