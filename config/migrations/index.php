@@ -105,9 +105,19 @@ function run_migration(string $file): bool
             }
         }
 
+        $benign = ['duplicate column name', 'already exists', 'duplicate key name',
+                   'duplicate foreign key', 'duplicate check constraint'];
         foreach ($statements as $s) {
-            if (!empty(trim($s))) {
+            if (empty(trim($s))) continue;
+            try {
                 db_run($s);
+            } catch (Throwable $e) {
+                $msg = strtolower($e->getMessage());
+                $isBenign = false;
+                foreach ($benign as $b) {
+                    if (str_contains($msg, $b)) { $isBenign = true; break; }
+                }
+                if (!$isBenign) throw $e;
             }
         }
 

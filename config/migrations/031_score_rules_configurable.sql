@@ -8,19 +8,35 @@
 -- 5. attendance_thresholds: bảng mới cho các mốc xếp loại CC
 -- ============================================================
 
--- 1. Thêm cột vào score_types
-ALTER TABLE score_types
-    ADD COLUMN category VARCHAR(32) NOT NULL DEFAULT 'homework'
-    COMMENT 'homework=điểm BT, exam=điểm thi, attendance=chuyên cần',
-    ADD COLUMN max_exams TINYINT NOT NULL DEFAULT 1
+-- 1. Thêm cột vào score_types (lỗi trùng cột bị nuốt bởi migration runner)
+ALTER TABLE score_types ADD COLUMN category VARCHAR(32) NOT NULL DEFAULT 'homework'
+    COMMENT 'homework=điểm BT, exam=điểm thi, attendance=chuyên cần';
+ALTER TABLE score_types ADD COLUMN max_exams TINYINT NOT NULL DEFAULT 1
     COMMENT 'Số bài kiểm tra tối đa cho loại này (1-20)';
 
--- 2. Thêm exam_num vào scores, cập nhật unique key
-ALTER TABLE scores
-    ADD COLUMN exam_num TINYINT NOT NULL DEFAULT 1
+-- 2. Thêm exam_num vào scores (lỗi trùng cột bị nuốt)
+ALTER TABLE scores ADD COLUMN exam_num TINYINT NOT NULL DEFAULT 1
     COMMENT 'Số thứ tự bài KT trong loại (1, 2, 3...)';
 
--- 3. Tạo bảng score_rules
+-- 3. Cập nhật unique key của scores: (term_id, student_id, type_code) → (term_id, student_id, type_code, exam_num)
+--    Dùng temp table vì MariaDB không cho DROP unique key đang có FK tham chiếu
+--    Mọi lỗi trùng bảng/cột đều bị nuốt bởi migration runner
+CREATE TABLE scores_tmp LIKE scores;
+ALTER TABLE scores_tmp DROP COLUMN IF EXISTS exam_num, ADD COLUMN exam_num TINYINT NOT NULL DEFAULT 1;
+ALTER TABLE scores_tmp DROP INDEX uq_score, ADD UNIQUE KEY uq_score (term_id, student_id, type_code, exam_num);
+INSERT INTO scores_tmp
+    (id, term_id, student_id, type_code, value, updated_by, updated_at, exam_num)
+    SELECT id, term_id, student_id, type_code, value, updated_by, updated_at, 1 FROM scores;
+RENAME TABLE scores TO scores_old, scores_tmp TO scores;
+DROP TABLE IF EXISTS scores_old;
+ALTER TABLE scores
+    ADD CONSTRAINT fk_sc_term FOREIGN KEY (term_id) REFERENCES terms(id) ON DELETE CASCADE,
+    ADD CONSTRAINT fk_sc_student FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+    ADD CONSTRAINT fk_sc_type FOREIGN KEY (type_code) REFERENCES score_types(code),
+    ADD CONSTRAINT fk_sc_by FOREIGN KEY (updated_by) REFERENCES members(id) ON DELETE SET NULL,
+    ADD CONSTRAINT chk_sc_value CHECK (value >= 0 AND value <= 10);
+
+-- 4. Tạo bảng score_rules
 CREATE TABLE IF NOT EXISTS score_rules (
     id            INT AUTO_INCREMENT PRIMARY KEY,
     rule_key      VARCHAR(64) NOT NULL UNIQUE COMMENT 'Khóa định danh',
@@ -33,7 +49,7 @@ CREATE TABLE IF NOT EXISTS score_rules (
     CONSTRAINT fk_sr_by FOREIGN KEY (updated_by) REFERENCES members(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 4. Tạo bảng term_programs
+-- 5. Tạo bảng term_programs
 CREATE TABLE IF NOT EXISTS term_programs (
     id              INT AUTO_INCREMENT PRIMARY KEY,
     term_id         INT NOT NULL COMMENT 'Học kỳ',
@@ -44,7 +60,7 @@ CREATE TABLE IF NOT EXISTS term_programs (
     CONSTRAINT fk_tp_prog FOREIGN KEY (program_id) REFERENCES programs(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 5. Tạo bảng attendance_thresholds
+-- 6. Tạo bảng attendance_thresholds
 CREATE TABLE IF NOT EXISTS attendance_thresholds (
     id              INT AUTO_INCREMENT PRIMARY KEY,
     sort_order      INT NOT NULL COMMENT 'Thứ tự ưu tiên (1 = cao nhất)',
@@ -81,7 +97,6 @@ INSERT IGNORE INTO attendance_thresholds (sort_order, label, min_percent, descri
 (4, 'Đạt', 60.00, 'Tối thiểu');
 
 -- Seed term_programs: với mỗi học kỳ, tạo term_programs cho tất cả programs có count_for_attendance=1
--- Sử dụng INSERT IGNORE để không tạo trùng
 INSERT IGNORE INTO term_programs (term_id, program_id, is_active)
 SELECT t.id AS term_id, p.id AS program_id, 1 AS is_active
 FROM terms t
