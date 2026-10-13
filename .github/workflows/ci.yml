@@ -292,6 +292,10 @@ jobs:
       - name: Giờ Việt Nam (trình duyệt nhiều múi giờ)
         run: node tests/e2e/vntime.js
 
+      # Ô nhập ngày/giờ theo khuôn dd/mm/yyyy · hh:mm (máy en-US / ja-JP vẫn thấy khuôn Việt Nam), kể cả form đăng ký.
+      - name: Ô nhập ngày/giờ theo khuôn
+        run: node tests/e2e/o_nhap_ngay.js
+
       # Xuất Excel: cột ngày là ô ngày thật dd/mm/yyyy, đúng ngày ở 3 múi giờ máy, nhập lại ra đúng ngày.
       - name: Xuất Excel (ô ngày thật)
         run: node tests/e2e/excel_xuat.js

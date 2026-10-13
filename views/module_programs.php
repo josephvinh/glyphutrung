@@ -125,10 +125,7 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Giờ Bắt đầu <span class="text-rose-500">*</span></label>
-                        <input x-model="programForm.startTime" type="time" required
-                               aria-required="true"
-                               class="w-full min-w-0 bg-slate-50 border rounded-xl px-3 py-2.5 text-sm text-slate-800"
-                               :class="!programForm.startTime && showProgramModal ? 'border-rose-300 bg-rose-50' : 'border-slate-200'">
+                        <?php ngay_input('programForm.startTime', ['kind' => 'time', 'class' => 'w-full min-w-0 bg-slate-50 border rounded-xl px-3 py-2.5 text-sm text-slate-800', 'attrs' => 'required aria-required="true" :class="!programForm.startTime && showProgramModal ? \'border-rose-300 bg-rose-50\' : \'border-slate-200\'"']); ?>
                     </div>
                     <div>
                         <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Loại</label>
@@ -155,16 +152,14 @@
                 </div>
                 <div x-show="programForm.type === 'chiến dịch'" style="display: none;">
                     <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Ngày diễn ra</label>
-                    <input x-model="programForm.eventDate" type="date" min="2000-01-01" max="2100-12-31" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                    <?php ngay_input('programForm.eventDate', ['class' => 'w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500', 'attrs' => 'min="2000-01-01" max="2100-12-31"']); ?>
                 </div>
 
                 <!-- Mốc 1: GIỜ TÍNH ĐI TRỄ (bắt buộc). Trước đây gọi "giờ chốt
                      sổ" + để trống thì ngầm +30' — gây nhầm với mốc tính vắng. -->
                 <div>
                     <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Giờ tính đi trễ <span class="text-rose-500">*</span></label>
-                    <input x-model="programForm.cutoffTime" type="time" required aria-required="true"
-                           class="w-full bg-slate-50 border rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                           :class="!programForm.cutoffTime && showProgramModal ? 'border-rose-300 bg-rose-50' : 'border-slate-200'">
+                    <?php ngay_input('programForm.cutoffTime', ['kind' => 'time', 'class' => 'w-full bg-slate-50 border rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500', 'attrs' => 'required aria-required="true" :class="!programForm.cutoffTime && showProgramModal ? \'border-rose-300 bg-rose-50\' : \'border-slate-200\'"']); ?>
                     <p class="text-micro text-slate-500 mt-1 ml-1">Đến sau giờ này là <b>đi trễ</b> (vẫn điểm danh được).</p>
                 </div>
 
@@ -172,9 +167,7 @@
                      buổi thì không ghi điểm danh được nữa (attendance.php). -->
                 <div>
                     <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Giờ khoá sổ (tính vắng) <span class="text-rose-500">*</span></label>
-                    <input x-model="programForm.absentTime" type="time" required aria-required="true"
-                           class="w-full bg-slate-50 border rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                           :class="!programForm.absentTime && showProgramModal ? 'border-rose-300 bg-rose-50' : 'border-slate-200'">
+                    <?php ngay_input('programForm.absentTime', ['kind' => 'time', 'class' => 'w-full bg-slate-50 border rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500', 'attrs' => 'required aria-required="true" :class="!programForm.absentTime && showProgramModal ? \'border-rose-300 bg-rose-50\' : \'border-slate-200\'"']); ?>
                     <p class="text-micro text-slate-500 mt-1 ml-1">Sau giờ này <b>không điểm danh được nữa</b>, em vắng tính vắng.</p>
                 </div>
 
@@ -182,11 +175,11 @@
                 <div x-show="programForm.type === 'bắt buộc'" class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Áp dụng từ</label>
-                        <input x-model="programForm.effectiveFrom" type="date" class="w-full min-w-0 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800">
+                        <?php ngay_input('programForm.effectiveFrom', ['class' => 'w-full min-w-0 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800']); ?>
                     </div>
                     <div>
                         <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Đến ngày</label>
-                        <input x-model="programForm.effectiveTo" type="date" class="w-full min-w-0 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800">
+                        <?php ngay_input('programForm.effectiveTo', ['class' => 'w-full min-w-0 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800']); ?>
                     </div>
                 </div>
 

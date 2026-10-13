@@ -117,6 +117,10 @@ Quy tắc đặc thù repo khi code:
   trong `api/export.php`. Tên tệp dùng `dd-mm-yyyy`.
 - **Nhập Excel:** `readXlsxRows` đọc số ngày Excel rồi đổi bằng số học (`vn.fromExcel`), trả `dd/mm/yyyy`;
   KHÔNG bật `cellDates` của SheetJS (dựng `Date` theo múi giờ máy, từng làm ô có giờ ≥ 12:00 nhảy sang ngày sau).
+- **Ô nhập ngày/giờ:** KHÔNG dùng `<input type="date|time|datetime-local">` (hiển thị theo vùng của trình duyệt:
+  mm/dd/yyyy, AM/PM). Dùng `<?php ngay_input('form.truong', ['kind' => 'date|time|datetime', 'class' => '…', 'attrs' => '…']); ?>`
+  (`views/_ngay_input.php`): ô chữ có khuôn dd/mm/yyyy · hh:mm, model vẫn là `yyyy-mm-dd` / `HH:mm` / `yyyy-mm-ddTHH:mm`.
+  `DateInputMaskTest` chặn ô gốc.
 - **Schema:** đổi cấu trúc DB qua `config/migrations/NNN_*.sql` (đánh số tăng).
   Seed dữ liệu khởi tạo (quyền, module) đặt trong `install.php` và **không dùng
   `INSERT IGNORE`** cho ràng buộc có thể thất bại thật (vd khóa ngoại) — xem lỗi
