@@ -45,7 +45,7 @@
                 <button aria-label="Lùi một ngày" @click="shiftAttendanceDate(-1)" class="w-10 h-10 shrink-0 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-center text-slate-500 active:scale-90 transition-transform">
                     <i data-lucide="chevron-left" class="w-4 h-4"></i>
                 </button>
-                <input x-model="attendanceDate" type="date" min="2000-01-01" max="2100-12-31" class="input-glass flex-1 min-w-0 px-3 py-2.5 text-sm font-semibold text-slate-800">
+                <?php ngay_input('attendanceDate', ['class' => 'input-glass min-w-0 px-3 py-2.5 text-sm font-semibold text-slate-800', 'wrap' => 'flex-1 min-w-0', 'attrs' => 'min="2000-01-01" max="2100-12-31"']); ?>
                 <button aria-label="Tới một ngày" @click="shiftAttendanceDate(1)" class="w-10 h-10 shrink-0 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-center text-slate-500 active:scale-90 transition-transform">
                     <i data-lucide="chevron-right" class="w-4 h-4"></i>
                 </button>
@@ -108,15 +108,13 @@
                     <!-- Từ ngày -->
                     <div>
                         <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-2">Từ ngày</label>
-                        <input x-model="exportForm.fromDate" type="date"
-                               class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                        <?php ngay_input('exportForm.fromDate', ['class' => 'w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500']); ?>
                     </div>
 
                     <!-- Đến ngày -->
                     <div>
                         <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-2">Đến ngày</label>
-                        <input x-model="exportForm.toDate" type="date"
-                               class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                        <?php ngay_input('exportForm.toDate', ['class' => 'w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500']); ?>
                     </div>
 
                     <!-- Validation error -->

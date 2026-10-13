@@ -1295,3 +1295,71 @@ select.tntt-select {
 .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
 .active\:bg-slate-100:active { background-color: #f1f5f9; }
 
+
+
+/* ==========================================================
+   Ô NHẬP NGÀY / GIỜ THEO KHUÔN (views/_ngay_input.php + modules/ngay_nhap.js)
+   Ô chữ dd/mm/yyyy · hh:mm; bên phải là nút lịch/đồng hồ: ô gốc (type=date/time) trong suốt phủ lên
+   biểu tượng nên chạm/bấm là mở bộ chọn của máy. Ô gốc chỉ để CHỌN; chữ hiển thị luôn theo khuôn.
+   ========================================================== */
+.ngay-wrap {
+    position: relative;
+    display: block;
+    min-width: 0;
+}
+/* Chừa chỗ cho nút bên phải (chọn bằng 2 class để thắng px-3 của Tailwind) */
+.ngay-wrap > .ngay-in {
+    padding-right: 2.5rem;
+    -webkit-appearance: none;
+    appearance: none;
+}
+.ngay-wrap > .ngay-in.ngay-loi {
+    border-color: #fb7185;
+    background-color: #fff1f2;
+}
+.ngay-btn {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+}
+.ngay-btn > svg {
+    width: 1.125rem;
+    height: 1.125rem;
+    pointer-events: none;
+}
+.ngay-native {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    opacity: 0;
+    cursor: pointer;
+    font-size: 16px;               /* iOS: tránh tự phóng to khi chạm */
+    -webkit-appearance: none;
+    appearance: none;
+}
+.ngay-native::-webkit-calendar-picker-indicator {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+.ngay-wrap.ngay-off .ngay-btn {
+    opacity: 0.4;
+    pointer-events: none;
+}

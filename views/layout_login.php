@@ -176,8 +176,7 @@ if (!$__dev) ob_start();
             </div>
             <div>
                 <label class="block text-micro font-bold text-slate-500 uppercase mb-1.5">Ngày sinh</label>
-                <input x-model="rBirth" type="date" required min="1900-01-01" max="<?php echo date('Y-m-d'); ?>"
-                       class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30">
+                <?php ngay_input('rBirth', ['class' => 'w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30', 'attrs' => 'required min="1900-01-01" max="' . date('Y-m-d') . '"']); ?>
                 <p class="text-micro text-slate-500 mt-1 ml-1">Để đoàn mừng sinh nhật</p>
             </div>
         </div>
@@ -292,6 +291,7 @@ if (!$__dev) ob_start();
 
 <?php /* Script THƯỜNG (không defer) ở cuối body: chạy khi parser tới đây,
          TRƯỚC alpine (defer) -> kịp đăng ký component loginScreen. */ ?>
+<script src="assets/js/modules/ngay_nhap.js?v=<?php echo @filemtime(__DIR__ . '/../public/assets/js/modules/ngay_nhap.js') ?: 0; ?>"></script>
 <script src="assets/js/login.js?v=<?php echo @filemtime(__DIR__ . '/../public/assets/js/login.js') ?: 0; ?>"></script>
 </body>
 </html>
