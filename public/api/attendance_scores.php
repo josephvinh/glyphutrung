@@ -7,7 +7,7 @@
 
 require __DIR__ . '/_bootstrap.php';
 
-require_login();
+$me = require_permission('attendance', 'view');
 
 $termId    = (int) ($_GET['term_id'] ?? 0);
 $studentId = (int) ($_GET['student_id'] ?? 0);
@@ -18,6 +18,19 @@ if (!$studentId) json_fail('Thiếu student_id.');
 // Lấy term để biết năm học
 $term = db_one('SELECT year_id FROM terms WHERE id = ?', [$termId]);
 if (!$term) json_fail('Không tìm thấy học kỳ.', 404);
+
+// Phạm vi theo lớp: chỉ GLV của lớp đó (hoặc admin/BĐH/trưởng khối phụ
+// trách lớp) mới xem được chuyên cần của một em — chống IDOR xem em
+// lớp khác qua đoạn URL đơn giản.
+$enr = db_one(
+    'SELECT class_id FROM enrollments
+     WHERE year_id = ? AND student_id = ? AND status = ?',
+    [$term['year_id'], $studentId, 'đang sinh hoạt']
+);
+if (!$enr) json_fail('Em này không trong danh sách năm học của học kỳ.', 404);
+if (!can_access_class($me, 'attendance', (int) $enr['class_id'], 'view')) {
+    json_fail('Bạn không phụ trách lớp của em này.', 403);
+}
 
 // Lấy các chương trình active của term
 $programs = db_all('
