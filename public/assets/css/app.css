@@ -1295,3 +1295,16 @@ select.tntt-select {
 .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
 .active\:bg-slate-100:active { background-color: #f1f5f9; }
 
+/* Màn hình điểm & cài đặt quy tắc (B8-B10) — class Tailwind bị build rơi */
+.self-end { align-self: flex-end; }
+.text-green-500 { color: #22c55e; }
+.text-purple-500 { color: #a855f7; }
+.hover\:bg-slate-50\/50:hover { background-color: rgb(248 250 252 / 0.5); }
+.hover\:border-blue-500:hover { border-color: #3b82f6; }
+.hover\:text-rose-500:hover { color: #f43f5e; }
+@media (min-width: 768px) {
+    .md\:block { display: block; }
+    .md\:grid { display: grid; }
+    .md\:hidden { display: none; }
+}
+

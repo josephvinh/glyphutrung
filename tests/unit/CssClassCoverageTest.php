@@ -31,7 +31,6 @@ class CssClassCoverageTest extends TestCase
      * (app.css) hoặc sửa tên cho đúng.
      */
     private const KHONG_CAN_CSS = [
-        'scroll-x'      => 'module_scores.php: dấu hiệu thừa, bảng đã có overflow-x-auto',
         'sidebar-brand' => 'layout_sidebar.php: dấu hiệu cấu trúc, không có CSS/JS nào dùng',
         'header-content' => 'print.php: khung bọc cấu trúc (CSS nhắm vào .header .org, .header h1…)',
         'main-column'   => 'print.php: khung bọc cấu trúc của phiếu liên lạc',
