@@ -10,7 +10,7 @@ window.TNTT.dashboard = {
 
     // Today's attendance stats (computed from existing data)
     get todayAttendance() {
-        const today = this.toDateInput(new Date());
+        const today = this.vnToday();
         const activeStudents = this.accessibleStudents.filter(s => s.status === 'đang sinh hoạt');
         const programsToday = this.programsOn(today);
 
@@ -59,7 +59,7 @@ window.TNTT.dashboard = {
 
     // Active programs today
     get todayPrograms() {
-        const today = this.toDateInput(new Date());
+        const today = this.vnToday();
         return this.programsOn(today);
     }
 };

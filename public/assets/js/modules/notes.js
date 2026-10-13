@@ -32,11 +32,7 @@ window.TNTT.notes = {
     get agendaItems() {
         const now = this.nowStamp();
         // Ngưỡng ẩn: việc đã xong quá 1 ngày trước thì ẩn đi cho sạch
-        const hideThreshold = (() => {
-            const d = new Date(); d.setDate(d.getDate() - 1);
-            const p = n => String(n).padStart(2, '0');
-            return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' 00:00';
-        })();
+        const hideThreshold = this.vnAddDays(this.vnToday(), -1) + ' 00:00';
 
         const items = [];
         this.notes.forEach(n => {
@@ -83,10 +79,7 @@ window.TNTT.notes = {
 
     // 'YYYY-MM-DD HH:MM' của lúc này — để so sánh chuỗi cho gọn
     nowStamp() {
-        const d = new Date();
-        const p = n => String(n).padStart(2, '0');
-        return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate())
-             + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+        return this.vnNow();   // giờ VN
     },
 
     // ---- Việc SẮP TỚI (cho "Việc cần làm" + chấm đỏ trên icon) ----
@@ -94,11 +87,7 @@ window.TNTT.notes = {
     // chối, trong 2 ngày tới hoặc đang tới giờ.
     get upcomingAgenda() {
         const now = this.nowStamp();
-        const hanChot = (() => {
-            const d = new Date(); d.setDate(d.getDate() + 2);
-            const p = n => String(n).padStart(2, '0');
-            return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' 23:59';
-        })();
+        const hanChot = this.vnAddDays(this.vnToday(), 2) + ' 23:59';
         return this.agendaItems.filter(it => {
             if (it.kind === 'note') return !it.done && it.at <= hanChot;
             return it.rsvp !== 'không tham gia' && it.at >= now.slice(0, 10) + ' 00:00' && it.at <= hanChot;
@@ -146,12 +135,11 @@ window.TNTT.notes = {
 
     // ---- Thêm / sửa ----
     openCreateNote() {
-        const d = new Date();
         const p = n => String(n).padStart(2, '0');
-        const gioTron = p((d.getHours() + 1) % 24) + ':00';
+        const gioTron = p((window.TNTT.vn.parts().hh + 1) % 24) + ':00';   // giờ tròn kế tiếp, giờ VN
         this.noteForm = {
             id: null, title: '', note: '',
-            date: this.toDateInput(d), time: gioTron, allDay: false
+            date: this.vnToday(), time: gioTron, allDay: false
         };
         this.isEditingNote = false;
         this.showNoteModal = true;

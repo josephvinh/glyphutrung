@@ -131,14 +131,8 @@ window.TNTT.access = {
     // Tính tuổi từ ngày sinh
     _calculateAge(birthDate) {
         if (!birthDate) return 0;
-        const birth = new Date(birthDate);
-        const today = new Date();
-        let age = today.getFullYear() - birth.getFullYear();
-        const monthDiff = today.getMonth() - birth.getMonth();
-        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-            age--;
-        }
-        return age;
+        const age = this.vnAge(birthDate);   // đến hôm nay theo giờ VN, tính trên chuỗi ngày (không qua Date)
+        return age === null ? 0 : age;
     },
 
     // hasActiveFilter và clearFilters đã có trong students.js - không dùng ở đây

@@ -262,7 +262,7 @@ window.TNTT.reports = {
     // treo chấm đỏ suốt kỳ gây phiền.
     get reportTodoCount() {
         if (!this.canWriteReports || this.isUnderMaintenance('reports')) return 0;
-        const today = this.toDateInput(new Date());
+        const today = this.vnToday();
         const term = this.terms.find(t => {
             if (!t.to || today > t.to) return false;         // đã qua ngày cuối kỳ
             const d = new Date(t.to + 'T00:00:00');

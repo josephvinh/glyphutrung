@@ -10,10 +10,10 @@ window.TNTT.birthdays = {
     // Không lưu gì thêm, hoàn toàn suy ra từ birthDate của danh sách
     // thiếu nhi. Chỉ tính các em đang sinh hoạt, trong phạm vi quyền.
     // ==========================================
-    birthdayMonth: new Date().getMonth() + 1,
+    birthdayMonth: window.TNTT.vn.parts().m,        // tháng hiện tại theo giờ VN
 
     openBirthdays() {
-        this.birthdayMonth = new Date().getMonth() + 1;
+        this.birthdayMonth = window.TNTT.vn.parts().m;
         this.changeModule('birthdays');
     },
 
@@ -32,12 +32,12 @@ window.TNTT.birthdays = {
     // Năm nay em tròn bao nhiêu tuổi
     turningAge(student) {
         if (!student.birthDate) return '';
-        return new Date().getFullYear() - Number(student.birthDate.split('-')[0]);
+        return window.TNTT.vn.parts().y - Number(student.birthDate.split('-')[0]);
     },
 
     isBirthdayToday(student) {
-        const now = new Date();
-        return this.birthMonth(student) === now.getMonth() + 1 && this.birthDay(student) === now.getDate();
+        const now = window.TNTT.vn.parts();
+        return this.birthMonth(student) === now.m && this.birthDay(student) === now.d;
     },
 
     // Sĩ số lớp đang phụ trách, dùng cho thẻ thống kê ngoài Trang chủ
@@ -130,12 +130,11 @@ window.TNTT.birthdays = {
 
     // Sắp tới trong 7 ngày, tính cả trường hợp vắt qua tháng sau
     get upcomingBirthdays() {
-        const now = new Date();
-        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const today = this.vnTodayDate();   // ngày lịch hôm nay theo giờ VN
         return this.filteredBirthdayPool
             .map(s => {
-                let next = new Date(now.getFullYear(), this.birthMonth(s) - 1, this.birthDay(s));
-                if (next < today) next = new Date(now.getFullYear() + 1, this.birthMonth(s) - 1, this.birthDay(s));
+                let next = new Date(today.getFullYear(), this.birthMonth(s) - 1, this.birthDay(s));
+                if (next < today) next = new Date(today.getFullYear() + 1, this.birthMonth(s) - 1, this.birthDay(s));
                 return { student: s, days: Math.round((next - today) / 86400000) };
             })
             .filter(x => x.days > 0 && x.days <= 7)

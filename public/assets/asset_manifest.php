@@ -18,7 +18,7 @@ return [
     // Thứ tự KHÔNG đổi tuỳ tiện: nền tảng trước, shell/dashboard sau.
     'js_modules' => [
         // Core modules (loaded on startup)
-        'router', 'core', 'xlsx_io', 'programs', 'access', 'students', 'student_profile', 'attendance', 'qrscan', 'qrcard',
+        'router', 'vntime', 'core', 'xlsx_io', 'programs', 'access', 'students', 'student_profile', 'attendance', 'qrscan', 'qrcard',
         'leave', 'birthdays', 'announcements', 'stats', 'analytics', 'scores',
         'reports', 'promotion', 'org', 'push', 'notifications', 'dashboard', 'shell',
         'calendar', 'notes', 'library', 'gifts', 'rewards',

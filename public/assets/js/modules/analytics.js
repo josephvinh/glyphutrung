@@ -74,18 +74,12 @@ window.TNTT.analytics = {
     // Weekly attendance data for chart
     get weeklyData() {
         const weeks = [];
-        const now = new Date();
-        const startOfWeek = new Date(now);
-        startOfWeek.setDate(now.getDate() - now.getDay() - 28); // Start 4 weeks ago
+        const hoNay = this.vnToday();   // giờ VN
+        const startOfWeek = this.vnAddDays(hoNay, -this.vnDow(hoNay) - 28); // Start 4 weeks ago
 
         for (let i = 0; i < 4; i++) {
-            const weekStart = new Date(startOfWeek);
-            weekStart.setDate(startOfWeek.getDate() + (i * 7));
-            const weekEnd = new Date(weekStart);
-            weekEnd.setDate(weekStart.getDate() + 6);
-
-            const ws = this.toDateInput(weekStart);
-            const we = this.toDateInput(weekEnd);
+            const ws = this.vnAddDays(startOfWeek, i * 7);
+            const we = this.vnAddDays(ws, 6);
 
             let present = 0, excused = 0, unexcused = 0, total = 0;
 

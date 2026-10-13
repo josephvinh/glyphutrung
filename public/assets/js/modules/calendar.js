@@ -7,7 +7,7 @@ window.TNTT.calendar = {
     // ==========================================
     // 1. DATA
     // ==========================================
-    currentDate: new Date(),
+    currentDate: window.TNTT.vn.todayDate(),   // ngày lịch hôm nay theo giờ VN
     showEventDetailModal: false,
     selectedEvent: null,
 
@@ -31,8 +31,7 @@ window.TNTT.calendar = {
     get calendarDays() {
         const year = this.currentDate.getFullYear();
         const month = this.currentDate.getMonth();
-        const today = new Date();
-        const todayStr = this.toDateInput(today);
+        const todayStr = this.vnToday();
 
         // Ngày đầu tiên của tháng
         const firstDay = new Date(year, month, 1);

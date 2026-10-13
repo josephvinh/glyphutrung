@@ -35,7 +35,7 @@ window.TNTT.announcements = {
 
     isAnnouncementExpired(a) {
         if (!a.expiresAt) return false;
-        return a.expiresAt < this.toDateInput(new Date());
+        return a.expiresAt < this.vnToday();
     },
 
     // Đối tượng nhận: kiêm nhiệm thấy thông báo cho MỌI khối/lớp mình phụ trách.
