@@ -6,6 +6,12 @@
  * Bật chế độ ném ngoại lệ để lỗi SQL không âm thầm trôi qua.
  */
 
+// GIỜ VIỆT NAM cho mọi điểm vào nạp tệp này (trang index/bxh/print, cron nhắc việc, script dòng lệnh...). Trước đây
+// chỉ api/_bootstrap.php và vài trang công khai tự đặt; các nơi còn lại (index.php, bxh.php, config/cron_*.php,
+// config/nhac_*.php) chạy theo cấu hình PHP của host nên ngày/giờ có thể lệch khi host đặt múi giờ khác. Đi cùng
+// SET time_zone = '+07:00' của MySQL ở db() bên dưới.
+date_default_timezone_set('Asia/Ho_Chi_Minh');
+
 function app_config(?string $key = null)
 {
     static $config = null;
