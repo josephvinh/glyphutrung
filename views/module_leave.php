@@ -198,7 +198,7 @@
                     </div>
 
                     <p class="text-micro text-slate-500 mb-3 ml-1">
-                        Nộp bởi <span class="font-bold text-slate-500" x-text="req.createdBy"></span> lúc <span x-text="req.createdAt"></span>
+                        Nộp bởi <span class="font-bold text-slate-500" x-text="req.createdBy"></span> lúc <span x-text="vnFmtDateTime(req.createdAt)"></span>
                     </p>
 
                     <!-- Kết quả xử lý -->
@@ -207,7 +207,7 @@
                          :class="req.status === 'đã duyệt' ? 'bg-emerald-50 border-emerald-100' : 'bg-rose-50 border-rose-100'">
                         <p class="text-micro font-bold" :class="req.status === 'đã duyệt' ? 'text-emerald-700' : 'text-rose-700'">
                             <span x-text="req.status === 'đã duyệt' ? 'Đã duyệt bởi' : 'Từ chối bởi'"></span>
-                            <span x-text="req.approvedBy"></span> · <span x-text="req.approvedAt"></span>
+                            <span x-text="req.approvedBy"></span> · <span x-text="vnFmtDateTime(req.approvedAt)"></span>
                         </p>
                         <p x-show="req.rejectReason" style="display: none;" class="text-micro text-rose-600 mt-1 leading-snug" x-text="'Lý do: ' + req.rejectReason"></p>
                     </div>

@@ -71,7 +71,7 @@
                     <template x-if="a.isMeeting">
                         <div class="bg-blue-50/70 border border-blue-100 rounded-2xl p-3 mb-3" @click.stop>
                             <p class="text-micro font-bold text-blue-700 flex flex-wrap items-center gap-x-3 gap-y-1">
-                                <span class="flex items-center gap-1"><i data-lucide="calendar-check" class="w-3.5 h-3.5"></i><span x-text="a.meetingAt"></span></span>
+                                <span class="flex items-center gap-1"><i data-lucide="calendar-check" class="w-3.5 h-3.5"></i><span x-text="vnFmtDateTime(a.meetingAt)"></span></span>
                                 <span x-show="a.meetingPlace" style="display:none" class="flex items-center gap-1"><i data-lucide="map-pin" class="w-3.5 h-3.5"></i><span x-text="a.meetingPlace"></span></span>
                             </p>
                             <div class="flex gap-2 mt-2.5">
@@ -91,7 +91,7 @@
 
                     <div class="flex items-center justify-between text-micro text-slate-500 border-t border-slate-100 pt-3">
                         <span>Phát bởi <span class="font-bold text-slate-500" x-text="a.createdBy"></span></span>
-                        <span x-text="a.publishedAt"></span>
+                        <span x-text="vnFmtDateTime(a.publishedAt)"></span>
                     </div>
                 </div>
             </template>
@@ -146,7 +146,7 @@
                     <div class="bg-slate-50 rounded-2xl p-3.5 space-y-2 mb-4">
                         <div class="flex items-center justify-between text-xs">
                             <span class="font-semibold text-slate-500">Thời điểm phát</span>
-                            <span class="font-bold text-slate-700" x-text="a.publishedAt || 'Chưa phát'"></span>
+                            <span class="font-bold text-slate-700" x-text="vnFmtDateTime(a.publishedAt) || 'Chưa phát'"></span>
                         </div>
                         <div class="flex items-center justify-between text-xs">
                             <span class="font-semibold text-slate-500">Hạn hiển thị</span>
@@ -154,7 +154,7 @@
                         </div>
                         <div x-show="a.isMeeting" style="display: none;" class="flex items-center justify-between text-xs border-t border-slate-200 pt-2">
                             <span class="font-semibold text-blue-600">Buổi họp lúc</span>
-                            <span class="font-bold text-blue-700" x-text="a.meetingAt + (a.meetingPlace ? ' · ' + a.meetingPlace : '')"></span>
+                            <span class="font-bold text-blue-700" x-text="vnFmtDateTime(a.meetingAt) + (a.meetingPlace ? ' · ' + a.meetingPlace : '')"></span>
                         </div>
                     </div>
 

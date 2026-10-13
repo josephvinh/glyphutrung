@@ -387,7 +387,7 @@ function build_report_card_html(array $student, array $term, ?array $report): st
     $fullName = htmlspecialchars($student['full_name'] ?? '');
     $code = htmlspecialchars($student['code'] ?? '');
     $className = htmlspecialchars($student['class_name'] ?? '');
-    $birthDate = $student['birth_date'] ?? '';
+    $birthDate = htmlspecialchars(fmt_ngay($student['birth_date'] ?? ''));   // dd/mm/yyyy
 
     $attendance = [
         'total' => 0, 'present' => 0, 'late' => 0,
@@ -424,8 +424,8 @@ function build_report_card_html(array $student, array $term, ?array $report): st
     $attUnexcused = $attendance['unexcused'];
     $attRate = $attendance['rate'];
     $termName = $term['name'] ?? '';
-    $termFrom = $term['from'] ?? '';
-    $termTo = $term['to'] ?? '';
+    $termFrom = htmlspecialchars(fmt_ngay($term['from'] ?? ''));   // dd/mm/yyyy
+    $termTo = htmlspecialchars(fmt_ngay($term['to'] ?? ''));
 
     ob_start();
     require __DIR__ . '/../../views/partial_report_card.php';

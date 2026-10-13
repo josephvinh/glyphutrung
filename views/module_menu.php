@@ -67,7 +67,7 @@
                         <div class="min-w-0 flex-1">
                             <p class="text-sm font-bold text-slate-800 leading-snug truncate" x-text="a.title"></p>
                             <p class="text-micro text-slate-500 truncate">
-                                <span x-text="audienceLabel(a)"></span> · <span x-text="a.publishedAt"></span>
+                                <span x-text="audienceLabel(a)"></span> · <span x-text="vnFmtDateTime(a.publishedAt)"></span>
                             </p>
                         </div>
                         <span x-show="!readAnnouncements.includes(a.id)" style="display:none" class="w-2 h-2 rounded-full bg-blue-600 mt-1.5 shrink-0"></span>
