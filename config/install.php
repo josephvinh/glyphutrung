@@ -168,7 +168,13 @@ if (file_exists($migration030)) {
     $mig030 = preg_replace('/^\s*--.*$/m', '', $mig030);
     $mig030Parts = array_filter(array_map('trim', explode(';', $mig030)), fn($s) => $s !== '');
     foreach ($mig030Parts as $stmt) {
-        try { $pdo->exec($stmt); } catch (PDOException $e) {
+        try {
+            // query()+closeCursor(), KHÔNG exec(): khi đối tượng đã có, migration chạy
+            // 'SELECT 1' qua PREPARE/EXECUTE và trả về một tập kết quả; exec() không đóng
+            // nó nên câu kế tiếp lỗi 2014 "unbuffered queries are active" (chạy lại lần hai).
+            $kq = $pdo->query($stmt);
+            if ($kq !== false) $kq->closeCursor();
+        } catch (PDOException $e) {
             $msg = strtolower($e->getMessage());
             if (!str_contains($msg, 'duplicate column name') && !str_contains($msg, 'already exists')
                 && !str_contains($msg, 'duplicate key name') && !str_contains($msg, 'duplicate foreign key')) {
