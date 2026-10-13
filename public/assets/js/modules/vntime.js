@@ -88,6 +88,23 @@ window.TNTT = window.TNTT || {};
             return m[3] + '/' + m[2] + '/' + m[1] + (m[4] !== undefined ? ' ' + m[4] + ':' + m[5] : '');
         },
 
+        /**
+         * Số ngày Excel -> { ymd: 'yyyy-mm-dd', hh, mm }; null nếu không phải ngày (số < 1 là ô chỉ có giờ).
+         * Đổi bằng số học trên mốc UTC (1899-12-30, hoặc 1904-01-01 với sổ làm việc hệ 1904), KHÔNG dựng Date theo
+         * múi giờ máy nên đọc file từ máy nào cũng ra đúng ngày.
+         */
+        fromExcel(serial, date1904) {
+            if (typeof serial !== 'number' || !isFinite(serial) || serial < 1) return null;
+            let ngay = Math.floor(serial);
+            let phut = Math.round((serial - ngay) * 1440);        // làm tròn phút: tránh 23:59:59.99 lùi/nhảy ngày
+            if (phut >= 1440) { ngay++; phut = 0; }
+            const d = new Date((date1904 ? Date.UTC(1904, 0, 1) : Date.UTC(1899, 11, 30)) + ngay * 86400000);
+            return {
+                ymd: d.getUTCFullYear() + '-' + p2(d.getUTCMonth() + 1) + '-' + p2(d.getUTCDate()),
+                hh: Math.floor(phut / 60), mm: phut % 60
+            };
+        },
+
         /** Tuổi tính đến hôm nay (giờ VN) của người sinh 'yyyy-mm-dd'; null nếu không hợp lệ. */
         age(birthYmd, todayYmd) {
             const b = RE.exec(String(birthYmd || ''));

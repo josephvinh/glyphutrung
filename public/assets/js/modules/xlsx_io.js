@@ -59,20 +59,54 @@ window.TNTT.xlsx_io = {
     async readXlsxRows(file, preferSheet) {
         const X = await this.loadXlsxLib();
         const buf = await file.arrayBuffer();
-        const wb = X.read(buf, { type: 'array', cellDates: true });
+        // KHÔNG dùng cellDates: SheetJS dựng Date theo múi giờ của máy (có thể lệch ngày/giờ). Đọc số ngày Excel
+        // rồi tự đổi (vn.fromExcel), nhận ô ngày bằng định dạng ô (cellNF).
+        const wb = X.read(buf, { type: 'array', cellNF: true });
         const pick = (preferSheet && wb.SheetNames.find(n => n.trim().toLowerCase() === preferSheet.toLowerCase()))
                    || wb.SheetNames[0];
         if (!pick) return [];
-        const raw = X.utils.sheet_to_json(wb.Sheets[pick], { header: 1, raw: true, defval: '', blankrows: false });
+        const ws = wb.Sheets[pick];
+        if (!ws || !ws['!ref']) return [];
+        const vn = window.TNTT.vn;
         const p2 = (n) => String(n).padStart(2, '0');
-        return raw.map(row => row.map(v => {
-            if (v instanceof Date) {
-                // SheetJS dựng Date theo giờ địa phương; bù 12 giờ để giây lẻ không lùi sang ngày trước
-                const d = new Date(v.getTime() + 12 * 3600 * 1000);
-                return p2(d.getDate()) + '/' + p2(d.getMonth() + 1) + '/' + d.getFullYear();
+        const date1904 = !!(wb.Workbook && wb.Workbook.WBProps && wb.Workbook.WBProps.date1904);
+        const bang = X.SSF.get_table ? X.SSF.get_table() : {};
+        // Định dạng ô có phải ngày/giờ không (z có thể là chuỗi định dạng hoặc mã định dạng dựng sẵn "14").
+        const laDinhDangNgay = (z) => {
+            if (z === undefined || z === null || z === '') return false;
+            const f = /^\d+$/.test(String(z)) ? (bang[Number(z)] || '') : String(z);
+            return f !== '' && X.SSF.is_date(f);
+        };
+        const rg = X.utils.decode_range(ws['!ref']);
+        const rows = [];
+        for (let r = rg.s.r; r <= rg.e.r; r++) {
+            const row = [];
+            let coGiaTri = false;
+            for (let c = rg.s.c; c <= rg.e.c; c++) {
+                const cell = ws[X.utils.encode_cell({ r: r, c: c })];
+                let v = '';
+                if (cell) {
+                    if (cell.t === 'n' && laDinhDangNgay(cell.z)) {
+                        const x = vn.fromExcel(cell.v, date1904);
+                        if (x) v = vn.fmtDate(x.ymd);                                  // dd/mm/yyyy
+                        else if (cell.v >= 0 && cell.v < 1) {                          // ô chỉ có giờ -> HH:mm
+                            const phut = Math.round(cell.v * 1440);
+                            v = p2(Math.floor(phut / 60) % 24) + ':' + p2(phut % 60);
+                        }
+                        else v = String(cell.v);
+                    } else if (cell.t === 'n') {
+                        v = String(cell.v);                                            // số thường -> chuỗi gọn
+                    } else if (cell.t === 'e') {
+                        v = '';
+                    } else {
+                        v = String(cell.v === null || cell.v === undefined ? '' : cell.v).trim();
+                    }
+                }
+                if (v !== '') coGiaTri = true;
+                row.push(v);
             }
-            if (typeof v === 'number') return String(v);
-            return String(v === null || v === undefined ? '' : v).trim();
-        }));
+            if (coGiaTri) rows.push(row);                                              // bỏ dòng trống hoàn toàn
+        }
+        return rows;
     },
 };
