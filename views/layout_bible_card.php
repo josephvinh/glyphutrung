@@ -53,7 +53,7 @@ function bibleCard() {
                 const stored = localStorage.getItem('dailyBibleVerse');
                 if (stored) {
                     const data = JSON.parse(stored);
-                    const today = new Date().toDateString();
+                    const today = window.TNTT.vn.today();
                     if (data.date === today && data.verse) {
                         this.verse = data.verse;
                         this.ref = data.ref || '';
@@ -73,7 +73,7 @@ function bibleCard() {
                     this.ref = data.ref || '';
                     try {
                         localStorage.setItem('dailyBibleVerse', JSON.stringify({
-                            date: new Date().toDateString(),
+                            date: window.TNTT.vn.today(),
                             verse: data.verse,
                             ref: data.ref || '',
                             ts: Date.now()
@@ -93,7 +93,7 @@ function bibleCard() {
                     this.ref = data.ref || '';
                     try {
                         localStorage.setItem('dailyBibleVerse', JSON.stringify({
-                            date: new Date().toDateString(),
+                            date: window.TNTT.vn.today(),
                             verse: data.verse,
                             ref: data.ref || '',
                             ts: Date.now()

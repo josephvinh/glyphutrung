@@ -314,14 +314,10 @@ window.TNTT.rewards = {
         }
     },
 
-    // Hạn lấy hiển thị kiểu 'HH:mm dd/mm/yyyy' cho dễ đọc tại quầy.
+    // Hạn lấy hiển thị 'dd/mm/yyyy HH:mm' (giờ VN) cho dễ đọc tại quầy.
     cfFormatExpiry(iso) {
         if (!iso) return '';
-        const d = new Date(String(iso).replace(' ', 'T'));
-        if (isNaN(d.getTime())) return String(iso);
-        return d.toLocaleString('vi-VN', {
-            hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric'
-        });
+        return window.TNTT.vn.fmtDateTime(iso);
     },
 
     // ---- Tiếng thành công/ lỗi (tái dùng WebAudio của qrscan.js) --------

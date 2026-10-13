@@ -149,7 +149,7 @@ window.TNTT.attendance = {
     },
 
     openAttendance() {
-        if (!this.attendanceDate) this.attendanceDate = this.toDateInput(new Date());
+        if (!this.attendanceDate) this.attendanceDate = this.vnToday();
         this.activeSession = null;
         this.attendanceSearch = '';
         this.changeModule('attendance');
@@ -160,7 +160,7 @@ window.TNTT.attendance = {
     programOccursOn(p, dateStr) {
         if (p.status !== 'kích hoạt') return false;
         if (p.type === 'chiến dịch') return p.eventDate === dateStr;
-        const dow = new Date(dateStr + 'T00:00:00').getDay();
+        const dow = this.vnDow(dateStr);
         const days = (p.daysOfWeek && p.daysOfWeek.length)
             ? p.daysOfWeek
             : (p.dayOfWeek === null || p.dayOfWeek === undefined ? [] : [p.dayOfWeek]);
@@ -217,11 +217,11 @@ window.TNTT.attendance = {
     //   - Hôm nay: so giờ hiện tại với giờ bắt đầu (nowTs cập nhật 30s/lần
     //     nên buổi tự hiện ra khi tới giờ, không cần tải lại trang).
     programStarted(p, dateStr) {
-        const today = this.toDateInput(new Date());
+        const today = this.vnToday();
         if (dateStr < today) return true;
         if (dateStr > today) return false;
         if (!p.startTime) return true;   // thiếu giờ bắt đầu -> không chặn
-        return this.nowTs >= new Date(dateStr + 'T' + p.startTime + ':00').getTime();
+        return this.nowTs >= this.vnParse(dateStr + ' ' + p.startTime);   // giờ buổi là giờ VN
     },
 
     // Buổi trong ngày thuộc phạm vi LỚP của mình (chưa xét giờ bắt đầu).
@@ -259,15 +259,11 @@ window.TNTT.attendance = {
 
     // Nhảy tới Chúa Nhật gần nhất (đa số chương trình rơi vào Chúa Nhật)
     goToNearestSunday() {
-        const d = new Date(this.attendanceDate + 'T00:00:00');
-        d.setDate(d.getDate() - d.getDay());
-        this.attendanceDate = this.toDateInput(d);
+        this.attendanceDate = this.vnAddDays(this.attendanceDate, -this.vnDow(this.attendanceDate));
     },
 
     shiftAttendanceDate(days) {
-        const d = new Date(this.attendanceDate + 'T00:00:00');
-        d.setDate(d.getDate() + days);
-        this.attendanceDate = this.toDateInput(d);
+        this.attendanceDate = this.vnAddDays(this.attendanceDate, days);
     },
 
     startSession(prog) {
@@ -321,7 +317,7 @@ window.TNTT.attendance = {
         if (!session) return false;
         const prog = this.programs.find(p => p.id === session.programId);
         if (!prog) return false;
-        return this.nowTs >= new Date(session.date + 'T' + this.cutoffOf(prog) + ':00').getTime();
+        return this.nowTs >= this.vnParse(session.date + ' ' + this.cutoffOf(prog));   // giờ chốt là giờ VN
     },
 
     get isPastCutoff() {
@@ -614,7 +610,7 @@ window.TNTT.attendance = {
     // trên icon Điểm danh (thay cho khối "Việc cần làm" ở Trang chủ).
     get attendanceTodoCount() {
         if (!this.canAccess('attendance') || this.isUnderMaintenance('attendance')) return 0;
-        const today = this.toDateInput(new Date());
+        const today = this.vnToday();
         let n = 0;
         // Chỉ nhắc những buổi thật sự mở được: đúng phạm vi lớp của mình +
         // đã tới giờ bắt đầu. Nếu không, chấm nhắc sẽ đòi làm buổi mà danh
@@ -656,7 +652,7 @@ window.TNTT.attendance = {
 
     // Open export Excel modal with default values
     openExportModal() {
-        const today = this.toDateInput(new Date());
+        const today = this.vnToday();
         // Default: from first day of month to today
         const firstOfMonth = today.substring(0, 8) + '01';
         this.exportForm = {

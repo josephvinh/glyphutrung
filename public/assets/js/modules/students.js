@@ -690,7 +690,7 @@ window.TNTT.students = {
         if (lop)       guide.push(['Lớp: ' + lop + (khoi ? '  ·  Khối: ' + khoi : '')]);
         if (this.year) guide.push(['Niên khoá: ' + this.year.name]);
         guide.push(
-            ['Xuất lúc: ' + this.formatDate(this.toDateInput(new Date()))],
+            ['Xuất lúc: ' + this.formatDate(this.vnToday())],
             [''],
             ['CÁCH DÙNG'],
             ['1. Mở sheet "Danh sách", điền mỗi em một dòng, ngay dưới hàng tiêu đề.'],
@@ -830,14 +830,8 @@ window.TNTT.students = {
     // Calculate age from birthDate
     calculateAge(birthDate) {
         if (!birthDate) return '—';
-        const birth = new Date(birthDate);
-        const today = new Date();
-        let age = today.getFullYear() - birth.getFullYear();
-        const monthDiff = today.getMonth() - birth.getMonth();
-        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-            age--;
-        }
-        return age;
+        const age = this.vnAge(birthDate);   // đến hôm nay theo giờ VN, tính trên chuỗi ngày (không qua Date)
+        return age === null ? '—' : age;
     },
 
     // ==========================================
@@ -882,7 +876,7 @@ window.TNTT.students = {
     },
 
     generatePdfListHtml(students) {
-        const today = new Date().toLocaleDateString('vi-VN');
+        const today = this.formatDate(this.vnToday());
         const year = window.TNTT?.currentYear?.name || 'Niên khoá hiện tại';
         const block = this.filterBlock || 'Tất cả các khối';
         const cls = this.filterClass || 'Tất cả các lớp';
@@ -893,7 +887,7 @@ window.TNTT.students = {
                 <td>${this.escapeHtml(s.code)}</td>
                 <td>${this.escapeHtml(s.holyName)} ${this.escapeHtml(s.name)}</td>
                 <td>${s.gender === 1 ? 'Nam' : 'Nữ'}</td>
-                <td>${s.birthDate ? new Date(s.birthDate).toLocaleDateString('vi-VN') : '-'}</td>
+                <td>${s.birthDate ? this.formatDate(s.birthDate) : '-'}</td>
                 <td>${this.escapeHtml(s.className || '-')}</td>
                 <td>${this.escapeHtml(s.status)}</td>
             </tr>
@@ -923,7 +917,7 @@ window.TNTT.students = {
     },
 
     generatePdfCardsHtml(students) {
-        const today = new Date().toLocaleDateString('vi-VN');
+        const today = this.formatDate(this.vnToday());
         const year = window.TNTT?.currentYear?.name || 'Niên khoá hiện tại';
 
         let cards = students.map(s => `
@@ -935,7 +929,7 @@ window.TNTT.students = {
                 <div class="card-body">
                     <p><strong>Lớp:</strong> ${this.escapeHtml(s.className || '-')}</p>
                     <p><strong>Giới tính:</strong> ${s.gender === 1 ? 'Nam' : 'Nữ'}</p>
-                    <p><strong>Ngày sinh:</strong> ${s.birthDate ? new Date(s.birthDate).toLocaleDateString('vi-VN') : '-'}</p>
+                    <p><strong>Ngày sinh:</strong> ${s.birthDate ? this.formatDate(s.birthDate) : '-'}</p>
                     <p><strong>Địa chỉ:</strong> ${this.escapeHtml(s.address || '-')}</p>
                     <p><strong>Cha:</strong> ${this.escapeHtml(s.fatherName || '-')} - ${this.escapeHtml(s.fatherPhone || '-')}</p>
                     <p><strong>Mẹ:</strong> ${this.escapeHtml(s.motherName || '-')} - ${this.escapeHtml(s.motherPhone || '-')}</p>
@@ -974,7 +968,7 @@ window.TNTT.students = {
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Danh sách thiếu nhi - ${new Date().toLocaleDateString('vi-VN')}</title>
+    <title>Danh sách thiếu nhi - ${this.formatDate(this.vnToday())}</title>
     <style>
         @page { margin: 15mm; size: A4; }
         * { box-sizing: border-box; margin: 0; padding: 0; }

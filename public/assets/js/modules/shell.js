@@ -90,12 +90,13 @@ window.TNTT.shell = {
         return value; // Giữ nguyên chuỗi sai để server báo lỗi
     },
 
+    // 'yyyy-mm-dd' (hoặc 'yyyy-mm-dd HH:mm...') -> 'dd/mm/yyyy'. Chuỗi thuần: không qua Date nên
+    // không lệch ngày theo múi giờ máy. Xem vntime.js.
     formatDate(dateStr) {
         if (!dateStr) return '';
-        const parts = dateStr.split('-');
-        if (parts.length !== 3) return dateStr;
-        return parts[2] + '/' + parts[1] + '/' + parts[0];
+        return window.TNTT.vn.fmtDate(dateStr);
     },
+
 
     // Cộng phút vào chuỗi 'HH:MM', tự cuộn qua nửa đêm nếu cần
     addMinutes(hhmm, minutes) {
@@ -106,18 +107,19 @@ window.TNTT.shell = {
         return p(Math.floor(total / 60)) + ':' + p(total % 60);
     },
 
+    // Giờ hiện tại 'HH:mm' theo GIỜ VIỆT NAM (không theo múi giờ của máy).
     currentTime() {
-        const d = new Date();
-        const p = n => String(n).padStart(2, '0');
-        return p(d.getHours()) + ':' + p(d.getMinutes());
+        return window.TNTT.vn.time();
     },
 
     // 'X phút trước' / 'X giờ trước' / v.v. cho notification center
     formatRelativeTime(dateStr) {
         if (!dateStr) return '';
-        const date = new Date(dateStr);
-        const now = new Date();
-        const diff = (now - date) / 1000;
+        // Chuỗi từ máy chủ ('yyyy-mm-dd HH:mm:ss') là GIỜ VN; hiểu theo múi giờ của máy sẽ lệch
+        // vài tiếng. Chuỗi ISO có múi giờ (…Z) thì để Date tự hiểu.
+        let ts = window.TNTT.vn.parse(dateStr);
+        if (isNaN(ts)) ts = new Date(dateStr).getTime();
+        const diff = (Date.now() - ts) / 1000;
 
         if (diff < 60) return 'Vừa xong';
         if (diff < 3600) return Math.floor(diff / 60) + ' phút trước';
@@ -140,8 +142,7 @@ window.TNTT.shell = {
     // 'yyyy-mm-dd' -> 'Chúa Nhật, 23/08/2026'
     formatFullDate(dateStr) {
         if (!dateStr) return '';
-        const d = new Date(dateStr + 'T00:00:00');
-        return this.weekdayLabel(d.getDay()) + ', ' + this.formatDate(dateStr);
+        return this.weekdayLabel(this.vnDow(dateStr)) + ', ' + this.formatDate(dateStr);
     },
 
     // Mô tả lịch của 1 chương trình để in lên thẻ
@@ -152,14 +153,12 @@ window.TNTT.shell = {
 
     // 'yyyy-mm-dd hh:mm' - dùng cho mốc thời gian nộp / duyệt đơn
     timestamp() {
-        const d = new Date();
-        return this.toDateInput(d) + ' ' + this.currentTime();
+        return this.vnNow();
     },
 
+    // 'dd-mm-yyyy' của hôm nay (giờ VN) — dùng đặt tên tệp
     todayStamp() {
-        const d = new Date();
-        const p = n => String(n).padStart(2, '0');
-        return p(d.getDate()) + '-' + p(d.getMonth() + 1) + '-' + d.getFullYear();
+        return this.vnToday().split('-').reverse().join('-');
     },
 
     // Kiểm tra module có đang active (bao gồm cả student_profile khi key là students)
@@ -212,9 +211,9 @@ window.TNTT.shell = {
         this.$watch('filterBlock', resetLimit);
         this.$watch('filterClass', resetLimit);
 
-        this.attendanceDate = this.toDateInput(new Date());
-        this.leaveDate = this.toDateInput(new Date());
-        this.statMonth = this.toDateInput(new Date()).slice(0, 7);
+        this.attendanceDate = this.vnToday();
+        this.leaveDate = this.vnToday();
+        this.statMonth = this.vnToday().slice(0, 7);
         this.syncLeaveProgram();
 
         // Đổi ngày xin phép thì chương trình đang chọn có thể không còn diễn ra

@@ -61,7 +61,7 @@ window.TNTT.student_profile = {
 
         // Đếm các buổi đã kết thúc mà em không có mặt và không có phép
         let unexcused = 0;
-        const now = new Date();
+        const hoNay = this.vnToday();   // giờ VN; toISOString/getDay theo máy từng làm lệch ngày
 
         this.programs.forEach(p => {
             if (p.status !== 'kích hoạt') return;
@@ -69,21 +69,17 @@ window.TNTT.student_profile = {
             // Với chương trình thường, kiểm tra các Chúa Nhật đã qua
             if (p.type !== 'chiến dịch') {
                 // Lấy ngày Chúa Nhật gần nhất hoặc trước đó
-                let date = new Date(now);
-                date.setDate(date.getDate() - date.getDay()); // Chúa Nhật gần nhất
+                let dateStr = this.vnAddDays(hoNay, -this.vnDow(hoNay)); // Chúa Nhật gần nhất
 
                 // Kiểm tra tối đa 26 Chúa Nhật (1 năm)
                 for (let i = 0; i < 26; i++) {
-                    const dateStr = date.toISOString().split('T')[0];
-                    const cutoff = new Date(date);
-                    cutoff.setHours(23, 59, 59);
-
-                    if (cutoff < now) {
+                    // Chỉ tính ngày đã qua hẳn (hết 23:59:59 của ngày đó theo giờ VN)
+                    if (dateStr < hoNay) {
                         if (!attendedDates.has(dateStr) && !excusedDates.has(dateStr)) {
                             unexcused++;
                         }
                     }
-                    date.setDate(date.getDate() - 7);
+                    dateStr = this.vnAddDays(dateStr, -7);
                 }
             }
         });

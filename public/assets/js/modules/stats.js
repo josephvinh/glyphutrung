@@ -21,7 +21,7 @@ window.TNTT.stats = {
     statCategory: 'chuyen_can',
 
     openStats(khongDoiMan = false) {
-        if (!this.statMonth) this.statMonth = this.toDateInput(new Date()).slice(0, 7);
+        if (!this.statMonth) this.statMonth = this.vnToday().slice(0, 7);
         if (!khongDoiMan) this.changeModule('stats');
     },
 

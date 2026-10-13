@@ -287,6 +287,11 @@ jobs:
           php tests/fixtures/e2e_attendance_seed.php
           node tests/e2e/attendance_regress.js
 
+      # "Hôm nay / bây giờ" luôn theo giờ Việt Nam dù máy đặt múi giờ nào (5 múi giờ, đồng hồ cố định).
+      # Cần tài khoản admin đã bỏ cờ must_change_pw (do e2e_attendance_seed.php ở bước trên).
+      - name: Giờ Việt Nam (trình duyệt nhiều múi giờ)
+        run: node tests/e2e/vntime.js
+
       - name: Tải ảnh lỗi + báo cáo
         if: always()
         uses: actions/upload-artifact@v4

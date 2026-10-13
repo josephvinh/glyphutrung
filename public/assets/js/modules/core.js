@@ -546,13 +546,13 @@ window.TNTT.core = {
 
     // ---- VIỆC CẦN LÀM ----
     get currentTerm() {
-        const today = this.toDateInput(new Date());
+        const today = this.vnToday();
         return this.terms.find(t => today >= t.from && today <= t.to) || this.terms[0];
     },
 
     get myTasks() {
         const tasks = [];
-        const today = this.toDateInput(new Date());
+        const today = this.vnToday();
         const scope = this.accessibleStudents.filter(s => s.status === 'đang sinh hoạt');
 
         const isMgr = ['admin', 'bdh', 'truong_khoi'].includes(this.user.role);
@@ -741,10 +741,9 @@ window.TNTT.core = {
     },
 
     dayLabel(dateStr) {
-        const today = this.toDateInput(new Date());
-        const y = new Date(); y.setDate(y.getDate() - 1);
+        const today = this.vnToday();
         if (dateStr === today) return 'Hôm nay';
-        if (dateStr === this.toDateInput(y)) return 'Hôm qua';
+        if (dateStr === this.vnAddDays(today, -1)) return 'Hôm qua';
         return this.formatFullDate(dateStr);
     },
 

@@ -145,7 +145,7 @@ window.TNTT.qrcard = {
 
         this.qrTheDangLam = true;
         const cards = ds.map(s => this.qrCardHtml(s)).join('');
-        const ngay = this.formatDate(this.toDateInput(new Date()));
+        const ngay = this.formatDate(this.vnToday());
         const html = '<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>Thẻ QR</title>'
             + '<style>@page{size:A4;margin:10mm}' + this.qrStyleCss()
             + 'h1{font-size:15px;margin:0 0 2px}.phu{font-size:11px;color:#64748b;margin:0 0 10px}'

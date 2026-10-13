@@ -25,7 +25,7 @@ window.TNTT.leave = {
     rejectForm: { requestId: null, reason: '' },
 
     openLeave() {
-        if (!this.leaveDate) this.leaveDate = this.toDateInput(new Date());
+        if (!this.leaveDate) this.leaveDate = this.vnToday();
         this.leaveSearch = '';
         this.syncLeaveProgram();
         this.changeModule('leave');
@@ -65,7 +65,7 @@ window.TNTT.leave = {
     // nếu không điểm chuyên cần cả năm sẽ không bao giờ chốt được.
     get isLeaveExpired() {
         if (!this.leaveDate) return false;
-        return this.leaveDate < this.toDateInput(new Date());
+        return this.leaveDate < this.vnToday();
     },
 
     // Luồng 1 (sớm): chọn được mọi em trong quyền.

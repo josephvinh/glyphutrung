@@ -108,6 +108,10 @@ Quy tắc đặc thù repo khi code:
   vào component Alpine `tnttApp`. **Không** đặt trùng tên thuộc tính/hàm giữa các
   mảnh — mảnh sau sẽ đè mảnh trước một cách âm thầm (xem bẫy #194). Thêm module
   mới: khai **một chỗ** ở `public/assets/asset_manifest.php`.
+- **Ngày giờ (JS):** "hôm nay / bây giờ" lấy từ `window.TNTT.vn` / `this.vnToday()` / `this.vnTime()`
+  (`modules/vntime.js`, giờ Việt Nam), **không** dùng `new Date().getHours()/getDate()/toLocale*()`,
+  `toDateInput(new Date())` hay `toISOString().slice()` (theo múi giờ máy, lệch ngày). Hiển thị ngày
+  `dd/mm/yyyy` bằng `this.formatDate()` / `this.vnFmtDateTime()`. `VnTimeUsageTest` chặn các kiểu cũ.
 - **Schema:** đổi cấu trúc DB qua `config/migrations/NNN_*.sql` (đánh số tăng).
   Seed dữ liệu khởi tạo (quyền, module) đặt trong `install.php` và **không dùng
   `INSERT IGNORE`** cho ràng buộc có thể thất bại thật (vd khóa ngoại) — xem lỗi
