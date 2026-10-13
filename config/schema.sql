@@ -737,3 +737,22 @@ CREATE TABLE IF NOT EXISTS gift_order_items (
     INDEX idx_gitem_order (order_id),
     INDEX idx_gitem_gift (gift_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+--  LỜI CHÚA MỖI NGÀY — GIỚI HẠN THEO IP
+--  api/bible.php?action=random chỉ trả một câu mỗi IP mỗi giờ, nên ghi
+--  lại câu đã trả. Giống hệt config/migrations/006_bible_tracking.sql:
+--  CSDL dựng bằng install.php trước đây THIẾU bảng này (chỉ migration 006
+--  tạo) nên thẻ "Lời Chúa" ở trang chủ nhận HTTP 500. cron_cleanup.php
+--  dọn dòng quá 30 ngày.
+-- ============================================================
+CREATE TABLE IF NOT EXISTS bible_daily (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    ip_address VARCHAR(45) NOT NULL COMMENT 'IPv4 hoặc IPv6',
+    verse_text TEXT NOT NULL COMMENT 'Nội dung câu Kinh Thánh',
+    verse_ref VARCHAR(100) NOT NULL COMMENT 'Tham chiếu vd: Ga 3:16',
+    verse_translation VARCHAR(50) DEFAULT 'vietnamese' COMMENT 'Bản dịch',
+    fetched_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_ip (ip_address),
+    INDEX idx_fetched_at (fetched_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
