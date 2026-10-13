@@ -18,7 +18,7 @@
             </div>
             <div>
                 <p class="text-sm font-black text-emerald-700">Đã chuyển lớp xong</p>
-                <p class="text-micro text-emerald-700" x-text="promoteDone ? 'Khối ' + promoteDone.block + ' · ' + promoteDone.at : ''"></p>
+                <p class="text-micro text-emerald-700" x-text="promoteDone ? 'Khối ' + promoteDone.block + ' · ' + vnFmtDateTime(promoteDone.at) : ''"></p>
             </div>
         </div>
         <div class="grid grid-cols-3 gap-3 text-center">
