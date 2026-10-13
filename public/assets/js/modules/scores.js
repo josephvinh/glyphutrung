@@ -191,6 +191,13 @@ window.TNTT.scores = {
         await this.loadData();
     },
 
+    // Xác nhận xóa bài với student info
+    confirmDeleteExam(student, type, examNum) {
+        const typeLabel = this.scoreTypes.find(t => t.code === type)?.label || type;
+        if (!confirm('Xóa bài ' + typeLabel + ' số ' + examNum + ' của ' + student.name + '?\nCác bài phía sau sẽ được đánh số lại.')) return;
+        this.deleteExam(student.id, type, examNum);
+    },
+
     // Cập nhật điểm
     setScore(studentId, type, raw, termId, examNum) {
         const t = Number(termId || this.scoreTermId);

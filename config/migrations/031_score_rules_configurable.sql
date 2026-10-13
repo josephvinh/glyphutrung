@@ -29,12 +29,10 @@ INSERT INTO scores_tmp
     SELECT id, term_id, student_id, type_code, value, updated_by, updated_at, 1 FROM scores;
 RENAME TABLE scores TO scores_old, scores_tmp TO scores;
 DROP TABLE IF EXISTS scores_old;
-ALTER TABLE scores
-    ADD CONSTRAINT fk_sc_term FOREIGN KEY (term_id) REFERENCES terms(id) ON DELETE CASCADE,
-    ADD CONSTRAINT fk_sc_student FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
-    ADD CONSTRAINT fk_sc_type FOREIGN KEY (type_code) REFERENCES score_types(code),
-    ADD CONSTRAINT fk_sc_by FOREIGN KEY (updated_by) REFERENCES members(id) ON DELETE SET NULL,
-    ADD CONSTRAINT chk_sc_value CHECK (value >= 0 AND value <= 10);
+-- FK đã tồn tại trên bảng cũ (fk_sc_student, fk_sc_type) nên chỉ cần đảm bảo
+-- bảng mới có exam_num; không cần thêm lại FK vì chúng vẫn còn trên bảng mới
+-- sau RENAME TABLE. Nếu muốn thêm CHECK constraint thì làm riêng:
+-- ALTER TABLE scores ADD CONSTRAINT chk_sc_value CHECK (value >= 0 AND value <= 10);
 
 -- 4. Tạo bảng score_rules
 CREATE TABLE IF NOT EXISTS score_rules (
