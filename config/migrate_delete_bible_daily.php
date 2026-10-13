@@ -2,13 +2,21 @@
 /**
  * Migration: Xóa table bible_daily
  *
- * Table này không còn cần thiết sau khi chuyển sang nguồn gospel-data.
- * Chạy: php config/migrate_delete_bible_daily.php
+ * LƯU Ý: public/api/bible.php (thẻ "Lời Chúa" trên dashboard) VẪN dùng bảng này để nhớ
+ * câu đã trao cho từng IP trong 1 giờ; thiếu bảng thì thẻ vẫn chạy nhưng mất bộ nhớ đó
+ * và ghi log mỗi lần gọi. Vì vậy script này KHÔNG xóa trừ khi truyền cờ --xac-nhan.
+ * Chạy: php config/migrate_delete_bible_daily.php --xac-nhan
  *
  * @see issue #229
  */
 
-require __DIR__ . '/_bootstrap.php';
+if (!in_array('--xac-nhan', $argv ?? [], true)) {
+    echo "Bỏ qua: bible_daily vẫn được public/api/bible.php dùng (thẻ Lời Chúa).\n";
+    echo "Muốn xóa thật, chạy lại với cờ --xac-nhan.\n";
+    exit(0);
+}
+
+require __DIR__ . '/db.php';
 
 echo "=== Migration: Xóa table bible_daily ===\n\n";
 

@@ -75,20 +75,40 @@ function get_fallback_verse(): array
 }
 
 /**
+ * Bảng bible_daily (config/migrations/006) chỉ để nhớ "IP này đã nhận câu nào trong 1 giờ qua".
+ * Thẻ Lời Chúa trên dashboard KHÔNG được hỏng chỉ vì bảng phụ này chưa có / đã bị xóa
+ * (host chưa chạy migration 006, hoặc từng chạy config/migrate_delete_bible_daily.php):
+ * thiếu bảng thì ghi log một dòng rồi vẫn trả câu ngẫu nhiên, chỉ mất phần nhớ theo IP.
+ * Lỗi khác (mất kết nối, sai cú pháp...) vẫn ném ra để không che lỗi thật.
+ */
+function bible_thieu_bang(Throwable $e): bool
+{
+    if (!$e instanceof PDOException) return false;
+    $thieu = ($e->errorInfo[0] ?? $e->getCode()) === '42S02' || (int) ($e->errorInfo[1] ?? 0) === 1146;
+    if ($thieu) error_log('[bible] thiếu bảng bible_daily, bỏ qua bộ nhớ theo IP (chạy migration 006)');
+    return $thieu;
+}
+
+/**
  * Kiểm tra rate limit: 1 lần/IP/giờ
  */
 function get_cached_verse(string $ip): ?array
 {
     $oneHourAgo = date('Y-m-d H:i:s', time() - 3600);
 
-    $row = db_one(
-        'SELECT verse_text, verse_ref, verse_translation, fetched_at
-           FROM bible_daily
-          WHERE ip_address = ? AND fetched_at > ?
-          ORDER BY fetched_at DESC
-          LIMIT 1',
-        [$ip, $oneHourAgo]
-    );
+    try {
+        $row = db_one(
+            'SELECT verse_text, verse_ref, verse_translation, fetched_at
+               FROM bible_daily
+              WHERE ip_address = ? AND fetched_at > ?
+              ORDER BY fetched_at DESC
+              LIMIT 1',
+            [$ip, $oneHourAgo]
+        );
+    } catch (PDOException $e) {
+        if (bible_thieu_bang($e)) return null;
+        throw $e;
+    }
 
     if (!$row) {
         return null;
@@ -108,11 +128,16 @@ function get_cached_verse(string $ip): ?array
  */
 function save_verse(string $ip, string $text, string $ref, string $translation = 'vietnamese'): int
 {
-    return db_insert(
-        'INSERT INTO bible_daily (ip_address, verse_text, verse_ref, verse_translation, fetched_at)
-         VALUES (?, ?, ?, ?, NOW())',
-        [$ip, $text, $ref, $translation]
-    );
+    try {
+        return db_insert(
+            'INSERT INTO bible_daily (ip_address, verse_text, verse_ref, verse_translation, fetched_at)
+             VALUES (?, ?, ?, ?, NOW())',
+            [$ip, $text, $ref, $translation]
+        );
+    } catch (PDOException $e) {
+        if (bible_thieu_bang($e)) return 0;
+        throw $e;
+    }
 }
 
 switch ($action) {
@@ -161,12 +186,17 @@ switch ($action) {
         // Chỉ admin mới xem được danh sách IP
         $me = require_permission('settings', 'view');
 
-        $rows = db_all(
-            'SELECT id, ip_address, verse_text, verse_ref, verse_translation, fetched_at
-               FROM bible_daily
-              ORDER BY fetched_at DESC
-              LIMIT 100'
-        );
+        try {
+            $rows = db_all(
+                'SELECT id, ip_address, verse_text, verse_ref, verse_translation, fetched_at
+                   FROM bible_daily
+                  ORDER BY fetched_at DESC
+                  LIMIT 100'
+            );
+        } catch (PDOException $e) {
+            if (!bible_thieu_bang($e)) throw $e;
+            $rows = [];
+        }
 
         json_out([
             'success' => true,
@@ -188,17 +218,20 @@ switch ($action) {
         // Chỉ admin mới xem được thống kê
         $me = require_permission('settings', 'view');
 
-        $totalRequests = (int) db_val('SELECT COUNT(*) FROM bible_daily');
-
-        $uniqueIps = (int) db_val('SELECT COUNT(DISTINCT ip_address) FROM bible_daily');
-
-        $todayStart = date('Y-m-d') . ' 00:00:00';
-        $todayUniqueIps = (int) db_val(
-            'SELECT COUNT(DISTINCT ip_address) FROM bible_daily WHERE fetched_at >= ?',
-            [$todayStart]
-        );
-
-        $lastRequest = db_val('SELECT MAX(fetched_at) FROM bible_daily');
+        try {
+            $totalRequests = (int) db_val('SELECT COUNT(*) FROM bible_daily');
+            $uniqueIps = (int) db_val('SELECT COUNT(DISTINCT ip_address) FROM bible_daily');
+            $todayStart = date('Y-m-d') . ' 00:00:00';
+            $todayUniqueIps = (int) db_val(
+                'SELECT COUNT(DISTINCT ip_address) FROM bible_daily WHERE fetched_at >= ?',
+                [$todayStart]
+            );
+            $lastRequest = db_val('SELECT MAX(fetched_at) FROM bible_daily');
+        } catch (PDOException $e) {
+            if (!bible_thieu_bang($e)) throw $e;
+            $totalRequests = $uniqueIps = $todayUniqueIps = 0;
+            $lastRequest = null;
+        }
 
         json_out([
             'success' => true,
