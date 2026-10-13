@@ -88,6 +88,24 @@ window.TNTT = window.TNTT || {};
             return m[3] + '/' + m[2] + '/' + m[1] + (m[4] !== undefined ? ' ' + m[4] + ':' + m[5] : '');
         },
 
+        /**
+         * 'yyyy-mm-dd' hoặc 'yyyy-mm-dd HH:mm[:ss]' -> { v: số ngày Excel, z: định dạng ô } để ghi ô NGÀY THẬT.
+         * Tính thẳng từ số (Date.UTC / 86400000 + 25569), không dựng Date theo múi giờ máy nên không lệch ngày.
+         * null nếu sai dạng, ngày không có thật, hoặc trước 1900 (Excel không biểu diễn được).
+         */
+        excel(str) {
+            const m = RE.exec(String(str || '').trim());
+            if (!m || +m[1] < 1900) return null;
+            const t = Date.UTC(+m[1], +m[2] - 1, +m[3]);
+            const ok = new Date(t);
+            if (ok.getUTCMonth() !== +m[2] - 1 || ok.getUTCDate() !== +m[3]) return null;
+            const coGio = m[4] !== undefined;
+            return {
+                v: t / 86400000 + 25569 + (coGio ? (+m[4] * 60 + +m[5]) / 1440 : 0),
+                z: coGio ? 'dd/mm/yyyy hh:mm' : 'dd/mm/yyyy'
+            };
+        },
+
         /** Tuổi tính đến hôm nay (giờ VN) của người sinh 'yyyy-mm-dd'; null nếu không hợp lệ. */
         age(birthYmd, todayYmd) {
             const b = RE.exec(String(birthYmd || ''));
