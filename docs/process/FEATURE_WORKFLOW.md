@@ -115,6 +115,8 @@ Quy tắc đặc thù repo khi code:
 - **Xuất Excel:** cột ngày là ô ngày THẬT hiện dd/mm/yyyy, không phải chuỗi chữ: truyền `{ d: 'yyyy-mm-dd' }`
   (hoặc `{ dt: 'yyyy-mm-dd HH:mm' }`) vào `rows` của `downloadXlsx`; máy chủ trả ô đó bằng `excel_date_cell()`
   trong `api/export.php`. Tên tệp dùng `dd-mm-yyyy`.
+- **Nhập Excel:** `readXlsxRows` đọc số ngày Excel rồi đổi bằng số học (`vn.fromExcel`), trả `dd/mm/yyyy`;
+  KHÔNG bật `cellDates` của SheetJS (dựng `Date` theo múi giờ máy, từng làm ô có giờ ≥ 12:00 nhảy sang ngày sau).
 - **Schema:** đổi cấu trúc DB qua `config/migrations/NNN_*.sql` (đánh số tăng).
   Seed dữ liệu khởi tạo (quyền, module) đặt trong `install.php` và **không dùng
   `INSERT IGNORE`** cho ràng buộc có thể thất bại thật (vd khóa ngoại) — xem lỗi

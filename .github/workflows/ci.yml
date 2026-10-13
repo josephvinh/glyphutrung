@@ -296,6 +296,10 @@ jobs:
       - name: Xuất Excel (ô ngày thật)
         run: node tests/e2e/excel_xuat.js
 
+      # Nhập Excel: ô ngày đọc ra đúng dd/mm/yyyy ở 7 múi giờ máy (không cần máy chủ/DB).
+      - name: Nhập Excel (ô ngày)
+        run: node tests/e2e/excel_nhap.js
+
       - name: Tải ảnh lỗi + báo cáo
         if: always()
         uses: actions/upload-artifact@v4
