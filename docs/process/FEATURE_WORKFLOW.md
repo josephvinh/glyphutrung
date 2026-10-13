@@ -112,6 +112,9 @@ Quy tắc đặc thù repo khi code:
   (`modules/vntime.js`, giờ Việt Nam), **không** dùng `new Date().getHours()/getDate()/toLocale*()`,
   `toDateInput(new Date())` hay `toISOString().slice()` (theo múi giờ máy, lệch ngày). Hiển thị ngày
   `dd/mm/yyyy` bằng `this.formatDate()` / `this.vnFmtDateTime()`. `VnTimeUsageTest` chặn các kiểu cũ.
+- **Xuất Excel:** cột ngày là ô ngày THẬT hiện dd/mm/yyyy, không phải chuỗi chữ: truyền `{ d: 'yyyy-mm-dd' }`
+  (hoặc `{ dt: 'yyyy-mm-dd HH:mm' }`) vào `rows` của `downloadXlsx`; máy chủ trả ô đó bằng `excel_date_cell()`
+  trong `api/export.php`. Tên tệp dùng `dd-mm-yyyy`.
 - **Schema:** đổi cấu trúc DB qua `config/migrations/NNN_*.sql` (đánh số tăng).
   Seed dữ liệu khởi tạo (quyền, module) đặt trong `install.php` và **không dùng
   `INSERT IGNORE`** cho ràng buộc có thể thất bại thật (vd khóa ngoại) — xem lỗi

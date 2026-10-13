@@ -118,7 +118,7 @@ switch ($action) {
         // Build attendance matrix
         json_out(['ok' => true,
             'sheet' => ['name' => 'Điểm danh', 'rows' => build_attendance_rows($students, $sessions, $year)],
-            'filename' => 'Bang_Diem_Danh_' . date('Y-m-d') . '.xlsx']);
+            'filename' => 'Bang_Diem_Danh_' . date('d-m-Y') . '.xlsx']);
 
     // -------------------------------------------------------------
     // EXPORT SCORES (xlsx)
@@ -167,7 +167,7 @@ switch ($action) {
 
         json_out(['ok' => true,
             'sheet' => ['name' => 'Bảng điểm', 'rows' => build_scores_rows($students, $scores, $scoreTypes)],
-            'filename' => 'Bang_Diem_' . preg_replace('/\s+/', '_', $term['name']) . '_' . date('Y-m-d') . '.xlsx']);
+            'filename' => 'Bang_Diem_' . preg_replace('/\s+/', '_', $term['name']) . '_' . date('d-m-Y') . '.xlsx']);
 
     // -------------------------------------------------------------
     // EXPORT ATTENDANCE DETAIL (xlsx)
@@ -316,7 +316,7 @@ switch ($action) {
             elseif ($r['status'] === 'vắng không phép') $statusLabel = 'Vắng mặt';
 
             $rows[] = [
-                'date'      => date('d/m/Y', strtotime($r['session_date'])),
+                'date'      => $r['session_date'],   // yyyy-mm-dd; trình duyệt ghi thành ô ngày thật (dd/mm/yyyy)
                 'code'      => $r['student_code'],
                 'name'      => $r['full_name'],
                 'class'     => $r['class_name'],
@@ -332,7 +332,7 @@ switch ($action) {
             $key = $lr['student_code'] . '|' . $lr['session_date'] . '|' . $lr['program_name'];
             if (!isset($attendedKeys[$key])) {
                 $rows[] = [
-                    'date'      => date('d/m/Y', strtotime($lr['session_date'])),
+                    'date'      => $lr['session_date'],
                     'code'      => $lr['student_code'],
                     'name'      => $lr['full_name'],
                     'class'     => $lr['class_name'],
@@ -346,9 +346,7 @@ switch ($action) {
 
         // Sort by date desc, then class, then code
         usort($rows, function($a, $b) {
-            $dateA = DateTime::createFromFormat('d/m/Y', $a['date']);
-            $dateB = DateTime::createFromFormat('d/m/Y', $b['date']);
-            $dateCmp = $dateB <=> $dateA; // desc
+            $dateCmp = strcmp($b['date'], $a['date']); // yyyy-mm-dd: so chuỗi = so ngày; giảm dần
             if ($dateCmp !== 0) return $dateCmp;
             $classCmp = strcmp($a['class'], $b['class']);
             if ($classCmp !== 0) return $classCmp;
@@ -366,7 +364,7 @@ switch ($action) {
                 $className = preg_replace('/\s+/', '_', $safeClassName) . '_';
             }
         }
-        $filename = 'Diem_Danh_' . $className . $fromDate . '_' . $toDate . '.xlsx';
+        $filename = 'Diem_Danh_' . $className . date('d-m-Y', strtotime($fromDate)) . '_' . date('d-m-Y', strtotime($toDate)) . '.xlsx';   // tên tệp: dd-mm-yyyy
 
         json_out(['ok' => true,
             'sheet' => ['name' => 'Điểm danh chi tiết', 'rows' => build_attendance_detail_rows($rows)],
@@ -479,7 +477,7 @@ function build_attendance_rows(array $students, array $sessions, array $year): a
         if ($s['session_date']) {
             // Thêm tên chương trình vào tiêu đề để phân biệt các buổi cùng ngày
             $shortName = mb_substr($s['name'] ?? 'CT', 0, 3);
-            $headers[] = $shortName . ' ' . date('d/m', strtotime($s['session_date']));
+            $headers[] = $shortName . ' ' . date('d/m/Y', strtotime($s['session_date']));   // dd/mm/yyyy
             $sessionCols[] = $s;
         }
     }
@@ -539,6 +537,15 @@ function build_scores_rows(array $students, array $scores, array $scoreTypes): a
     return $rows;
 }
 
+/**
+ * Ô NGÀY cho bảng xuất: máy chủ chỉ trả bảng dữ liệu, trình duyệt dựng .xlsx. Ô {"d":"yyyy-mm-dd"} được
+ * trình duyệt ghi thành ô ngày THẬT hiện dd/mm/yyyy (xlsx_io.js buildXlsxSheet). Rỗng/sai dạng thì trả chuỗi.
+ */
+function excel_date_cell(string $ymd)
+{
+    return preg_match('/\A\d{4}-\d{2}-\d{2}\z/', $ymd) ? ['d' => $ymd] : $ymd;
+}
+
 function build_attendance_detail_rows(array $rows): array
 {
     $out = [['STT', 'Mã số', 'Họ tên', 'Lớp', 'Ngày', 'Buổi', 'Trạng thái', 'Ghi chú', 'Người ghi']];
@@ -549,7 +556,7 @@ function build_attendance_detail_rows(array $rows): array
             (string) ($r['code'] ?? ''),
             (string) ($r['name'] ?? ''),
             (string) ($r['class'] ?? ''),
-            (string) ($r['date'] ?? ''),
+            excel_date_cell((string) ($r['date'] ?? '')),
             (string) ($r['program'] ?? ''),
             (string) ($r['status'] ?? ''),
             (string) ($r['note'] ?? ''),
