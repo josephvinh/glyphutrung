@@ -1103,6 +1103,10 @@ window.TNTT.core = {
         return this.user.role === 'admin';
     },
 
+    get isBdh() {
+        return this.user.role === 'bdh' || this.user.role === 'admin';
+    },
+
     // Danh xưng thực tế của đoàn: chỉ Giáo Lý Viên / Dự Bị. Các vai điều hành
     // (BĐH, Trưởng khối, Chủ nhiệm) VẪN là Giáo Lý Viên — đó là NHIỆM VỤ, không
     // phải danh xưng. Dùng ở chỗ giới thiệu bản thân cho đúng đời thực.
