@@ -102,9 +102,16 @@ window.TNTT.core = {
     primaryAssignment: window.TNTT.boot?.primaryAssignment || null,
 
     // Đổi tên thành initCore để tránh trùng với shell.init (#121)
-    initCore() {
+    async initCore() {
         if (typeof this.initOfflineAttendance === 'function') {
             this.initOfflineAttendance();
+        }
+        // Load rules điểm số (tuỳ chỉnh)
+        if (window.TNTT?.scores?.initScoreRules) {
+            window.TNTT.scores.initScoreRules();
+        }
+        if (window.TNTT?.scores?.initAttendanceConfig) {
+            window.TNTT.scores.initAttendanceConfig();
         }
     },
 
