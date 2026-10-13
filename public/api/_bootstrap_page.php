@@ -123,8 +123,28 @@ function page_bootstrap(array $me): array
             'passAttendance' => app_config('pass_attendance'),
         ],
         // Unread notification count - avoid extra API call on page load
-        'unreadNotifications' => (int) (db_one(
-            'SELECT COUNT(*) c FROM push_notifications WHERE member_id = ? AND is_read = 0',
-            [(int) $me['id']])['c'] ?? 0),
+        'unreadNotifications' => page_unread_notifications((int) $me['id']),
     ];
+}
+
+/**
+ * Số thông báo chưa đọc, để hiện chấm đỏ ngay lúc mở trang.
+ *
+ * Chỉ là phụ trợ: host chạy mã mới mà CHƯA chạy migration 030 thì bảng
+ * push_notifications chưa có, và truy vấn này làm sập cả trang sau đăng nhập
+ * (HTTP 500, trắng). Riêng lỗi "bảng chưa có" thì coi như 0 và ghi log để người
+ * triển khai thấy; mọi lỗi khác vẫn ném lên như cũ.
+ */
+function page_unread_notifications(int $memberId): int
+{
+    try {
+        return (int) (db_one(
+            'SELECT COUNT(*) c FROM push_notifications WHERE member_id = ? AND is_read = 0',
+            [$memberId])['c'] ?? 0);
+    } catch (PDOException $e) {
+        $chuaCoBang = ($e->errorInfo[1] ?? 0) === 1146 || ($e->errorInfo[0] ?? '') === '42S02';
+        if (!$chuaCoBang) throw $e;
+        error_log('page_bootstrap: bảng push_notifications chưa có — chạy config/migrations/030_push_notifications.sql');
+        return 0;
+    }
 }
