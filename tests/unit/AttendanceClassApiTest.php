@@ -444,4 +444,79 @@ class AttendanceClassApiTest extends TestCase
                 [$tA, $tB, $tC]);
         }
     }
+
+    /**
+     * Mục A review vòng 2: expected cũ đếm COUNT(DISTINCT session_date) GROUP
+     * BY student_id, program_id — nghĩa là em vắng hoàn toàn cho expected=0
+     * (và 100% rank A). Fix: expected đếm theo CHƯƠNG TRÌNH rồi áp cho
+     * mọi em; em vắng hoàn toàn vẫn hiện với percent = 0% và rank KĐ.
+     */
+    public function test_student_with_no_attendance_appears_with_zero_percent(): void
+    {
+        $year = current_year();
+        $term = db_one('SELECT id, start_date, end_date FROM terms WHERE id = ?', [$this->termId]);
+        $prog = db_one("SELECT id FROM programs WHERE count_for_attendance = 1 LIMIT 1");
+        if (!$year || !$term || !$prog) {
+            $this->markTestSkipped('Cần niên khoá + term có ngày + program count_for_attendance=1.');
+        }
+
+        // 1. Tạo 1 em nhưng KHÔNG có dòng attendances nào.
+        $codeV = 'V' . substr((string) time(), -5) . random_int(100, 999);
+        $studentV = db_insert(
+            "INSERT INTO students (code, full_name, gender) VALUES (?, 'Vang Hoan Toan', 1)",
+            [$codeV]
+        );
+        db_run("INSERT INTO enrollments (year_id, student_id, class_id, status) VALUES (?,?,?,?)",
+               [$this->yearId, $studentV, $this->classA, 'đang sinh hoạt']);
+
+        // 2. Tạo buổi điểm danh cho 1 EM KHÁC cùng lớp, cùng chương trình,
+        //    để tạo "expected > 0" cho cả lớp.
+        $codeP = 'P' . substr((string) time(), -5) . random_int(100, 999);
+        $studentP = db_insert(
+            "INSERT INTO students (code, full_name, gender) VALUES (?, 'Co Mat', 1)",
+            [$codeP]
+        );
+        db_run("INSERT INTO enrollments (year_id, student_id, class_id, status) VALUES (?,?,?,?)",
+               [$this->yearId, $studentP, $this->classA, 'đang sinh hoạt']);
+        db_run("INSERT INTO attendances (session_date, program_id, student_id, status, year_id)
+                VALUES (?, ?, ?, 'có mặt', ?)",
+            [$term['start_date'], $prog['id'], $studentP, $this->yearId]);
+
+        try {
+            $r = $this->http('GET',
+                '/api/attendance_class.php?term_id=' . $this->termId
+                . '&class_id=' . $this->classA);
+            $this->assertSame(200, $r['code'],
+                'Endpoint phải trả 200: ' . $r['raw']);
+
+            // Tìm em V (vắng hoàn toàn).
+            $foundV = null;
+            foreach ($r['json'] as $row) {
+                if ((int) ($row['student_id'] ?? 0) === $studentV) {
+                    $foundV = $row;
+                    break;
+                }
+            }
+            $this->assertNotNull($foundV,
+                'Em vắng hoàn toàn vẫn phải có mặt trong kết quả (không bị bỏ qua): ' . $r['raw']);
+
+            // percent = 0 vì không có buổi nào có mặt
+            $this->assertSame(0, (float) ($foundV['percent'] ?? -1),
+                'Em vắng hoàn toàn phải có percent = 0 (không phải 100% do expected=0): '
+                . $r['raw']);
+
+            // total_expected > 0 (vì em kia đã tạo buổi)
+            $this->assertGreaterThan(0, (int) ($foundV['total_expected'] ?? 0),
+                'total_expected phải > 0 (đếm theo chương trình, không phụ thuộc em): '
+                . $r['raw']);
+
+            // rank = KĐ vì 0% không khớp threshold nào
+            $this->assertSame('KĐ', $foundV['rank'] ?? null,
+                'Em vắng hoàn toàn phải xếp "KĐ": ' . $r['raw']);
+        } finally {
+            db_run("DELETE FROM attendances WHERE student_id IN (?, ?)", [$studentV, $studentP]);
+            db_run("DELETE FROM enrollments WHERE student_id IN (?, ?)", [$studentV, $studentP]);
+            db_run("DELETE FROM students WHERE id IN (?, ?)", [$studentV, $studentP]);
+        }
+    }
 }
