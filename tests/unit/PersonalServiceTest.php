@@ -149,6 +149,90 @@ class PersonalServiceTest extends TestCase
         $this->assertSame(0, (int) $manual['is_auto']);
     }
 
+    /**
+     * Có dòng nhập tay (is_auto = 0) cùng year_label với dải năm mà
+     * updateGlvYear sắp sinh ra → phải throw, liệt kê năm bị xung đột,
+     * và KHÔNG đổi members.glv_year (rollback toàn bộ).
+     */
+    public function test_updateGlvYear_throw_khi_co_dong_nhap_tay_trung_nam(): void
+    {
+        $mid = $this->makeMember('glv');
+        // Tạo dòng nhập tay cho năm nằm trong dải sinh tự động [2024..2026].
+        PersonalService::saveServiceHistory(
+            $mid,
+            ['year_label' => '2024-2025', 'role_code' => 'bdh', 'note' => 'làm BĐH năm đó'],
+            1
+        );
+
+        $thrown = null;
+        try {
+            PersonalService::updateGlvYear($mid, 2024, 1);
+        } catch (\Exception $e) {
+            $thrown = $e;
+        }
+        $this->assertNotNull($thrown, 'Phải throw khi có dòng nhập tay trùng năm.');
+        $this->assertStringContainsString('2024-2025', $thrown->getMessage(),
+            'Message phải liệt kê year_label bị xung đột.');
+
+        // members.glv_year phải KHÔNG đổi (vẫn null — rollback).
+        $m = db_one("SELECT glv_year FROM members WHERE id = ?", [$mid]);
+        $this->assertNull($m['glv_year'], 'glv_year phải giữ nguyên khi xung đột.');
+
+        // Dòng nhập tay phải còn nguyên.
+        $manual = $this->firstHistory($mid, '2024-2025');
+        $this->assertNotNull($manual, 'Dòng nhập tay phải còn nguyên.');
+        $this->assertSame(0, (int) $manual['is_auto']);
+        $this->assertSame('bdh', $manual['role_code']);
+
+        // Không được tạo dòng is_auto = 1 nào cho member này.
+        $autoRows = db_all(
+            "SELECT 1 FROM member_service_history WHERE member_id = ? AND is_auto = 1",
+            [$mid]
+        );
+        $this->assertEmpty($autoRows, 'Không được tạo dòng tự sinh khi xung đột.');
+    }
+
+    /**
+     * Nhiều dòng nhập tay cùng nằm trong dải → message phải liệt kê
+     * TẤT CẢ các năm xung đột (không chỉ năm đầu).
+     */
+    public function test_updateGlvYear_throw_liet_ke_tat_ca_nam_xung_dot(): void
+    {
+        $mid = $this->makeMember('glv');
+        // Hai dòng nhập tay nằm trong dải [2022..2026].
+        PersonalService::saveServiceHistory(
+            $mid,
+            ['year_label' => '2023-2024', 'role_code' => 'du_bi', 'note' => 'dự bị'],
+            1
+        );
+        PersonalService::saveServiceHistory(
+            $mid,
+            ['year_label' => '2025-2026', 'role_code' => 'truong_khoi', 'note' => 'trưởng khối'],
+            1
+        );
+
+        $thrown = null;
+        try {
+            PersonalService::updateGlvYear($mid, 2022, 1);
+        } catch (\Exception $e) {
+            $thrown = $e;
+        }
+        $this->assertNotNull($thrown, 'Phải throw khi có dòng nhập tay trùng năm.');
+        $msg = $thrown->getMessage();
+        $this->assertStringContainsString('2023-2024', $msg,
+            'Message phải liệt kê 2023-2024.');
+        $this->assertStringContainsString('2025-2026', $msg,
+            'Message phải liệt kê 2025-2026.');
+
+        // Cả hai dòng nhập tay phải còn nguyên.
+        $r1 = $this->firstHistory($mid, '2023-2024');
+        $r2 = $this->firstHistory($mid, '2025-2026');
+        $this->assertNotNull($r1);
+        $this->assertNotNull($r2);
+        $this->assertSame(0, (int) $r1['is_auto']);
+        $this->assertSame(0, (int) $r2['is_auto']);
+    }
+
     // =================================================================
     // Review Focus #3 — Auto-fill vs Manual history
     // =================================================================
