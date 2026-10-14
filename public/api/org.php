@@ -307,6 +307,7 @@ switch ($action) {
                 $in,
                 (int) $me['id']
             );
+            Cache::flush();
             json_ok(['ok' => true]);
         } catch (Exception $e) {
             json_fail($e->getMessage(), 400);
@@ -321,6 +322,7 @@ switch ($action) {
                 (int) ($in['member_id'] ?? 0),
                 (string) ($in['year_label'] ?? '')
             );
+            Cache::flush();
             json_ok(['ok' => true]);
         } catch (Exception $e) {
             json_fail($e->getMessage(), 400);
@@ -337,11 +339,11 @@ switch ($action) {
         // Validate glv_year nếu được cung cấp (không phải null = xoá).
         $glvYear = null;
         if (array_key_exists('glv_year', $in) && $in['glv_year'] !== null) {
-            $year = (int) $in['glv_year'];
-            if ($year < 1900 || $year > (int) date('Y')) {
+            $inputYear = (int) $in['glv_year'];
+            if ($inputYear < 1900 || $inputYear > (int) date('Y')) {
                 json_fail('Năm không hợp lệ', 400);
             }
-            $glvYear = $year;
+            $glvYear = $inputYear;
         }
         try {
             $result = PersonalService::updateGlvYear(
@@ -349,6 +351,7 @@ switch ($action) {
                 $glvYear,
                 (int) $me['id']
             );
+            Cache::flush();
             json_ok($result);
         } catch (Exception $e) {
             json_fail($e->getMessage(), 400);
@@ -362,6 +365,13 @@ switch ($action) {
         if (empty($in['member_id']) || empty($in['status'])) {
             json_fail('Thiếu thông tin bắt buộc', 400);
         }
+        $targetId = (int) $in['member_id'];
+        // Không cho BĐH đổi trạng thái tài khoản Quản trị.
+        $target = db_one('SELECT id, role_code FROM members WHERE id=?', [$targetId]);
+        if (!$target) json_fail('Không tìm thấy thành viên.', 404);
+        if ($target['role_code'] === 'admin') {
+            json_fail('Không thể thay đổi trạng thái tài khoản Quản trị.');
+        }
         // Bắt buộc ghi chú khi rời trạng thái "đang phục vụ" — lý do tạm
         // nghỉ/nghỉ hẳn cần được lưu lại để truy vết sau này.
         $note = isset($in['note']) ? (string) $in['note'] : null;
@@ -371,10 +381,11 @@ switch ($action) {
         }
         try {
             $result = PersonalService::changeMemberStatus(
-                (int) $in['member_id'],
+                $targetId,
                 (string) $in['status'],
                 $note
             );
+            Cache::flush();
             json_ok($result);
         } catch (Exception $e) {
             json_fail($e->getMessage(), 400);
