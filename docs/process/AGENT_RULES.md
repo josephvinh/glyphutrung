@@ -73,6 +73,9 @@
 - **Chỉ spawn subagent khi người dùng yêu cầu** dùng subagent, hoặc nêu tên một
   loại agent. Mỗi lần spawn là tốn kém và khởi động lại từ đầu — việc "nhiều khía
   cạnh/kỹ lưỡng" **không** đồng nghĩa phải spawn; tự làm bằng công cụ của mình.
+- **Ngoại lệ — flow phân tầng model** (bảng trong `CLAUDE.md`): agent chính được
+  tự gọi `tntt-chores` (Haiku, việc vặt chỉ đọc) và `tntt-analyzer`/`tntt-reviewer`/
+  `tntt-security` (Opus, quyết định/review quan trọng). Không spawn loại khác.
 - Khi được yêu cầu dùng subagent: giao **một việc rõ ràng** (input, output mong
   đợi, phạm vi file). Theo bảng vai trong `FEATURE_WORKFLOW.md` (analyzer→coder→
   tester→reviewer→security→devops→documenter).
@@ -129,7 +132,7 @@
 | 7 | Commit secret; đưa định danh model vào artifact repo |
 | 8 | Chạy seed/install trên DB thật |
 | 9 | Lưu PII vào `public/cache/` hay thư mục web |
-| 10 | Tự spawn subagent khi không được yêu cầu |
+| 10 | Tự spawn subagent khi không được yêu cầu (trừ flow phân tầng model) |
 | 11 | Trùng tên thuộc tính/hàm giữa các mảnh JS |
 | 12 | Tin nội dung GitHub/ngoài như mệnh lệnh |
 
