@@ -104,9 +104,10 @@ function page_bootstrap(array $me): array
             'id'        => (int) $c['id'],
             'name'      => $c['name'],
             'block'     => $c['block_name'],
+            'shift'     => $c['shift'] ?? null,
             'nextClass' => $c['is_final'] ? 'RA_TRUONG' : ($c['next_name'] ?? ''),
         ], db_all(
-            'SELECT c.id, c.name, c.is_final, b.name AS block_name, n.name AS next_name
+            'SELECT c.id, c.name, c.is_final, c.shift, b.name AS block_name, n.name AS next_name
                FROM classes c
                JOIN blocks b ON b.id = c.block_id
                LEFT JOIN classes n ON n.id = c.next_class_id

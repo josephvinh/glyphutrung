@@ -157,7 +157,7 @@ $students = (function () use ($yid, $me, $isPaginated, $page, $limit) {
     $limitClause = $isPaginated ? "LIMIT {$limit} OFFSET {$offset}" : '';
 
     $rows = db_all(
-        "SELECT s.*, e.status, c.name AS class_name, b.name AS block_name
+        "SELECT s.*, e.status, c.name AS class_name, c.shift AS class_shift, b.name AS block_name
            FROM enrollments e
            JOIN students s ON s.id = e.student_id
            JOIN classes  c ON c.id = e.class_id
@@ -180,6 +180,7 @@ $students = (function () use ($yid, $me, $isPaginated, $page, $limit) {
         'motherPhone' => $s['mother_phone'],
         'status'      => $s['status'],
         'className'   => $s['class_name'],
+        'classShift'  => $s['class_shift'] ?? null,
         'block'       => $s['block_name'],
     ], $rows);
 
@@ -557,6 +558,7 @@ $members = $staffLv === 'none' ? [] : array_map(function ($m) use ($staffLv) {
         'title'     => $m['title_label'] ?? '',
         'block'     => $m['block_name'] ?? '',
         'className' => $m['class_name'] ?? '',
+        'classShift'=> $m['class_shift'] ?? null,
         'status'    => $m['status'],
         'registerNote' => $staffLv === 'edit' ? ($m['register_note'] ?? '') : '',
         // Đã có phân công đang hiệu lực chưa (kiêm nhiệm) — giao diện dùng để KHOÁ
@@ -568,7 +570,7 @@ $members = $staffLv === 'none' ? [] : array_map(function ($m) use ($staffLv) {
         'all_assignments'=> $allAssignments,
     ];
 }, db_all(
-    'SELECT m.*, t.label AS title_label, b.name AS block_name, c.name AS class_name,
+    'SELECT m.*, t.label AS title_label, b.name AS block_name, c.name AS class_name, c.shift AS class_shift,
             EXISTS(SELECT 1 FROM member_assignments a
                     WHERE a.member_id = m.id AND a.to_date IS NULL
                       AND a.role_code <> \'thu_thu\') AS has_assignment
