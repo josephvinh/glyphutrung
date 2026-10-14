@@ -246,4 +246,89 @@ class AttendanceScoresApiTest extends TestCase
         $this->assertSame(403, $rForbidden['code'],
             'GLV KHÔNG được xem chuyên cần em lớp khác: ' . $rForbidden['raw']);
     }
+
+    /**
+     * Review mục 8: 'JOIN terms t ON t.year_id = a.year_id' trước đây đếm buổi
+     * của CẢ niên khoá, không lọc theo term.start_date/end_date. Bài test:
+     *   1. Tạo program FRESH (chưa có buổi nào trong kỳ), gắn vào term_programs.
+     *   2. Chèn 1 dòng điểm danh cho studentA với session_date NGOÀI khoảng
+     *      [start_date, end_date] của term.
+     *   3. Gọi endpoint.
+     *   4. Với program fresh này, expected phải = 0 (vì buổi ngoài kỳ KHÔNG
+     *      được tính). Nếu code lỗi cũ JOIN theo year, expected = 1.
+     *
+     * Bài test này xác minh: mọi buổi ngoài khoảng [start_date, end_date] đều
+     * bị bỏ — kể cả buổi trong CÙNG niên khoá. Response detail[] per-program
+     * chỉ chứa tổng đếm (không kèm session_date), nên không assert được per-row;
+     * cách gián tiếp ở trên (program fresh) là cách chính xác nhất có thể.
+     */
+    public function test_expected_sessions_filter_by_term_date_range(): void
+    {
+        $year = current_year();
+        $term = db_one('SELECT id, start_date, end_date FROM terms WHERE id = ?', [$this->termId]);
+        if (!$year || !$term) {
+            $this->markTestSkipped('Cần niên khoá hiện tại + 1 học kỳ.');
+        }
+        if (strtotime($term['start_date']) === false || strtotime($term['end_date']) === false) {
+            $this->markTestSkipped('term thiếu start_date/end_date hợp lệ.');
+        }
+
+        // Ngày NGOÀI khoảng học kỳ: lùi 1 năm so với start_date. Cùng year_id
+        // với cả niên khoá nên sẽ bị ĐẾM NHẦM nếu JOIN chỉ theo year_id.
+        $outside = date('Y-m-d', strtotime($term['start_date'] . ' -1 year'));
+
+        // 1. Tạo program fresh cho năm hiện tại, count_for_attendance=1.
+        $progName = 'TAS Outside ' . random_int(100000, 999999);
+        $progId = db_insert(
+            "INSERT INTO programs (year_id, name, type, status, count_for_attendance,
+                                   start_time, day_of_week, sort_order)
+             VALUES (?, ?, 'bắt buộc', 'kích hoạt', 1, '08:00:00', 0, 99)",
+            [$year['id'], $progName]
+        );
+        // Gắn program vào term_programs để endpoint liệt kê nó trong detail[].
+        db_run(
+            "INSERT INTO term_programs (term_id, program_id, is_active) VALUES (?, ?, 1)
+             ON DUPLICATE KEY UPDATE is_active = 1",
+            [$this->termId, $progId]
+        );
+
+        // 2. Chèn 1 dòng điểm danh NGOÀI khoảng học kỳ.
+        db_run(
+            "INSERT INTO attendances (session_date, program_id, student_id, status, year_id)
+             VALUES (?, ?, ?, 'có mặt', ?)",
+            [$outside, $progId, $this->studentIdA, $year['id']]
+        );
+
+        try {
+            $r = $this->http('GET',
+                '/api/attendance_scores.php?term_id=' . $this->termId
+                . '&student_id=' . $this->studentIdA);
+            $this->assertSame(200, $r['code'],
+                'Endpoint phải trả 200 khi có buổi ngoài khoảng ngày: ' . $r['raw']);
+            $this->assertArrayHasKey('detail', $r['json'] ?? [],
+                'Response phải có key "detail".');
+
+            // 3. Tìm program fresh trong detail[] và assert expected == 0.
+            $foundProg = null;
+            foreach (($r['json']['detail'] ?? []) as $d) {
+                if ((int) ($d['program_id'] ?? 0) === $progId) {
+                    $foundProg = $d;
+                    break;
+                }
+            }
+            $this->assertNotNull($foundProg,
+                'Program fresh phải xuất hiện trong detail[] (đã gắn term_programs). '
+                . 'Response: ' . $r['raw']);
+            $this->assertSame(0, (int) ($foundProg['expected'] ?? -1),
+                'Buổi NGOÀI khoảng [start_date, end_date] không được tính vào expected. '
+                . 'Nếu = 1 thì endpoint vẫn đang đếm cả niên khoá (lỗi JOIN theo year_id). '
+                . 'Response: ' . $r['raw']);
+        } finally {
+            // 4. Dọn dẹp: xoá attendance, term_programs, program theo đúng thứ tự FK.
+            db_run('DELETE FROM attendances WHERE student_id = ? AND session_date = ?',
+                [$this->studentIdA, $outside]);
+            db_run('DELETE FROM term_programs WHERE program_id = ?', [$progId]);
+            db_run('DELETE FROM programs WHERE id = ?', [$progId]);
+        }
+    }
 }

@@ -15,8 +15,8 @@ $studentId = (int) ($_GET['student_id'] ?? 0);
 if (!$termId) json_fail('Thiếu term_id.');
 if (!$studentId) json_fail('Thiếu student_id.');
 
-// Lấy term để biết năm học
-$term = db_one('SELECT year_id FROM terms WHERE id = ?', [$termId]);
+// Lấy term để biết năm học + khoảng ngày của học kỳ
+$term = db_one('SELECT id, year_id, start_date, end_date FROM terms WHERE id = ?', [$termId]);
 if (!$term) json_fail('Không tìm thấy học kỳ.', 404);
 
 // Phạm vi theo lớp: chỉ GLV của lớp đó (hoặc admin/BĐH/trưởng khối phụ
@@ -47,25 +47,32 @@ $totalLate = 0;
 $totalAbsent = 0;
 $detail = [];
 
+// Ghi nhận: vắng vẫn đếm theo buổi (dự_kiến − có_mặt − trễ), KHÔNG loại
+// trừ em vào giữa kỳ — tạm chấp nhận theo mô tả hiện tại, sẽ refine khi
+// có yêu cầu thực tế từ GLV (xem mục 8 review PR #285).
 foreach ($programs as $p) {
-    // Đếm buổi dự kiến (buổi đã điểm danh trong học kỳ)
+    // Đếm buổi dự kiến TRONG khoảng [term.start_date, term.end_date].
+    // Trước đây JOIN theo year_id đếm cả niên khoá → không đúng "theo học
+    // kỳ" như mô tả PR; fix mục 8 review PR #285.
     $expected = db_one('
         SELECT COUNT(DISTINCT a.session_date) as c
         FROM attendances a
-        JOIN terms t ON t.year_id = a.year_id
+        JOIN terms t ON t.id = ?
         WHERE a.program_id = ? AND t.id = ?
-    ', [$p['program_id'], $termId]);
+          AND a.session_date BETWEEN t.start_date AND t.end_date
+    ', [$termId, $p['program_id'], $termId]);
     $exp = (int) ($expected['c'] ?? 0);
 
-    // Đếm có mặt / đi trễ / vắng cho học sinh này
+    // Đếm có mặt / đi trễ cho học sinh này, cùng khoảng ngày của học kỳ.
     $stats = db_one("
         SELECT
             SUM(CASE WHEN a.status = 'có mặt' THEN 1 ELSE 0 END) as present,
             SUM(CASE WHEN a.status = 'đi trễ' THEN 1 ELSE 0 END) as late
         FROM attendances a
-        JOIN terms t ON t.year_id = a.year_id
+        JOIN terms t ON t.id = ?
         WHERE a.program_id = ? AND t.id = ? AND a.student_id = ?
-    ", [$p['program_id'], $termId, $studentId]);
+          AND a.session_date BETWEEN t.start_date AND t.end_date
+    ", [$termId, $p['program_id'], $termId, $studentId]);
 
     $pr = (int) ($stats['present'] ?? 0);
     $lt = (int) ($stats['late'] ?? 0);
