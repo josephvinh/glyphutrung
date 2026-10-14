@@ -105,14 +105,26 @@ if ($action === 'delete_exam') {
 
     $year = validate_score_access($me, $studentId, $termId);
 
-    // Xoá bài exam_num
-    db_run('DELETE FROM scores WHERE term_id=? AND student_id=? AND type_code=? AND exam_num=?',
-        [$termId, $studentId, $type, $examNum]);
+    $typeRow = db_one('SELECT max_exams FROM score_types WHERE code=?', [$type]);
+    if (!$typeRow) json_fail('Đầu điểm không hợp lệ.', 404);
+    if ($examNum < 1 || $examNum > (int) $typeRow['max_exams']) {
+        json_fail('Bài số ' . $examNum . ' vượt quá số bài tối đa (' . $typeRow['max_exams'] . ').');
+    }
 
-    // Renumber: giảm exam_num của các bài lớn hơn examNum đã xoá
-    db_run('UPDATE scores SET exam_num = exam_num - 1
-            WHERE term_id=? AND student_id=? AND type_code=? AND exam_num > ?',
-        [$termId, $studentId, $type, $examNum]);
+    // Bọc transaction để lỗi giữa DELETE và renumber UPDATE không làm lệch số bài.
+    $pdo = db();
+    $pdo->beginTransaction();
+    try {
+        db_run('DELETE FROM scores WHERE term_id=? AND student_id=? AND type_code=? AND exam_num=?',
+            [$termId, $studentId, $type, $examNum]);
+        db_run('UPDATE scores SET exam_num = exam_num - 1
+                WHERE term_id=? AND student_id=? AND type_code=? AND exam_num > ?',
+            [$termId, $studentId, $type, $examNum]);
+        $pdo->commit();
+    } catch (Throwable $e) {
+        $pdo->rollBack();
+        throw $e;
+    }
 
     Cache::flush();
     json_out(['ok' => true, 'renumbered' => true]);

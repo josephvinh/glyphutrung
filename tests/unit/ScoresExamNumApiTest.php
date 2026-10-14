@@ -369,4 +369,29 @@ class ScoresExamNumApiTest extends TestCase
             db_run("DELETE FROM students WHERE id = ?", [$studentBId]);
         }
     }
+
+    public function test_delete_exam_rejects_unknown_type(): void
+    {
+        $r = $this->http('POST', '/api/scores.php?action=delete_exam', [
+            'studentId' => $this->studentId,
+            'termId'    => $this->termId,
+            'type'      => 'khong_ton_tai',
+            'examNum'   => 1,
+        ]);
+        $this->assertSame(404, $r['code'],
+            'delete_exam với type không tồn tại phải 404: ' . $r['raw']);
+    }
+
+    public function test_delete_exam_rejects_exam_above_max(): void
+    {
+        // p45 max_exams=2; xoá examNum=5 phải 400.
+        $r = $this->http('POST', '/api/scores.php?action=delete_exam', [
+            'studentId' => $this->studentId,
+            'termId'    => $this->termId,
+            'type'      => 'p45',
+            'examNum'   => 5,
+        ]);
+        $this->assertSame(400, $r['code'],
+            'delete_exam với examNum > max_exams phải 400: ' . $r['raw']);
+    }
 }
