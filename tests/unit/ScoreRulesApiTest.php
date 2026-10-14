@@ -252,6 +252,30 @@ class ScoreRulesApiTest extends TestCase
      * Phân quyền: GLV thường (không có quyền scores.edit) → 403 khi POST rules
      * (mục 5 — bảo vệ luật cứng #6).
      */
+    public function test_post_rules_rejects_invalid_rank_thresholds_value(): void
+    {
+        $r = $this->http('POST', '/api/rules.php', [
+            'rule_key'   => 'rank_thresholds',
+            'rule_value' => json_encode(['gioi' => 12, 'kha' => 6.5]), // thiếu 'tb', 'yeu'; gioi > 10
+            'rule_label' => 'Ngưỡng xếp loại',
+            'rule_type'  => 'threshold',
+        ]);
+        $this->assertSame(400, $r['code'],
+            'rule_value không khớp schema phải 400: ' . $r['raw']);
+    }
+
+    public function test_post_rules_rejects_unknown_rule_key(): void
+    {
+        $r = $this->http('POST', '/api/rules.php', [
+            'rule_key'   => 'tu_dat_bi_mat',
+            'rule_value' => '{"x":1}',
+            'rule_label' => 'Tự đặt',
+            'rule_type'  => 'threshold',
+        ]);
+        $this->assertSame(400, $r['code'],
+            'rule_key không nằm trong whitelist phải 400: ' . $r['raw']);
+    }
+
     public function test_post_rules_rejects_non_admin(): void
     {
         $this->loginNonAdmin();

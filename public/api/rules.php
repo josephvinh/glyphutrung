@@ -20,6 +20,34 @@ function require_admin_or_bdh(): array {
     return $me;
 }
 
+// Whitelist + schema cho các rule đã biết. Mỗi rule_key có schema kiểm
+// JSON (đủ khoá, đúng kiểu, giá trị trong khoảng cho phép).
+$RULE_SCHEMAS = [
+    'rank_thresholds' => [
+        'type'  => 'threshold',
+        'shape' => function (array $v): ?string {
+            foreach (['gioi', 'kha', 'tb', 'yeu'] as $k) {
+                if (!isset($v[$k]) || !is_numeric($v[$k])) return "thiếu/không phải số: $k";
+                $n = (float) $v[$k];
+                if ($n < 0 || $n > 10) return "$k phải 0..10";
+            }
+            $vals = [(float)$v['gioi'], (float)$v['kha'], (float)$v['tb'], (float)$v['yeu']];
+            if ($vals[0] <= $vals[1] || $vals[1] <= $vals[2] || $vals[2] <= $vals[3]) {
+                return 'thứ tự phải gioi > kha > tb > yeu';
+            }
+            return null;
+        },
+    ],
+    'passing_min_avg' => [
+        'type'  => 'threshold',
+        'shape' => function (array $v): ?string {
+            if (!isset($v['min']) || !is_numeric($v['min'])) return 'thiếu/không phải số: min';
+            if ((float) $v['min'] < 0 || (float) $v['min'] > 10) return 'min phải 0..10';
+            return null;
+        },
+    ],
+];
+
 $me = $me ?? require_login();
 $action = $_SERVER['REQUEST_METHOD'];
 $type = $_GET['type'] ?? '';
@@ -44,8 +72,8 @@ if ($action === 'GET') {
     if ($type === 'attendance') {
         $thresholds = db_all('SELECT id, sort_order, label, min_percent, description
                               FROM attendance_thresholds ORDER BY sort_order DESC');
-        $rules = db_all("SELECT rule_key, rule_label, rule_type, rule_value, description
-                         FROM score_rules WHERE rule_key LIKE 'attendance_%'");
+        $rules = db_all('SELECT rule_key, rule_label, rule_type, rule_value, description
+                         FROM score_rules ORDER BY rule_key');
         $rulesMap = [];
         foreach ($rules as $r) {
             $rulesMap[$r['rule_key']] = $r;
@@ -67,8 +95,8 @@ if ($action === 'GET') {
             'attendance' => (static function() {
                 $thresholds = db_all('SELECT id, sort_order, label, min_percent, description
                                       FROM attendance_thresholds ORDER BY sort_order DESC');
-                $rules = db_all("SELECT rule_key, rule_label, rule_type, rule_value, description
-                                 FROM score_rules WHERE rule_key LIKE 'attendance_%'");
+                $rules = db_all('SELECT rule_key, rule_label, rule_type, rule_value, description
+                                 FROM score_rules ORDER BY rule_key');
                 $rulesMap = [];
                 foreach ($rules as $r) { $rulesMap[$r['rule_key']] = $r; }
                 return ['thresholds' => $thresholds, 'rules' => $rulesMap];
@@ -94,6 +122,24 @@ if ($action === 'POST') {
     $description = trim((string) ($in['description'] ?? ''));
 
     if ($ruleKey === '') json_fail('Thiếu rule_key.');
+
+    if (!isset($RULE_SCHEMAS[$ruleKey])) {
+        json_fail('rule_key không hợp lệ. Hỏi admin để thêm vào whitelist.', 400);
+    }
+    $schema = $RULE_SCHEMAS[$ruleKey];
+    if ($ruleType !== '' && $ruleType !== $schema['type']) {
+        json_fail("rule_type cho '$ruleKey' phải là '" . $schema['type'] . "'.", 400);
+    }
+    $decoded = is_string($ruleValue) ? json_decode($ruleValue, true) : (array) $ruleValue;
+    if (!is_array($decoded)) {
+        json_fail('rule_value phải là JSON object.', 400);
+    }
+    $err = ($schema['shape'])($decoded);
+    if ($err !== null) {
+        json_fail('rule_value không khớp schema: ' . $err, 400);
+    }
+    // Ép ruleType về đúng nếu caller không truyền
+    if ($ruleType === '') $ruleType = $schema['type'];
 
     // Encode JSON
     if (is_array($ruleValue)) {
