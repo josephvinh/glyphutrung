@@ -30,7 +30,7 @@ $me = $me ?? require_login();
 
 if ($action === 'GET' && $id === 0) {
     $thresholds = db_all('SELECT id, sort_order, label, min_percent, description
-                         FROM attendance_thresholds ORDER BY sort_order DESC');
+                         FROM attendance_thresholds ORDER BY min_percent DESC');
     json_out($thresholds);
 }
 
@@ -54,13 +54,24 @@ if ($action === 'POST') {
     $in = json_input();
 
     $label = trim((string) ($in['label'] ?? ''));
-    $minPercent = max(0, min(100, (float) ($in['min_percent'] ?? 0)));
+    $rawMin = $in['min_percent'] ?? null;
     $description = trim((string) ($in['description'] ?? ''));
 
     if ($label === '') json_fail('Thiếu nhãn.');
-    if ($minPercent < 0 || $minPercent > 100) json_fail('Ngưỡng phần trăm phải từ 0 đến 100.');
+    if (!is_numeric($rawMin)) json_fail('Ngưỡng phần trăm phải là số.');
+    $minPercent = (float) $rawMin;
+    if ($minPercent < 0 || $minPercent > 100) {
+        json_fail('Ngưỡng phần trăm phải từ 0 đến 100.');
+    }
 
-    // Lấy sort_order lớn nhất + 1 (để thứ tự đúng)
+    if (db_one('SELECT id FROM attendance_thresholds WHERE label = ?', [$label])) {
+        json_fail('Nhãn đã tồn tại.', 409);
+    }
+    if (db_one('SELECT id FROM attendance_thresholds WHERE min_percent = ?', [$minPercent])) {
+        json_fail('Ngưỡng phần trăm này đã có.', 409);
+    }
+
+    // sort_order = max + 1 (giữ logic cũ; query sort theo min_percent DESC ở GET)
     $maxOrder = (int) (db_one('SELECT MAX(sort_order) as m FROM attendance_thresholds')['m'] ?? 0);
 
     db_run('INSERT INTO attendance_thresholds (sort_order, label, min_percent, description)
@@ -87,10 +98,22 @@ if ($action === 'PUT' && $id > 0) {
     $in = json_input();
 
     $label = trim((string) ($in['label'] ?? $t['label']));
-    $minPercent = max(0, min(100, (float) ($in['min_percent'] ?? $t['min_percent'])));
+    $rawMin = $in['min_percent'] ?? $t['min_percent'];
     $description = trim((string) ($in['description'] ?? $t['description']));
 
     if ($label === '') json_fail('Nhãn không được trống.');
+    if (!is_numeric($rawMin)) json_fail('Ngưỡng phần trăm phải là số.');
+    $minPercent = (float) $rawMin;
+    if ($minPercent < 0 || $minPercent > 100) {
+        json_fail('Ngưỡng phần trăm phải từ 0 đến 100.');
+    }
+
+    $dup = db_one('SELECT id FROM attendance_thresholds WHERE label = ? AND id <> ?',
+        [$label, $id]);
+    if ($dup) json_fail('Nhãn đã tồn tại.', 409);
+    $dup2 = db_one('SELECT id FROM attendance_thresholds WHERE min_percent = ? AND id <> ?',
+        [$minPercent, $id]);
+    if ($dup2) json_fail('Ngưỡng phần trăm này đã có.', 409);
 
     db_run('UPDATE attendance_thresholds
             SET label = ?, min_percent = ?, description = ?

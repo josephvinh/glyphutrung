@@ -71,7 +71,7 @@ if ($action === 'GET') {
 
     if ($type === 'attendance') {
         $thresholds = db_all('SELECT id, sort_order, label, min_percent, description
-                              FROM attendance_thresholds ORDER BY sort_order DESC');
+                              FROM attendance_thresholds ORDER BY min_percent DESC');
         $rules = db_all('SELECT rule_key, rule_label, rule_type, rule_value, description
                          FROM score_rules ORDER BY rule_key');
         $rulesMap = [];
@@ -94,7 +94,7 @@ if ($action === 'GET') {
             })(),
             'attendance' => (static function() {
                 $thresholds = db_all('SELECT id, sort_order, label, min_percent, description
-                                      FROM attendance_thresholds ORDER BY sort_order DESC');
+                                      FROM attendance_thresholds ORDER BY min_percent DESC');
                 $rules = db_all('SELECT rule_key, rule_label, rule_type, rule_value, description
                                  FROM score_rules ORDER BY rule_key');
                 $rulesMap = [];
