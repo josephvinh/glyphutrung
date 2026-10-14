@@ -1185,6 +1185,15 @@ window.TNTT.core = {
 
     classes: [],   // máy chủ nạp qua loadData()
 
+    // Nhãn rút gọn ca học để gắn vào tên lớp ở các màn (điểm danh, danh sách,
+    // bxh…). Đặt trong core.js để MỌI module dùng chung qua `this.shiftSuffix()`.
+    shiftSuffix(shift) {
+        if (shift === 'sang')  return ' (Sáng)';
+        if (shift === 'chieu') return ' (Chiều)';
+        if (shift === 'toi')   return ' (Tối)';
+        return '';
+    },
+
     programClasses: {},   // programId -> [classId,...] (rỗng = toàn đoàn)
 
     stampSummaries: {},   // studentId -> {current_balance, held_balance, total_earned, current_streak, longest_streak, recent_transactions[]}
