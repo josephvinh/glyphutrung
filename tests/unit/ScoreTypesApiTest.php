@@ -286,4 +286,35 @@ class ScoreTypesApiTest extends TestCase
         $found = array_filter($list['json'], fn($t) => $t['code'] === $testCode);
         $this->assertCount(0, $found);
     }
+
+    public function test_post_short_label_truncates_utf8_correctly(): void
+    {
+        $testCode = 'u' . substr((string)time(), -5) . random_int(100, 999);
+        $this->cleanupCodes[] = $testCode;
+        // Label "Điểm học kỳ" — 3 ký tự đầu là "Điể" (UTF-8 nhiều byte)
+        $r = $this->http('POST', '/api/score_types.php', [
+            'code'   => $testCode,
+            'label'  => 'Điểm học kỳ dài',
+            'weight' => 1, 'max_exams' => 1,
+        ]);
+        $this->assertSame(200, $r['code']);
+        // short_label auto = substr(label, 0, 3) — bug: cắt giữa "Đi"
+        // Sau fix: mb_substr → "Điể"
+        $list = $this->http('GET', '/api/score_types.php');
+        $found = array_filter($list['json'], fn($t) => $t['code'] === $testCode);
+        $this->assertCount(1, $found);
+        $first = array_values($found)[0];
+        $this->assertEquals('Điể', $first['short_label'],
+            'short_label phải cắt UTF-8 đúng bằng mb_substr: ' . $first['short_label']);
+    }
+
+    public function test_put_rejects_invalid_code(): void
+    {
+        // Code có ký tự không hợp lệ (chữ hoa, dấu cách)
+        $r = $this->http('PUT', '/api/score_types.php?code=' . urlencode('BAD CODE'), [
+            'label' => 'X',
+        ]);
+        $this->assertSame(400, $r['code'],
+            'PUT code không hợp lệ phải 400: ' . $r['raw']);
+    }
 }

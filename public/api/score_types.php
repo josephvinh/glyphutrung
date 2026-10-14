@@ -78,7 +78,7 @@ if ($action === 'POST') {
 
     db_run('INSERT INTO score_types (code, label, short_label, weight, max_exams, category, sort_order)
             VALUES (?,?,?,?,?,?,?)',
-        [$code, $label, $short ?: substr($label, 0, 3), $weight, $maxExams, $category, $maxOrder + 1]);
+        [$code, $label, $short ?: mb_substr($label, 0, 3, 'UTF-8'), $weight, $maxExams, $category, $maxOrder + 1]);
 
     log_action('tao', 'score_types', 'Thêm loại đầu điểm: ' . $label, '');
     Cache::flush();
@@ -93,6 +93,10 @@ if ($action === 'POST') {
 if ($action === 'PUT' && $code !== '') {
     $me = require_admin_or_bdh();
 
+    if (!preg_match('/^[a-z][a-z0-9_]{0,15}$/', $code)) {
+        json_fail('Mã chỉ gồm chữ thường, số, gạch dưới, tối đa 16 ký tự, bắt đầu bằng chữ.');
+    }
+
     $type = db_one('SELECT * FROM score_types WHERE code = ?', [$code]);
     if (!$type) json_fail('Không tìm thấy loại đầu điểm.', 404);
 
@@ -100,19 +104,32 @@ if ($action === 'PUT' && $code !== '') {
 
     $label = trim((string) ($in['label'] ?? $type['label']));
     $short = trim((string) ($in['short_label'] ?? $type['short_label']));
-    if ($short === '') $short = substr($label, 0, 3);
+    if ($short === '') $short = mb_substr($label, 0, 3, 'UTF-8');
 
     $weight = max(1, (int) ($in['weight'] ?? $type['weight']));
     $maxExams = max(1, min(20, (int) ($in['max_exams'] ?? $type['max_exams'])));
     $category = in_array($in['category'] ?? '', ['homework', 'exam', 'attendance'], true)
         ? $in['category'] : $type['category'];
 
+    // Log thay đổi weight/max_exams/category vì ảnh hưởng đến cách tính điểm cũ
+    $changes = [];
+    if ((int) $weight !== (int) $type['weight']) {
+        $changes[] = "weight: {$type['weight']} → {$weight}";
+    }
+    if ((int) $maxExams !== (int) $type['max_exams']) {
+        $changes[] = "max_exams: {$type['max_exams']} → {$maxExams}";
+    }
+    if ($category !== $type['category']) {
+        $changes[] = "category: {$type['category']} → {$category}";
+    }
+
     db_run('UPDATE score_types
             SET label = ?, short_label = ?, weight = ?, max_exams = ?, category = ?
             WHERE code = ?',
         [$label, $short, $weight, $maxExams, $category, $code]);
 
-    log_action('sudung', 'score_types', 'Sửa loại đầu điểm: ' . $code, '');
+    $note = $changes ? implode('; ', $changes) : 'không đổi weight/max_exams/category';
+    log_action('sudung', 'score_types', 'Sửa loại đầu điểm: ' . $code, $note);
     Cache::flush();
 
     json_out(['ok' => true]);
@@ -124,6 +141,10 @@ if ($action === 'PUT' && $code !== '') {
 
 if ($action === 'DELETE' && $code !== '') {
     $me = require_admin_or_bdh();
+
+    if (!preg_match('/^[a-z][a-z0-9_]{0,15}$/', $code)) {
+        json_fail('Mã không hợp lệ.');
+    }
 
     $type = db_one('SELECT * FROM score_types WHERE code = ?', [$code]);
     if (!$type) json_fail('Không tìm thấy loại đầu điểm.', 404);
