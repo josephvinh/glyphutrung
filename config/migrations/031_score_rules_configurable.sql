@@ -23,7 +23,8 @@ ALTER TABLE scores ADD COLUMN IF NOT EXISTS exam_num TINYINT NOT NULL DEFAULT 1
 --    Có FK tham chiếu uq_score nên thêm index thay thế trước, sau đó mới drop — theo
 --    gợi ý của review #285 mục 2. MariaDB báo lỗi nếu DROP INDEX khi FK còn cần nó.
 --    IF EXISTS / IF NOT EXISTS để chạy lại an toàn (luật #5).
-ALTER TABLE scores ADD INDEX IF NOT EXISTS idx_sc_term_student (term_id, student_id);
+--    Lưu ý mục 🟡 4 review vòng 2: KHÔNG giữ idx_sc_term_student vì nó dư —
+--    uq_score (term_id, student_id, type_code, exam_num) đã có prefix đó.
 ALTER TABLE scores DROP INDEX IF EXISTS uq_score;
 ALTER TABLE scores ADD UNIQUE KEY uq_score (term_id, student_id, type_code, exam_num);
 -- Nếu muốn thêm CHECK constraint thì làm riêng:
