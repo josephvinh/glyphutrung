@@ -58,6 +58,10 @@ if ($action === 'set') {
     if (!db_one('SELECT code FROM score_types WHERE code=?', [$type])) {
         json_fail('Đầu điểm không hợp lệ.');
     }
+    $typeRow = db_one('SELECT max_exams FROM score_types WHERE code=?', [$type]);
+    if ($examNum < 1 || $examNum > (int) $typeRow['max_exams']) {
+        json_fail('Bài số ' . $examNum . ' vượt quá số bài tối đa (' . $typeRow['max_exams'] . ') của đầu điểm này.');
+    }
 
     // Ô trống = xoá điểm
     if ($raw === '') {
@@ -75,7 +79,7 @@ if ($action === 'set') {
 
     db_run('INSERT INTO scores (term_id, student_id, type_code, exam_num, value, updated_by)
             VALUES (?,?,?,?,?,?)
-            ON DUPLICATE KEY UPDATE value = VALUES(value), exam_num = VALUES(exam_num), updated_by = VALUES(updated_by)',
+            ON DUPLICATE KEY UPDATE value = VALUES(value), updated_by = VALUES(updated_by)',
         [$termId, $studentId, $type, $examNum, $value, $me['id']]);
 
     Cache::flush();

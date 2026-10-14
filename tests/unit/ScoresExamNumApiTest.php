@@ -254,11 +254,12 @@ class ScoresExamNumApiTest extends TestCase
 
     public function test_delete_exam_removes_score_and_renumbers(): void
     {
-        // Set 3 bài
+        // Set 3 bài — dùng 'mieng' (max_exams=3) thay vì 'p45' (max_exams=2)
+        // để không vượt quá giới hạn exam_num.
         foreach ([1 => 6.0, 2 => 7.5, 3 => 9.0] as $num => $val) {
             $this->http('POST', '/api/scores.php', [
                 'action' => 'set', 'studentId' => $this->studentId,
-                'termId' => $this->termId, 'type' => 'p45',
+                'termId' => $this->termId, 'type' => 'mieng',
                 'exam_num' => $num, 'value' => (string) $val,
             ]);
         }
@@ -267,18 +268,46 @@ class ScoresExamNumApiTest extends TestCase
         $r = $this->http('POST', '/api/scores.php?action=delete_exam', [
             'studentId' => $this->studentId,
             'termId'    => $this->termId,
-            'type'      => 'p45',
+            'type'      => 'mieng',
             'examNum'   => 1,
         ]);
         $this->assertSame(200, $r['code'], 'delete_exam phải thành công: ' . $r['raw']);
 
         // Bài exam_num=1 không còn; exam_num=2,3 đã renumber thành 1,2
-        $this->assertNull($this->scoreExists($this->studentId, $this->termId, 'p45', 3),
+        $this->assertNull($this->scoreExists($this->studentId, $this->termId, 'mieng', 3),
             'Bài 3 cũ phải được renumber xuống 2 (không còn exam_num=3)');
-        $this->assertEquals(7.5, $this->scoreExists($this->studentId, $this->termId, 'p45', 1),
+        $this->assertEquals(7.5, $this->scoreExists($this->studentId, $this->termId, 'mieng', 1),
             'Bài cũ exam_num=2 phải renumber thành 1 với giá trị 7.5');
-        $this->assertEquals(9.0, $this->scoreExists($this->studentId, $this->termId, 'p45', 2),
+        $this->assertEquals(9.0, $this->scoreExists($this->studentId, $this->termId, 'mieng', 2),
             'Bài cũ exam_num=3 phải renumber thành 2 với giá trị 9.0');
+    }
+
+    public function test_set_score_rejects_exam_num_above_max(): void
+    {
+        // 'p45' đã có max_exams = 2 (xem migration 031 dòng 78).
+        // exam_num = 5 phải bị 400.
+        $r = $this->http('POST', '/api/scores.php', [
+            'action' => 'set',
+            'studentId' => $this->studentId,
+            'termId'    => $this->termId,
+            'type'      => 'p45',
+            'exam_num'  => 5,
+            'value'     => '8.0',
+        ]);
+        $this->assertSame(400, $r['code'],
+            'exam_num > max_exams phải bị 400: ' . $r['raw']);
+
+        // Bài hợp lệ (exam_num=2) vẫn pass — khẳng định validation không quá tay.
+        $r2 = $this->http('POST', '/api/scores.php', [
+            'action' => 'set',
+            'studentId' => $this->studentId,
+            'termId'    => $this->termId,
+            'type'      => 'p45',
+            'exam_num'  => 2,
+            'value'     => '7.0',
+        ]);
+        $this->assertSame(200, $r2['code'],
+            'exam_num = max_exams vẫn OK: ' . $r2['raw']);
     }
 
     public function test_score_value_must_be_0_to_10(): void
