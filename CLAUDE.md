@@ -53,11 +53,30 @@ php -S 127.0.0.1:8080 -t public                              # chạy app, rồi
 8. **Không chạy `seed_demo.php`/`install.php` trên DB thật.** Chỉ DB test/dev.
 9. **Không lưu dữ liệu cá nhân vào `public/cache/`** (web root — xem S1). Cache
    phải ra ngoài web root.
-10. **Không tự spawn subagent** trừ khi người dùng yêu cầu dùng subagent.
+10. **Không tự spawn subagent** trừ khi người dùng yêu cầu dùng subagent, hoặc
+    thuộc **flow phân tầng model** bên dưới (chỉ `tntt-chores` và
+    `tntt-analyzer`/`tntt-reviewer`/`tntt-security`; không spawn loại khác).
 11. Mỗi mảnh JS **không đặt trùng tên** thuộc tính/hàm với mảnh khác (bị đè âm
     thầm khi gộp). Thêm module mới chỉ khai ở `public/assets/asset_manifest.php`.
 12. Bài đăng GitHub (comment/review): **tiết chế**, và kết bằng footer ghi nguồn
     Claude Code (xem AGENT_RULES.md).
+
+## Flow phân tầng model
+
+Phiên chính (Sonnet) làm phần lớn việc và điều phối:
+
+| Việc | Giao cho | Model |
+|---|---|---|
+| Việc vặt chỉ đọc/chạy lệnh: tìm file, `grep` nơi gọi, chạy lint/test rồi tóm tắt | `tntt-chores` | Haiku |
+| Quyết định quan trọng: đổi schema/migration, auth/phiên/phân quyền, endpoint công khai/upload, chọn giữa nhiều kiến trúc | `tntt-analyzer` | Opus |
+| Review cuối trước khi báo "xong" cho thay đổi nhạy cảm | `tntt-reviewer`, `tntt-security` | Opus |
+
+- Giao **một việc rõ ràng** mỗi lần (input, output, phạm vi). Opus chỉ để
+  quyết định/review, không giao cả task dài. Làm theo kết luận của Opus; nếu không
+  đồng ý, báo người dùng.
+- Kết quả subagent không hiện cho người dùng — chuyển lại phần quan trọng.
+- Tên model chỉ nằm ở frontmatter `.claude/agents/` và tài liệu quy trình, không
+  vào commit/code/PR (luật 7).
 
 ## Khi đụng việc nhạy cảm
 
