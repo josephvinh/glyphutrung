@@ -53,8 +53,8 @@ window.TNTT.personal = {
     get yearsOfService() {
         // null khi chưa lên GLV — giao diện hiển thị "—"
         if (!this.profile || !this.profile.glvYear) return null;
-        const now = new Date().getFullYear();
-        return Math.max(0, now - this.profile.glvYear);
+        const year = window.TNTT.vn.now().year;
+        return Math.max(0, year - this.profile.glvYear);
     },
 
     // is_auto = 0 (nhập tay) mới sửa/xoá được; is_auto = 1 khoá
@@ -82,14 +82,14 @@ window.TNTT.personal = {
             window.TNTT.toast.warning('Chỉ Ban Điều Hành mới đổi được năm lên GLV.');
             return;
         }
-        this.glvYearForm.year = this.profile?.glvYear ?? new Date().getFullYear();
+        this.glvYearForm.year = this.profile?.glvYear ?? window.TNTT.vn.now().year;
         this.showGlvModal = true;
     },
 
     async saveGlvYear() {
         if (!this.profile) return;
         const year = parseInt(this.glvYearForm.year, 10);
-        if (!year || year < 1900 || year > new Date().getFullYear()) {
+        if (!year || year < 1900 || year > window.TNTT.vn.now().year) {
             window.TNTT.toast.warning('Vui lòng nhập năm hợp lệ.');
             return;
         }
@@ -147,8 +147,8 @@ window.TNTT.personal = {
         }
         this.editingHistoryYear = null;
         // Gợi ý năm học kết thúc gần nhất
-        const now = new Date();
-        const y = now.getMonth() >= 8 ? now.getFullYear() : now.getFullYear() - 1;
+        const now = window.TNTT.vn.now();
+        const y = now.month >= 8 ? now.year : now.year - 1;
         this.historyForm = { yearLabel: y + '-' + (y + 1), roleCode: 'glv', note: '' };
     },
 
