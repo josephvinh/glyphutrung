@@ -1302,6 +1302,7 @@ select.tntt-select {
 .hover\:bg-slate-50\/50:hover { background-color: rgb(248 250 252 / 0.5); }
 .hover\:border-blue-500:hover { border-color: #3b82f6; }
 .hover\:text-rose-500:hover { color: #f43f5e; }
+.bg-amber-50\/50 { background-color: rgb(254 243 199 / 0.5); }
 @media (min-width: 768px) {
     .md\:block { display: block; }
     .md\:grid { display: grid; }

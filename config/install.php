@@ -362,6 +362,15 @@ if (!$year) {
             (?,?,?,?,1), (?,?,?,?,2)',
            [$yearId, 'Học kỳ I',  '2026-08-01', '2026-12-31',
             $yearId, 'Học kỳ II', '2027-01-01', '2027-05-31']);
+    // Seed term_programs cho 2 học kỳ mới — các program có count_for_attendance=1
+    // được tính chuyên cần. INSERT IGNORE bỏ qua nếu đã có (an toàn khi chạy lại).
+    db_run('
+        INSERT IGNORE INTO term_programs (term_id, program_id, is_active)
+        SELECT t.id, p.id, 1
+        FROM terms t
+        JOIN programs p ON p.count_for_attendance = 1
+        WHERE t.year_id = ?
+    ', [$yearId]);
     say('✓ Niên khoá 2026 - 2027 và 2 học kỳ');
 } else {
     $yearId = (int) $year['id'];

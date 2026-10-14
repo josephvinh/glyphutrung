@@ -501,7 +501,7 @@ class AttendanceClassApiTest extends TestCase
                 'Em vắng hoàn toàn vẫn phải có mặt trong kết quả (không bị bỏ qua): ' . $r['raw']);
 
             // percent = 0 vì không có buổi nào có mặt
-            $this->assertSame(0, (float) ($foundV['percent'] ?? -1),
+            $this->assertSame(0.0, (float) ($foundV['percent'] ?? -1),
                 'Em vắng hoàn toàn phải có percent = 0 (không phải 100% do expected=0): '
                 . $r['raw']);
 
