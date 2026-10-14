@@ -20,7 +20,7 @@ function require_admin_or_bdh(): array {
     return $me;
 }
 
-$me = $me ?? require_login();
+$me = require_login();
 
 // ============================================================
 // GET — lấy programs của 1 học kỳ
@@ -88,6 +88,14 @@ if ($action === 'POST') {
     $isActive = isset($in['is_active']) ? (bool) $in['is_active'] : true;
 
     if (!$termId || !$programId) json_fail('Thiếu term_id hoặc program_id.');
+
+    // Validate FK trước insert — 404 thay vì 500 do FK violation (#9 review #285).
+    if (!db_one('SELECT id FROM terms WHERE id = ?', [$termId])) {
+        json_fail('Học kỳ không tồn tại.', 404);
+    }
+    if (!db_one('SELECT id FROM programs WHERE id = ?', [$programId])) {
+        json_fail('Chương trình không tồn tại.', 404);
+    }
 
     // Upsert
     db_run('INSERT INTO term_programs (term_id, program_id, is_active)
