@@ -287,6 +287,11 @@ switch ($action) {
     // Task 2.3 — bọc lại PersonalService để frontend cá nhân dùng.
     // getServiceHistory: GET, mặc định lấy của chính $me; muốn xem của
     // người khác phải có 'org.edit' (BĐH/Quản trị).
+    //
+    // Lưu ý: 4 case ghi (saveServiceHistory / deleteServiceHistory /
+    // updateGlvYear / changeMemberStatus) chuyển sang `api/personal.php` —
+    // nơi duy nhất để tránh trùng/lệch (luật 4). Trả 410 Gone để frontend
+    // biết đã chuyển endpoint.
     case 'getServiceHistory':
         $memberId = (int) ($_GET['member_id'] ?? $me['id']);
         if ($memberId !== (int) $me['id'] && permission_of('org') !== 'edit') {
@@ -296,101 +301,10 @@ switch ($action) {
         break;
 
     case 'saveServiceHistory':
-        require_write();
-        require_permission('org', 'edit');
-        if (empty($in['member_id']) || empty($in['year_label'])) {
-            json_fail('Thiếu thông tin bắt buộc', 400);
-        }
-        try {
-            PersonalService::saveServiceHistory(
-                (int) $in['member_id'],
-                $in,
-                (int) $me['id']
-            );
-            Cache::flush();
-            json_ok(['ok' => true]);
-        } catch (Exception $e) {
-            json_fail($e->getMessage(), 400);
-        }
-        break;
-
     case 'deleteServiceHistory':
-        require_write();
-        require_permission('org', 'edit');
-        try {
-            PersonalService::deleteServiceHistory(
-                (int) ($in['member_id'] ?? 0),
-                (string) ($in['year_label'] ?? '')
-            );
-            Cache::flush();
-            json_ok(['ok' => true]);
-        } catch (Exception $e) {
-            json_fail($e->getMessage(), 400);
-        }
-        break;
-
-    // ================== HỒ SƠ CÁ NHÂN · NĂM LÊN GLV ===============
     case 'updateGlvYear':
-        require_write();
-        require_permission('org', 'edit');
-        if (empty($in['member_id'])) {
-            json_fail('Thiếu member_id', 400);
-        }
-        // Validate glv_year nếu được cung cấp (không phải null = xoá).
-        $glvYear = null;
-        if (array_key_exists('glv_year', $in) && $in['glv_year'] !== null) {
-            $inputYear = (int) $in['glv_year'];
-            if ($inputYear < 1900 || $inputYear > (int) date('Y')) {
-                json_fail('Năm không hợp lệ', 400);
-            }
-            $glvYear = $inputYear;
-        }
-        try {
-            $result = PersonalService::updateGlvYear(
-                (int) $in['member_id'],
-                $glvYear,
-                (int) $me['id']
-            );
-            Cache::flush();
-            json_ok($result);
-        } catch (Exception $e) {
-            json_fail($e->getMessage(), 400);
-        }
-        break;
-
-    // ================== HỒ SƠ CÁ NHÂN · TRẠNG THÁI =================
     case 'changeMemberStatus':
-        require_write();
-        require_permission('org', 'edit');
-        if (empty($in['member_id']) || empty($in['status'])) {
-            json_fail('Thiếu thông tin bắt buộc', 400);
-        }
-        $targetId = (int) $in['member_id'];
-        // Không cho BĐH đổi trạng thái tài khoản Quản trị.
-        $target = db_one('SELECT id, role_code FROM members WHERE id=?', [$targetId]);
-        if (!$target) json_fail('Không tìm thấy thành viên.', 404);
-        if ($target['role_code'] === 'admin') {
-            json_fail('Không thể thay đổi trạng thái tài khoản Quản trị.');
-        }
-        // Bắt buộc ghi chú khi rời trạng thái "đang phục vụ" — lý do tạm
-        // nghỉ/nghỉ hẳn cần được lưu lại để truy vết sau này.
-        $note = isset($in['note']) ? (string) $in['note'] : null;
-        if (in_array($in['status'], ['tạm nghỉ', 'đã nghỉ'], true)
-            && ($note === null || trim($note) === '')) {
-            json_fail('Vui lòng nhập ghi chú khi thay đổi trạng thái', 400);
-        }
-        try {
-            $result = PersonalService::changeMemberStatus(
-                $targetId,
-                (string) $in['status'],
-                $note
-            );
-            Cache::flush();
-            json_ok($result);
-        } catch (Exception $e) {
-            json_fail($e->getMessage(), 400);
-        }
-        break;
+        json_fail('Action "' . $action . '" đã chuyển sang api/personal.php.', 410);
 
     // -------------------------------------------------------------
     default:

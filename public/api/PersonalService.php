@@ -21,6 +21,12 @@ require_once __DIR__ . '/../../config/db.php';
 
 class PersonalService
 {
+    /** Lấy niên khoá hiện tại (is_current=1), hoặc null nếu chưa có. */
+    private static function currentSchoolYear(): ?array
+    {
+        return db_one("SELECT * FROM school_years WHERE is_current = 1 LIMIT 1");
+    }
+
     // =================================================================
     // SERVICE HISTORY
     // =================================================================
@@ -64,6 +70,17 @@ class PersonalService
         $yearLabel = (string) ($data['year_label'] ?? '');
         if ($yearLabel === '') {
             throw new Exception('Thiếu năm học cho dòng lịch sử.');
+        }
+        // Backend phải validate (defense in depth — frontend cũng check ở
+        // personal.js nhưng API có thể bị gọi từ nơi khác).
+        if (!preg_match('/^\d{4}-\d{4}$/', $yearLabel)) {
+            throw new Exception('Năm học phải có dạng YYYY-YYYY (ví dụ 2024-2025).');
+        }
+        // Bắt buộc năm sau = năm trước + 1 (ví dụ 2024-2025) để khớp
+        // định dạng lưu ở school_years; tránh người dùng nhập "2024-2030".
+        $parts = explode('-', $yearLabel);
+        if ((int) $parts[1] !== (int) $parts[0] + 1) {
+            throw new Exception('Năm học phải có dạng YYYY-(YYYY+1), ví dụ 2024-2025.');
         }
 
         $existing = db_one(
@@ -131,7 +148,7 @@ class PersonalService
 
     /**
      * Cập nhật năm lên GLV (members.glv_year) và tái dựng các dòng lịch sử
-     * tự động từ năm đó tới năm học hiện tại.
+     * tự động từ năm đó tới năm hiện tại.
      *
      * Dùng năm học HIỆN TẠI (is_current=1) thay vì date('Y') để tránh
      * tháng 1-8 sinh dòng cho năm học chưa bắt đầu.
@@ -143,6 +160,9 @@ class PersonalService
      *     N..currentYear. Năm đầu (N) ghi note 'Năm đầu làm GLV'.
      *   - Mỗi năm tra cứu phân công thật qua getAssignmentForYear() để
      *     lấy role/block/class; nếu không có thì mặc định role = 'glv'.
+     *
+     * Bọc trong transaction để lỗi giữa chừng rollback toàn bộ — test
+     * "rollback" mới có ý nghĩa thật.
      *
      * @throws Exception Nếu dải năm bị tái dựng có dòng is_auto = 0.
      */
@@ -158,64 +178,72 @@ class PersonalService
             // Bảo toàn dữ liệu nhập tay: nếu trong dải năm [N..hiện tại] đã
             // có dòng is_auto = 0, BÁO LỖI và KHÔNG đụng đến members.glv_year
             // cũng như các dòng lịch sử — user phải xoá tay trước rồi chạy lại.
-            $currentYearId = self::currentSchoolYearId();
-            $currentYearName = $currentYearId ? self::schoolYearNameFromId($currentYearId) : null;
-            if ($currentYearName) {
-                $currentYear = (int) explode(' - ', $currentYearName)[0];
-                $conflicts = db_all(
-                    "SELECT year_label FROM member_service_history
-                      WHERE member_id = ?
-                        AND is_auto = 0
-                        AND year_label BETWEEN ? AND ?
-                      ORDER BY year_label",
-                    [
-                        $memberId,
-                        self::yearLabelFromYear($glvYear),
-                        self::yearLabelFromYear($currentYear),
-                    ]
+            // Dùng niên khoá hiện tại (is_current=1) thay vì date('Y') để
+            // tháng 1–8 không sinh dòng cho năm học chưa bắt đầu.
+            $currentSchoolYear = self::currentSchoolYear();
+            $currentYear = $currentSchoolYear
+                ? (int) explode(' - ', $currentSchoolYear['name'])[0]
+                : (int) date('Y');
+            $conflicts = db_all(
+                "SELECT year_label FROM member_service_history
+                  WHERE member_id = ?
+                    AND is_auto = 0
+                    AND year_label BETWEEN ? AND ?
+                  ORDER BY year_label",
+                [
+                    $memberId,
+                    self::yearLabelFromYear($glvYear),
+                    self::yearLabelFromYear($currentYear),
+                ]
+            );
+            if (!empty($conflicts)) {
+                $labels = array_column($conflicts, 'year_label');
+                throw new Exception(
+                    'Không thể tái dựng: các năm sau đã có dòng nhập tay '
+                    . '(cần xóa trước khi đặt năm GLV): '
+                    . implode(', ', $labels) . '.'
                 );
-                if (!empty($conflicts)) {
-                    $labels = array_column($conflicts, 'year_label');
-                    throw new Exception(
-                        'Không thể tái dựng: các năm sau đã có dòng nhập tay '
-                        . '(cần xóa trước khi đặt năm GLV): '
-                        . implode(', ', $labels) . '.'
-                    );
-                }
             }
 
             // Không có xung đột → cập nhật glv_year, dọn dòng tự sinh cũ,
             // rồi tái dựng dải [glvYear..currentYear] với is_auto = 1.
-            db_run(
-                "UPDATE members SET glv_year = ? WHERE id = ?",
-                [$glvYear, $memberId]
-            );
-            db_run(
-                "DELETE FROM member_service_history
-                  WHERE member_id = ? AND is_auto = 1",
-                [$memberId]
-            );
-
-            $genYear = $currentYear ?? (int) date('Y');
-            for ($year = $glvYear; $year <= $genYear; $year++) {
-                $assignment = self::getAssignmentForYear($memberId, $year);
-                $note = ($year === $glvYear) ? 'Năm đầu làm GLV' : null;
-
+            // Bọc trong transaction để lỗi giữa chừng rollback toàn bộ.
+            db()->beginTransaction();
+            try {
                 db_run(
-                    "INSERT INTO member_service_history
-                         (member_id, year_label, role_code, block_id, class_id,
-                          is_auto, note, created_by)
-                     VALUES (?,?,?,?,?, 1, ?, ?)",
-                    [
-                        $memberId,
-                        self::yearLabelFromYear($year),
-                        $assignment['role_code'] ?? 'glv',
-                        $assignment['block_id']  ?? null,
-                        $assignment['class_id']  ?? null,
-                        $note,
-                        $updatedBy,
-                    ]
+                    "UPDATE members SET glv_year = ? WHERE id = ?",
+                    [$glvYear, $memberId]
                 );
+                db_run(
+                    "DELETE FROM member_service_history
+                      WHERE member_id = ? AND is_auto = 1",
+                    [$memberId]
+                );
+
+                for ($year = $glvYear; $year <= $currentYear; $year++) {
+                    $assignment = self::getAssignmentForYear($memberId, $year);
+                    $note = ($year === $glvYear) ? 'Năm đầu làm GLV' : null;
+
+                    db_run(
+                        "INSERT INTO member_service_history
+                             (member_id, year_label, role_code, block_id, class_id,
+                              is_auto, note, created_by)
+                         VALUES (?,?,?,?,?, 1, ?, ?)",
+                        [
+                            $memberId,
+                            self::yearLabelFromYear($year),
+                            $assignment['role_code'] ?? 'glv',
+                            $assignment['block_id']  ?? null,
+                            $assignment['class_id']  ?? null,
+                            $note,
+                            $updatedBy,
+                        ]
+                    );
+                }
+                db()->commit();
+            } catch (Throwable $e) {
+                db()->rollBack();
+                throw $e;
             }
         } else {
             // null = xoá sạch các dòng tự sinh để history chỉ còn dòng nhập tay.
@@ -233,39 +261,21 @@ class PersonalService
         return ['ok' => true, 'glv_year' => $glvYear];
     }
 
-    private static function currentSchoolYearId(): ?int
-    {
-        $row = db_one("SELECT id FROM school_years WHERE is_current = 1 LIMIT 1");
-        return $row ? (int) $row['id'] : null;
-    }
-
-    private static function schoolYearNameFromId(int $id): ?string
-    {
-        $row = db_one("SELECT name FROM school_years WHERE id = ?", [$id]);
-        return $row ? $row['name'] : null;
-    }
-
     /**
      * Tra cứu phân công thật của thành viên trong một năm học cụ thể.
      *
-     * QUAN TRỌNG về định dạng:
-     *   - school_years.name có dạng "2024 - 2025" (CÓ KHOẢNG TRẮNG).
-     *   - member_service_history.year_label lưu "2024-2025" (KHÔNG khoảng trắng).
-     *   - Dùng school_year_name = "N - N+1" để tìm school_year_id, rồi JOIN
-     *     theo school_year_id (chính xác, không phụ thuộc định dạng chuỗi).
-     *
-     * QUAN TRỌNG về điều kiện chồng lấn:
-     *   - Phân công KÉO DÀI (from_date = 2022, to_date = NULL) phải áp dụng
-     *     cho mọi năm học kể từ khi bắt đầu.
-     *   - Điều kiện cũ: from >= N-09-01 AND to <= N+1-08-31 → SAI, loại
-     *     phân công bắt đầu TRƯỚC năm học. Đúng: phân công phủ năm học.
-     *   - Đúng: from_date <= N+1-08-31 AND (to_date IS NULL OR to_date >= N-09-01).
+     * BƯỚC QUAN TRỌNG: bảng school_years.name CÓ KHOẢNG TRẮNG quanh dấu gạch
+     * ngang — "2024 - 2025" — KHÁC với member_service_history.year_label
+     * lưu "2024-2025". Hai bảng dùng HAI ĐỊNH DẠNG KHÁC NHAU; truy vấn
+     * WHERE name = ? phải nộp chuỗi CÓ KHOẢNG TRẮNG, nếu không sẽ trượt
+     * sang NULL và mất toàn bộ history.
      *
      * @return array{role_code:string,block_id:?int,class_id:?int}|null
      */
     private static function getAssignmentForYear(int $memberId, int $year): ?array
     {
         $schoolYearName = "{$year} - " . ($year + 1);
+
         $row = db_one(
             "SELECT id FROM school_years WHERE name = ?",
             [$schoolYearName]
@@ -273,20 +283,22 @@ class PersonalService
         if (!$row) {
             return null;
         }
-        $schoolYearId = (int) $row['id'];
 
-        // Phân công chồng lấn năm học: bắt đầu trước/sau khi năm kết thúc
-        // VÀ kết thúc sau/khi năm bắt đầu. Lấy phân công primary trước.
+        // Khoảng hoạt động của một phân công trong năm học: từ 01/09 đến 31/08
+        // năm sau. Assignment bắt đầu TRƯỚC 01/09 (phép gán đầu năm) nhưng vẫn
+        // đang hiệu lực → dùng giao khoảng: bắt đầu <= cuối năm VÀ (kết thúc
+        // NULL hoặc >= đầu năm). Lấy phân công primary trước.
+        // Lưu ý: bảng member_assignments hiện không có school_year_id, nên
+        // lọc theo tên năm học thông qua từ khoá date chồng khoảng.
         return db_one(
             "SELECT ma.role_code, ma.block_id, ma.class_id
                FROM member_assignments ma
               WHERE ma.member_id = ?
-                AND ma.school_year_id = ?
                 AND ma.from_date <= CONCAT(?, '-08-31')
                 AND (ma.to_date IS NULL OR ma.to_date >= CONCAT(?, '-09-01'))
               ORDER BY ma.is_primary DESC
               LIMIT 1",
-            [$memberId, $schoolYearId, $year, $year]
+            [$memberId, $year, $year]
         );
     }
 
@@ -321,8 +333,9 @@ class PersonalService
      * tránh thêm cột mới — đã có sẵn cho "chờ duyệt" và phù hợp để chứa
      * lý do "tạm nghỉ thai sản" / "đã nghỉ vì chuyển công tác").
      *
-     * NOTE: không ghi đè register_note nếu không có note mới (giữ lại
-     * lời nhắn đăng ký / lý do nghỉ trước đó).
+     * Chỉ ghi đè register_note khi $note !== null để tránh mất lời nhắn
+     * đăng ký ban đầu nếu case gọi truyền note=null (giữ tương thích
+     * ngược với personal.php).
      *
      * @throws Exception Nếu $newStatus không thuộc ba giá trị hợp lệ
      */
@@ -332,13 +345,6 @@ class PersonalService
             throw new Exception('Trạng thái không hợp lệ.');
         }
 
-        $member = db_one("SELECT id, register_note FROM members WHERE id = ?", [$memberId]);
-        if (!$member) {
-            throw new Exception('Không tìm thấy thành viên.');
-        }
-
-        // Chỉ ghi đè register_note khi có note mới (giữ lại lý do cũ nếu
-        // người dùng không nhập gì — tránh mất lời nhắn đăng ký).
         if ($note !== null) {
             db_run(
                 "UPDATE members SET status = ?, register_note = ? WHERE id = ?",
