@@ -168,12 +168,9 @@ $migrations = [
     "ALTER TABLE members ADD COLUMN glv_year INT NULL",
     "CREATE TABLE IF NOT EXISTS member_service_history (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        member_id INT NULL,
-        member_holy_name VARCHAR(64) NULL,
-        member_full_name VARCHAR(128) NULL,
+        member_id INT NOT NULL,
         year_label VARCHAR(20) NOT NULL,
         role_code VARCHAR(24) NULL,
-        role_label VARCHAR(64) NULL,
         block_id INT NULL,
         class_id INT NULL,
         is_auto TINYINT(1) NOT NULL DEFAULT 0,
@@ -183,47 +180,9 @@ $migrations = [
         UNIQUE KEY uk_member_year (member_id, year_label),
         INDEX idx_history_member (member_id),
         INDEX idx_history_year (year_label),
-        INDEX idx_history_auto (is_auto),
-        CONSTRAINT fk_msh_member   FOREIGN KEY (member_id)  REFERENCES members(id) ON DELETE SET NULL,
-        CONSTRAINT fk_msh_block    FOREIGN KEY (block_id)   REFERENCES blocks(id)  ON DELETE SET NULL,
-        CONSTRAINT fk_msh_class    FOREIGN KEY (class_id)   REFERENCES classes(id) ON DELETE SET NULL,
-        CONSTRAINT fk_msh_role     FOREIGN KEY (role_code)  REFERENCES roles(code)  ON DELETE RESTRICT,
-        CONSTRAINT fk_msh_creator  FOREIGN KEY (created_by) REFERENCES members(id)  ON DELETE SET NULL
+        INDEX idx_history_auto (is_auto)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
-    // Vòng 3: bổ sung 3 cột snapshot cho CSDL cũ (idempotent nhờ catch ở dưới)
-    "ALTER TABLE member_service_history ADD COLUMN member_holy_name VARCHAR(64) NULL",
-    "ALTER TABLE member_service_history ADD COLUMN member_full_name VARCHAR(128) NULL",
-    "ALTER TABLE member_service_history ADD COLUMN role_label VARCHAR(64) NULL",
-    "ALTER TABLE member_service_history MODIFY COLUMN member_id INT NULL",
 ];
-// Migration 031: Quy tắc điểm tuỳ chỉnh
-$migration031 = __DIR__ . '/migrations/031_score_rules_configurable.sql';
-if (file_exists($migration031)) {
-    $mig031 = file_get_contents($migration031);
-    $mig031 = preg_replace('/^\s*--.*$/m', '', $mig031);
-    $mig031Parts = array_filter(array_map('trim', explode(';', $mig031)), fn($s) => $s !== '');
-    foreach ($mig031Parts as $stmt) {
-        if ($stmt === '') continue;
-        try {
-            $kq = $pdo->query($stmt);
-            if ($kq !== false) $kq->closeCursor();
-        } catch (PDOException $e) {
-            $msg = strtolower($e->getMessage());
-            $benign = ['duplicate column name', 'already exists', 'duplicate key name',
-                       'duplicate foreign key', 'duplicate check constraint'];
-            $ok = false;
-            foreach ($benign as $b) {
-                if (str_contains($msg, $b)) { $ok = true; break; }
-            }
-            if (!$ok) {
-                say('LỖI migration 031: ' . $e->getMessage());
-                say('Câu lệnh: ' . substr($stmt, 0, 120) . '...');
-                exit(1);
-            }
-        }
-    }
-    say('✓ Migration 031: Quy tắc điểm tuỳ chỉnh');
-}
 // PR-4: Notification Center - chạy migration 030 (tạo push_notifications + cột notification_id)
 $migration030 = __DIR__ . '/migrations/030_push_notifications.sql';
 if (file_exists($migration030)) {
@@ -394,17 +353,15 @@ foreach (['gifts', 'rewards'] as $mod) {
 }
 say('✓ Module: ' . count($modules) . ' · Phân quyền: ' . (count($perms) * count($roleOrder) + 2));
 
-// --- Đầu điểm (với category và max_exams) ---
+// --- Đầu điểm ---
 $scoreTypes = [
-    ['mieng',  'Miệng',   'M',  1, 3, 'homework', 1],
-    ['p15',    '15 phút', '15', 1, 4, 'homework', 2],
-    ['p45',    '1 tiết',  '1T', 2, 2, 'homework', 3],
-    ['giuaky', 'Giữa kỳ', 'GK', 2, 1, 'exam',     4],
-    ['cuoiky', 'Cuối kỳ', 'CK', 3, 1, 'exam',     5],
+    ['mieng',  'Miệng',   'M',  1, 1],
+    ['p15',    '15 phút', '15', 1, 2],
+    ['giuaky', 'Giữa kỳ', 'GK', 2, 3],
+    ['cuoiky', 'Cuối kỳ', 'CK', 3, 4],
 ];
 foreach ($scoreTypes as $s) {
-    db_run('INSERT IGNORE INTO score_types (code, label, short_label, weight, max_exams, category, sort_order)
-            VALUES (?,?,?,?,?,?,?)', $s);
+    db_run('INSERT IGNORE INTO score_types (code, label, short_label, weight, sort_order) VALUES (?,?,?,?,?)', $s);
 }
 say('✓ Đầu điểm: ' . count($scoreTypes));
 
@@ -417,10 +374,6 @@ if (!$year) {
             (?,?,?,?,1), (?,?,?,?,2)',
            [$yearId, 'Học kỳ I',  '2026-08-01', '2026-12-31',
             $yearId, 'Học kỳ II', '2027-01-01', '2027-05-31']);
-    // term_programs KHÔNG seed ở đây — endpoint chuyên cần dùng LEFT JOIN
-    // với COALESCE(is_active, 1): chưa có dòng = đang bật. Tránh seed sai
-    // thứ tự (programs chưa có lúc chạy) và lệch year_id giữa các năm
-    // (mục 🔴 1, 🔴 2 review vòng 5 PR #285).
     say('✓ Niên khoá 2026 - 2027 và 2 học kỳ');
 } else {
     $yearId = (int) $year['id'];

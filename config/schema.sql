@@ -177,29 +177,21 @@ CREATE TABLE IF NOT EXISTS member_assignments (
 --  year_label) chống trùng một năm một người.
 -- =====================================================================
 CREATE TABLE IF NOT EXISTS member_service_history (
-    id              INT AUTO_INCREMENT PRIMARY KEY,
-    member_id       INT          NULL     COMMENT 'FK members.id, ON DELETE SET NULL — giữ lịch sử khi xoá thành viên',
-    member_holy_name VARCHAR(64)  NULL     COMMENT 'Snapshot: tên thánh tại thời điểm ghi dòng',
-    member_full_name VARCHAR(128) NULL     COMMENT 'Snapshot: họ tên tại thời điểm ghi dòng',
-    year_label      VARCHAR(20)  NOT NULL COMMENT 'VD: 2024-2025',
-    role_code       VARCHAR(24)  NULL     COMMENT 'Vai trò trong năm đó',
-    role_label      VARCHAR(64)  NULL     COMMENT 'Snapshot: nhãn vai (denormalize từ roles.label)',
-    block_id        INT          NULL     COMMENT 'Khối được phân công',
-    class_id        INT          NULL     COMMENT 'Lớp được phân công',
-    is_auto         TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '1=tự động tạo, 0=nhập tay',
-    note            VARCHAR(255) NULL     COMMENT 'Ghi chú thêm',
-    created_at      TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
-    created_by      INT          NULL     COMMENT 'Ai tạo',
+    id         INT AUTO_INCREMENT PRIMARY KEY,
+    member_id  INT          NOT NULL,
+    year_label VARCHAR(20)  NOT NULL COMMENT 'VD: 2024-2025',
+    role_code  VARCHAR(24)  NULL     COMMENT 'Vai trò trong năm đó',
+    block_id   INT          NULL     COMMENT 'Khối được phân công',
+    class_id   INT          NULL     COMMENT 'Lớp được phân công',
+    is_auto    TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '1=tự động tạo, 0=nhập tay',
+    note       VARCHAR(255) NULL     COMMENT 'Ghi chú thêm',
+    created_at TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    created_by INT          NULL     COMMENT 'Ai tạo',
 
     UNIQUE KEY uk_member_year (member_id, year_label),
     INDEX idx_history_member (member_id),
     INDEX idx_history_year (year_label),
-    INDEX idx_history_auto (is_auto),
-    CONSTRAINT fk_msh_member   FOREIGN KEY (member_id)  REFERENCES members(id) ON DELETE SET NULL,
-    CONSTRAINT fk_msh_block    FOREIGN KEY (block_id)   REFERENCES blocks(id)  ON DELETE SET NULL,
-    CONSTRAINT fk_msh_class    FOREIGN KEY (class_id)   REFERENCES classes(id) ON DELETE SET NULL,
-    CONSTRAINT fk_msh_role     FOREIGN KEY (role_code)  REFERENCES roles(code)  ON DELETE RESTRICT,
-    CONSTRAINT fk_msh_creator  FOREIGN KEY (created_by) REFERENCES members(id)  ON DELETE SET NULL
+    INDEX idx_history_auto (is_auto)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================================================
