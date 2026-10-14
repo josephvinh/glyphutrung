@@ -113,6 +113,17 @@ switch ($action) {
                         VALUES (?,?,?,?,1), (?,?,?,?,2)',
                        [$yid, 'Học kỳ I',  $start,   $mid,
                         $yid, 'Học kỳ II', $midNext, $end]);
+
+                // Seed term_programs cho 2 học kỳ mới — các program có count_for_attendance=1
+                // được tính chuyên cần mặc định. INSERT IGNORE bỏ qua nếu đã có.
+                db_run('
+                    INSERT IGNORE INTO term_programs (term_id, program_id, is_active)
+                    SELECT t.id, p.id, 1
+                    FROM terms t
+                    JOIN programs p ON p.count_for_attendance = 1
+                    WHERE t.year_id = ?
+                ', [$yid]);
+
                 return $yid;
             });
         } catch (\Throwable $e) {

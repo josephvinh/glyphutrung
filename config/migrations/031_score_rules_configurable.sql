@@ -18,15 +18,25 @@ ALTER TABLE score_types ADD COLUMN IF NOT EXISTS max_exams TINYINT NOT NULL DEFA
 ALTER TABLE scores ADD COLUMN IF NOT EXISTS exam_num TINYINT NOT NULL DEFAULT 1
     COMMENT 'Số thứ tự bài KT trong loại (1, 2, 3...)';
 
--- 3. Cập nhật unique key của scores: (term_id, student_id, type_code) → (term_id, student_id, type_code, exam_num)
---    ALTER tại chỗ (bỏ CREATE TABLE LIKE + RENAME cũ vì làm mất FK + không idempotent).
---    Có FK tham chiếu uq_score nên thêm index thay thế trước, sau đó mới drop — theo
---    gợi ý của review #285 mục 2. MariaDB báo lỗi nếu DROP INDEX khi FK còn cần nó.
---    IF EXISTS / IF NOT EXISTS để chạy lại an toàn (luật #5).
---    Lưu ý mục 🟡 4 review vòng 2: KHÔNG giữ idx_sc_term_student vì nó dư —
---    uq_score (term_id, student_id, type_code, exam_num) đã có prefix đó.
-ALTER TABLE scores DROP INDEX IF EXISTS uq_score;
-ALTER TABLE scores ADD UNIQUE KEY uq_score (term_id, student_id, type_code, exam_num);
+-- 3. Cập nhật unique key: (term_id, student_id, type_code) → (term_id, student_id, type_code, exam_num)
+--    ALTER tại chỗ, không dùng temp table.
+--
+--    PROBLEM: FK fk_sc_term dùng cột term_id — MariaDB dùng uq_score
+--    (term_id, student_id, type_code) làm index nền. DROP INDEX uq_score
+--    sẽ bị lỗi 1553 "Cannot drop index needed by foreign key".
+--
+--    SOLUTION 2 bước:
+--    (a) Tạo index thay thế trên (term_id, student_id) — FK sẽ dùng index mới.
+--    (b) DROP uq_score + ADD uq_score 4 cột trong 1 ALTER (MariaDB thực hiện
+--        nguyên tử cả hai, không có khoảng trắng giữa DROP và ADD).
+--    IF NOT EXISTS / IF EXISTS để chạy lại an toàn.
+
+ALTER TABLE scores
+    ADD INDEX IF NOT EXISTS idx_sc_term_student (term_id, student_id);
+
+ALTER TABLE scores
+    DROP INDEX uq_score,
+    ADD UNIQUE KEY uq_score (term_id, student_id, type_code, exam_num);
 -- Nếu muốn thêm CHECK constraint thì làm riêng:
 -- ALTER TABLE scores ADD CONSTRAINT chk_sc_value CHECK (value >= 0 AND value <= 10);
 
