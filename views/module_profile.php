@@ -98,7 +98,7 @@
     </div>
 
     <!-- 6. THÂM NIÊN PHỤC VỤ (năm lên GLV) -->
-    <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-card p-5 shadow-sm border border-blue-100 mb-5">
+    <div style="background: linear-gradient(135deg, #eff6ff 0%, #eef2ff 100%);" class="rounded-card p-5 shadow-sm border border-blue-100 mb-5">
         <h3 class="text-xs font-bold text-blue-700 uppercase tracking-wider mb-3">Thâm niên phục vụ</h3>
         <div class="flex items-center gap-4">
             <div class="w-14 h-14 shrink-0 rounded-2xl bg-white border border-blue-100 flex items-center justify-center shadow-sm">
@@ -107,7 +107,7 @@
             <div class="flex-1 min-w-0">
                 <p class="text-2xl font-black text-blue-700 leading-tight">
                     <span x-text="yearsOfService === null ? '—' : yearsOfService"></span>
-                    <span class="text-sm font-bold text-blue-500/80" x-text="yearsOfService === null ? 'chưa lên GLV' : 'năm'"></span>
+                    <span class="text-sm font-bold text-blue-600" x-text="yearsOfService === null ? 'chưa lên GLV' : 'năm'"></span>
                 </p>
                 <p class="text-micro text-slate-500 mt-0.5"
                    x-text="profile?.glvYear ? 'Tính từ năm ' + profile.glvYear : 'BĐH sẽ đặt năm GLV khi bạn lên chức.'"></p>
@@ -456,7 +456,7 @@
             </p>
             <div>
                 <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Năm lên GLV</label>
-                <input type="number" min="1900" :max="new Date().getFullYear()"
+                <input type="number" min="1900" :max="window.TNTT.vn.now().year"
                        x-model.number="glvYearForm.year"
                        class="w-full bg-slate-50 border border-slate-200 rounded-field px-3 py-3 text-base font-bold text-slate-800 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 transition-all">
             </div>
