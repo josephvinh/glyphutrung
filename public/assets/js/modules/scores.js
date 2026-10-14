@@ -276,12 +276,43 @@ window.TNTT.scores = {
     },
 
     async getAttendanceScore(studentId, termId) {
+        // Giữ cho ai cũ gọi vẫn chạy — nhưng màn điểm nên dùng
+        // getAttendanceForClass() (1 request/lớp) thay vì gọi hàm
+        // này cho từng em (N+1).
         try {
             const resp = await fetch('/api/attendance_scores.php?term_id=' + termId + '&student_id=' + studentId);
             if (!resp.ok) return null;
             return await resp.json();
         } catch (e) {
             return null;
+        }
+    },
+
+    // Lấy điểm chuyên cần cả lớp 1 lần (attendance_class.php) — tránh
+    // N+1 của getAttendanceScore() khi duyệt từng em. Cache theo lớp
+    // + học kỳ để gọi lại trong cùng view thì không tốn thêm request.
+    _attendanceClassCache: {},
+    async getAttendanceForClass(classId, termId) {
+        if (!classId || !termId) return {};
+        const key = classId + ':' + termId;
+        if (this._attendanceClassCache[key]) return this._attendanceClassCache[key];
+
+        try {
+            const resp = await fetch('/api/attendance_class.php?term_id=' + termId + '&class_id=' + classId);
+            if (!resp.ok) {
+                this._attendanceClassCache[key] = {};
+                return {};
+            }
+            const arr = await resp.json();
+            const map = {};
+            for (const row of (arr || [])) {
+                map[row.student_id] = row;
+            }
+            this._attendanceClassCache[key] = map;
+            return map;
+        } catch (e) {
+            this._attendanceClassCache[key] = {};
+            return {};
         }
     },
 
