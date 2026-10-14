@@ -202,8 +202,9 @@
                                 </th>
                             </template>
                         </template>
-                        <th class="px-3 py-3 text-micro font-bold text-slate-500 uppercase text-center bg-blue-50">ĐTB</th>
+                        <th class="px-3 py-3 text-micro font-bold text-slate-500 uppercase text-center">ĐTB</th>
                         <th class="px-3 py-3 text-micro font-bold text-slate-500 uppercase text-center">Học lực</th>
+                        <th class="px-3 py-3 text-micro font-bold text-slate-500 uppercase text-center bg-amber-50">CC</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -226,6 +227,20 @@
                                 <span class="text-micro font-bold uppercase tracking-wider px-2 py-1 rounded-lg border whitespace-nowrap"
                                       :class="scoreRankClass(termAverage(s.id, scoreTermId))"
                                       x-text="academicRank(termAverage(s.id, scoreTermId))"></span>
+                            </td>
+                            <!-- Chuyên cần: % + xếp loại CC -->
+                            <td class="px-3 py-3 text-center bg-amber-50/50">
+                                <template x-if="attendanceOf(s.id)">
+                                    <div class="flex flex-col items-center gap-0.5">
+                                        <span class="text-sm font-black text-amber-700"
+                                              x-text="(attendanceOf(s.id)?.percent ?? '–') + '%'"></span>
+                                        <span class="text-micro font-bold text-amber-600"
+                                              x-text="attendanceRank(attendanceOf(s.id)?.percent)"></span>
+                                    </div>
+                                </template>
+                                <template x-if="!attendanceOf(s.id)">
+                                    <span class="text-slate-300 text-micro">–</span>
+                                </template>
                             </td>
                         </tr>
                     </template>
@@ -273,6 +288,18 @@
                                     </template>
                                 </div>
                             </div>
+                        </template>
+                    </div>
+
+                    <!-- Chuyên cần -->
+                    <div class="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between">
+                        <span class="text-xs font-bold text-amber-600">Chuyên cần</span>
+                        <template x-if="attendanceOf(s.id)">
+                            <span class="text-sm font-black text-amber-700"
+                                  x-text="(attendanceOf(s.id)?.percent ?? '–') + '% · ' + attendanceRank(attendanceOf(s.id)?.percent)"></span>
+                        </template>
+                        <template x-if="!attendanceOf(s.id)">
+                            <span class="text-slate-300 text-sm">–</span>
                         </template>
                     </div>
                 </div>

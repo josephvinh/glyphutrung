@@ -288,6 +288,11 @@ window.TNTT.scores = {
         }
     },
 
+    // Lấy điểm chuyên cần 1 em từ cache (cache được fill bởi getAttendanceForClass)
+    attendanceOf(studentId) {
+        return this._attendanceClassCache[this.scoreClass + ':' + this.scoreTermId]?.[studentId] ?? null;
+    },
+
     // Lấy điểm chuyên cần cả lớp 1 lần (attendance_class.php) — tránh
     // N+1 của getAttendanceScore() khi duyệt từng em. Cache theo lớp
     // + học kỳ để gọi lại trong cùng view thì không tốn thêm request.
@@ -325,9 +330,17 @@ window.TNTT.scores = {
         if (this.scoreTypes.length === 0) {
             this.initScoreRules();
         }
+        // Load attendance config nếu chưa có
+        if (this.attendanceConfig.thresholds.length === 0) {
+            this.initAttendanceConfig();
+        }
         this.scoreClass = this.availableClasses.length === 1 ? this.availableClasses[0] : '';
         this.scoreTermId = this.currentTerm?.id || 1;
         this.scoreType = this.scoreTypes[0]?.code || 'mieng';
+        // Load attendance cả lớp ngay khi mở (1 request, tránh N+1)
+        if (this.scoreClass) {
+            this.getAttendanceForClass(this.scoreClass, this.scoreTermId);
+        }
         this.changeModule('scores');
     },
 
