@@ -261,7 +261,7 @@
                     <div x-show="announcementForm.isMeeting" x-collapse style="display: none;" class="mt-3 space-y-3">
                         <div>
                             <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Thời gian họp</label>
-                            <input x-model="announcementForm.meetingAt" type="datetime-local" min="2000-01-01T00:00" max="2100-12-31T23:59" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                            <?php ngay_input('announcementForm.meetingAt', ['kind' => 'datetime', 'class' => 'w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500', 'attrs' => 'min="2000-01-01T00:00" max="2100-12-31T23:59"']); ?>
                         </div>
                         <div>
                             <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Địa điểm (tuỳ chọn)</label>
@@ -273,7 +273,7 @@
                 <div class="grid grid-cols-2 gap-3 border-t border-slate-100 pt-4 pb-6">
                     <div>
                         <label class="block text-micro font-bold text-slate-500 uppercase mb-1">Hạn hiển thị</label>
-                        <input x-model="announcementForm.expiresAt" type="date" min="2000-01-01" max="2100-12-31" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                        <?php ngay_input('announcementForm.expiresAt', ['class' => 'w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500', 'attrs' => 'min="2000-01-01" max="2100-12-31"']); ?>
                         <p class="text-micro text-slate-500 mt-1 ml-1">Để trống là không giới hạn</p>
                     </div>
                     <div>

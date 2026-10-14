@@ -5,6 +5,7 @@
  * dữ liệu nghiệp vụ nào ra trình duyệt.
  */
 require __DIR__ . '/api/_bootstrap_page.php';
+require_once __DIR__ . '/../views/_ngay_input.php';   // ngay_input(): ô nhập ngày/giờ theo khuôn dd/mm/yyyy
 
 // Nén gzip trang HTML. Trang chính ~600KB chữ thô (mọi màn hình dựng sẵn
 // trong HTML) nhưng nén còn ~95KB; không nén thì mỗi lần mở app trên mạng

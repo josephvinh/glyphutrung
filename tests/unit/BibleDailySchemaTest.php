@@ -81,4 +81,37 @@ class BibleDailySchemaTest extends TestCase
             db_run("DELETE FROM bible_daily WHERE ip_address = '127.0.0.1'");
         }
     }
+
+    /**
+     * Thẻ Lời Chúa ở dashboard phải sống được khi host thiếu bảng bible_daily (chưa chạy
+     * migration 006 hoặc đã chạy migrate_delete_bible_daily.php): vẫn 200 + có câu, chỉ mất
+     * bộ nhớ theo IP (nên câu thứ hai không còn "cached").
+     */
+    public function test_endpoint_random_van_tra_cau_khi_thieu_bang_bible_daily(): void
+    {
+        if (!$this->dbTest()) $this->markTestSkipped('Chỉ chạy trên DB tntt_test (đổi tên bảng tạm thời).');
+        db_run('RENAME TABLE bible_daily TO bible_daily_tam');
+        try {
+            foreach (['random', 'list', 'stats', ''] as $action) {
+                $ch = curl_init(self::$base . '/api/bible.php?action=' . $action);
+                curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 30]);
+                $body = curl_exec($ch);
+                $code = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+                curl_close($ch);
+                if ($action === 'list' || $action === 'stats') {
+                    // Cần quyền admin; ở đây chỉ cần chắc chắn không 500 (401/403 là đúng).
+                    $this->assertNotSame(500, $code, "action=$action không được 500 khi thiếu bảng.");
+                    continue;
+                }
+                $j = json_decode((string) $body, true);
+                $this->assertSame(200, $code, "action=$action phải 200 khi thiếu bảng bible_daily.");
+                $this->assertTrue($j['success'] ?? false);
+                $this->assertFalse($j['cached'] ?? true);
+                $this->assertNotSame('', (string) ($j['verse'] ?? ''));
+                $this->assertNotSame('', (string) ($j['ref'] ?? ''));
+            }
+        } finally {
+            db_run('RENAME TABLE bible_daily_tam TO bible_daily');
+        }
+    }
 }
