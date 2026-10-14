@@ -426,7 +426,7 @@
                             class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                         <option value="">— Chọn lớp —</option>
                         <template x-for="cls in classes" :key="cls.id">
-                            <option :value="cls.name" x-text="cls.block + ' · ' + cls.name"></option>
+                            <option :value="cls.name" x-text="cls.block + ' · ' + cls.name + shiftSuffix(cls.shift)"></option>
                         </template>
                     </select>
                 </div>
