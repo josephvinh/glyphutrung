@@ -123,6 +123,21 @@ if ($action === 'PUT' && $code !== '') {
         $changes[] = "category: {$type['category']} → {$category}";
     }
 
+    // Chặn giảm max_exams xuống dưới số bài đã nhập — mục 🟡 6 review vòng 2
+    // PR #285: bài biến mất trên giao diện dù dữ liệu vẫn còn trong DB.
+    if ((int) $maxExams < (int) $type['max_exams']) {
+        $maxExamNum = db_one(
+            'SELECT MAX(exam_num) as m FROM scores WHERE type_code = ?',
+            [$code]
+        );
+        $highestUsed = (int) ($maxExamNum['m'] ?? 0);
+        if ($highestUsed > $maxExams) {
+            json_fail('Không thể giảm max_exams xuống ' . $maxExams
+                . ' vì đã có em nhập đến bài ' . $highestUsed
+                . '. Hãy xoá các bài vượt mức trước.');
+        }
+    }
+
     db_run('UPDATE score_types
             SET label = ?, short_label = ?, weight = ?, max_exams = ?, category = ?
             WHERE code = ?',
