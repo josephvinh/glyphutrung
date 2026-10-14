@@ -408,7 +408,7 @@
                         <p class="text-micro font-bold text-blue-600 leading-tight">
                             <span x-text="student.code"></span>
                             <span class="text-slate-400 mx-1">•</span>
-                            <span class="text-slate-400 font-medium" x-text="student.className"></span>
+                            <span class="text-slate-400 font-medium" x-text="student.className + shiftSuffix(student.classShift)"></span>
                         </p>
                         <p class="text-sm font-black text-slate-800 leading-snug">
                             <span class="font-normal text-slate-500" x-text="student.holyName"></span>
