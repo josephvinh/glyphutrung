@@ -29,45 +29,31 @@ $me = require_login();
 if ($action === 'GET') {
     if (!$termId) json_fail('Thiếu term_id.');
 
-    // Lấy tất cả programs (active), kèm trạng thái của term này
+    // Chặn term_id bất kỳ — mục 🟡 2 review vòng 2 PR #285. Trước đây
+    // term_id không tồn tại vẫn LEFT JOIN về 0 dòng, dễ nhầm với "term
+    // mới chưa có program nào". 404 rõ ràng giúp UI biết phải báo lỗi.
+    $term = db_one('SELECT id, start_date, end_date FROM terms WHERE id = ?', [$termId]);
+    if (!$term) json_fail('Học kỳ không tồn tại.', 404);
+
+    // Lấy programs CÓ trong term_programs của term này (không auto-seed ở
+    // GET — mục 9 review #285; migration 031 đã seed sẵn cho mọi term).
     $programs = db_all('
         SELECT p.id, p.name, p.type, p.count_for_attendance,
                tp.id as tp_id, tp.is_active
         FROM programs p
-        LEFT JOIN term_programs tp ON tp.program_id = p.id AND tp.term_id = ?
+        JOIN term_programs tp ON tp.program_id = p.id AND tp.term_id = ?
         WHERE p.status = "kích hoạt" AND p.count_for_attendance = 1
         ORDER BY p.sort_order, p.name
     ', [$termId]);
 
-    // Nếu chưa có term_programs nào cho term này → seed mặc định
-    $hasAny = false;
-    foreach ($programs as $p) {
-        if ($p['tp_id'] !== null) { $hasAny = true; break; }
-    }
-    if (!$hasAny) {
-        db_run('INSERT IGNORE INTO term_programs (term_id, program_id, is_active)
-                SELECT ?, id, 1 FROM programs WHERE count_for_attendance = 1 AND status = "kích hoạt"',
-            [$termId]);
-        // Reload
-        $programs = db_all('
-            SELECT p.id, p.name, p.type, p.count_for_attendance,
-                   tp.id as tp_id, tp.is_active
-            FROM programs p
-            LEFT JOIN term_programs tp ON tp.program_id = p.id AND tp.term_id = ?
-            WHERE p.status = "kích hoạt" AND p.count_for_attendance = 1
-            ORDER BY p.sort_order, p.name
-        ', [$termId]);
-    }
-
     // Đếm số buổi dự kiến mỗi program (buổi đã điểm danh trong kỳ)
-    $term = db_one('SELECT start_date, end_date FROM terms WHERE id = ?', [$termId]);
     foreach ($programs as &$p) {
         $count = db_one('
             SELECT COUNT(DISTINCT session_date) as c
             FROM attendances a
-            JOIN terms t ON t.year_id = a.year_id
-            WHERE a.program_id = ? AND t.id = ?
-        ', [$p['id'], $termId]);
+            WHERE a.program_id = ?
+              AND a.session_date BETWEEN ? AND ?
+        ', [$p['id'], $term['start_date'], $term['end_date']]);
         $p['expected_sessions'] = (int) ($count['c'] ?? 0);
         $p['is_active'] = (bool) ($p['is_active'] ?? true);
     }
