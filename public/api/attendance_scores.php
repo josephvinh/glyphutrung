@@ -102,7 +102,7 @@ $totalPercent = $totalExpected > 0
     : 0;
 
 // Xếp loại theo thresholds
-$thresholds = db_all('SELECT label, min_percent FROM attendance_thresholds ORDER BY sort_order DESC');
+$thresholds = db_all('SELECT label, min_percent FROM attendance_thresholds ORDER BY min_percent DESC');
 $rank = 'KĐ';
 foreach ($thresholds as $t) {
     if ($totalPercent >= (float) $t['min_percent']) {

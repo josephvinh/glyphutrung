@@ -336,4 +336,112 @@ class AttendanceClassApiTest extends TestCase
         $this->assertSame(403, $rForbidden['code'],
             'GLV KHÔNG được xem chuyên cần lớp khác: ' . $rForbidden['raw']);
     }
+
+    /**
+     * Review PR #285 mục cuối (broad review): endpoint loop thresholds theo
+     * `sort_order DESC` (legacy) để gán rank. Nếu admin sửa `min_percent` mà
+     * KHÔNG sắp xếp lại `sort_order`, xếp loại sẽ sai.
+     *
+     * Test này chứng minh: dù `sort_order` cố ý KHÔNG match thứ tự
+     * `min_percent`, endpoint vẫn gán rank theo `min_percent` (cao nhất mà
+     * percent đạt). Bug: ORDER BY sort_order DESC; Fix: ORDER BY min_percent
+     * DESC. Đã sửa ở 2 site: `attendance_class.php:92` và
+     * `attendance_scores.php:105`.
+     *
+     * Seed: 3 threshold với sort_order cố ý lệch, dùng `min_percent` giá trị
+     * KHÁC seed (95, 85, 75) để khỏi đụng rank 'A'=90 / 'B'=80 / 'C'=70
+     * có sẵn — vì `ORDER BY min_percent DESC` không deterministic khi trùng
+     * min_percent, test phải đảm bảo chỉ 1 threshold match.
+     *   TR-A: min_percent=85, sort_order=1003
+     *   TR-B: min_percent=95, sort_order=1001
+     *   TR-C: min_percent=75, sort_order=1002
+     *
+     * Old code (`sort_order DESC`): loop thứ tự TR-A(1003), TR-C(1002), TR-B(1001).
+     *   - Em (100%) → first match 85% (TR-A) → rank "TR-A"  (SAI — phải là TR-B)
+     *
+     * New code (`min_percent DESC`): loop thứ tự TR-B(95), TR-A(85), TR-C(75).
+     *   - Em (100%) → first match 95% (TR-B) → rank "TR-B"  (ĐÚNG)
+     */
+    public function test_rank_assignment_uses_min_percent_order(): void
+    {
+        $year = current_year();
+        $term = db_one('SELECT id, start_date, end_date FROM terms WHERE id = ?', [$this->termId]);
+        $prog = db_one("SELECT id FROM programs WHERE count_for_attendance = 1 LIMIT 1");
+        if (!$year || !$term || !$prog) {
+            $this->markTestSkipped('Cần niên khoá + term có start_date/end_date + program count_for_attendance=1.');
+        }
+
+        // 1. Tạo 3 threshold với sort_order CỐ Ý lệch min_percent.
+        //    Dùng sort_order lớn (1001-1003) để tránh đụng seed hiện có,
+        //    min_percent khác seed (95, 85, 75) để loop không bị đụng rank
+        //    A=90 / B=80 / C=70 / Đạt=60 của seed.
+        $tA = db_insert(
+            "INSERT INTO attendance_thresholds (sort_order, label, min_percent)
+             VALUES (?, ?, ?)",
+            [1003, 'TR-A', 85]
+        );
+        $tB = db_insert(
+            "INSERT INTO attendance_thresholds (sort_order, label, min_percent)
+             VALUES (?, ?, ?)",
+            [1001, 'TR-B', 95]
+        );
+        $tC = db_insert(
+            "INSERT INTO attendance_thresholds (sort_order, label, min_percent)
+             VALUES (?, ?, ?)",
+            [1002, 'TR-C', 75]
+        );
+
+        // 2. Tạo 1 em với 1 buổi có mặt → 100% (vượt mọi threshold).
+        $codeR = 'TRR' . random_int(100000, 999999);
+        $studentIdR = db_insert(
+            "INSERT INTO students (code, full_name, gender) VALUES (?, 'RankTest R', 1)",
+            [$codeR]
+        );
+        db_run("INSERT INTO enrollments (year_id, student_id, class_id, status) VALUES (?,?,?,?)",
+               [$this->yearId, $studentIdR, $this->classA, 'đang sinh hoạt']);
+
+        $sessionDate1 = $term['start_date'];
+        db_run(
+            "INSERT INTO attendances (session_date, program_id, student_id, status, year_id)
+             VALUES (?, ?, ?, 'có mặt', ?)",
+            [$sessionDate1, $prog['id'], $studentIdR, $this->yearId]
+        );
+
+        try {
+            $r = $this->http('GET',
+                '/api/attendance_class.php?term_id=' . $this->termId
+                . '&class_id=' . $this->classA);
+            $this->assertSame(200, $r['code'],
+                'Endpoint phải trả 200: ' . $r['raw']);
+            $this->assertIsArray($r['json'],
+                'Response phải là mảng JSON: ' . $r['raw']);
+
+            // Tìm em R trong kết quả.
+            $foundR = null;
+            foreach ($r['json'] as $row) {
+                if ((int) ($row['student_id'] ?? 0) === $studentIdR) {
+                    $foundR = $row;
+                    break;
+                }
+            }
+            $this->assertNotNull($foundR,
+                'Em R phải có mặt trong kết quả: ' . $r['raw']);
+
+            // Em R (100%) phải được xếp "TR-B" (label của 95% threshold — highest match).
+            // Nếu code lỗi cũ `sort_order DESC` chạy, sẽ trả "TR-A" (label của 85%).
+            $this->assertSame(100.0, (float) ($foundR['percent'] ?? 0),
+                'Em R phải có percent = 100% (1/1 buổi có mặt): ' . $r['raw']);
+            $this->assertSame('TR-B', $foundR['rank'] ?? null,
+                'Em R (100%) phải được xếp "TR-B" (label của 95% threshold). '
+                . 'Nếu = "TR-A" thì endpoint vẫn sort theo sort_order DESC (bug). '
+                . 'Response: ' . $r['raw']);
+        } finally {
+            // Cleanup theo đúng thứ tự FK.
+            db_run("DELETE FROM attendances WHERE student_id = ?", [$studentIdR]);
+            db_run("DELETE FROM enrollments WHERE student_id = ?", [$studentIdR]);
+            db_run("DELETE FROM students WHERE id = ?", [$studentIdR]);
+            db_run("DELETE FROM attendance_thresholds WHERE id IN (?, ?, ?)",
+                [$tA, $tB, $tC]);
+        }
+    }
 }

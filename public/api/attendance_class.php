@@ -89,7 +89,7 @@ foreach ($rows as $r) {
     $byStudent[$sid]['total_late']     += $lt;
 }
 
-$thresholds = db_all('SELECT label, min_percent FROM attendance_thresholds ORDER BY sort_order DESC');
+$thresholds = db_all('SELECT label, min_percent FROM attendance_thresholds ORDER BY min_percent DESC');
 foreach ($byStudent as &$s) {
     $ab = $s['total_expected'] - $s['total_present'] - $s['total_late'];
     $s['total_absent'] = max(0, $ab);
