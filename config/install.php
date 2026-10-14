@@ -160,6 +160,28 @@ $migrations = [
     // Offline attendance: ghi mốc quét thật từ client
     "ALTER TABLE attendances ADD COLUMN scanned_at DATETIME NULL",
     "ALTER TABLE attendances ADD COLUMN offline_marked TINYINT(1) NOT NULL DEFAULT 0",
+    // Organization & Personal Modules — cột + bảng (migration 031).
+    // schema.sql đã có các cột/bảng này cho CSDL mới; các lệnh dưới đây chỉ
+    // phục vụ CSDL cũ chạy lại install.php (trùng cột / bảng thì bỏ qua).
+    "ALTER TABLE classes ADD COLUMN shift ENUM('sang','chieu') NULL",
+    "CREATE INDEX idx_class_shift ON classes(shift)",
+    "ALTER TABLE members ADD COLUMN glv_year INT NULL",
+    "CREATE TABLE IF NOT EXISTS member_service_history (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        member_id INT NOT NULL,
+        year_label VARCHAR(20) NOT NULL,
+        role_code VARCHAR(24) NULL,
+        block_id INT NULL,
+        class_id INT NULL,
+        is_auto TINYINT(1) NOT NULL DEFAULT 0,
+        note VARCHAR(255) NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        created_by INT NULL,
+        UNIQUE KEY uk_member_year (member_id, year_label),
+        INDEX idx_history_member (member_id),
+        INDEX idx_history_year (year_label),
+        INDEX idx_history_auto (is_auto)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
 ];
 // PR-4: Notification Center - chạy migration 030 (tạo push_notifications + cột notification_id)
 $migration030 = __DIR__ . '/migrations/030_push_notifications.sql';
@@ -179,6 +201,26 @@ if (file_exists($migration030)) {
             if (!str_contains($msg, 'duplicate column name') && !str_contains($msg, 'already exists')
                 && !str_contains($msg, 'duplicate key name') && !str_contains($msg, 'duplicate foreign key')) {
                 say('LỖI migration 030: ' . $e->getMessage());
+                exit(1);
+            }
+        }
+    }
+}
+// Organization & Personal Modules — chạy migration 031 (shift + glv_year + member_service_history)
+$migration031 = __DIR__ . '/migrations/031_add_organization_tables.sql';
+if (file_exists($migration031)) {
+    $mig031 = file_get_contents($migration031);
+    $mig031 = preg_replace('/^\s*--.*$/m', '', $mig031);
+    $mig031Parts = array_filter(array_map('trim', explode(';', $mig031)), fn($s) => $s !== '');
+    foreach ($mig031Parts as $stmt) {
+        try {
+            $kq = $pdo->query($stmt);
+            if ($kq !== false) $kq->closeCursor();
+        } catch (PDOException $e) {
+            $msg = strtolower($e->getMessage());
+            if (!str_contains($msg, 'duplicate column name') && !str_contains($msg, 'already exists')
+                && !str_contains($msg, 'duplicate key name') && !str_contains($msg, 'duplicate foreign key')) {
+                say('LỖI migration 031: ' . $e->getMessage());
                 exit(1);
             }
         }
