@@ -110,7 +110,107 @@ function can_see_admin(?array $me): bool
  */
 function can_view_logs(?array $me): bool
 {
-    return ($me['role_code'] ?? '') === 'admin';
+    if (!$me) return false;
+    // Admin + BĐH xem tất cả; mọi vai có tài khoản nội bộ (có id) đều xem
+    // được log của mình (scope thu hẹp bằng log_scope_where bên dưới).
+    $r = $me['role_code'] ?? '';
+    if (in_array($r, ['admin', 'bdh'], true)) return true;
+    return !empty($me['id']);
+}
+
+/**
+ * Trả về mệnh đề WHERE giới hạn log theo phạm vi của người dùng.
+ *  - admin / BĐH: 1=1 (thấy tất cả)
+ *  - Khác: thấy log do mình tạo HOẶC log có target_type='student' mà
+ *    target_id (student.id) thuộc lớp mình CHỦ NHIỆM (assignment role_code
+ *    = 'glv_chu_nhiem', to_date IS NULL) trong năm học hiện hành.
+ *
+ * Lưu ý:
+ *  - KHÔNG nhận user-input; chỉ dùng $me['id'] đã qua require_login.
+ *  - Không dùng cột homeroom_teacher_id ở classes (Ruling 11) — bảng
+ *    classes không có cột đó. Dùng member_assignments.
+ *  - Nếu không phải glv_chu_nhiem (vai glv/du_bị/thu_thư) thì chỉ thấy
+ *    log do mình tạo.
+ */
+function log_scope_where(?array $me): string
+{
+    if (!$me) return '0=1';
+    $r = $me['role_code'] ?? '';
+    if (in_array($r, ['admin', 'bdh'], true)) return '1=1';
+
+    $meId = (int) ($me['id'] ?? 0);
+    if ($meId <= 0) return '0=1';
+
+    // Có vai glv_chu_nhiem với class_id active?
+    $classes = db_all(
+        "SELECT DISTINCT class_id FROM member_assignments
+          WHERE member_id = ? AND role_code = 'glv_chu_nhiem'
+            AND to_date IS NULL AND class_id IS NOT NULL",
+        [$meId]
+    );
+    $classIds = array_column($classes, 'class_id');
+    $classIds = array_map('intval', $classIds);
+
+    if (!$classIds) {
+        // Không chủ nhiệm lớp nào → chỉ thấy log do mình tạo.
+        return "actor_id = $meId";
+    }
+
+    $ph = implode(',', array_fill(0, count($classIds), '?'));
+    $year = current_year();
+    $yearId = (int) ($year['id'] ?? 0);
+
+    return "(
+        actor_id = $meId
+        OR (target_type = 'student' AND target_id IN (
+            SELECT s.id FROM students s
+            WHERE s.class_id IN ($ph)
+              AND s.year_id = $yearId
+        ))
+    )";
+}
+
+/**
+ * Biến thể an toàn của log_scope_where() khi cần truyền qua PDO: trả về
+ * cả mệnh đề WHERE VÀ mảng params tương ứng (cho placeholder `?` của IN).
+ * Dùng ở những nơi gọi db_all/db_one/db_run trực tiếp.
+ *
+ * @return array{0:string,1:array} [whereClause, params]
+ */
+function log_scope_where_with_params(?array $me): array
+{
+    if (!$me) return ['0=1', []];
+    $r = $me['role_code'] ?? '';
+    if (in_array($r, ['admin', 'bdh'], true)) return ['1=1', []];
+
+    $meId = (int) ($me['id'] ?? 0);
+    if ($meId <= 0) return ['0=1', []];
+
+    $classes = db_all(
+        "SELECT DISTINCT class_id FROM member_assignments
+          WHERE member_id = ? AND role_code = 'glv_chu_nhiem'
+            AND to_date IS NULL AND class_id IS NOT NULL",
+        [$meId]
+    );
+    $classIds = array_map('intval', array_column($classes, 'class_id'));
+
+    if (!$classIds) {
+        return ["actor_id = $meId", []];
+    }
+
+    $ph = implode(',', array_fill(0, count($classIds), '?'));
+    $year = current_year();
+    $yearId = (int) ($year['id'] ?? 0);
+
+    $where = "(
+        actor_id = $meId
+        OR (target_type = 'student' AND target_id IN (
+            SELECT s.id FROM students s
+            WHERE s.class_id IN ($ph)
+              AND s.year_id = $yearId
+        ))
+    )";
+    return [$where, $classIds];
 }
 
 /* ============================================================================

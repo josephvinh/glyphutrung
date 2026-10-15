@@ -22,7 +22,7 @@
                 <span x-show="myTasks.length > 0" style="display: none;"
                       class="w-2 h-2 rounded-full bg-rose-500"></span>
             </button>
-            <button x-show="isAdmin" style="display: none;" @click="settingsTab = 'logs'" type="button"
+            <button x-show="canViewLogs" style="display: none;" @click="settingsTab = 'logs'" type="button"
                     class="shrink-0 whitespace-nowrap px-4 py-2.5 sm:flex-1 rounded-2xl font-bold text-micro transition-colors flex items-center justify-center gap-1.5"
                     :class="settingsTab === 'logs' ? 'bg-blue-600 text-white shadow-md shadow-blue-200' : 'text-slate-500'">
                 <i data-lucide="scroll-text" class="w-4 h-4"></i> Nhật ký
@@ -68,6 +68,47 @@
                             :class="logFilter === k ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-500 border-slate-200'"
                             x-text="logDefs[k].label"></button>
                 </template>
+            </div>
+
+            <!-- Bộ lọc nâng cao: 4 ô trên 1 hàng (desktop), dọc (mobile) -->
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-3 px-1">
+                <!-- Người thực hiện -->
+                <select x-model="logFilterActor"
+                        class="tap-safe w-full bg-white border border-slate-200 rounded-field px-3 py-2.5 text-sm font-medium text-slate-700">
+                    <option value="">Tất cả người</option>
+                    <template x-for="a in logActorOptions" :key="a">
+                        <option :value="a" x-text="a"></option>
+                    </template>
+                </select>
+
+                <!-- Module -->
+                <select x-model="logFilterModule"
+                        class="tap-safe w-full bg-white border border-slate-200 rounded-field px-3 py-2.5 text-sm font-medium text-slate-700">
+                    <option value="">Tất cả module</option>
+                    <template x-for="m in logModuleOptions" :key="m">
+                        <option :value="m" x-text="m"></option>
+                    </template>
+                </select>
+
+                <!-- Từ ngày -->
+                <input x-model="logFilterFrom"
+                       type="date" aria-label="Từ ngày"
+                       class="tap-safe w-full bg-white border border-slate-200 rounded-field px-3 py-2.5 text-sm font-medium text-slate-700">
+
+                <!-- Đến ngày -->
+                <input x-model="logFilterTo"
+                       type="date" aria-label="Đến ngày"
+                       class="tap-safe w-full bg-white border border-slate-200 rounded-field px-3 py-2.5 text-sm font-medium text-slate-700">
+            </div>
+
+            <!-- Nút Xóa bộ lọc — chỉ hiện khi có filter đang áp -->
+            <div x-show="logFilterActor || logFilterModule || logFilterFrom || logFilterTo"
+                 class="mb-3 px-1">
+                <button @click="logFilterActor = ''; logFilterModule = ''; logFilterFrom = ''; logFilterTo = ''"
+                        type="button"
+                        class="text-xs font-bold text-blue-600 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 active:scale-95 transition-transform">
+                    <i data-lucide="x" class="w-3 h-3 inline"></i> Xóa bộ lọc
+                </button>
             </div>
 
             <div class="flex justify-between items-center mb-3 px-1">

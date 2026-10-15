@@ -702,6 +702,28 @@ window.TNTT.core = {
     logSearch: '',
     logFilter: '',
 
+    // Bộ lọc nâng cao
+    logFilterActor: '',
+    logFilterModule: '',
+    logFilterFrom: '',
+    logFilterTo: '',
+
+    // Options cho dropdown — sinh từ dữ liệu đang có trong logs[]
+    get logActorOptions() {
+        const seen = new Map();
+        for (const l of this.logs) {
+            if (l.actor) seen.set(l.actor, (seen.get(l.actor) || 0) + 1);
+        }
+        return [...seen.entries()]
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 20)
+            .map(([name]) => name);
+    },
+
+    get logModuleOptions() {
+        return [...new Set(this.logs.map(l => l.module).filter(Boolean))].sort();
+    },
+
     // action: khóa trong logDefs · what: một câu đọc là hiểu · detail: bổ nghĩa
     logAction(action, module, what, detail) {
         this.logs.unshift({
@@ -720,8 +742,14 @@ window.TNTT.core = {
 
     get filteredLogs() {
         const q = this.normalizeText(this.logSearch);
+        const fromTs = this.logFilterFrom ? new Date(this.logFilterFrom).getTime() : null;
+        const toTs   = this.logFilterTo   ? new Date(this.logFilterTo).getTime() + 86400000 : null;
         return this.logs
             .filter(l => this.logFilter === '' || l.action === this.logFilter)
+            .filter(l => this.logFilterActor  === '' || l.actor  === this.logFilterActor)
+            .filter(l => this.logFilterModule  === '' || l.module === this.logFilterModule)
+            .filter(l => fromTs === null || l.ts >= fromTs)
+            .filter(l => toTs   === null || l.ts <  toTs)
             .filter(l => q === ''
                 || this.normalizeText(l.actor).includes(q)
                 || this.normalizeText(l.what).includes(q)
@@ -1094,6 +1122,12 @@ window.TNTT.core = {
 
     get isAdmin() {
         return this.user.role === 'admin';
+    },
+
+    get canViewLogs() {
+        if (!this.user) return false;
+        const r = this.user.role ?? '';
+        return r === 'admin' || r === 'bdh';
     },
 
     // Danh xưng thực tế của đoàn: chỉ Giáo Lý Viên / Dự Bị. Các vai điều hành
