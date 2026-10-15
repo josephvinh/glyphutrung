@@ -123,17 +123,55 @@ function can_view_logs(?array $me): bool
 /** Tất cả phân công đang active của một thành viên */
 function effective_assignments(int $memberId): array
 {
-    return db_all(
+    return effective_assignments_many([$memberId])[$memberId] ?? [];
+}
+
+/**
+ * Phân công đang active của NHIỀU thành viên trong MỘT truy vấn:
+ * [memberId => [hàng như effective_assignments()]]. Danh bạ nhân sự dùng cái này
+ * thay vì gọi effective_assignments() cho từng người (N+1). $hideAdmin = bỏ các
+ * phân công vai Quản trị (người xem không phải admin — F9).
+ */
+function effective_assignments_many(array $memberIds, bool $hideAdmin = false): array
+{
+    $ids = array_values(array_unique(array_map('intval', $memberIds)));
+    if (!$ids) return [];
+    $ph = implode(',', array_fill(0, count($ids), '?'));
+    $rows = db_all(
         "SELECT a.*, r.label AS role_label, r.level AS role_level, r.scope AS role_scope,
                 b.name AS block_name, c.name AS class_name
            FROM member_assignments a
            JOIN roles r ON r.code = a.role_code
            LEFT JOIN blocks b ON b.id = a.block_id
            LEFT JOIN classes c ON c.id = a.class_id
-          WHERE a.member_id = ? AND a.to_date IS NULL
-          ORDER BY a.is_primary DESC, a.from_date DESC",
-        [$memberId]
+          WHERE a.member_id IN ($ph) AND a.to_date IS NULL"
+        . ($hideAdmin ? " AND a.role_code <> 'admin'" : '') . "
+          ORDER BY a.member_id, a.is_primary DESC, a.from_date DESC",
+        $ids
     );
+    $by = [];
+    foreach ($rows as $r) $by[(int) $r['member_id']][] = $r;
+    return $by;
+}
+
+/**
+ * Phân công ở dạng AN TOÀN để trả ra ngoài (data.php, personal.php): bỏ assigned_by
+ * (id người phân công — thường là Quản trị) và note (BĐH tự gõ). effective_assignments*()
+ * trả cả a.* cho nội bộ; đừng đưa nguyên hàng đó ra client (F9: lộ danh tính Quản trị).
+ */
+function public_assignment(array $a): array
+{
+    return [
+        'id'         => (int) $a['id'],
+        'role_code'  => $a['role_code'],
+        'role_label' => $a['role_label'] ?? null,
+        'block_id'   => $a['block_id'] !== null ? (int) $a['block_id'] : null,
+        'block_name' => $a['block_name'] ?? null,
+        'class_id'   => $a['class_id'] !== null ? (int) $a['class_id'] : null,
+        'class_name' => $a['class_name'] ?? null,
+        'is_primary' => (int) $a['is_primary'],
+        'from_date'  => $a['from_date'],
+    ];
 }
 
 /** Có đang giữ vai trò X không (active) */

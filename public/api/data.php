@@ -91,7 +91,8 @@ enforce_api_read_limit();
 
 // Đổi phiên bản khi đổi hình dạng/phạm vi dữ liệu: khoá cache cũ (có thể đang
 // chứa dữ liệu rộng hơn phạm vi mới) không bao giờ được đọc lại và tự hết hạn.
-// v3: thêm classes[] (shift + studentCount) và members[].glv_year/all_assignments (T2.1).
+// v3: thêm students[].classShift và members[].classShift/glv_year/all_assignments (T2.1).
+// Danh sách lớp kèm shift KHÔNG nằm ở đây: đã có ở BOOT.classes (page_bootstrap) và sĩ số ở classCounts.
 const DATA_CACHE_VER = 'v3';
 
 // Pagination config
@@ -229,31 +230,6 @@ foreach (db_all(
       GROUP BY c.id", [$yid]) as $r) {
     $classCounts[$r['name']] = (int) $r['n'];
 }
-
-// ---------------------------------------------------------------
-// Lớp — danh sách đầy đủ kèm shift (sáng/chiều) và sĩ số đang sinh hoạt
-// (T2.1 — Organization module cần shift + studentCount để hiển thị badge
-// và lọc). Sĩ số đếm server-side thay vì client tự đếm (đã làm cho
-// $classCounts ở trên) vì dữ liệu thiếu nhi đã bị phạm vi thu hẹp.
-// ---------------------------------------------------------------
-$classes = array_map(fn($c) => [
-    'id'           => (int) $c['id'],
-    'block_id'     => (int) $c['block_id'],
-    'name'         => $c['name'],
-    'sort_order'   => (int) $c['sort_order'],
-    'next_class_id'=> $c['next_class_id'] === null ? null : (int) $c['next_class_id'],
-    'is_final'     => (bool) $c['is_final'],
-    'shift'        => $c['shift'] ?? null,
-    'studentCount' => (int) db_val(
-        "SELECT COUNT(*) FROM enrollments
-          WHERE class_id = ? AND year_id = ? AND status = 'đang sinh hoạt'",
-        [$c['id'], $yid]
-    ),
-], db_all(
-    'SELECT c.id, c.block_id, c.name, c.sort_order, c.next_class_id, c.is_final, c.shift
-       FROM classes c
-       JOIN blocks  b ON b.id = c.block_id
-      ORDER BY b.sort_order, c.sort_order'));
 
 // ---------------------------------------------------------------
 // Chương trình
@@ -543,10 +519,21 @@ $memberWhere = [];
 // Ẩn tài khoản Quản trị khỏi mọi người trừ chính admin (F9).
 if (!can_see_admin($me))  $memberWhere[] = "m.role_code <> 'admin'";
 if ($staffLv !== 'edit') $memberWhere[] = "m.status <> 'chờ duyệt'";
-$members = $staffLv === 'none' ? [] : array_map(function ($m) use ($staffLv) {
-    // Tất cả phân công đang hiệu lực (không chỉ phân công chính) — màn Tổ Chức
-    // dùng để hiển thị huy hiệu kiêm nhiệm trên từng nhân sự (T2.1).
-    $allAssignments = effective_assignments((int) $m['id']);
+$memberRows = $staffLv === 'none' ? [] : db_all(
+    'SELECT m.*, t.label AS title_label, b.name AS block_name, c.name AS class_name, c.shift AS class_shift,
+            EXISTS(SELECT 1 FROM member_assignments a
+                    WHERE a.member_id = m.id AND a.to_date IS NULL
+                      AND a.role_code <> \'thu_thu\') AS has_assignment
+       FROM members m
+       LEFT JOIN titles  t ON t.id = m.title_id
+       LEFT JOIN blocks  b ON b.id = m.block_id
+       LEFT JOIN classes c ON c.id = m.class_id'
+    . ($memberWhere ? ' WHERE ' . implode(' AND ', $memberWhere) : '')
+    . ' ORDER BY m.id');
+// Tất cả phân công đang hiệu lực (không chỉ phân công chính) của cả danh bạ,
+// lấy MỘT truy vấn — màn Tổ Chức dùng để hiển thị huy hiệu kiêm nhiệm (T2.1).
+$assignmentsByMember = effective_assignments_many(array_column($memberRows, 'id'), !can_see_admin($me));
+$members = array_map(function ($m) use ($staffLv, $assignmentsByMember) {
     return [
         'id'        => (int) $m['id'],
         'code'      => $m['code'],
@@ -567,19 +554,10 @@ $members = $staffLv === 'none' ? [] : array_map(function ($m) use ($staffLv) {
         'hasAssignment' => !empty($m['has_assignment']),
         // T2.1: thêm trường mới cho module Tổ Chức / Cá Nhân
         'glv_year'       => $m['glv_year'] === null ? null : (int) $m['glv_year'],
-        'all_assignments'=> $allAssignments,
+        // Chưa có nơi dùng ở giao diện (dành cho màn Tổ Chức). Chỉ cột an toàn — xem public_assignment().
+        'all_assignments'=> array_map('public_assignment', $assignmentsByMember[(int) $m['id']] ?? []),
     ];
-}, db_all(
-    'SELECT m.*, t.label AS title_label, b.name AS block_name, c.name AS class_name, c.shift AS class_shift,
-            EXISTS(SELECT 1 FROM member_assignments a
-                    WHERE a.member_id = m.id AND a.to_date IS NULL
-                      AND a.role_code <> \'thu_thu\') AS has_assignment
-       FROM members m
-       LEFT JOIN titles  t ON t.id = m.title_id
-       LEFT JOIN blocks  b ON b.id = m.block_id
-       LEFT JOIN classes c ON c.id = m.class_id'
-    . ($memberWhere ? ' WHERE ' . implode(' AND ', $memberWhere) : '')
-    . ' ORDER BY m.id'));
+}, $memberRows);
 
 // ---------------------------------------------------------------
 // Nhật ký — 50 dòng gần nhất (đủ xem, nhẹ bandwidth). CHỈ người được xem
@@ -625,7 +603,6 @@ $result = [
     // Sổ Mộc cho các em trong phạm vi.
     'stampSummaries' => $stampSummaries,
     'classCounts'   => $classCounts,
-    'classes'       => $classes,    // T2.1: danh sách lớp + shift + studentCount
     'programs'      => $programs,
     'programClasses' => $programClasses,
     'attendances'   => $attendances,

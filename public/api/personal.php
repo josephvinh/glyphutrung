@@ -3,22 +3,32 @@
  * HỒ SƠ CÁ NHÂN
  *
  * API cho frontend cá nhân (module_personal) — xem hồ sơ của chính mình
- * và sửa các trường do BĐH/Quản trị cấp quyền. Endpoint dành cho giao
- * diện "hồ sơ của tôi"; nếu BĐH/Quản trị muốn quản lý hồ sơ của người
- * khác (gộp vào module Tổ chức) thì dùng các action tương ứng ở
- * `org.php` (getServiceHistory/saveServiceHistory/updateGlvYear/...).
+ * và sửa các trường do BĐH/Quản trị cấp quyền. Đây là đường DUY NHẤT cho các
+ * thao tác này (org.php không có bản sao: hai bản trùng đã từng lệch nhau).
  *
- * Phân quyền:
- *   - getProfile             : org.view (mặc định của $me; nếu xem người
- *                               khác thì phải có org.edit)
- *   - updateGlvYear          : org.edit (BĐH/Quản trị — chính sách hiện
- *                               không cho thành viên tự đổi năm GLV của
- *                               mình; muốn đổi phải nhờ BĐH)
- *   - saveServiceHistory     : org.edit
- *   - deleteServiceHistory   : org.edit
+ *   GET  api/personal.php?action=getProfile[&member_id=N]
+ *   POST api/personal.php?action=updateGlvYear        { member_id, glv_year|null }   (phải có khoá glv_year; null = xoá)
+ *   POST api/personal.php?action=saveServiceHistory   { member_id, year_label, role_code?, block_id?, class_id?, note? }
+ *   POST api/personal.php?action=deleteServiceHistory { member_id, year_label }
+ *   POST api/personal.php?action=changeMemberStatus   { member_id, status, note? }
  *
- * Ghi chú: tất cả thao tác GHI đều đi qua require_write() (POST + CSRF +
- * rate-limit) theo AGENT_RULES.md rule 6.
+ * Phân quyền (ba lớp, AGENT_RULES.md §2):
+ *   - getProfile             : org.view cho hồ sơ CỦA MÌNH; hồ sơ người khác cần
+ *                              staff.edit (Nhân sự). Không có staff.edit: mọi id khác
+ *                              mình đều 403 như nhau (không dò được ai có/là admin).
+ *                              Có staff.edit: id admin trả 404 như id không có (F9).
+ *   - updateGlvYear / saveServiceHistory / deleteServiceHistory /
+ *     changeMemberStatus     : staff.edit (BĐH/Quản trị theo ma trận mặc định) +
+ *                              kiểm đối tượng PersonalService::authorizeTarget
+ *                              (admin → 404, BĐH khác → chỉ Quản trị, #97).
+ *                              Cổng 'org' KHÔNG dùng: Trưởng khối có org.edit nên
+ *                              sẽ khoá được cả tài khoản Quản trị. Chính sách hiện
+ *                              không cho thành viên tự đổi năm GLV của mình.
+ *
+ * Dữ liệu trả ra chỉ gồm cột an toàn: phân công qua public_assignment() (không
+ * assigned_by/note), lịch sử không có created_by — đều là id/ghi chú của Quản trị.
+ *
+ * Mọi thao tác GHI đi qua require_write() (POST + CSRF + rate-limit).
  */
 
 require __DIR__ . '/_bootstrap.php';
@@ -28,25 +38,48 @@ require_once __DIR__ . '/PersonalService.php';
 $action = $_GET['action'] ?? '';
 $in     = json_input();
 
-// getProfile là đọc — route ở mức 'view' (mọi thành viên đều xem được
-// hồ sơ của chính mình). Nếu muốn xem của NGƯỜI KHÁC, case tự nâng lên
-// check 'edit' bên trong.
+// getProfile là đọc — route ở mức 'view' (mọi thành viên đều xem được hồ sơ
+// của chính mình). Xem người KHÁC thì authorizeTarget đòi staff.edit.
 $VIEW_ACTIONS = ['getProfile'];
 
 $me = in_array($action, $VIEW_ACTIONS, true)
     ? require_permission('org', 'view')
-    : require_permission('org', 'edit');
+    : require_permission('staff', 'edit');
+
+$canEditStaff = permission_of('staff') === 'edit';
+
+/** Dừng với lỗi nếu người gọi không được thao tác $op trên hồ sơ $memberId. */
+function personal_guard(array $me, bool $canEditStaff, int $memberId, string $op): void
+{
+    if ($memberId <= 0) json_fail('Thiếu member_id.', 400);
+    $deny = PersonalService::authorizeTarget($me, $canEditStaff, $memberId, $op);
+    if ($deny) json_fail($deny['error'], $deny['code']);
+}
+
+/** Chạy một thao tác ghi: lỗi nghiệp vụ → 400/404/409 kèm thông điệp; lỗi CSDL → 500 không lộ SQL. */
+function personal_run(callable $fn): array
+{
+    try {
+        return $fn();
+    } catch (PersonalException $e) {
+        json_fail($e->getMessage(), $e->getCode() >= 400 ? $e->getCode() : 400);
+    } catch (Throwable $e) {
+        json_fail(safe_error($e, 'Không lưu được:'), 500);
+    }
+}
+
+/** Tên thành viên để ghi nhật ký (đã qua personal_guard nên chắc chắn tồn tại). */
+function personal_name(int $memberId): string
+{
+    return (string) (db_one('SELECT full_name FROM members WHERE id = ?', [$memberId])['full_name'] ?? ('#' . $memberId));
+}
 
 switch ($action) {
 
     // ============================= HỒ SƠ =============================
     case 'getProfile':
         $targetId = (int) ($_GET['member_id'] ?? $me['id']);
-
-        // Chính mình thì OK ở 'view'; người khác phải có 'org.edit'.
-        if ($targetId !== (int) $me['id'] && permission_of('org') !== 'edit') {
-            json_fail('Bạn chỉ được xem hồ sơ của chính mình.', 403);
-        }
+        personal_guard($me, $canEditStaff, $targetId, 'view');
 
         $member = db_one(
             'SELECT m.*, t.label AS title_label
@@ -55,9 +88,6 @@ switch ($action) {
               WHERE m.id = ?',
             [$targetId]
         );
-        if (!$member) {
-            json_fail('Không tìm thấy thành viên.', 404);
-        }
 
         json_ok([
             'member' => [
@@ -76,7 +106,7 @@ switch ($action) {
                     $member['glv_year'] !== null ? (int) $member['glv_year'] : null
                 ),
             ],
-            'assignments' => effective_assignments($targetId),
+            'assignments' => array_map('public_assignment', effective_assignments($targetId)),
             'history'     => PersonalService::getServiceHistory($targetId),
         ]);
         break;
@@ -84,63 +114,63 @@ switch ($action) {
     // ============================ NĂM GLV ============================
     case 'updateGlvYear':
         require_write();
-        // require_permission('org', 'edit') đã chạy ở top-level (vì
-        // updateGlvYear không thuộc $VIEW_ACTIONS).
-        if (empty($in['member_id'])) {
-            json_fail('Thiếu member_id.', 400);
-        }
-        $glvYear = null;
-        if (array_key_exists('glv_year', $in) && $in['glv_year'] !== null) {
-            $year = (int) $in['glv_year'];
-            if ($year < 1900 || $year > (int) date('Y')) {
-                json_fail('Năm không hợp lệ.', 400);
-            }
-            $glvYear = $year;
-        }
-        try {
-            $result = PersonalService::updateGlvYear(
-                (int) $in['member_id'],
-                $glvYear,
-                (int) $me['id']
-            );
-            json_ok($result);
-        } catch (Exception $e) {
-            json_fail($e->getMessage(), 400);
-        }
+        $memberId = (int) ($in['member_id'] ?? 0);
+        personal_guard($me, $canEditStaff, $memberId, 'edit');
+
+        // Bắt buộc có khoá glv_year: null = xoá năm lên GLV (và mọi dòng tự sinh); có giá trị thì
+        // service kiểm 1900..năm bắt đầu niên khoá hiện tại. Thiếu khoá KHÔNG được hiểu là xoá.
+        if (!array_key_exists('glv_year', $in)) json_fail('Thiếu glv_year (gửi null để xoá năm lên GLV).', 400);
+        $glvYear = $in['glv_year'] !== null ? (int) $in['glv_year'] : null;
+
+        $result = personal_run(fn() => PersonalService::updateGlvYear($memberId, $glvYear, (int) $me['id']));
+
+        log_action('sua', 'staff', 'Đặt năm lên GLV: ' . personal_name($memberId),
+                   $glvYear === null ? 'xoá' : (string) $glvYear);
+        Cache::flush();   // data.php (members[].glv_year) đang được cache theo phạm vi
+        json_ok($result);
         break;
 
     // ====================== LỊCH SỬ PHỤC VỤ =========================
     case 'saveServiceHistory':
         require_write();
-        if (empty($in['member_id']) || empty($in['year_label'])) {
-            json_fail('Thiếu thông tin bắt buộc.', 400);
-        }
-        try {
-            PersonalService::saveServiceHistory(
-                (int) $in['member_id'],
-                $in,
-                (int) $me['id']
-            );
-            json_ok(['ok' => true]);
-        } catch (Exception $e) {
-            json_fail($e->getMessage(), 400);
-        }
+        $memberId = (int) ($in['member_id'] ?? 0);
+        personal_guard($me, $canEditStaff, $memberId, 'edit');
+        if (empty($in['year_label'])) json_fail('Thiếu thông tin bắt buộc.', 400);
+
+        personal_run(fn() => PersonalService::saveServiceHistory($memberId, $in, (int) $me['id']));
+
+        log_action('sua', 'staff', 'Ghi lịch sử phục vụ: ' . personal_name($memberId), (string) $in['year_label']);
+        json_ok(['ok' => true]);
         break;
 
     case 'deleteServiceHistory':
         require_write();
-        if (empty($in['member_id']) || empty($in['year_label'])) {
-            json_fail('Thiếu thông tin bắt buộc.', 400);
-        }
-        try {
-            PersonalService::deleteServiceHistory(
-                (int) $in['member_id'],
-                (string) $in['year_label']
-            );
-            json_ok(['ok' => true]);
-        } catch (Exception $e) {
-            json_fail($e->getMessage(), 400);
-        }
+        $memberId = (int) ($in['member_id'] ?? 0);
+        personal_guard($me, $canEditStaff, $memberId, 'edit');
+        if (empty($in['year_label'])) json_fail('Thiếu thông tin bắt buộc.', 400);
+
+        personal_run(fn() => PersonalService::deleteServiceHistory($memberId, (string) $in['year_label']));
+
+        log_action('xoa', 'staff', 'Xoá lịch sử phục vụ: ' . personal_name($memberId), (string) $in['year_label']);
+        json_ok(['ok' => true]);
+        break;
+
+    // ========================== TRẠNG THÁI ===========================
+    case 'changeMemberStatus':
+        require_write();
+        $memberId = (int) ($in['member_id'] ?? 0);
+        personal_guard($me, $canEditStaff, $memberId, 'edit');
+        if (empty($in['status'])) json_fail('Thiếu thông tin bắt buộc.', 400);
+
+        // Ghi chú bắt buộc khi rời 'đang phục vụ' (kiểm trong service).
+        $note   = isset($in['note']) ? (string) $in['note'] : null;
+        $status = (string) $in['status'];
+        $result = personal_run(fn() => PersonalService::changeMemberStatus($memberId, $status, $note, (int) $me['id']));
+
+        // Chỉ ghi trạng thái mới — lý do (có thể nhạy cảm) nằm ở hồ sơ, không chép vào nhật ký.
+        log_action('sua', 'staff', 'Đổi trạng thái: ' . personal_name($memberId), $status);
+        Cache::flush();   // data.php (members[].status) đang được cache theo phạm vi
+        json_ok($result);
         break;
 
     default:
