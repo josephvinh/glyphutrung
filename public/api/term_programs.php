@@ -35,16 +35,20 @@ if ($action === 'GET') {
     $term = db_one('SELECT id, start_date, end_date FROM terms WHERE id = ?', [$termId]);
     if (!$term) json_fail('Học kỳ không tồn tại.', 404);
 
-    // Lấy programs CÓ trong term_programs của term này (không auto-seed ở
-    // GET — mục 9 review #285; migration 031 đã seed sẵn cho mọi term).
+    // Lấy programs active của niên khoá. Phương án "gọn" (mục 2 review vòng
+    // 5 PR #285): coi "chưa có dòng term_programs" là đang bật; dòng
+    // term_programs chỉ lưu ngoại lệ (tắt chương trình). Lọc theo
+    // year_id của học kỳ — niên khoá mới không bị gắn chương trình cũ.
+    $yearId = (int) (db_one('SELECT year_id FROM terms WHERE id = ?', [$termId])['year_id'] ?? 0);
     $programs = db_all('
         SELECT p.id, p.name, p.type, p.count_for_attendance,
-               tp.id as tp_id, tp.is_active
+               tp.id as tp_id, COALESCE(tp.is_active, 1) as is_active
         FROM programs p
-        JOIN term_programs tp ON tp.program_id = p.id AND tp.term_id = ?
-        WHERE p.status = "kích hoạt" AND p.count_for_attendance = 1
+        LEFT JOIN term_programs tp ON tp.program_id = p.id AND tp.term_id = ?
+        WHERE p.year_id = ? AND p.status = "kích hoạt" AND p.count_for_attendance = 1
+          AND COALESCE(tp.is_active, 1) = 1
         ORDER BY p.sort_order, p.name
-    ', [$termId]);
+    ', [$termId, $yearId]);
 
     // Đếm số buổi dự kiến mỗi program (buổi đã điểm danh trong kỳ)
     foreach ($programs as &$p) {
@@ -55,7 +59,7 @@ if ($action === 'GET') {
               AND a.session_date BETWEEN ? AND ?
         ', [$p['id'], $term['start_date'], $term['end_date']]);
         $p['expected_sessions'] = (int) ($count['c'] ?? 0);
-        $p['is_active'] = (bool) ($p['is_active'] ?? true);
+        $p['is_active'] = (bool) $p['is_active'];
     }
 
     json_out($programs);

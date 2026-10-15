@@ -100,11 +100,7 @@ INSERT IGNORE INTO attendance_thresholds (sort_order, label, min_percent, descri
 (3, 'C', 70.00, 'Khá'),
 (4, 'Đạt', 60.00, 'Tối thiểu');
 
--- Seed term_programs: với mỗi học kỳ, tạo term_programs cho tất cả programs có count_for_attendance=1
-INSERT IGNORE INTO term_programs (term_id, program_id, is_active)
-SELECT t.id AS term_id, p.id AS program_id, 1 AS is_active
-FROM terms t
-JOIN programs p ON p.count_for_attendance = 1
-WHERE NOT EXISTS (
-    SELECT 1 FROM term_programs tp WHERE tp.term_id = t.id AND tp.program_id = p.id
-);
+-- term_programs KHÔNG seed ở đây. Endpoint chuyên cần dùng LEFT JOIN
+-- với COALESCE(is_active, 1), lọc theo year_id của học kỳ — chưa có
+-- dòng = đang bật. Seed ở đây bị lệch year_id (mục 🔴 2 review vòng 5
+-- PR #285). Bảng vẫn được tạo ở trên, dùng cho ngoại lệ (tắt CT).

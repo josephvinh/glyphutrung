@@ -32,14 +32,18 @@ if (!can_access_class($me, 'attendance', (int) $enr['class_id'], 'view')) {
     json_fail('Bạn không phụ trách lớp của em này.', 403);
 }
 
-// Lấy các chương trình active của term
+// Lấy các chương trình active của term. Mục 2 review vòng 5: LEFT JOIN,
+// lọc theo year_id của học kỳ, COALESCE(is_active, 1) — chưa có dòng
+// term_programs = đang bật; dòng chỉ lưu ngoại lệ (tắt).
+$yearId = (int) ($term['year_id'] ?? 0);
 $programs = db_all('
-    SELECT tp.program_id, p.name as program_name
-    FROM term_programs tp
-    JOIN programs p ON p.id = tp.program_id
-    WHERE tp.term_id = ? AND tp.is_active = 1
+    SELECT p.id AS program_id, p.name AS program_name
+    FROM programs p
+    LEFT JOIN term_programs tp ON tp.program_id = p.id AND tp.term_id = ?
+    WHERE p.year_id = ? AND p.status = "kích hoạt" AND p.count_for_attendance = 1
+      AND COALESCE(tp.is_active, 1) = 1
     ORDER BY p.sort_order, p.name
-', [$termId]);
+', [$termId, $yearId]);
 
 $totalExpected = 0;
 $totalPresent = 0;

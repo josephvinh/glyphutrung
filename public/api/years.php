@@ -114,15 +114,10 @@ switch ($action) {
                        [$yid, 'Học kỳ I',  $start,   $mid,
                         $yid, 'Học kỳ II', $midNext, $end]);
 
-                // Seed term_programs cho 2 học kỳ mới — các program có count_for_attendance=1
-                // được tính chuyên cần mặc định. INSERT IGNORE bỏ qua nếu đã có.
-                db_run('
-                    INSERT IGNORE INTO term_programs (term_id, program_id, is_active)
-                    SELECT t.id, p.id, 1
-                    FROM terms t
-                    JOIN programs p ON p.count_for_attendance = 1
-                    WHERE t.year_id = ?
-                ', [$yid]);
+                // term_programs KHÔNG seed ở đây — endpoint chuyên cần dùng
+                // LEFT JOIN với COALESCE(is_active, 1), lọc theo year_id của
+                // từng học kỳ. Seed ở đây trước đây gắn chương trình niên
+                // khoá cũ vào niên khoá mới (mục 🔴 2 review vòng 5).
 
                 return $yid;
             });

@@ -34,11 +34,14 @@ if (!can_access_class($me, 'attendance', $classId, 'view')) {
 $term = db_one('SELECT id, year_id, start_date, end_date FROM terms WHERE id = ?', [$termId]);
 if (!$term) json_fail('Không tìm thấy học kỳ.', 404);
 
-$programs = db_all('SELECT tp.program_id, p.name AS program_name
-                    FROM term_programs tp
-                    JOIN programs p ON p.id = tp.program_id
-                    WHERE tp.term_id = ? AND tp.is_active = 1
-                    ORDER BY p.sort_order, p.name', [$termId]);
+// Mục 2 review vòng 5: LEFT JOIN programs theo year_id, COALESCE(is_active, 1)
+// — chưa có dòng term_programs = đang bật; dòng chỉ lưu ngoại lệ (tắt).
+$programs = db_all('SELECT p.id AS program_id, p.name AS program_name
+                    FROM programs p
+                    LEFT JOIN term_programs tp ON tp.program_id = p.id AND tp.term_id = ?
+                    WHERE p.year_id = ? AND p.status = "kích hoạt" AND p.count_for_attendance = 1
+                      AND COALESCE(tp.is_active, 1) = 1
+                    ORDER BY p.sort_order, p.name', [$termId, $term['year_id']]);
 
 // QUERY 1: buổi dự kiến theo từng CHƯƠNG TRÌNH trong học kỳ (độc lập
 // từng em). Mục A review vòng 2: GROUP BY student_id, program_id đếm
@@ -49,10 +52,12 @@ $expectedRows = db_all("
     SELECT a.program_id, COUNT(DISTINCT a.session_date) AS c
     FROM attendances a
     WHERE a.session_date BETWEEN ? AND ?
-      AND a.program_id IN (SELECT program_id FROM term_programs
-                           WHERE term_id = ? AND is_active = 1)
+      AND a.program_id IN (SELECT p.id FROM programs p
+                           LEFT JOIN term_programs tp ON tp.program_id = p.id AND tp.term_id = ?
+                           WHERE p.year_id = ? AND p.count_for_attendance = 1
+                             AND COALESCE(tp.is_active, 1) = 1)
     GROUP BY a.program_id
-", [$term['start_date'], $term['end_date'], $termId]);
+", [$term['start_date'], $term['end_date'], $termId, $term['year_id']]);
 foreach ($expectedRows as $er) {
     $expectedByProgram[(int) $er['program_id']] = (int) $er['c'];
 }
@@ -85,13 +90,15 @@ $attendanceRows = db_all("
            SUM(CASE WHEN a.status = 'đi trễ'  THEN 1 ELSE 0 END) AS late
     FROM attendances a
     WHERE a.session_date BETWEEN ? AND ?
-      AND a.program_id IN (SELECT program_id FROM term_programs
-                           WHERE term_id = ? AND is_active = 1)
+      AND a.program_id IN (SELECT p.id FROM programs p
+                           LEFT JOIN term_programs tp ON tp.program_id = p.id AND tp.term_id = ?
+                           WHERE p.year_id = ? AND p.count_for_attendance = 1
+                             AND COALESCE(tp.is_active, 1) = 1)
       AND a.student_id IN (SELECT student_id FROM enrollments
                             WHERE year_id = ? AND class_id = ?
                               AND status = 'đang sinh hoạt')
     GROUP BY a.student_id, a.program_id
-", [$term['start_date'], $term['end_date'], $termId, $term['year_id'], $classId]);
+", [$term['start_date'], $term['end_date'], $termId, $term['year_id'], $term['year_id'], $classId]);
 
 foreach ($attendanceRows as $r) {
     $sid = (int) $r['student_id'];
