@@ -20,7 +20,7 @@ có hệ quả bảo mật.
 |-----|----|----|
 | 🔴 Nghiêm trọng | 2 | S1, S2 |
 | 🟠 Cao | 3 | S3, S4, S5 |
-| 🟡 Trung bình | 4 | S6, S7, S8, S9 |
+| 🟡 Trung bình | 5 | S6, S7, S8, S9, S13 |
 | 🔵 Thấp / Thông tin | 3 | S10, S11, S12 |
 
 **5 việc nên làm trong 24 giờ:**
@@ -234,6 +234,31 @@ khai thác, và cách sửa đề xuất.
 - **Cách sửa:** Sinh mật khẩu tạm ngẫu nhiên mạnh hơn, vd
   `bin2hex(random_bytes(4))` (8 hex) hoặc 6–8 ký tự an toàn từ `random_int`.
 
+## 🟡 S13 — `assignments.php` `list`/`active`: ai có `org.view` đọc được phân công của BẤT KỲ thành viên, kể cả Quản trị
+
+> Phát hiện thêm ngày 15/10/2026 khi review PR #296 (không nằm trong ảnh chụp `ab5bd8b`).
+> **✅ đã kiểm chứng động** (GLV thường, DB test) — lỗi có sẵn trên `master`, PR #296 không đụng tới.
+
+- **Vị trí:** `public/api/assignments.php:16` chỉ đòi `require_permission('org', 'view')`
+  (mọi vai mặc định trừ Thủ thư đều có). Hai action đọc:
+  - `list` (`:21-38`): trả **mọi** phân công (kể cả đã kết thúc) của `memberId` tuỳ ý, gồm cột
+    `note` và `assigned_by_name` (JOIN `members`) — không kiểm phạm vi, không ẩn Quản trị.
+  - `active` (`:42-45`): trả `effective_assignments()` (`a.*`: `assigned_by`, `note`) của `memberId` tuỳ ý.
+  - `list_active` (`:57-91`): với BĐH (`scan_class_ids` = null) kết quả gồm cả dòng `role = 'admin'`.
+- **Khai thác:** GLV/Dự bị gọi `GET api/assignments.php?action=list&memberId=<id>` (id liên tiếp, dò được):
+  - Dò ra **ai là Quản trị** (vai `admin`) — phá lớp che F9 (danh bạ/`data.php`/`personal.php` đều ẩn admin);
+  - Đọc **tên người phân công** (thường là Quản trị) và **ghi chú nội bộ** của BĐH;
+  - Đọc lịch sử phân công của người khác ngoài phạm vi lớp/khối của mình.
+  Kiểm chứng: GLV `0911000003` gọi `?action=list&memberId=1` → `role=admin`,
+  `assigned_by_name=<tên Quản trị>`, `note="Tạo bởi trình cài đặt"`.
+- **Frontend không dùng `list`/`active`:** `org.js` chỉ gọi `list_active`, `create`, `end`.
+- **Cách sửa (PR riêng, luật 4):** xoá hai action không dùng; hoặc cho `list`/`active` đòi
+  `staff.edit` hoặc `memberId === $me['id']`, với người không phải admin: mục tiêu admin → 404
+  (như id không tồn tại), lọc `role_code <> 'admin'`, bỏ `assigned_by`/`assigned_by_name`/`note`.
+  Thêm `AND a.role_code <> 'admin'` vào `list_active` khi `!can_see_admin($me)`.
+- **Test hồi quy:** GLV gọi `list`/`active` với `memberId` của admin phải 403/404; BĐH gọi
+  `list_active` không được thấy dòng `role = 'admin'`.
+
 ## 🔵 S10 — `bible.php`: lưu IP khách vô thời hạn + `CREATE TABLE` mỗi request
 
 - **Vị trí:** `public/api/bible.php:16` (`ensure_bible_table` chạy mỗi lượt
@@ -312,7 +337,7 @@ Ghi lại để lần sau khỏi nghi oan — các chốt sau đã xác minh là
 2. **S2** (xoay secret, bỏ default_password cứng).
 3. **S3, S4** (IDOR data.php + định danh cổng đổi quà).
 4. **S5, S6, S7, S8** (rate-limit XFF, XSS landing, lỗi lộ, CSRF logout).
-5. **S9–S12** dọn dần.
+5. **S9–S13** dọn dần (S13 nên sớm hơn: phá lớp che admin F9).
 
 Mỗi mục nên đi kèm **một test hồi quy** (xem `docs/process/TESTING.md` → mục "Test
 bảo mật / phân quyền") để không tái phát. Ví dụ: test tải `/cache/<md5>.json`
