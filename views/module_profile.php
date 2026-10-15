@@ -102,7 +102,7 @@
         <h3 class="text-xs font-bold text-blue-700 uppercase tracking-wider mb-3">Thâm niên phục vụ</h3>
         <div class="flex items-center gap-4">
             <div class="w-14 h-14 shrink-0 rounded-2xl bg-white border border-blue-100 flex items-center justify-center shadow-sm">
-                <i data-lucide="award" class="w-7 h-7 text-blue-600"></i>
+                <i data-lucide="trophy" class="w-7 h-7 text-blue-600"></i>
             </div>
             <div class="flex-1 min-w-0">
                 <p class="text-2xl font-black text-blue-700 leading-tight">
@@ -112,7 +112,7 @@
                 <p class="text-micro text-slate-500 mt-0.5"
                    x-text="profile?.glvYear ? 'Tính từ năm ' + profile.glvYear : 'BĐH sẽ đặt năm GLV khi bạn lên chức.'"></p>
             </div>
-            <button x-show="canManageOrg" @click="openGlvModal()" type="button" style="display: none;"
+            <button x-show="canEditProfileData" @click="openGlvModal()" type="button" style="display: none;"
                     class="tap-safe shrink-0 px-3 py-2 bg-white border border-blue-200 text-blue-700 rounded-xl font-bold text-xs active:scale-95 transition-transform flex items-center gap-1">
                 <i data-lucide="pencil" class="w-3 h-3"></i>
                 <span x-text="profile?.glvYear ? 'Đổi' : 'Đặt'"></span>
@@ -124,7 +124,7 @@
     <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100 mb-5">
         <div class="flex items-center justify-between mb-3">
             <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Lịch sử phục vụ</h3>
-            <button x-show="canManageOrg" @click="startAddHistory(); showHistoryModal = true" type="button" style="display: none;"
+            <button x-show="canEditProfileData" @click="startAddHistory(); showHistoryModal = true" type="button" style="display: none;"
                     class="tap-safe text-micro font-bold text-blue-600 flex items-center gap-1 active:scale-95 transition-transform">
                 <i data-lucide="plus" class="w-3 h-3"></i> Thêm
             </button>
@@ -429,7 +429,7 @@
 
 <!-- ==========================================================
      MODAL CẬP NHẬT NĂM LÊN GLV
-     Chỉ BĐH/Quản trị (canManageOrg). Xoá cũng qua đây (set null).
+     Chỉ BĐH/Quản trị (canEditProfileData). Xoá cũng qua đây (set null).
      Backend: public/api/personal.php?action=updateGlvYear
      ========================================================== -->
 <div x-show="showGlvModal" style="display: none;" class="fixed inset-0 z-[200] flex items-end sm:items-center justify-center">
@@ -447,16 +447,16 @@
         </div>
         <div class="p-5 space-y-4">
             <p class="text-sm text-slate-600">
-                Khi đặt năm <span class="font-bold">N</span>, hệ thống sẽ tự tái dựng dòng lịch sử phục vụ từ năm
-                <span class="font-bold" x-text="glvYearForm.year"></span> đến năm hiện tại.
+                Khi đặt năm <span class="font-bold">N</span>, hệ thống sẽ tự tái dựng dòng lịch sử phục vụ từ niên khoá
+                <span class="font-bold" x-text="glvYearForm.year ? glvYearForm.year + '-' + (glvYearForm.year + 1) : '…'"></span> đến niên khoá hiện tại.
             </p>
             <p class="text-micro text-amber-700 bg-amber-50 border border-amber-100 rounded-2xl px-3 py-2 leading-relaxed">
                 <i data-lucide="alert-triangle" class="w-3.5 h-3.5 inline-block mr-1 -mt-0.5"></i>
                 Nếu trong dải năm đó đã có dòng nhập tay, lệnh sẽ bị từ chối — bạn phải xoá dòng nhập tay trước rồi chạy lại.
             </p>
             <div>
-                <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Năm lên GLV</label>
-                <input type="number" min="1900" :max="window.TNTT.vn.now().year"
+                <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Năm lên GLV (năm bắt đầu niên khoá)</label>
+                <input type="number" min="1900" :max="currentSchoolYearStart"
                        x-model.number="glvYearForm.year"
                        class="w-full bg-slate-50 border border-slate-200 rounded-field px-3 py-3 text-base font-bold text-slate-800 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 transition-all">
             </div>

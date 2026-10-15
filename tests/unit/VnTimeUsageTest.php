@@ -59,6 +59,27 @@ class VnTimeUsageTest extends TestCase
         $this->assertSame([], $vp, "Còn chỗ dùng đồng hồ/múi giờ của máy:\n" . implode("\n", $vp));
     }
 
+    /**
+     * window.TNTT.vn.now() / this.vnNow() trả CHUỖI 'yyyy-mm-dd HH:mm', KHÔNG phải đối tượng.
+     * `vn.now().year` ra undefined -> NaN/'NaN-NaN' trên giao diện mà ESLint và PHPUnit đều không thấy
+     * (lỗi này đã nằm trong personal.js). Muốn năm/tháng/ngày: window.TNTT.vn.parts() -> {y, m, d, ...}.
+     */
+    public function test_vn_now_la_chuoi_khong_doc_thuoc_tinh_nhu_doi_tuong(): void
+    {
+        $re = '/\b(?:vn\.now|vnNow)\(\s*[^()]*\)\s*\.\s*(year|month|day|hour|minute|second|y|m|d|hh|mm|ss)\b/';
+        $vp = [];
+        foreach ($this->nguon() as $f => $code) {
+            $sach = preg_replace('#/\*.*?\*/#s', '', $code);
+            foreach (explode("\n", $sach) as $i => $dong) {
+                $dong = preg_replace('#(?<![:\'"])//.*$#', '', $dong);
+                if (preg_match($re, $dong)) {
+                    $vp[] = basename($f) . ':' . ($i + 1) . '  |  ' . trim($dong);
+                }
+            }
+        }
+        $this->assertSame([], $vp, "vn.now() trả chuỗi — dùng window.TNTT.vn.parts() để lấy năm/tháng/ngày:\n" . implode("\n", $vp));
+    }
+
     public function test_vntime_la_module_dau_tien_sau_router(): void
     {
         $m = require dirname(__DIR__, 2) . '/public/assets/asset_manifest.php';

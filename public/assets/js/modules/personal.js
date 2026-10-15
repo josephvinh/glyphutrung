@@ -7,10 +7,10 @@
    tnttApp bởi app.js, nên từ template truy cập qua `this.xxx`
    chứ không phải qua component lồng.
 
-   Phân quyền: getProfile mở ở 'org.view' (xem của mình), 3 write
-   cần 'org.edit' (BĐH/Quản trị) — backend ở public/api/personal.php
+   Phân quyền: getProfile mở ở 'org.view' (xem của mình); các thao tác ghi
+   cần 'staff.edit' (BĐH/Quản trị) — backend ở public/api/personal.php
    đã enforce; frontend chỉ ẩn nút nếu biết mình không có quyền
-   (canManageOrg đã có sẵn ở core.js).
+   (canEditProfileData bên dưới).
 
    Quy ước service history (xem PersonalService::getServiceHistory):
      - is_auto = 0  → dòng nhập tay, sửa/xoá được
@@ -50,16 +50,33 @@ window.TNTT.personal = {
     },
 
     // ---------- HELPERS ----------
+    // Khớp backend (personal.php): ghi cần staff.edit chứ KHÔNG phải org.edit —
+    // Trưởng khối có org.edit nhưng không được sửa hồ sơ phục vụ.
+    get canEditProfileData() {
+        return this.canEditModule('staff');
+    },
+
+    // Năm BẮT ĐẦU của niên khoá hiện tại — cùng nguồn với PersonalService::currentSchoolStartYear():
+    // niên khoá đang mở (this.year.name = "2026 - 2027" → 2026), KHÔNG phải năm dương lịch.
+    // Chưa có niên khoá thì suy từ ngày: từ tháng 8 là niên khoá mới. (vn.now() trả CHUỖI
+    // 'yyyy-mm-dd HH:mm'; năm/tháng lấy từ vn.parts() — y, m: 1–12.)
+    get currentSchoolYearStart() {
+        const m = /^\s*(\d{4})/.exec((this.year && this.year.name) || '');
+        if (m) return parseInt(m[1], 10);
+        const p = window.TNTT.vn.parts();
+        return p.m >= 8 ? p.y : p.y - 1;
+    },
+
     get yearsOfService() {
         // null khi chưa lên GLV — giao diện hiển thị "—"
         if (!this.profile || !this.profile.glvYear) return null;
-        const year = window.TNTT.vn.now().year;
-        return Math.max(0, year - this.profile.glvYear);
+        return Math.max(0, this.currentSchoolYearStart - this.profile.glvYear);
     },
 
-    // is_auto = 0 (nhập tay) mới sửa/xoá được; is_auto = 1 khoá
+    // is_auto = 0 (nhập tay) mới sửa/xoá được; is_auto = 1 khoá. Và chỉ người
+    // có quyền sửa hồ sơ phục vụ — người khác chỉ xem (khỏi hiện nút rồi nhận 403).
     canEditHistoryEntry(entry) {
-        return entry && entry.is_auto === 0;
+        return this.canEditProfileData && !!entry && entry.is_auto === 0;
     },
 
     // Nhãn vai trò cho dòng lịch sử (giống getRoleLabel trong các mảnh khác)
@@ -78,19 +95,19 @@ window.TNTT.personal = {
 
     // ---------- ACTIONS: GLV YEAR ----------
     openGlvModal() {
-        if (!this.canManageOrg) {
+        if (!this.canEditProfileData) {
             window.TNTT.toast.warning('Chỉ Ban Điều Hành mới đổi được năm lên GLV.');
             return;
         }
-        this.glvYearForm.year = this.profile?.glvYear ?? window.TNTT.vn.now().year;
+        this.glvYearForm.year = this.profile?.glvYear ?? this.currentSchoolYearStart;
         this.showGlvModal = true;
     },
 
     async saveGlvYear() {
         if (!this.profile) return;
         const year = parseInt(this.glvYearForm.year, 10);
-        if (!year || year < 1900 || year > window.TNTT.vn.now().year) {
-            window.TNTT.toast.warning('Vui lòng nhập năm hợp lệ.');
+        if (!year || year < 1900 || year > this.currentSchoolYearStart) {
+            window.TNTT.toast.warning('Vui lòng nhập năm từ 1900 đến ' + this.currentSchoolYearStart + ' (năm bắt đầu niên khoá hiện tại).');
             return;
         }
         this.busyGlv = true;
@@ -141,14 +158,13 @@ window.TNTT.personal = {
 
     // Mở form thêm mới — reset
     startAddHistory() {
-        if (!this.canManageOrg) {
+        if (!this.canEditProfileData) {
             window.TNTT.toast.warning('Chỉ Ban Điều Hành mới thêm được dòng lịch sử.');
             return;
         }
         this.editingHistoryYear = null;
-        // Gợi ý năm học kết thúc gần nhất
-        const now = window.TNTT.vn.now();
-        const y = now.month >= 8 ? now.year : now.year - 1;
+        // Gợi ý năm học hiện tại
+        const y = this.currentSchoolYearStart;
         this.historyForm = { yearLabel: y + '-' + (y + 1), roleCode: 'glv', note: '' };
     },
 

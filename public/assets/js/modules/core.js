@@ -1190,7 +1190,6 @@ window.TNTT.core = {
     shiftSuffix(shift) {
         if (shift === 'sang')  return ' (Sáng)';
         if (shift === 'chieu') return ' (Chiều)';
-        if (shift === 'toi')   return ' (Tối)';
         return '';
     },
 
