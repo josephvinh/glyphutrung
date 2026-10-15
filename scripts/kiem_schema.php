@@ -43,6 +43,10 @@ function kiem_schema_danh_sach(): array
         ['009_offline_attendance_flag.sql', 'attendances',    'offline_marked'],
         ['030_push_notifications.sql',  'push_notifications', null],
         ['030_push_notifications.sql',  'push_outbox',        'notification_id'],
+        // 031: thiếu cột shift thì page_bootstrap() (mọi trang sau đăng nhập) lỗi SQL.
+        ['031_add_organization_tables.sql', 'classes',        'shift'],
+        ['031_add_organization_tables.sql', 'members',        'glv_year'],
+        ['031_add_organization_tables.sql', 'member_service_history', null],
     ];
 }
 

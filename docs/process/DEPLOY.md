@@ -58,6 +58,9 @@ FROM (
   UNION ALL SELECT '009_offline_attendance_flag.sql', 'attendances', 'offline_marked'
   UNION ALL SELECT '030_push_notifications.sql', 'push_notifications', NULL
   UNION ALL SELECT '030_push_notifications.sql', 'push_outbox', 'notification_id'
+  UNION ALL SELECT '031_add_organization_tables.sql', 'classes', 'shift'
+  UNION ALL SELECT '031_add_organization_tables.sql', 'members', 'glv_year'
+  UNION ALL SELECT '031_add_organization_tables.sql', 'member_service_history', NULL
 ) x
 ORDER BY co, x.migration;
 ```

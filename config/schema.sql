@@ -74,15 +74,13 @@ CREATE TABLE IF NOT EXISTS classes (
     next_class_id INT         NULL COMMENT 'lớp kế tiếp khi lên lớp',
     is_final      TINYINT(1)  NOT NULL DEFAULT 0 COMMENT '1 = lớp cuối, lên lớp là ra trường',
     shift         ENUM('sang','chieu') NULL COMMENT 'Ca học: NULL=không phân biệt, sang=buổi sáng, chieu=buổi chiều',
+    INDEX idx_class_shift (shift),
     CONSTRAINT fk_class_block FOREIGN KEY (block_id) REFERENCES blocks(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Khóa ngoại tự tham chiếu phải thêm sau khi bảng đã tồn tại
 ALTER TABLE classes ADD CONSTRAINT fk_class_next
     FOREIGN KEY (next_class_id) REFERENCES classes(id) ON DELETE SET NULL;
-
--- Index cho cột shift (filter lớp sáng/chiều — xem migration 031)
-ALTER TABLE classes ADD INDEX idx_class_shift (shift);
 
 -- =====================================================================
 --  3. VAI TRÒ & CHỨC DANH
@@ -187,6 +185,13 @@ CREATE TABLE IF NOT EXISTS member_service_history (
     note       VARCHAR(255) NULL     COMMENT 'Ghi chú thêm',
     created_at TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     created_by INT          NULL     COMMENT 'Ai tạo',
+
+    -- Khoá ngoại giống member_assignments. Xoá thành viên thì xoá luôn lịch sử
+    -- của họ (không để dòng mồ côi). Xoá khối/lớp thì giữ dòng, chỉ bỏ liên kết.
+    CONSTRAINT fk_hist_member FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE,
+    CONSTRAINT fk_hist_role   FOREIGN KEY (role_code) REFERENCES roles(code),
+    CONSTRAINT fk_hist_block  FOREIGN KEY (block_id)  REFERENCES blocks(id)  ON DELETE SET NULL,
+    CONSTRAINT fk_hist_class  FOREIGN KEY (class_id)  REFERENCES classes(id) ON DELETE SET NULL,
 
     UNIQUE KEY uk_member_year (member_id, year_label),
     INDEX idx_history_member (member_id),

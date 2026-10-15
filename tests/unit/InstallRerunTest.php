@@ -51,4 +51,30 @@ class InstallRerunTest extends TestCase
         $this->assertSame(1, $dem("SELECT COUNT(*) c FROM information_schema.columns
             WHERE table_schema = DATABASE() AND table_name = 'push_outbox' AND column_name = 'notification_id'"));
     }
+
+    /** Migration 031 (tổ chức & cá nhân): cột, chỉ mục, bảng, 4 khoá ngoại, cùng bảng mã với roles — cả sau lần chạy lại. */
+    public function test_sau_install_co_du_doi_tuong_cua_migration_031(): void
+    {
+        $this->chayInstall();
+        $dem = fn(string $sql) => (int) (db_one($sql)['c'] ?? 0);
+        $this->assertSame(1, $dem("SELECT COUNT(*) c FROM information_schema.columns
+            WHERE table_schema = DATABASE() AND table_name = 'classes' AND column_name = 'shift'"), 'Thiếu cột classes.shift.');
+        $this->assertSame(1, $dem("SELECT COUNT(*) c FROM information_schema.statistics
+            WHERE table_schema = DATABASE() AND table_name = 'classes' AND index_name = 'idx_class_shift'"), 'Thiếu chỉ mục idx_class_shift.');
+        $this->assertSame(1, $dem("SELECT COUNT(*) c FROM information_schema.columns
+            WHERE table_schema = DATABASE() AND table_name = 'members' AND column_name = 'glv_year'"), 'Thiếu cột members.glv_year.');
+        $this->assertSame(1, $dem("SELECT COUNT(*) c FROM information_schema.tables
+            WHERE table_schema = DATABASE() AND table_name = 'member_service_history'"), 'Thiếu bảng member_service_history.');
+
+        $fk = array_column(db_all("SELECT constraint_name n FROM information_schema.table_constraints
+            WHERE constraint_schema = DATABASE() AND table_name = 'member_service_history' AND constraint_type = 'FOREIGN KEY'
+            ORDER BY 1"), 'n');
+        $this->assertSame(['fk_hist_block', 'fk_hist_class', 'fk_hist_member', 'fk_hist_role'], $fk,
+            'member_service_history phải có đủ 4 khoá ngoại (xoá thành viên thì xoá theo lịch sử; xoá khối/lớp thì bỏ liên kết).');
+
+        $coll = fn(string $bang) => db_one("SELECT table_collation c FROM information_schema.tables
+            WHERE table_schema = DATABASE() AND table_name = ?", [$bang])['c'];
+        $this->assertSame($coll('roles'), $coll('member_service_history'),
+            'member_service_history phải cùng collation với roles — khác thì JOIN roles lỗi "Illegal mix of collations".');
+    }
 }
