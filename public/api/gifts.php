@@ -45,13 +45,39 @@ switch ($action) {
         $cols = 'name=?, stamp_cost=?, stock=?, image_url=?, status=?, sort_order=?';
         $vals = [$name, $cost, $stock, $image, $status, $sort];
 
+        // Các cột ghi vào log diff - key trùng tên cột DB để so sánh với dòng SELECT.
+        $tracked = ['name', 'stamp_cost', 'stock', 'status', 'sort_order'];
+        $moi = [
+            'name'       => $name,
+            'stamp_cost' => $cost,
+            'stock'      => $stock,
+            'status'     => $status,
+            'sort_order' => $sort,
+        ];
+
         if ($id > 0) {
-            if (!db_one('SELECT id FROM gifts WHERE id=?', [$id])) json_fail('Không tìm thấy quà.', 404);
+            $cu = db_one('SELECT name, stamp_cost, stock, status, sort_order FROM gifts WHERE id=?', [$id]);
+            if (!$cu) json_fail('Không tìm thấy quà.', 404);
             db_run("UPDATE gifts SET $cols WHERE id=?", array_merge($vals, [$id]));
-            log_action('sua', 'gifts', 'Sửa quà ' . $name, $cost . ' mộc · tồn ' . $stock);
+            $diff = diff_arrays($cu, $moi, $tracked);
+            log_action('sua', 'gifts', 'Sửa quà ' . $name, $cost . ' mộc · tồn ' . $stock,
+                [
+                    'before' => $diff['before'],
+                    'after'  => $diff['after'],
+                    'target_type'  => 'gift',
+                    'target_id'    => $id,
+                    'target_label' => $name,
+                ]);
         } else {
             $id = db_insert("INSERT INTO gifts SET $cols", $vals);
-            log_action('tao', 'gifts', 'Tạo quà ' . $name, $cost . ' mộc · tồn ' . $stock);
+            log_action('tao', 'gifts', 'Tạo quà ' . $name, $cost . ' mộc · tồn ' . $stock,
+                [
+                    'before' => null,
+                    'after'  => $moi,
+                    'target_type'  => 'gift',
+                    'target_id'    => $id,
+                    'target_label' => $name,
+                ]);
         }
 
         Cache::flush();   // danh mục quà đổi -> mọi người nạp lại thấy ngay
@@ -63,7 +89,7 @@ switch ($action) {
         require_permission('gifts', 'edit');
 
         $id   = (int) ($in['id'] ?? 0);
-        $gift = db_one('SELECT name FROM gifts WHERE id=?', [$id]);
+        $gift = db_one('SELECT name, stamp_cost, stock, status, sort_order FROM gifts WHERE id=?', [$id]);
         if (!$gift) json_fail('Không tìm thấy quà.', 404);
 
         // Quà đã có đơn đổi (gift_order_items tham chiếu tới) thì KHÔNG xoá
@@ -76,7 +102,20 @@ switch ($action) {
         }
 
         db_run('DELETE FROM gifts WHERE id=?', [$id]);
-        log_action('xoa', 'gifts', 'Xóa quà ' . $gift['name'], '');
+        log_action('xoa', 'gifts', 'Xóa quà ' . $gift['name'], '',
+            [
+                'before' => [
+                    'name'       => $gift['name'],
+                    'stamp_cost' => (int) $gift['stamp_cost'],
+                    'stock'      => (int) $gift['stock'],
+                    'status'     => $gift['status'],
+                    'sort_order' => (int) $gift['sort_order'],
+                ],
+                'after'        => null,
+                'target_type'  => 'gift',
+                'target_id'    => $id,
+                'target_label' => $gift['name'],
+            ]);
 
         Cache::flush();
         json_out(['ok' => true]);
