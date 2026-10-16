@@ -519,4 +519,60 @@ class AttendanceClassApiTest extends TestCase
             db_run("DELETE FROM students WHERE id IN (?, ?)", [$studentV, $studentP]);
         }
     }
+
+    /**
+     * Mục "Thiếu test" review vòng 5: tạo chương trình mới (count_for_attendance=1,
+     * status='kích hoạt') qua programs.php → phải xuất hiện trong
+     * attendance_class.php NGAY mà không cần tạo dòng term_programs.
+     * Logic LEFT JOIN + COALESCE(is_active, 1) = 1: chưa có dòng = đang bật.
+     */
+    public function test_new_program_appears_in_attendance_class_without_seed(): void
+    {
+        $year = current_year();
+        $term = db_one('SELECT id, year_id, start_date, end_date FROM terms WHERE id = ?', [$this->termId]);
+        if (!$year || !$term) {
+            $this->markTestSkipped('Cần niên khoá + term.');
+        }
+
+        // 1. Tạo 1 program mới — count_for_attendance=1, status='kích hoạt',
+        //    thuộc năm hiện tại (điều kiện WHERE p.year_id = ?).
+        $newProgName = 'TestNewProg_' . substr((string) time(), -5) . random_int(100, 999);
+        $newProgId = db_insert(
+            "INSERT INTO programs (year_id, name, type, status, count_for_attendance,
+                                   start_time, day_of_week)
+             VALUES (?, ?, 'bắt buộc', 'kích hoạt', 1, '08:00:00', 0)",
+            [$term['year_id'], $newProgName]
+        );
+
+        try {
+            // 2. Gọi attendance_class.php — KHÔNG tạo dòng term_programs.
+            $r = $this->http('GET',
+                '/api/attendance_class.php?term_id=' . $this->termId
+                . '&class_id=' . $this->classA);
+            $this->assertSame(200, $r['code'],
+                'Endpoint phải trả 200: ' . $r['raw']);
+            $this->assertIsArray($r['json'],
+                'Response phải là mảng: ' . $r['raw']);
+
+            // 3. Trong programs[] của em A, phải có program_id = $newProgId.
+            $foundProgId = null;
+            foreach ($r['json'] as $row) {
+                if ((int) ($row['student_id'] ?? 0) !== $this->studentIdA) continue;
+                foreach (($row['programs'] ?? []) as $p) {
+                    if ((int) ($p['program_id'] ?? 0) === $newProgId) {
+                        $foundProgId = $newProgId;
+                        break 2;
+                    }
+                }
+            }
+            $this->assertSame($newProgId, $foundProgId,
+                'Program mới phải xuất hiện trong attendance_class.php '
+                . 'mà KHÔNG cần tạo dòng term_programs (LEFT JOIN + COALESCE). '
+                . 'Nếu thiếu, query vẫn INNER JOIN hoặc chỉ lọc programs cũ. '
+                . 'Response: ' . $r['raw']);
+        } finally {
+            // Cleanup: programs có thể có FK từ attendances; xoá an toàn.
+            db_run("DELETE FROM programs WHERE id = ?", [$newProgId]);
+        }
+    }
 }
