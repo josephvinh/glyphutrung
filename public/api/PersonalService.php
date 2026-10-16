@@ -21,6 +21,12 @@ require_once __DIR__ . '/../../config/db.php';
 
 class PersonalService
 {
+    /** Lấy niên khoá hiện tại (is_current=1), hoặc null nếu chưa có. */
+    private static function currentSchoolYear(): ?array
+    {
+        return db_one("SELECT * FROM school_years WHERE is_current = 1 LIMIT 1");
+    }
+
     // =================================================================
     // SERVICE HISTORY
     // =================================================================
@@ -65,6 +71,11 @@ class PersonalService
         if ($yearLabel === '') {
             throw new Exception('Thiếu năm học cho dòng lịch sử.');
         }
+
+        // Vòng 3: validate FK trước khi INSERT — bảo vệ dữ liệu khỏi
+        // role_code/block_id/class_id ảo (FK đã SET NULL nên DB không
+        // chặn, nhưng record sẽ mồ côi — UI hiển thị "?" khó hiểu).
+        self::validateForeignKeys($data);
 
         $existing = db_one(
             "SELECT id, is_auto FROM member_service_history
@@ -143,48 +154,66 @@ class PersonalService
      */
     public static function updateGlvYear(int $memberId, ?int $glvYear, int $updatedBy): array
     {
-        db_run(
-            "UPDATE members SET glv_year = ? WHERE id = ?",
-            [$glvYear, $memberId]
-        );
-
-        if ($glvYear !== null) {
-            // Dọn dòng tự sinh cũ trước khi tái dựng.
+        // Bọc trong transaction để lỗi giữa chừng rollback toàn bộ (vòng 3
+        // review): trước đây nhánh null chỉ chạy 2 lệnh rời, lỗi giữa
+        // chừng sẽ để members.glv_year lệch với history.
+        db()->beginTransaction();
+        try {
             db_run(
-                "DELETE FROM member_service_history
-                  WHERE member_id = ? AND is_auto = 1",
-                [$memberId]
+                "UPDATE members SET glv_year = ? WHERE id = ?",
+                [$glvYear, $memberId]
             );
 
-            $currentYear = (int) date('Y');
-
-            for ($year = $glvYear; $year <= $currentYear; $year++) {
-                $assignment = self::getAssignmentForYear($memberId, $year);
-                $note = ($year === $glvYear) ? 'Năm đầu làm GLV' : null;
-
+            if ($glvYear !== null) {
+                // Dọn dòng tự sinh cũ trước khi tái dựng.
                 db_run(
-                    "INSERT INTO member_service_history
-                         (member_id, year_label, role_code, block_id, class_id,
-                          is_auto, note, created_by)
-                     VALUES (?,?,?,?,?, 1, ?, ?)",
-                    [
-                        $memberId,
-                        self::yearLabelFromYear($year),
-                        $assignment['role_code'] ?? 'glv',
-                        $assignment['block_id']  ?? null,
-                        $assignment['class_id']  ?? null,
-                        $note,
-                        $updatedBy,
-                    ]
+                    "DELETE FROM member_service_history
+                      WHERE member_id = ? AND is_auto = 1",
+                    [$memberId]
+                );
+
+                // Vòng 3: dùng niên khoá hiện tại (is_current=1) thay cho
+                // date('Y') để tháng 1-8 không sinh dòng cho năm học chưa
+                // bắt đầu. Hàm currentSchoolYear() trả null nếu chưa có —
+                // fallback date('Y') giữ hành vi cũ cho DB test seed.
+                $currentSchoolYear = self::currentSchoolYear();
+                $currentYear = $currentSchoolYear
+                    ? (int) explode(' - ', $currentSchoolYear['name'])[0]
+                    : (int) date('Y');
+
+                for ($year = $glvYear; $year <= $currentYear; $year++) {
+                    $assignment = self::getAssignmentForYear($memberId, $year);
+                    $note = ($year === $glvYear) ? 'Năm đầu làm GLV' : null;
+
+                    db_run(
+                        "INSERT INTO member_service_history
+                             (member_id, year_label, role_code, block_id, class_id,
+                              is_auto, note, created_by)
+                         VALUES (?,?,?,?,?, 1, ?, ?)",
+                        [
+                            $memberId,
+                            self::yearLabelFromYear($year),
+                            $assignment['role_code'] ?? 'glv',
+                            $assignment['block_id']  ?? null,
+                            $assignment['class_id']  ?? null,
+                            $note,
+                            $updatedBy,
+                        ]
+                    );
+                }
+            } else {
+                // null = xoá sạch các dòng tự sinh để history chỉ còn dòng nhập tay.
+                db_run(
+                    "DELETE FROM member_service_history
+                      WHERE member_id = ? AND is_auto = 1",
+                    [$memberId]
                 );
             }
-        } else {
-            // null = xoá sạch các dòng tự sinh để history chỉ còn dòng nhập tay.
-            db_run(
-                "DELETE FROM member_service_history
-                  WHERE member_id = ? AND is_auto = 1",
-                [$memberId]
-            );
+
+            db()->commit();
+        } catch (Throwable $e) {
+            db()->rollBack();
+            throw $e;
         }
 
         return ['ok' => true, 'glv_year' => $glvYear];
@@ -243,7 +272,14 @@ class PersonalService
         if ($glvYear === null) {
             return null;
         }
-        return (int) date('Y') - $glvYear;
+        // Vòng 3: dùng niên khoá hiện tại (is_current=1) thay cho date('Y')
+        // — tháng 1-8 nếu GLV thay đổi năm lên GLV thì "thâm niên" phải tính
+        // theo năm học, không theo năm dương lịch.
+        $current = self::currentSchoolYear();
+        $currentYear = $current
+            ? (int) explode(' - ', $current['name'])[0]
+            : (int) date('Y');
+        return $currentYear - $glvYear;
     }
 
     // =================================================================
@@ -266,11 +302,62 @@ class PersonalService
             throw new Exception('Trạng thái không hợp lệ.');
         }
 
-        db_run(
-            "UPDATE members SET status = ?, register_note = ? WHERE id = ?",
-            [$newStatus, $note, $memberId]
-        );
+        // Vòng 3: bọc transaction — UPDATE members + DELETE history
+        // phải atomic. Lỗi giữa chừng để lại state lệch.
+        db()->beginTransaction();
+        try {
+            db_run(
+                "UPDATE members SET status = ?, register_note = ? WHERE id = ?",
+                [$newStatus, $note, $memberId]
+            );
+            db_run(
+                "DELETE FROM member_service_history
+                  WHERE member_id = ? AND is_auto = 1",
+                [$memberId]
+            );
+            db()->commit();
+        } catch (Throwable $e) {
+            db()->rollBack();
+            throw $e;
+        }
 
         return ['ok' => true, 'status' => $newStatus];
     }
+
+    /**
+     * Validate role_code / block_id / class_id có thật trong CSDL.
+     * Vòng 3: FK ON DELETE SET NULL nên DB không chặn insert id ảo, nhưng
+     * sẽ sinh record mồ côi. Bắt ở tầng service để báo lỗi dễ hiểu.
+     *
+     * @throws PersonalServiceException Nếu id/code không tồn tại
+     */
+    private static function validateForeignKeys(array $data): void
+    {
+        if (isset($data['role_code']) && $data['role_code'] !== null) {
+            $exists = db_val('SELECT 1 FROM roles WHERE code = ?', [$data['role_code']]);
+            if (!$exists) {
+                throw new PersonalServiceException("Vai trò '{$data['role_code']}' không tồn tại.");
+            }
+        }
+        if (!empty($data['block_id'])) {
+            $exists = db_val('SELECT 1 FROM blocks WHERE id = ?', [$data['block_id']]);
+            if (!$exists) {
+                throw new PersonalServiceException("Khối #{$data['block_id']} không tồn tại.");
+            }
+        }
+        if (!empty($data['class_id'])) {
+            $exists = db_val('SELECT 1 FROM classes WHERE id = ?', [$data['class_id']]);
+            if (!$exists) {
+                throw new PersonalServiceException("Lớp #{$data['class_id']} không tồn tại.");
+            }
+        }
+    }
 }
+
+/**
+ * Vòng 3: exception riêng cho PersonalService — phân biệt lỗi nghiệp vụ
+ * (validate FK, status không hợp lệ) với lỗi hạ tầng (PDOException, kết
+ * nối DB, transaction). Frontend chỉ cần bắt PersonalServiceException để
+ * hiển thị message tiếng Việt; lỗi khác = 500.
+ */
+class PersonalServiceException extends Exception {}
