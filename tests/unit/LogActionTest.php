@@ -93,8 +93,9 @@ class LogActionTest extends TestCase
 
             // 6 cột mới từ migration 010 phải NULL khi gọi chữ ký cũ.
             foreach (['ip', 'user_agent', 'target_type', 'target_id', 'target_label', 'diff_json'] as $c) {
-                $this->assertNull($row[$c] ?? 'KHONG_PHU_HOP',
-                    "Cột '$c' phải NULL với chữ ký cũ, lấy: " . var_export($row[$c] ?? null, true));
+                $this->assertArrayHasKey($c, $row, "SELECT không trả về cột '$c'.");
+                $this->assertNull($row[$c],
+                    "Cột '$c' phải NULL với chữ ký cũ, lấy: " . var_export($row[$c], true));
             }
         } finally {
             $this->xoaLogTheoAction($action);
@@ -115,8 +116,9 @@ class LogActionTest extends TestCase
             $this->assertSame('chi tiết ABC',  $row['detail']);
 
             foreach (['ip', 'user_agent', 'target_type', 'target_id', 'target_label', 'diff_json'] as $c) {
-                $this->assertNull($row[$c] ?? 'KHONG_PHU_HOP',
-                    "Cột '$c' phải NULL với chữ ký cũ 4 tham số, lấy: " . var_export($row[$c] ?? null, true));
+                $this->assertArrayHasKey($c, $row, "SELECT không trả về cột '$c'.");
+                $this->assertNull($row[$c],
+                    "Cột '$c' phải NULL với chữ ký cũ 4 tham số, lấy: " . var_export($row[$c], true));
             }
         } finally {
             $this->xoaLogTheoAction($action);

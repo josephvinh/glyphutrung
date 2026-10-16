@@ -173,7 +173,7 @@ class ActivityLogMigrationTest extends TestCase
             $id = db_insert(
                 "INSERT INTO activity_logs (actor_id, actor_name, action, module, what, detail)
                  VALUES (?, ?, ?, ?, ?, ?)",
-                [0, self::ACTOR_TEST, 'test', 'test_module', 'log cũ chỉ có 7 cột', 'chi tiết']
+                [null, self::ACTOR_TEST, 'test', 'test_module', 'log cũ chỉ có 7 cột', 'chi tiết']
             );
             $this->assertGreaterThan(0, $id, 'INSERT log cũ phải trả về id > 0.');
 
@@ -181,8 +181,9 @@ class ActivityLogMigrationTest extends TestCase
                 FROM activity_logs WHERE id = ?", [$id]);
             $this->assertNotNull($row, 'Không đọc lại được dòng log vừa insert.');
             foreach (['ip', 'user_agent', 'target_type', 'target_id', 'target_label', 'diff_json'] as $c) {
-                $this->assertNull($row[$c] ?? 'KHONG_PHU_HOP', "Cột mới '$c' phải NULL với log cũ, lấy: "
-                    . var_export($row[$c] ?? null, true));
+                $this->assertArrayHasKey($c, $row, "SELECT không trả về cột mới '$c'.");
+                $this->assertNull($row[$c], "Cột mới '$c' phải NULL với log cũ, lấy: "
+                    . var_export($row[$c], true));
             }
         } finally {
             db_run("DELETE FROM activity_logs WHERE actor_name = ?", [self::ACTOR_TEST]);
@@ -199,8 +200,15 @@ class ActivityLogMigrationTest extends TestCase
 
         $this->assertStringContainsString('ADD COLUMN IF NOT EXISTS', $noiDung,
             'Migration 010 phải dùng ADD COLUMN IF NOT EXISTS để idempotent.');
-        $this->assertStringNotContainsString('DELIMITER', $noiDung,
-            'Migration 010 KHÔNG được dùng DELIMITER (PDO không hỗ trợ).');
+
+        // Không được có directive DELIMITER (PDO không hỗ trợ) — bỏ qua chuỗi
+        // 'DELIMITER' trong comment vì comment chỉ để giải thích.
+        foreach (preg_split('/\r?\n/', $noiDung) as $dong) {
+            $dong = trim($dong);
+            if ($dong === '' || str_starts_with($dong, '--')) continue;
+            $this->assertStringNotContainsString('DELIMITER', $dong,
+                "Migration 010 có directive DELIMITER ở dòng không phải comment: $dong");
+        }
 
         foreach (array_keys(self::INDEX_MOI) as $idx) {
             $this->assertStringContainsString($idx, $noiDung, "Migration 010 phải khai báo index '$idx'.");

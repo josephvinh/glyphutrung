@@ -157,15 +157,13 @@ function log_scope_where(?array $me): string
     }
 
     $ph = implode(',', array_fill(0, count($classIds), '?'));
-    $year = current_year();
-    $yearId = (int) ($year['id'] ?? 0);
 
     return "(
         actor_id = $meId
         OR (target_type = 'student' AND target_id IN (
             SELECT s.id FROM students s
             WHERE s.class_id IN ($ph)
-              AND s.year_id = $yearId
+              AND s.hidden_at IS NULL
         ))
     )";
 }
@@ -199,15 +197,13 @@ function log_scope_where_with_params(?array $me): array
     }
 
     $ph = implode(',', array_fill(0, count($classIds), '?'));
-    $year = current_year();
-    $yearId = (int) ($year['id'] ?? 0);
 
     $where = "(
         actor_id = $meId
         OR (target_type = 'student' AND target_id IN (
             SELECT s.id FROM students s
             WHERE s.class_id IN ($ph)
-              AND s.year_id = $yearId
+              AND s.hidden_at IS NULL
         ))
     )";
     return [$where, $classIds];
