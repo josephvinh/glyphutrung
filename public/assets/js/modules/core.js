@@ -708,6 +708,9 @@ window.TNTT.core = {
     logFilterFrom: '',
     logFilterTo: '',
 
+    // Modal xem diff của 1 dòng nhật ký (chỉ khi log có diff_json)
+    viewingLog: null,
+
     // Options cho dropdown — sinh từ dữ liệu đang có trong logs[]
     get logActorOptions() {
         const seen = new Map();
@@ -784,11 +787,96 @@ window.TNTT.core = {
     },
 
     async clearLogs() {
-        if (await window.TNTT.toast.confirm('Xóa toàn bộ nhật ký thao tác?\nViệc này không hoàn tác được.', { danger: true, confirmText: 'Xoá hết' })) {
+        // Khi đang lọc theo khoảng ngày thì xoá đúng khoảng đó; nếu không
+        // thì hỏi trước khi xoá TẤT CẢ (giữ tương thích luồng cũ).
+        const coKhoang = !!(this.logFilterFrom || this.logFilterTo);
+        const from = this.logFilterFrom || '';
+        const to   = this.logFilterTo   || '';
+        const moTa = coKhoang
+            ? `Xóa nhật ký trong khoảng ${from || '…'} → ${to || '…'}?\nViệc này không hoàn tác được.`
+            : 'Xóa toàn bộ nhật ký thao tác?\nViệc này không hoàn tác được.';
+        if (!await window.TNTT.toast.confirm(moTa, { danger: true, confirmText: 'Xoá' })) return;
+        const body = coKhoang ? { from, to } : {};
+        const r = await this.save('settings', 'clearLogs', body);
+        if (r && r.ok) {
             this.logs = [];
-            this.save('settings', 'clearLogs', {});
-            this.logAction('xoa', 'settings', 'Xóa toàn bộ nhật ký thao tác', '');
+            const n = (r && r.deleted) || 0;
+            window.TNTT.toast.info('Đã xóa ' + n + ' dòng nhật ký.');
+            this.logAction('xoa', 'settings', 'Xóa nhật ký thao tác', n + ' dòng');
         }
+    },
+
+    /**
+     * Tải file xuất nhật ký (CSV / XLSX) về máy.
+     * Gửi kèm filter hiện tại (actor / module / from / to) để file chỉ chứa
+     * đúng những dòng đang hiện trên màn hình — đỡ phải mở app lọc lại.
+     * Server tự ghi log "tao logs_export" cho việc xuất.
+     */
+    exportLogs(format) {
+        const fmt = (format === 'csv' || format === 'xlsx') ? format : 'xlsx';
+        const params = new URLSearchParams({ format: fmt });
+        if (this.logFilterActor)  params.set('actor',  this.logFilterActor);
+        if (this.logFilterModule) params.set('module', this.logFilterModule);
+        if (this.logFilterFrom)   params.set('from',   this.logFilterFrom);
+        if (this.logFilterTo)     params.set('to',     this.logFilterTo);
+        // Mở trong iframe ẩn để trình duyệt tự nhận Content-Disposition: attachment
+        const url = 'api/logs_export.php?' + params.toString();
+        const a = document.createElement('a');
+        a.href = url;
+        a.rel = 'noopener';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => a.remove(), 1000);
+    },
+
+    /**
+     * Mở modal xem diff của 1 dòng nhật ký. Modal chỉ hiện khi log có
+     * `diff` (parse từ diff_json ở backend). Log mới do log_action()
+     * ghi thêm trong session có thể chưa có diff.
+     */
+    openLogDiff(log) {
+        if (!log || !log.diff) return;
+        this.viewingLog = log;
+        // Khóa cuộn nền khi modal mở — modal đóng gọi closeLogDiff()
+        document.body.style.overflow = 'hidden';
+    },
+
+    closeLogDiff() {
+        this.viewingLog = null;
+        document.body.style.overflow = '';
+    },
+
+    /**
+     * Tính danh sách "thay đổi" từ log.diff để vẽ bảng Trường/Cũ/Mới.
+     * Trả về [{field, before, after, changed}] — `changed` để view dùng
+     * tô màu nhanh. Trường không đổi cũng liệt kê (giúp thấy toàn cảnh).
+     */
+    get logDiffRows() {
+        const log = this.viewingLog;
+        if (!log || !log.diff) return [];
+        const before = (log.diff && log.diff.before) || {};
+        const after  = (log.diff && log.diff.after)  || {};
+        const keys = new Set([...Object.keys(before), ...Object.keys(after)]);
+        return [...keys].sort().map((k) => {
+            const b = before[k];
+            const a = after[k];
+            const changed = JSON.stringify(b) !== JSON.stringify(a);
+            return { field: k, before: b, after: a, changed };
+        });
+    },
+
+    /**
+     * Format giá trị diff để hiện trong bảng. null/undefined → "—"
+     * (cho thấy trường được tạo mới hoặc bị xoá). Object/array → JSON
+     * gọn một dòng. Còn lại ép string.
+     */
+    formatDiffValue(v) {
+        if (v === null || v === undefined) return '—';
+        if (v === '') return '(rỗng)';
+        if (typeof v === 'object') {
+            try { return JSON.stringify(v); } catch (_) { return String(v); }
+        }
+        return String(v);
     },
 
     // ==========================================

@@ -43,6 +43,8 @@ require_once ROOT_PATH . '/src/ExceptionHandler.php';
 // hàm enforce_*_limit khác). Nạp ở đây để mọi endpoint api/ đều có sẵn —
 // trước đây thiếu require này nên data.php gọi hàm chưa định nghĩa → 500.
 require_once ROOT_PATH . '/src/RateLimiter.php';
+require_once ROOT_PATH . '/src/XlsxExport.php';
+require_once ROOT_PATH . '/src/LogMask.php';
 
 TNTT\Logger::bootstrap();
 $exceptionHandler = new TNTT\ExceptionHandler(TNTT\Logger::getInstance(), $debugMode);
@@ -584,6 +586,17 @@ function scan_class_ids(array $me): ?array
     $ph = implode(',', array_fill(0, count($blockIds), '?'));
     return array_map('intval', array_column(
         db_all("SELECT id FROM classes WHERE block_id IN ($ph)", $blockIds), 'id'));
+}
+
+/**
+ * Helper gọi nhanh TNTT\XlsxExport::write() cho endpoint xuất file.
+ * @param array<int,string> $headers
+ * @param array<int,array<int,mixed>> $rows
+ * @param array{sheet_name?:string,date_columns?:array<int,int>,bold_header?:bool} $opts
+ */
+function xlsx_export(string $path, array $headers, array $rows, array $opts = []): void
+{
+    \TNTT\XlsxExport::write($path, $headers, $rows, $opts);
 }
 
 /* ============================================================================

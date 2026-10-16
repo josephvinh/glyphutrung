@@ -87,3 +87,6 @@ test-code/
 
 # Cache Lời Chúa (sinh tự động)
 /storage/loichua/
+
+# Smoke test output (regenerated on each run)
+/tests/artifacts/

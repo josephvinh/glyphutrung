@@ -1298,6 +1298,26 @@ select.tntt-select {
 
 
 /* ==========================================================
+   UTILITY BỔ SUNG — dùng cho modal diff của nhật ký (views/module_settings.php).
+   Các class này KHÔNG có sẵn trong tailwind.css (đã rút gọn cho app) nên
+   khai bằng tay ở đây để khỏi dính test CssClassCoverageTest.
+   ========================================================== */
+.z-40 { z-index: 40; }
+.max-h-\[90vh\] { max-height: 90vh; }
+.rounded-t-2xl { border-top-left-radius: 1rem; border-top-right-radius: 1rem; }
+@media (min-width: 640px) {
+    .sm\:rounded-2xl { border-radius: 1rem; }
+}
+.font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+.break-all { word-break: break-all; }
+.self-center { align-self: center; }
+.bg-amber-50\/30 { background-color: rgb(254 243 199 / 0.3); }
+.active\:bg-slate-50:active { background-color: #f8fafc; }
+.grid-cols-\[120px_1fr_1fr\] { grid-template-columns: 120px 1fr 1fr; }
+.backdrop-blur-sm { backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+.line-through { text-decoration: line-through; }
+
+/* ==========================================================
    Ô NHẬP NGÀY / GIỜ THEO KHUÔN (views/_ngay_input.php + modules/ngay_nhap.js)
    Ô chữ dd/mm/yyyy · hh:mm; bên phải là nút lịch/đồng hồ: ô gốc (type=date/time) trong suốt phủ lên
    biểu tượng nên chạm/bấm là mở bộ chọn của máy. Ô gốc chỉ để CHỌN; chữ hiển thị luôn theo khuôn.

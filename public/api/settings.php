@@ -106,9 +106,27 @@ switch ($action) {
     // -------------------------------------------------------------
     case 'clearLogs':
         require_write();
-        db_run('DELETE FROM activity_logs');
-        log_action('xoa', 'settings', 'Xóa toàn bộ nhật ký thao tác', '');
-        json_out(['ok' => true]);
+        // Lọc theo khoảng ngày (tùy chọn): chỉ xoá log TRONG khoảng,
+        // giúp dọn dẹp từng đợt thay vì xoá sạch một lần. from/to dạng
+        // YYYY-MM-DD, không truyền thì xoá TẤT CẢ (giữ tương thích cũ).
+        $where = [];
+        $params = [];
+        if (!empty($in['from'])) {
+            $from = date('Y-m-d 00:00:00', strtotime((string) $in['from']));
+            if ($from) { $where[] = 'logged_at >= ?'; $params[] = $from; }
+        }
+        if (!empty($in['to'])) {
+            $to = date('Y-m-d 23:59:59', strtotime((string) $in['to']));
+            if ($to) { $where[] = 'logged_at <= ?'; $params[] = $to; }
+        }
+        $whereSql = $where ? ' WHERE ' . implode(' AND ', $where) : '';
+        $deleted = (int) (db_one("SELECT COUNT(*) n FROM activity_logs$whereSql", $params)['n'] ?? 0);
+        db_run("DELETE FROM activity_logs$whereSql", $params);
+        $mota = $deleted . ' dòng' . (($in['from'] ?? '') || ($in['to'] ?? '')
+            ? ' (' . ($in['from'] ?? '…') . ' → ' . ($in['to'] ?? '…') . ')'
+            : '');
+        log_action('xoa', 'settings', 'Xóa nhật ký thao tác', $mota);
+        json_out(['ok' => true, 'deleted' => $deleted]);
 
     // -------------------------------------------------------------
     default:
