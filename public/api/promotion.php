@@ -98,7 +98,20 @@ try {
 }
 
 log_action('sua', 'promotion', 'Lên lớp cuối năm khối ' . $block,
-           $up . ' lên lớp · ' . $stay . ' ở lại · ' . $graduate . ' ra trường → ' . $ty['name']);
+           $up . ' lên lớp · ' . $stay . ' ở lại · ' . $graduate . ' ra trường → ' . $ty['name'],
+    [
+        'before' => null,
+        'after'  => [
+            'up'       => $up,
+            'stay'     => $stay,
+            'graduate' => $graduate,
+            'block'    => $block,
+            'target_year_name' => $ty['name'],
+        ],
+        'target_type'  => 'promotion',
+        'target_id'    => $year['id'],
+        'target_label' => 'Lên lớp cuối năm khối ' . $block,
+    ]);
 
 json_out([
     'ok' => true, 'up' => $up, 'stay' => $stay, 'graduate' => $graduate,
