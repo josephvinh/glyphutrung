@@ -309,14 +309,166 @@ class OrganizationApiTest extends TestCase
     }
 
     // ------------------------------------------------------------------
-    //  T4.1: data shift expose (đặt vào PR8 - UI shift, vì phụ thuộc
-    //  data.php + _bootstrap_page.php expose classShift; PR7 chỉ có
-    //  test + validation, không có các thay đổi backend đó)
+    //  410 Gone: 4 case ghi đã chuyển sang api/personal.php. Gọi org.php
+    //  với 4 action này phải trả 410 (kể cả BĐH — không phải 403) để
+    //  frontend cũ phát hiện URL sai và cập nhật.
+    // ------------------------------------------------------------------
+
+    public function testOrg_410_SaveServiceHistory_Gone(): void
+    {
+        $bdh = $this->who['bdh'];
+        $r = $this->http($bdh['id'], 'POST',
+            '/api/org.php?action=saveServiceHistory',
+            ['member_id' => $this->who['glv']['id'], 'year_label' => '2024-2025']);
+        self::assertSame(410, $r['code'],
+            "saveServiceHistory ở org.php phải 410 Gone, được {$r['code']}: {$r['raw']}");
+    }
+
+    public function testOrg_410_DeleteServiceHistory_Gone(): void
+    {
+        $bdh = $this->who['bdh'];
+        $r = $this->http($bdh['id'], 'POST',
+            '/api/org.php?action=deleteServiceHistory',
+            ['member_id' => $this->who['glv']['id'], 'year_label' => '2024-2025']);
+        self::assertSame(410, $r['code'],
+            "deleteServiceHistory ở org.php phải 410 Gone, được {$r['code']}: {$r['raw']}");
+    }
+
+    public function testOrg_410_UpdateGlvYear_Gone(): void
+    {
+        $bdh = $this->who['bdh'];
+        $r = $this->http($bdh['id'], 'POST',
+            '/api/org.php?action=updateGlvYear',
+            ['member_id' => $this->who['glv']['id'], 'glv_year' => 2020]);
+        self::assertSame(410, $r['code'],
+            "updateGlvYear ở org.php phải 410 Gone, được {$r['code']}: {$r['raw']}");
+    }
+
+    public function testOrg_410_ChangeMemberStatus_Gone(): void
+    {
+        $bdh = $this->who['bdh'];
+        $r = $this->http($bdh['id'], 'POST',
+            '/api/org.php?action=changeMemberStatus',
+            ['member_id' => $this->who['glv']['id'], 'status' => 'tạm nghỉ', 'note' => 'test']);
+        self::assertSame(410, $r['code'],
+            "changeMemberStatus ở org.php phải 410 Gone, được {$r['code']}: {$r['raw']}");
+    }
+
+    // ------------------------------------------------------------------
+    //  changeMemberStatus: BĐH đổi trạng thái qua personal.php. Case
+    //  hợp lệ (200), bảo vệ admin (400), bắt buộc ghi chú khi rời
+    //  "đang phục vụ" (400), trạng thái không hợp lệ (400).
+    // ------------------------------------------------------------------
+
+    public function testChangeMemberStatus_Bdh_HappyPath(): void
+    {
+        $bdh = $this->who['bdh'];
+        $target = (int) $this->who['glv']['id'];
+
+        $r = $this->http($bdh['id'], 'POST', '/api/personal.php?action=changeMemberStatus',
+            ['member_id' => $target, 'status' => 'tạm nghỉ', 'note' => 'Nghỉ thai sản']);
+        self::assertSame(200, $r['code'],
+            "happy path phải 200, được {$r['code']}: {$r['raw']}");
+
+        $row = db_one('SELECT status FROM members WHERE id = ?', [$target]);
+        self::assertSame('tạm nghỉ', $row['status'], 'status phải = "tạm nghỉ"');
+
+        // Khôi phục
+        db_run('UPDATE members SET status = ? WHERE id = ?', ['đang phục vụ', $target]);
+    }
+
+    public function testChangeMemberStatus_Bdh_Admin_Protected(): void
+    {
+        // BĐH đổi trạng thái tài khoản admin → phải 400 (bảo vệ admin).
+        $bdh = $this->who['bdh'];
+        $admin = (int) $this->who['admin']['id'];
+        $r = $this->http($bdh['id'], 'POST', '/api/personal.php?action=changeMemberStatus',
+            ['member_id' => $admin, 'status' => 'tạm nghỉ', 'note' => 'hack']);
+        self::assertSame(400, $r['code'],
+            "BĐH đổi status admin phải 400, được {$r['code']}: {$r['raw']}");
+    }
+
+    public function testChangeMemberStatus_NoteRequired_WhenLeavingActive(): void
+    {
+        // Đổi sang 'tạm nghỉ' mà KHÔNG ghi chú → 400.
+        $bdh = $this->who['bdh'];
+        $target = (int) $this->who['glv']['id'];
+        $r = $this->http($bdh['id'], 'POST', '/api/personal.php?action=changeMemberStatus',
+            ['member_id' => $target, 'status' => 'tạm nghỉ']);
+        self::assertSame(400, $r['code'],
+            "thiếu ghi chú phải 400, được {$r['code']}: {$r['raw']}");
+    }
+
+    public function testChangeMemberStatus_InvalidStatus_400(): void
+    {
+        $bdh = $this->who['bdh'];
+        $target = (int) $this->who['glv']['id'];
+        $r = $this->http($bdh['id'], 'POST', '/api/personal.php?action=changeMemberStatus',
+            ['member_id' => $target, 'status' => 'invalid_status', 'note' => 'x']);
+        self::assertSame(400, $r['code'],
+            "status không hợp lệ phải 400, được {$r['code']}: {$r['raw']}");
+    }
+
+    // ------------------------------------------------------------------
+    //  T4.1: data shift expose (PR7 chỉ có test + validation, không có
+    //  các thay đổi data.php + _bootstrap_page.php expose classShift —
+    //  vẫn chờ PR8 để bật test này)
     // ------------------------------------------------------------------
 
     // ------------------------------------------------------------------
-    //  testBootstrapShift_AppearsInClasses — bỏ khỏi PR #292.
-    //  Thuộc về PR #293 (feat UI shift) vì cần _bootstrap_page.php +
-    //  data.php expose `shift`. Sẽ thêm lại ở PR #293.
+    //  T4.1: data shift expose — verify _bootstrap_page.php gửi
+    //  `shift` của từng lớp xuống window.TNTT.boot.classes, để
+    //  module_students dropdown shiftSuffix dùng được.
     // ------------------------------------------------------------------
+
+    public function testBootstrapShift_AppearsInClasses(): void
+    {
+        // Tạo 1 khối + 1 lớp có shift='sang' (nếu chưa có khối/lớp nào).
+        // Không xoá ở tearDown vì nếu test khác cũng cần lớp — chỉ dọn
+        // những dòng do test này tạo.
+        $blockId = (int) (db_one("SELECT id FROM blocks ORDER BY id LIMIT 1")['id'] ?? 0);
+        $classId = 0;
+        $className = 'BootstrapShiftTest_' . substr((string) mt_rand(), 0, 6);
+        $madeClass = false;
+        if ($blockId === 0) {
+            $blockId = (int) db_insert("INSERT INTO blocks (name, sort_order) VALUES (?, 99)", ['TestBs']);
+        }
+        $existing = db_one('SELECT id FROM classes WHERE name = ?', [$className]);
+        if ($existing) {
+            $classId = (int) $existing['id'];
+        } else {
+            $classId = (int) db_insert(
+                "INSERT INTO classes (block_id, name, shift, sort_order) VALUES (?, ?, 'sang', 99)",
+                [$blockId, $className]
+            );
+            $madeClass = true;
+        }
+        self::assertGreaterThan(0, $classId, 'phải có class id để test');
+
+        try {
+            // Mở trang index.php qua máy chủ tích hợp, parse window.TNTT_BOOT
+            $r = $this->http($this->who['admin']['id'], 'GET', '/index.php', null, false);
+            self::assertSame(200, $r['code'],
+                "GET /index.php phải 200, được {$r['code']}: {$r['raw']}");
+
+            // Tìm block window.TNTT_BOOT = {...} (mọi thứ nằm trong 1 <script>)
+            self::assertStringContainsString('window.TNTT_BOOT', (string) $r['raw'],
+                'trang phải có window.TNTT_BOOT');
+
+            // _bootstrap_page.php render qua json_encode — JSON format chuẩn,
+            // không có space giữa key:value. Match entry chứa tên lớp vừa tạo
+            // + shift:"sang".
+            $pattern = '/\{[^{}]*"name":"' . preg_quote($className, '/')
+                     . '"[^{}]*"shift":"sang"[^{}]*\}/';
+            self::assertSame(
+                1,
+                preg_match($pattern, (string) $r['raw']),
+                'payload classes phải có lớp vừa tạo với shift="sang"'
+            );
+        } finally {
+            if ($madeClass) {
+                db_run('DELETE FROM classes WHERE id = ?', [$classId]);
+            }
+        }
+    }
 }
