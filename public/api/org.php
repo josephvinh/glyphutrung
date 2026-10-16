@@ -15,6 +15,13 @@
  *   POST api/org.php?action=deleteMember  { id }
  *   POST api/org.php?action=approveMember / rejectMember / resetPassword
  *
+ * Hồ sơ cá nhân (module 'org'):
+ *   GET  api/org.php?action=getServiceHistory[&member_id=N]  lịch sử phục vụ (mặc định của $me)
+ *   POST api/org.php?action=saveServiceHistory   { member_id, year_label, role_code?, block_id?, class_id?, note? }
+ *   POST api/org.php?action=deleteServiceHistory { member_id, year_label }
+ *   POST api/org.php?action=updateGlvYear        { member_id, glv_year|null }
+ *   POST api/org.php?action=changeMemberStatus   { member_id, status, note? }
+ *
  * member_assignments là nguồn thật của "ai phụ trách chỗ nào"; các cột
  * members.role_code/block_id/class_id chỉ là bản dẫn xuất, luôn tính lại bằng
  * recompute_member_primary() sau khi phân công đổi.
@@ -30,10 +37,16 @@ $action = $_GET['action'] ?? '';
 
 // Duyệt tài khoản + quản lý nhân sự thuộc module Nhân sự (staff).
 // Còn lại (khối, lớp, chủ nhiệm/trưởng khối) thuộc module Tổ chức (org).
+// getServiceHistory là đọc — được mở ở mức 'view' để chính thành viên xem
+// lịch sử phục vụ của mình; muốn xem của NGƯỜI KHÁC thì case tự nâng lên
+// 'org.edit' (theo brief Task 2.3).
 $STAFF_ACTIONS = ['saveMember', 'deleteMember', 'approveMember', 'rejectMember', 'resetPassword'];
+$VIEW_ACTIONS  = ['getServiceHistory'];
 $me   = in_array($action, $STAFF_ACTIONS, true)
     ? require_permission('staff', 'edit')
-    : require_permission('org', 'edit');
+    : (in_array($action, $VIEW_ACTIONS, true)
+        ? require_permission('org', 'view')
+        : require_permission('org', 'edit'));
 
 $year = current_year();
 if (!$year) json_fail('Chưa có niên khoá nào đang mở.', 409);
@@ -44,6 +57,7 @@ $in     = json_input();
 // Sử dụng OrgService và StaffService để tách logic nghiệp vụ
 require_once __DIR__ . '/OrgService.php';
 require_once __DIR__ . '/StaffService.php';
+require_once __DIR__ . '/PersonalService.php';
 $org = new OrgService($me, $yid, $in);
 $staff = new StaffService($me, $yid, $in);
 
@@ -268,6 +282,104 @@ switch ($action) {
         }
         Cache::flush();
         json_out(['ok' => true]);
+
+    // ================== HỒ SƠ CÁ NHÂN · LỊCH SỬ PHỤC VỤ =============
+    // Task 2.3 — bọc lại PersonalService để frontend cá nhân dùng.
+    // getServiceHistory: GET, mặc định lấy của chính $me; muốn xem của
+    // người khác phải có 'org.edit' (BĐH/Quản trị).
+    case 'getServiceHistory':
+        $memberId = (int) ($_GET['member_id'] ?? $me['id']);
+        if ($memberId !== (int) $me['id'] && permission_of('org') !== 'edit') {
+            json_fail('Bạn chỉ được xem lịch sử phục vụ của chính mình.', 403);
+        }
+        json_ok(['history' => PersonalService::getServiceHistory($memberId)]);
+        break;
+
+    case 'saveServiceHistory':
+        require_write();
+        require_permission('org', 'edit');
+        if (empty($in['member_id']) || empty($in['year_label'])) {
+            json_fail('Thiếu thông tin bắt buộc', 400);
+        }
+        try {
+            PersonalService::saveServiceHistory(
+                (int) $in['member_id'],
+                $in,
+                (int) $me['id']
+            );
+            json_ok(['ok' => true]);
+        } catch (Exception $e) {
+            json_fail($e->getMessage(), 400);
+        }
+        break;
+
+    case 'deleteServiceHistory':
+        require_write();
+        require_permission('org', 'edit');
+        try {
+            PersonalService::deleteServiceHistory(
+                (int) ($in['member_id'] ?? 0),
+                (string) ($in['year_label'] ?? '')
+            );
+            json_ok(['ok' => true]);
+        } catch (Exception $e) {
+            json_fail($e->getMessage(), 400);
+        }
+        break;
+
+    // ================== HỒ SƠ CÁ NHÂN · NĂM LÊN GLV ===============
+    case 'updateGlvYear':
+        require_write();
+        require_permission('org', 'edit');
+        if (empty($in['member_id'])) {
+            json_fail('Thiếu member_id', 400);
+        }
+        // Validate glv_year nếu được cung cấp (không phải null = xoá).
+        $glvYear = null;
+        if (array_key_exists('glv_year', $in) && $in['glv_year'] !== null) {
+            $year = (int) $in['glv_year'];
+            if ($year < 1900 || $year > (int) date('Y')) {
+                json_fail('Năm không hợp lệ', 400);
+            }
+            $glvYear = $year;
+        }
+        try {
+            $result = PersonalService::updateGlvYear(
+                (int) $in['member_id'],
+                $glvYear,
+                (int) $me['id']
+            );
+            json_ok($result);
+        } catch (Exception $e) {
+            json_fail($e->getMessage(), 400);
+        }
+        break;
+
+    // ================== HỒ SƠ CÁ NHÂN · TRẠNG THÁI =================
+    case 'changeMemberStatus':
+        require_write();
+        require_permission('org', 'edit');
+        if (empty($in['member_id']) || empty($in['status'])) {
+            json_fail('Thiếu thông tin bắt buộc', 400);
+        }
+        // Bắt buộc ghi chú khi rời trạng thái "đang phục vụ" — lý do tạm
+        // nghỉ/nghỉ hẳn cần được lưu lại để truy vết sau này.
+        $note = isset($in['note']) ? (string) $in['note'] : null;
+        if (in_array($in['status'], ['tạm nghỉ', 'đã nghỉ'], true)
+            && ($note === null || trim($note) === '')) {
+            json_fail('Vui lòng nhập ghi chú khi thay đổi trạng thái', 400);
+        }
+        try {
+            $result = PersonalService::changeMemberStatus(
+                (int) $in['member_id'],
+                (string) $in['status'],
+                $note
+            );
+            json_ok($result);
+        } catch (Exception $e) {
+            json_fail($e->getMessage(), 400);
+        }
+        break;
 
     // -------------------------------------------------------------
     default:
