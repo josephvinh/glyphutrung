@@ -688,12 +688,26 @@ switch ($action) {
         if ($existing) {
             // Xóa favorite
             db_run('DELETE FROM student_favorites WHERE student_id = ? AND user_id = ?', [$studentId, $uid]);
-            log_action('unfav', 'students', 'Bỏ yêu thích ' . $student['full_name']);
+            log_action('unfav', 'students', 'Bỏ yêu thích ' . $student['full_name'], '',
+                [
+                    'before' => ['favorited' => 1],
+                    'after'  => ['favorited' => 0],
+                    'target_type'  => 'student',
+                    'target_id'    => $studentId,
+                    'target_label' => $student['full_name'] . ' · ' . $student['code'],
+                ]);
             json_out(['ok' => true, 'favorited' => false]);
         } else {
             // Thêm favorite
             db_insert('INSERT INTO student_favorites (student_id, user_id) VALUES (?, ?)', [$studentId, $uid]);
-            log_action('fav', 'students', 'Đánh dấu yêu thích ' . $student['full_name']);
+            log_action('fav', 'students', 'Đánh dấu yêu thích ' . $student['full_name'], '',
+                [
+                    'before' => ['favorited' => 0],
+                    'after'  => ['favorited' => 1],
+                    'target_type'  => 'student',
+                    'target_id'    => $studentId,
+                    'target_label' => $student['full_name'] . ' · ' . $student['code'],
+                ]);
             json_out(['ok' => true, 'favorited' => true]);
         }
         break;
