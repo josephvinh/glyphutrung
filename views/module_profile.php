@@ -3,7 +3,7 @@
      nên bỏ thanh điều hướng riêng (màn Cài Đặt đã có nút quay lại).
      Không đặt data-module ở đây: changeModule() sẽ ẩn mọi [data-module]
      không khớp, mà thẻ này do settingsTab điều khiển. -->
-<div class="relative pb-24">
+<div class="relative pb-24" x-init="loadProfile()">
 
     <!-- 2. THE HO SO -->
     <div class="bg-white rounded-card p-5 shadow-sm border border-slate-200 mb-5">
@@ -95,6 +95,56 @@
                    x-text="myActivity.total > 0 ? 'Tổng ' + myActivity.total + ' thao tác · gần nhất ' + myActivity.lastAt : 'Chưa có thao tác nào được ghi'"></p>
             </div>
         </div>
+    </div>
+
+    <!-- 6. THÂM NIÊN PHỤC VỤ (năm lên GLV) -->
+    <div style="background: linear-gradient(135deg, #eff6ff 0%, #eef2ff 100%);" class="rounded-card p-5 shadow-sm border border-blue-100 mb-5">
+        <h3 class="text-xs font-bold text-blue-700 uppercase tracking-wider mb-3">Thâm niên phục vụ</h3>
+        <div class="flex items-center gap-4">
+            <div class="w-14 h-14 shrink-0 rounded-2xl bg-white border border-blue-100 flex items-center justify-center shadow-sm">
+                <i data-lucide="award" class="w-7 h-7 text-blue-600"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+                <p class="text-2xl font-black text-blue-700 leading-tight">
+                    <span x-text="yearsOfService === null ? '—' : yearsOfService"></span>
+                    <span class="text-sm font-bold text-blue-600" x-text="yearsOfService === null ? 'chưa lên GLV' : 'năm'"></span>
+                </p>
+                <p class="text-micro text-slate-500 mt-0.5"
+                   x-text="profile?.glvYear ? 'Tính từ năm ' + profile.glvYear : 'BĐH sẽ đặt năm GLV khi bạn lên chức.'"></p>
+            </div>
+            <button x-show="canManageOrg" @click="openGlvModal()" type="button" style="display: none;"
+                    class="tap-safe shrink-0 px-3 py-2 bg-white border border-blue-200 text-blue-700 rounded-xl font-bold text-xs active:scale-95 transition-transform flex items-center gap-1">
+                <i data-lucide="pencil" class="w-3 h-3"></i>
+                <span x-text="profile?.glvYear ? 'Đổi' : 'Đặt'"></span>
+            </button>
+        </div>
+    </div>
+
+    <!-- 6b. LỊCH SỬ PHỤC VỤ -->
+    <div class="bg-white rounded-card p-5 shadow-sm border border-slate-100 mb-5">
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Lịch sử phục vụ</h3>
+            <button x-show="canManageOrg" @click="startAddHistory(); showHistoryModal = true" type="button" style="display: none;"
+                    class="tap-safe text-micro font-bold text-blue-600 flex items-center gap-1 active:scale-95 transition-transform">
+                <i data-lucide="plus" class="w-3 h-3"></i> Thêm
+            </button>
+        </div>
+        <p class="text-sm text-slate-500 italic" x-show="serviceHistory.length === 0">Chưa có dòng lịch sử nào.</p>
+        <div class="space-y-1.5" x-show="serviceHistory.length > 0">
+            <template x-for="h in serviceHistory.slice(0, 3)" :key="h.id">
+                <div class="flex items-center gap-2 text-sm">
+                    <span class="font-bold text-slate-700" x-text="h.year_label"></span>
+                    <span class="text-micro text-slate-500" x-text="'· ' + historyRoleLabel(h.role_code)"></span>
+                    <i x-show="h.is_auto === 1" data-lucide="lock" class="w-3 h-3 text-slate-400" title="Tự sinh từ hệ thống"></i>
+                </div>
+            </template>
+            <p x-show="serviceHistory.length > 3" class="text-micro text-slate-500 pt-1">
+                +<span x-text="serviceHistory.length - 3"></span> năm nữa…
+            </p>
+        </div>
+        <button @click="showHistoryModal = true" type="button" class="w-full mt-3 py-2 bg-slate-50 text-slate-700 rounded-xl font-bold text-xs active:scale-[0.98] transition-transform flex items-center justify-center gap-1.5">
+            <i data-lucide="list" class="w-3.5 h-3.5"></i> Xem toàn bộ lịch sử
+        </button>
     </div>
 
     <!-- 7. THÔNG BÁO ĐẨY
@@ -373,6 +423,132 @@
                 <i data-lucide="check" class="w-5 h-5 mr-2"></i>
                 <span x-text="pwBusy ? 'Đang lưu…' : 'Đổi mật khẩu'"></span>
             </button>
+        </div>
+    </div>
+</div>
+
+<!-- ==========================================================
+     MODAL CẬP NHẬT NĂM LÊN GLV
+     Chỉ BĐH/Quản trị (canManageOrg). Xoá cũng qua đây (set null).
+     Backend: public/api/personal.php?action=updateGlvYear
+     ========================================================== -->
+<div x-show="showGlvModal" style="display: none;" class="fixed inset-0 z-[200] flex items-end sm:items-center justify-center">
+    <div x-show="showGlvModal" x-transition.opacity.duration.300ms @click="showGlvModal = false" class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"></div>
+    <div x-show="showGlvModal"
+         x-transition:enter="transform transition ease-out duration-300"
+         x-transition:enter-start="translate-y-full sm:translate-y-0 sm:opacity-0"
+         x-transition:enter-end="translate-y-0 sm:opacity-100"
+         class="modal-sheet relative w-full max-w-md bg-white rounded-t-sheet sm:rounded-sheet shadow-2xl flex flex-col max-h-[88dvh] overflow-y-auto">
+        <div class="flex items-center justify-between p-5 border-b border-slate-100">
+            <h3 class="text-lg font-black text-slate-800">Cập nhật năm lên GLV</h3>
+            <button aria-label="Đóng" @click="showGlvModal = false" class="tap-safe w-9 h-9 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center active:scale-90">
+                <i data-lucide="x" class="w-5 h-5 text-slate-500"></i>
+            </button>
+        </div>
+        <div class="p-5 space-y-4">
+            <p class="text-sm text-slate-600">
+                Khi đặt năm <span class="font-bold">N</span>, hệ thống sẽ tự tái dựng dòng lịch sử phục vụ từ năm
+                <span class="font-bold" x-text="glvYearForm.year"></span> đến năm hiện tại.
+            </p>
+            <p class="text-micro text-amber-700 bg-amber-50 border border-amber-100 rounded-2xl px-3 py-2 leading-relaxed">
+                <i data-lucide="alert-triangle" class="w-3.5 h-3.5 inline-block mr-1 -mt-0.5"></i>
+                Nếu trong dải năm đó đã có dòng nhập tay, lệnh sẽ bị từ chối — bạn phải xoá dòng nhập tay trước rồi chạy lại.
+            </p>
+            <div>
+                <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1.5">Năm lên GLV</label>
+                <input type="number" min="1900" :max="window.TNTT.vn.now().year"
+                       x-model.number="glvYearForm.year"
+                       class="w-full bg-slate-50 border border-slate-200 rounded-field px-3 py-3 text-base font-bold text-slate-800 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 transition-all">
+            </div>
+        </div>
+        <div class="p-4 border-t border-slate-100 space-y-2">
+            <button @click="saveGlvYear()" :disabled="busyGlv" type="button"
+                    class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-2xl active:scale-[0.98] transition-transform shadow-md shadow-blue-200 flex justify-center items-center disabled:opacity-60">
+                <i data-lucide="check" class="w-5 h-5 mr-2"></i>
+                <span x-text="busyGlv ? 'Đang lưu…' : 'Lưu'"></span>
+            </button>
+            <button x-show="profile?.glvYear" @click="clearGlvYear()" :disabled="busyGlv" type="button" style="display: none;"
+                    class="w-full text-rose-600 font-bold py-2 text-xs active:scale-95 transition-transform">
+                Xoá năm lên GLV
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ==========================================================
+     MODAL LỊCH SỬ PHỤC VỤ (đầy đủ + sửa/xoá dòng nhập tay)
+     Dòng is_auto=0: sửa/xoá được (chỉ BĐH/Quản trị).
+     Dòng is_auto=1: chỉ xem, khoá.
+     Backend: public/api/personal.php?action=saveServiceHistory|deleteServiceHistory
+     ========================================================== -->
+<div x-show="showHistoryModal" style="display: none;" class="fixed inset-0 z-[200] flex items-end sm:items-center justify-center">
+    <div x-show="showHistoryModal" x-transition.opacity.duration.300ms @click="showHistoryModal = false" class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"></div>
+    <div x-show="showHistoryModal"
+         x-transition:enter="transform transition ease-out duration-300"
+         x-transition:enter-start="translate-y-full sm:translate-y-0 sm:opacity-0"
+         x-transition:enter-end="translate-y-0 sm:opacity-100"
+         class="modal-sheet relative w-full max-w-md bg-white rounded-t-sheet sm:rounded-sheet shadow-2xl flex flex-col max-h-[88dvh] overflow-y-auto">
+        <div class="flex items-center justify-between p-5 border-b border-slate-100">
+            <h3 class="text-lg font-black text-slate-800">Lịch sử phục vụ</h3>
+            <button aria-label="Đóng" @click="showHistoryModal = false; cancelHistoryForm()" class="tap-safe w-9 h-9 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center active:scale-90">
+                <i data-lucide="x" class="w-5 h-5 text-slate-500"></i>
+            </button>
+        </div>
+
+        <!-- Form thêm/sửa (hiện khi editingHistoryYear được set hoặc đang thêm mới) -->
+        <div x-show="editingHistoryYear !== null || historyForm.yearLabel" style="display: none;" class="p-5 border-b border-slate-100 bg-blue-50/50 space-y-3">
+            <p class="text-xs font-bold text-blue-700 uppercase tracking-wider"
+               x-text="editingHistoryYear ? 'Sửa dòng ' + editingHistoryYear : 'Thêm dòng mới'"></p>
+            <div>
+                <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1">Năm học</label>
+                <input type="text" placeholder="VD: 2024-2025" x-model="historyForm.yearLabel"
+                       class="w-full bg-white border border-slate-200 rounded-field px-3 py-2 text-sm font-semibold text-slate-800 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30">
+            </div>
+            <div>
+                <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1">Vai trò</label>
+                <select x-model="historyForm.roleCode" class="w-full bg-white border border-slate-200 rounded-field px-3 py-2 text-sm font-semibold text-slate-800">
+                    <option value="du_bi">Dự bị</option>
+                    <option value="glv">GLV</option>
+                    <option value="glv_chu_nhiem">GLV Chủ nhiệm</option>
+                    <option value="truong_khoi">Trưởng khối</option>
+                    <option value="bdh">BĐH</option>
+                    <option value="thu_thu">Thủ thư</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1">Ghi chú</label>
+                <input type="text" x-model="historyForm.note" class="w-full bg-white border border-slate-200 rounded-field px-3 py-2 text-sm text-slate-800">
+            </div>
+            <div class="flex gap-2">
+                <button @click="saveHistoryEntry()" :disabled="busyHistory" type="button"
+                        class="flex-1 bg-blue-600 text-white font-bold py-2.5 rounded-xl active:scale-[0.98] transition-transform text-sm flex items-center justify-center gap-1.5 disabled:opacity-60">
+                    <i data-lucide="check" class="w-4 h-4"></i>
+                    <span x-text="busyHistory ? 'Đang lưu…' : 'Lưu'"></span>
+                </button>
+                <button @click="cancelHistoryForm()" type="button"
+                        class="px-4 bg-slate-100 text-slate-600 font-bold py-2.5 rounded-xl text-sm">Huỷ</button>
+            </div>
+        </div>
+
+        <!-- Danh sách -->
+        <div class="p-5 space-y-1.5">
+            <p x-show="serviceHistory.length === 0" class="text-sm text-slate-500 italic">Chưa có dòng lịch sử nào.</p>
+            <template x-for="h in serviceHistory" :key="h.id">
+                <div class="flex items-center gap-2 py-2 border-b border-slate-100 last:border-0">
+                    <span class="font-bold text-sm text-slate-700 w-20" x-text="h.year_label"></span>
+                    <span class="text-xs text-slate-600 flex-1" x-text="historyRoleLabel(h.role_code)"></span>
+                    <span x-show="h.note" class="text-micro text-slate-400 italic flex-1 truncate" x-text="h.note"></span>
+                    <i x-show="h.is_auto === 1" data-lucide="lock" class="w-3.5 h-3.5 text-slate-400" title="Dòng tự sinh — không sửa được"></i>
+                    <div x-show="canEditHistoryEntry(h)" class="flex gap-1" style="display: none;">
+                        <button @click="startEditHistory(h)" aria-label="Sửa" class="tap-safe w-7 h-7 rounded-lg bg-slate-50 border border-slate-200 text-slate-600 flex items-center justify-center active:scale-90">
+                            <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                        </button>
+                        <button @click="deleteHistoryEntry(h)" aria-label="Xoá" class="tap-safe w-7 h-7 rounded-lg bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center active:scale-90">
+                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
+                </div>
+            </template>
         </div>
     </div>
 </div>

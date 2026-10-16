@@ -15,6 +15,12 @@
  *   POST api/org.php?action=deleteMember  { id }
  *   POST api/org.php?action=approveMember / rejectMember / resetPassword
  *
+ * Hồ sơ cá nhân (module 'org'):
+ *   GET  api/org.php?action=getServiceHistory[&member_id=N]  lịch sử phục vụ (mặc định của $me)
+ *   POST 4 case ghi (saveServiceHistory/deleteServiceHistory/updateGlvYear/changeMemberStatus)
+ *   ĐÃ CHUYỂN sang api/personal.php từ vòng 2 review — gọi ở đây sẽ trả
+ *   410 Gone để frontend cũ phát hiện và cập nhật URL.
+ *
  * member_assignments là nguồn thật của "ai phụ trách chỗ nào"; các cột
  * members.role_code/block_id/class_id chỉ là bản dẫn xuất, luôn tính lại bằng
  * recompute_member_primary() sau khi phân công đổi.
@@ -30,10 +36,16 @@ $action = $_GET['action'] ?? '';
 
 // Duyệt tài khoản + quản lý nhân sự thuộc module Nhân sự (staff).
 // Còn lại (khối, lớp, chủ nhiệm/trưởng khối) thuộc module Tổ chức (org).
+// getServiceHistory là đọc — được mở ở mức 'view' để chính thành viên xem
+// lịch sử phục vụ của mình; muốn xem của NGƯỜI KHÁC thì case tự nâng lên
+// 'org.edit' (theo brief Task 2.3).
 $STAFF_ACTIONS = ['saveMember', 'deleteMember', 'approveMember', 'rejectMember', 'resetPassword'];
+$VIEW_ACTIONS  = ['getServiceHistory'];
 $me   = in_array($action, $STAFF_ACTIONS, true)
     ? require_permission('staff', 'edit')
-    : require_permission('org', 'edit');
+    : (in_array($action, $VIEW_ACTIONS, true)
+        ? require_permission('org', 'view')
+        : require_permission('org', 'edit'));
 
 $year = current_year();
 if (!$year) json_fail('Chưa có niên khoá nào đang mở.', 409);
@@ -44,6 +56,7 @@ $in     = json_input();
 // Sử dụng OrgService và StaffService để tách logic nghiệp vụ
 require_once __DIR__ . '/OrgService.php';
 require_once __DIR__ . '/StaffService.php';
+require_once __DIR__ . '/PersonalService.php';
 $org = new OrgService($me, $yid, $in);
 $staff = new StaffService($me, $yid, $in);
 
@@ -268,6 +281,39 @@ switch ($action) {
         }
         Cache::flush();
         json_out(['ok' => true]);
+
+    // ================== HỒ SƠ CÁ NHÂN · LỊCH SỬ PHỤC VỤ =============
+    // Task 2.3 — bọc lại PersonalService để frontend cá nhân dùng.
+    // getServiceHistory: GET, mặc định lấy của chính $me; muốn xem của
+    // người khác phải có 'org.edit' (BĐH/Quản trị).
+    case 'getServiceHistory':
+        $memberId = (int) ($_GET['member_id'] ?? $me['id']);
+        if ($memberId !== (int) $me['id'] && permission_of('org') !== 'edit') {
+            json_fail('Bạn chỉ được xem lịch sử phục vụ của chính mình.', 403);
+        }
+        json_ok(['history' => PersonalService::getServiceHistory($memberId)]);
+        break;
+
+    case 'saveServiceHistory':
+        // Vòng 3: chuyển sang api/personal.php — nơi duy nhất còn 4 case ghi
+        // của module Tổ chức & Cá nhân (getProfile + 3 write). Trả 410 để
+        // frontend cũ phát hiện và cập nhật URL.
+        json_fail('Action đã chuyển sang api/personal.php — endpoint cũ không còn dùng.', 410);
+        break;
+
+    case 'deleteServiceHistory':
+        json_fail('Action đã chuyển sang api/personal.php — endpoint cũ không còn dùng.', 410);
+        break;
+
+    // ================== HỒ SƠ CÁ NHÂN · NĂM LÊN GLV ===============
+    case 'updateGlvYear':
+        json_fail('Action đã chuyển sang api/personal.php — endpoint cũ không còn dùng.', 410);
+        break;
+
+    // ================== HỒ SƠ CÁ NHÂN · TRẠNG THÁI =================
+    case 'changeMemberStatus':
+        json_fail('Action đã chuyển sang api/personal.php — endpoint cũ không còn dùng.', 410);
+        break;
 
     // -------------------------------------------------------------
     default:
