@@ -136,6 +136,52 @@ function effective_assignments(int $memberId): array
     );
 }
 
+/**
+ * Preload assignments đang hiệu lực cho nhiều thành viên trong 1 query.
+ * Thay thế N+1 khi build danh sách nhân sự (data.php). Trả về danh sách
+ * phẳng, người gọi tự group theo member_id.
+ *
+ * "Hiệu lực" = to_date IS NULL HOẶC to_date >= CURDATE().
+ * Kết quả sắp xếp is_primary DESC, from_date DESC để người gọi
+ * lấy phần tử đầu tiên làm primary khi cần.
+ */
+function preload_effective_assignments(array $memberIds): array
+{
+    if (empty($memberIds)) return [];
+    $placeholders = implode(',', array_fill(0, count($memberIds), '?'));
+    return db_all(
+        "SELECT a.*, r.label AS role_label, r.level AS role_level, r.scope AS role_scope,
+                b.name AS block_name, c.name AS class_name
+           FROM member_assignments a
+           JOIN roles r ON r.code = a.role_code
+           LEFT JOIN blocks b ON b.id = a.block_id
+           LEFT JOIN classes c ON c.id = a.class_id
+          WHERE a.member_id IN ($placeholders)
+            AND (a.to_date IS NULL OR a.to_date >= CURDATE())
+          ORDER BY a.member_id, a.is_primary DESC, a.from_date DESC",
+        $memberIds
+    );
+}
+
+/**
+ * Preload sĩ số đang sinh hoạt theo từng lớp trong niên khoá — 1 query
+ * GROUP BY thay vì 1 query / lớp (N+1 ở data.php cũ).
+ * Trả về [class_id => count].
+ */
+function preload_class_student_counts(int $yearId): array
+{
+    $rows = db_all(
+        "SELECT class_id, COUNT(*) AS n
+           FROM enrollments
+          WHERE year_id = ? AND status = 'đang sinh hoạt'
+          GROUP BY class_id",
+        [$yearId]
+    );
+    $out = [];
+    foreach ($rows as $r) $out[(int) $r['class_id']] = (int) $r['n'];
+    return $out;
+}
+
 /** Có đang giữ vai trò X không (active) */
 function has_active_role(int $memberId, string $roleCode): bool
 {

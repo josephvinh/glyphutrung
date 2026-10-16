@@ -232,9 +232,10 @@ foreach (db_all(
 // ---------------------------------------------------------------
 // Lớp — danh sách đầy đủ kèm shift (sáng/chiều) và sĩ số đang sinh hoạt
 // (T2.1 — Organization module cần shift + studentCount để hiển thị badge
-// và lọc). Sĩ số đếm server-side thay vì client tự đếm (đã làm cho
-// $classCounts ở trên) vì dữ liệu thiếu nhi đã bị phạm vi thu hẹp.
+// và lọc). Vòng 3: sĩ số đếm 1 query GROUP BY (preload_class_student_counts)
+// thay vì 1 query / lớp — sửa N+1.
 // ---------------------------------------------------------------
+$studentCounts = preload_class_student_counts($yid);
 $classes = array_map(fn($c) => [
     'id'           => (int) $c['id'],
     'block_id'     => (int) $c['block_id'],
@@ -243,11 +244,7 @@ $classes = array_map(fn($c) => [
     'next_class_id'=> $c['next_class_id'] === null ? null : (int) $c['next_class_id'],
     'is_final'     => (bool) $c['is_final'],
     'shift'        => $c['shift'] ?? null,
-    'studentCount' => (int) db_val(
-        "SELECT COUNT(*) FROM enrollments
-          WHERE class_id = ? AND year_id = ? AND status = 'đang sinh hoạt'",
-        [$c['id'], $yid]
-    ),
+    'studentCount' => $studentCounts[(int) $c['id']] ?? 0,
 ], db_all(
     'SELECT c.id, c.block_id, c.name, c.sort_order, c.next_class_id, c.is_final, c.shift
        FROM classes c
@@ -542,12 +539,35 @@ $memberWhere = [];
 // Ẩn tài khoản Quản trị khỏi mọi người trừ chính admin (F9).
 if (!can_see_admin($me))  $memberWhere[] = "m.role_code <> 'admin'";
 if ($staffLv !== 'edit') $memberWhere[] = "m.status <> 'chờ duyệt'";
-$members = $staffLv === 'none' ? [] : array_map(function ($m) use ($staffLv) {
-    // Tất cả phân công đang hiệu lực (không chỉ phân công chính) — màn Tổ Chức
-    // dùng để hiển thị huy hiệu kiêm nhiệm trên từng nhân sự (T2.1).
-    $allAssignments = effective_assignments((int) $m['id']);
+
+$memberRows = $staffLv === 'none' ? [] : db_all(
+    'SELECT m.*, t.label AS title_label, b.name AS block_name, c.name AS class_name,
+            EXISTS(SELECT 1 FROM member_assignments a
+                    WHERE a.member_id = m.id AND a.to_date IS NULL
+                      AND a.role_code <> \'thu_thu\') AS has_assignment
+       FROM members m
+       LEFT JOIN titles  t ON t.id = m.title_id
+       LEFT JOIN blocks  b ON b.id = m.block_id
+       LEFT JOIN classes c ON c.id = m.class_id'
+    . ($memberWhere ? ' WHERE ' . implode(' AND ', $memberWhere) : '')
+    . ' ORDER BY m.id');
+
+// Vòng 3: preload 1 query cho mọi assignment đang hiệu lực của các member
+// đã được phép trả về — thay vì gọi effective_assignments() / member (N+1).
+// Map $visibleMemberIds đã được lọc theo phạm vi admin/chờ-duyệt ở trên,
+// nên all_assignments không lộ phân công của member ẩn.
+$visibleMemberIds = array_map(fn($r) => (int) $r['id'], $memberRows);
+$assignmentsByMember = [];
+foreach (preload_effective_assignments($visibleMemberIds) as $a) {
+    $mid = (int) $a['member_id'];
+    if (!isset($assignmentsByMember[$mid])) $assignmentsByMember[$mid] = [];
+    $assignmentsByMember[$mid][] = $a;
+}
+
+$members = array_map(function ($m) use ($staffLv, $assignmentsByMember) {
+    $mid = (int) $m['id'];
     return [
-        'id'        => (int) $m['id'],
+        'id'        => $mid,
         'code'      => $m['code'],
         'holyName'  => $m['holy_name'],
         'fullName'  => $m['full_name'],
@@ -565,19 +585,11 @@ $members = $staffLv === 'none' ? [] : array_map(function ($m) use ($staffLv) {
         'hasAssignment' => !empty($m['has_assignment']),
         // T2.1: thêm trường mới cho module Tổ Chức / Cá Nhân
         'glv_year'       => $m['glv_year'] === null ? null : (int) $m['glv_year'],
-        'all_assignments'=> $allAssignments,
+        // Vòng 3: lấy từ preloaded map (1 query thay vì N+1) — đã lọc theo
+        // visibleMemberIds nên không lộ phân công của member ẩn.
+        'all_assignments'=> $assignmentsByMember[$mid] ?? [],
     ];
-}, db_all(
-    'SELECT m.*, t.label AS title_label, b.name AS block_name, c.name AS class_name,
-            EXISTS(SELECT 1 FROM member_assignments a
-                    WHERE a.member_id = m.id AND a.to_date IS NULL
-                      AND a.role_code <> \'thu_thu\') AS has_assignment
-       FROM members m
-       LEFT JOIN titles  t ON t.id = m.title_id
-       LEFT JOIN blocks  b ON b.id = m.block_id
-       LEFT JOIN classes c ON c.id = m.class_id'
-    . ($memberWhere ? ' WHERE ' . implode(' AND ', $memberWhere) : '')
-    . ' ORDER BY m.id'));
+}, $memberRows);
 
 // ---------------------------------------------------------------
 // Nhật ký — 50 dòng gần nhất (đủ xem, nhẹ bandwidth). CHỈ người được xem
