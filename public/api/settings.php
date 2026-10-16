@@ -65,7 +65,14 @@ switch ($action) {
         $label = db_one('SELECT label FROM modules WHERE module_key=?', [$mod])['label'];
         $rlab  = db_one('SELECT label FROM roles WHERE code=?', [$role])['label'];
         log_action('phanquyen', 'settings', 'Đổi quyền ' . $label . ' của ' . $rlab,
-                   ($names[$old['level'] ?? 'none']) . ' → ' . $names[$level]);
+                   ($names[$old['level'] ?? 'none']) . ' → ' . $names[$level],
+            [
+                'before' => ['level' => $old['level'] ?? 'none'],
+                'after'  => ['level' => $level],
+                'target_type'  => 'permission',
+                'target_id'    => $mod . '/' . $role,
+                'target_label' => $label . ' / ' . $rlab,
+            ]);
 
         json_out(['ok' => true]);
 
@@ -80,7 +87,14 @@ switch ($action) {
         db_run('UPDATE modules SET is_enabled=? WHERE module_key=?', [$now, $mod]);
         log_action('baotri', 'settings',
                    ($now ? 'Mở lại' : 'Tạm khóa') . ' chức năng ' . $m['label'],
-                   $now ? 'hoạt động bình thường' : 'đang bảo trì');
+                   $now ? 'hoạt động bình thường' : 'đang bảo trì',
+            [
+                'before' => ['is_enabled' => (int) $m['is_enabled']],
+                'after'  => ['is_enabled' => $now],
+                'target_type'  => 'module',
+                'target_id'    => (int) $m['id'],
+                'target_label' => $m['label'],
+            ]);
 
         json_out(['ok' => true, 'enabled' => (bool) $now]);
 
@@ -100,7 +114,14 @@ switch ($action) {
         } catch (\Throwable $e) {
             json_fail(safe_error($e, 'Không đặt lại được: '), 500);
         }
-        log_action('phanquyen', 'settings', 'Đặt lại toàn bộ phân quyền về mặc định', '');
+        log_action('phanquyen', 'settings', 'Đặt lại toàn bộ phân quyền về mặc định', '',
+            [
+                'before' => null,
+                'after'  => ['reset' => 'default'],
+                'target_type'  => 'permission',
+                'target_id'    => 0,
+                'target_label' => 'Tất cả module',
+            ]);
         json_out(['ok' => true]);
 
     // -------------------------------------------------------------
@@ -125,7 +146,14 @@ switch ($action) {
         $mota = $deleted . ' dòng' . (($in['from'] ?? '') || ($in['to'] ?? '')
             ? ' (' . ($in['from'] ?? '…') . ' → ' . ($in['to'] ?? '…') . ')'
             : '');
-        log_action('xoa', 'settings', 'Xóa nhật ký thao tác', $mota);
+        log_action('xoa', 'settings', 'Xóa nhật ký thao tác', $mota,
+            [
+                'before' => ['deleted_rows' => $deleted],
+                'after'  => null,
+                'target_type'  => 'activity_log',
+                'target_id'    => 0,
+                'target_label' => 'Nhật ký thao tác',
+            ]);
         json_out(['ok' => true, 'deleted' => $deleted]);
 
     // -------------------------------------------------------------
