@@ -2,19 +2,10 @@
 // tests/unit/TermProgramsApiTest.php
 //
 // KIỂM THỬ ĐẦU-CUỐI (qua HTTP thật) CỦA term_programs.php:
-//   GET  ?term_id=…        → mảng programs theo học kỳ
-//   POST { term_id, program_id, is_active } → bật/tắt chương trình
-//
-// Bảo vệ các luật cứng liên quan:
-//   - #5 "Không nuốt lỗi dữ liệu quan trọng": POST phải 404 (KHÔNG 500
-//     do FK violation) khi term_id / program_id không tồn tại. Lỗi 500
-//     che giấu vấn đề, frontend phải đoán từ stacktrace.
-//   - #6 "Không làm yếu phân quyền": POST chỉ admin/bdh; GET cần đăng
-//     nhập (require_login).
-//
-// Cookie/session/CSRF: dùng header thẳng (xem AttendanceClassApiTest
-// để biết lý do — CURLOPT_COOKIEJAR không ghi HttpOnly cookies trên
-// môi trường PHP/curl này).
+// - GET trả TẤT CẢ programs count_for_attendance=1, kể cả đã tắt
+//   (admin cần thấy để bật lại). Hai endpoint chuyên cần mới lọc is_active.
+// - POST bật/tắt is_active.
+// - Bảo vệ LUẬT CỨNG #6: chỉ admin/BDH mới được POST.
 
 require_once __DIR__ . '/../bootstrap.php';
 require_once __DIR__ . '/../../config/db.php';
@@ -29,8 +20,11 @@ class TermProgramsApiTest extends TestCase
     private array $sessions = [];
     private array $csrfs = [];
     private int $adminId = 0;
+    private int $yearId = 0;
     private int $termId = 0;
-    private int $programId = 0;
+    private int $progA = 0;   // count_for_attendance=1
+    private int $progB = 0;   // count_for_attendance=1
+    private int $progC = 0;   // count_for_attendance=1
 
     public static function setUpBeforeClass(): void
     {
@@ -73,22 +67,40 @@ class TermProgramsApiTest extends TestCase
         $year = current_year();
         $admin = db_one("SELECT id FROM members WHERE role_code = 'admin' LIMIT 1");
         $term = $year ? db_one("SELECT id FROM terms WHERE year_id = ? ORDER BY id LIMIT 1", [$year['id']]) : null;
-        $prog = db_one("SELECT id FROM programs WHERE count_for_attendance = 1 LIMIT 1");
-
-        if (!$year || !$admin || !$term || !$prog) {
-            $this->markTestSkipped('Cần niên khoá + admin + học kỳ + program count_for_attendance=1.');
+        if (!$year || !$admin || !$term) {
+            $this->markTestSkipped('Cần niên khoá + admin + ít nhất 1 học kỳ.');
         }
-        $this->adminId  = (int) $admin['id'];
-        $this->termId   = (int) $term['id'];
-        $this->programId = (int) $prog['id'];
+        $this->adminId = (int) $admin['id'];
+        $this->yearId  = (int) $year['id'];
+        $this->termId  = (int) $term['id'];
 
         db_run('UPDATE members SET must_change_pw = 0 WHERE id = ?', [$this->adminId]);
+
+        // 3 programs mới, count_for_attendance=1, status='kích hoạt', cùng niên khoá
+        $base = 'TP' . random_int(100000, 999999);
+        $this->progA = db_insert(
+            "INSERT INTO programs (year_id, name, type, status, count_for_attendance, start_time, day_of_week)
+             VALUES (?, ?, 'bắt buộc', 'kích hoạt', 1, '07:00:00', 0)",
+            [$this->yearId, $base . 'A']
+        );
+        $this->progB = db_insert(
+            "INSERT INTO programs (year_id, name, type, status, count_for_attendance, start_time, day_of_week)
+             VALUES (?, ?, 'bắt buộc', 'kích hoạt', 1, '08:00:00', 0)",
+            [$this->yearId, $base . 'B']
+        );
+        $this->progC = db_insert(
+            "INSERT INTO programs (year_id, name, type, status, count_for_attendance, start_time, day_of_week)
+             VALUES (?, ?, 'bắt buộc', 'kích hoạt', 1, '09:00:00', 0)",
+            [$this->yearId, $base . 'C']
+        );
 
         $this->loginAdmin();
     }
 
     protected function tearDown(): void
     {
+        db_run("DELETE FROM term_programs WHERE program_id IN (?, ?, ?)", [$this->progA, $this->progB, $this->progC]);
+        db_run("DELETE FROM programs WHERE id IN (?, ?, ?)", [$this->progA, $this->progB, $this->progC]);
         if ($this->adminId) {
             db_run('UPDATE members SET must_change_pw = 1 WHERE id = ?', [$this->adminId]);
         }
@@ -142,23 +154,81 @@ class TermProgramsApiTest extends TestCase
         $this->csrfs['admin'] = $r['json']['csrfToken'];
     }
 
-    // ==================== Tests ====================
-
-    public function test_post_term_programs_rejects_unknown_term(): void
+    private function isActive(array $list, int $progId): ?bool
     {
-        $r = $this->http('POST', '/api/term_programs.php', [
-            'term_id' => 99999999, 'program_id' => 1, 'is_active' => true,
-        ]);
-        $this->assertSame(404, $r['code'],
-            'term_id không tồn tại phải 404 (không phải 500 FK): ' . $r['raw']);
+        foreach ($list as $row) {
+            if ((int) ($row['id'] ?? 0) === $progId) {
+                return (bool) ($row['is_active'] ?? false);
+            }
+        }
+        return null;
     }
 
-    public function test_post_term_programs_rejects_unknown_program(): void
+    // ==================== Tests ====================
+
+    /**
+     * Mục 🟠 review vòng 6: GET phải trả TẤT CẢ programs count_for_attendance=1
+     * (kể cả đã tắt) để admin thấy và bật lại. Hai endpoint chuyên cần
+     * mới lọc `COALESCE(tp.is_active, 1) = 1`.
+     */
+    public function test_get_returns_all_programs_including_disabled(): void
     {
-        $r = $this->http('POST', '/api/term_programs.php', [
-            'term_id' => $this->termId, 'program_id' => 99999999, 'is_active' => true,
+        // 1. Tắt progB qua POST
+        $rPost = $this->http('POST', '/api/term_programs.php', [
+            'term_id' => $this->termId, 'program_id' => $this->progB, 'is_active' => false,
         ]);
+        $this->assertSame(200, $rPost['code'],
+            'POST tắt progB phải thành công: ' . $rPost['raw']);
+
+        // 2. GET — phải thấy CẢ 3 (A bật, B tắt, C bật mặc định)
+        $r = $this->http('GET', '/api/term_programs.php?term_id=' . $this->termId);
+        $this->assertSame(200, $r['code'],
+            'GET phải trả 200: ' . $r['raw']);
+        $this->assertIsArray($r['json'], 'Response phải là mảng: ' . $r['raw']);
+
+        $aFound = $this->isActive($r['json'], $this->progA);
+        $bFound = $this->isActive($r['json'], $this->progB);
+        $cFound = $this->isActive($r['json'], $this->progC);
+
+        $this->assertNotNull($aFound, 'progA phải có mặt trong kết quả: ' . $r['raw']);
+        $this->assertNotNull($bFound, 'progB (đã tắt) VẪN phải có mặt để admin bật lại: ' . $r['raw']);
+        $this->assertNotNull($cFound, 'progC phải có mặt trong kết quả: ' . $r['raw']);
+
+        $this->assertTrue($aFound, 'progA mặc định bật: ' . $r['raw']);
+        $this->assertFalse($bFound, 'progB đã POST tắt → is_active=false: ' . $r['raw']);
+        $this->assertTrue($cFound, 'progC mặc định bật: ' . $r['raw']);
+    }
+
+    /**
+     * Tắt rồi bật lại qua POST — round-trip phải OK.
+     */
+    public function test_post_can_disable_and_re_enable_program(): void
+    {
+        // Tắt
+        $r1 = $this->http('POST', '/api/term_programs.php', [
+            'term_id' => $this->termId, 'program_id' => $this->progA, 'is_active' => false,
+        ]);
+        $this->assertSame(200, $r1['code'], 'Tắt progA phải 200: ' . $r1['raw']);
+
+        $r2 = $this->http('GET', '/api/term_programs.php?term_id=' . $this->termId);
+        $this->assertFalse($this->isActive($r2['json'], $this->progA),
+            'progA phải tắt sau POST: ' . $r2['raw']);
+
+        // Bật lại
+        $r3 = $this->http('POST', '/api/term_programs.php', [
+            'term_id' => $this->termId, 'program_id' => $this->progA, 'is_active' => true,
+        ]);
+        $this->assertSame(200, $r3['code'], 'Bật lại progA phải 200: ' . $r3['raw']);
+
+        $r4 = $this->http('GET', '/api/term_programs.php?term_id=' . $this->termId);
+        $this->assertTrue($this->isActive($r4['json'], $this->progA),
+            'progA phải bật sau POST: ' . $r4['raw']);
+    }
+
+    public function test_get_unknown_term_returns_404(): void
+    {
+        $r = $this->http('GET', '/api/term_programs.php?term_id=999999');
         $this->assertSame(404, $r['code'],
-            'program_id không tồn tại phải 404: ' . $r['raw']);
+            'Term không tồn tại phải trả 404: ' . $r['raw']);
     }
 }

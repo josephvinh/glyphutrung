@@ -35,10 +35,10 @@ if ($action === 'GET') {
     $term = db_one('SELECT id, start_date, end_date FROM terms WHERE id = ?', [$termId]);
     if (!$term) json_fail('Học kỳ không tồn tại.', 404);
 
-    // Lấy programs active của niên khoá. Phương án "gọn" (mục 2 review vòng
-    // 5 PR #285): coi "chưa có dòng term_programs" là đang bật; dòng
-    // term_programs chỉ lưu ngoại lệ (tắt chương trình). Lọc theo
-    // year_id của học kỳ — niên khoá mới không bị gắn chương trình cũ.
+    // Lấy TẤT CẢ programs count_for_attendance=1 của niên khoá — kể cả
+    // đã tắt — để admin thấy và bật lại được trong UI Cài đặt. Hai
+    // endpoint chuyên cần (attendance_scores.php, attendance_class.php)
+    // mới lọc `COALESCE(tp.is_active, 1) = 1` (xem #290).
     $yearId = (int) (db_one('SELECT year_id FROM terms WHERE id = ?', [$termId])['year_id'] ?? 0);
     $programs = db_all('
         SELECT p.id, p.name, p.type, p.count_for_attendance,
@@ -46,7 +46,6 @@ if ($action === 'GET') {
         FROM programs p
         LEFT JOIN term_programs tp ON tp.program_id = p.id AND tp.term_id = ?
         WHERE p.year_id = ? AND p.status = "kích hoạt" AND p.count_for_attendance = 1
-          AND COALESCE(tp.is_active, 1) = 1
         ORDER BY p.sort_order, p.name
     ', [$termId, $yearId]);
 
