@@ -24,9 +24,13 @@ class PersonalServiceTest extends TestCase
 
     protected function setUp(): void
     {
-        if (!db_one("SHOW TABLES LIKE 'member_service_history'")) {
-            $this->markTestSkipped('Cần migration 031 (member_service_history).');
-        }
+        // Bảng member_service_history phải có từ migration 031 (CI kiểm schema).
+        // Nếu thiếu → fail rõ ràng, không skip — vòng 3 review: skip giả là
+        // qua mặt CI, nếu bảng thiếu thật thì CI phải đỏ chứ không "OK".
+        $this->assertNotNull(
+            db_one("SHOW TABLES LIKE 'member_service_history'"),
+            'Thiếu bảng member_service_history — chạy install.php + migration 031.'
+        );
     }
 
     protected function tearDown(): void
