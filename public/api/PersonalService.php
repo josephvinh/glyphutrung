@@ -165,6 +165,34 @@ class PersonalService
             );
 
             if ($glvYear !== null) {
+                // Bảo toàn dòng nhập tay: nếu trong dải [glvYear..hiện tại]
+                // đã có dòng is_auto=0 cùng year_label, BÁO LỖI để user xoá
+                // tay trước — tránh INSERT đè hoặc FK trượt.
+                $currentSchoolYear = self::currentSchoolYear();
+                $currentYear = $currentSchoolYear
+                    ? (int) explode(' - ', $currentSchoolYear['name'])[0]
+                    : (int) date('Y');
+                $conflicts = db_all(
+                    "SELECT year_label FROM member_service_history
+                      WHERE member_id = ?
+                        AND is_auto = 0
+                        AND year_label BETWEEN ? AND ?
+                      ORDER BY year_label",
+                    [
+                        $memberId,
+                        self::yearLabelFromYear($glvYear),
+                        self::yearLabelFromYear($currentYear),
+                    ]
+                );
+                if (!empty($conflicts)) {
+                    $labels = array_column($conflicts, 'year_label');
+                    throw new Exception(
+                        'Không thể tái dựng: các năm sau đã có dòng nhập tay '
+                        . '(cần xóa trước khi đặt năm GLV): '
+                        . implode(', ', $labels) . '.'
+                    );
+                }
+
                 // Dọn dòng tự sinh cũ trước khi tái dựng.
                 db_run(
                     "DELETE FROM member_service_history
