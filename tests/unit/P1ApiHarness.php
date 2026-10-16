@@ -47,9 +47,12 @@ trait P1ApiHarness
 
         $root = dirname(__DIR__, 2) . '/public';
         $env = array_merge(getenv(), $_ENV);
+        // Windows không có /dev/null; dùng NUL để test chạy được cả trên
+        // Git Bash CI và máy phát triển Windows. Không phá hành vi test.
+        $nullDev = DIRECTORY_SEPARATOR === '\\' ? 'NUL' : '/dev/null';
         self::$proc = proc_open(
             [PHP_BINARY, '-S', "127.0.0.1:$port", '-t', $root],
-            [0 => ['pipe', 'r'], 1 => ['file', '/dev/null', 'w'], 2 => ['file', '/dev/null', 'w']],
+            [0 => ['pipe', 'r'], 1 => ['file', $nullDev, 'w'], 2 => ['file', $nullDev, 'w']],
             $pipes, $root, $env
         );
         self::$base = "http://127.0.0.1:$port";
