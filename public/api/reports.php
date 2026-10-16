@@ -62,6 +62,34 @@ switch ($action) {
         if (!in_array($conduct, ['tốt', 'khá', 'trung bình', 'cần cố gắng'], true)) $conduct = 'tốt';
         if (!in_array($rank, ['Giỏi', 'Khá', 'Trung bình', 'Yếu'], true)) $rank = 'Trung bình';
 
+        $term = db_one('SELECT name FROM terms WHERE id=?', [$termId]);
+
+        // Snapshot các cột trước/sau để log diff — phiếu liên lạc là bản
+        // ghi tổng hợp nên cần nhiều cột. Bỏ att_* không đổi → log gọn.
+        $tracked = ['att_present','att_late','att_excused','att_unexcused','att_total',
+                    'att_rate','score','conduct','rank_label','remark','status'];
+        $moi = [
+            'att_present'   => (int) ($a['present'] ?? 0),
+            'att_late'      => (int) ($a['late'] ?? 0),
+            'att_excused'   => (int) ($a['excused'] ?? 0),
+            'att_unexcused' => (int) ($a['unexcused'] ?? 0),
+            'att_total'     => (int) ($a['total'] ?? 0),
+            'att_rate'      => (int) ($a['rate'] ?? 0),
+            'score'         => $rawSc === '' ? null : round((float) str_replace(',', '.', $rawSc), 2),
+            'conduct'       => $conduct,
+            'rank_label'    => $rank,
+            'remark'        => $remark,
+            'status'        => $send ? 'đã gửi' : 'nháp',
+        ];
+        // Đọc TRƯỚC khi INSERT — sau khi ghi thì hàng đã bị thay, không còn $cu
+        // để so sánh.
+        $cu = db_one(
+            'SELECT att_present, att_late, att_excused, att_unexcused, att_total, att_rate,
+                    score, conduct, rank_label, remark, status
+               FROM reports WHERE term_id=? AND student_id=?',
+            [$termId, $studentId]
+        ) ?: [];
+
         db_run('INSERT INTO reports (term_id, student_id, att_present, att_late, att_excused,
                                      att_unexcused, att_total, att_rate, score, conduct,
                                      rank_label, remark, status, created_by)
@@ -79,18 +107,39 @@ switch ($action) {
              $rawSc === '' ? null : round((float) str_replace(',', '.', $rawSc), 2),
              $conduct, $rank, $remark, $send ? 'đã gửi' : 'nháp', $me['id']]);
 
-        $term = db_one('SELECT name FROM terms WHERE id=?', [$termId]);
+        $diff = diff_arrays($cu, $moi, $tracked);
+
+        $label = $st['full_name'] . ' · ' . ($term['name'] ?? 'kỳ ' . $termId);
         log_action($send ? 'duyet' : 'sua', 'reports',
                    ($send ? 'Gửi' : 'Lưu nháp') . ' phiếu liên lạc của ' . $st['full_name'],
-                   $term['name'] . ' · xếp loại ' . $rank);
+                   $term['name'] . ' · xếp loại ' . $rank,
+                   [
+                       'before' => $diff['before'],
+                       'after'  => $diff['after'],
+                       'target_type'  => 'student',
+                       'target_id'    => $studentId,
+                       'target_label' => $label,
+                   ]);
 
         json_out(['ok' => true, 'createdBy' => $me['full_name'], 'createdAt' => date('Y-m-d H:i')]);
 
     // -------------------------------------------------------------
     case 'delete':
         require_write();
+        $cu = db_one('SELECT score, conduct, rank_label, remark, status FROM reports
+                       WHERE term_id=? AND student_id=?',
+                     [$termId, $studentId]) ?: [];
         db_run('DELETE FROM reports WHERE term_id=? AND student_id=?', [$termId, $studentId]);
-        log_action('xoa', 'reports', 'Xóa phiếu liên lạc của ' . $st['full_name'], '');
+        $term = db_one('SELECT name FROM terms WHERE id=?', [$termId]);
+        $label = $st['full_name'] . ' · ' . ($term['name'] ?? 'kỳ ' . $termId);
+        log_action('xoa', 'reports', 'Xóa phiếu liên lạc của ' . $st['full_name'], $label,
+                   [
+                       'before' => $cu ?: null,
+                       'after'  => null,
+                       'target_type'  => 'student',
+                       'target_id'    => $studentId,
+                       'target_label' => $label,
+                   ]);
         json_out(['ok' => true]);
 
     // -------------------------------------------------------------
