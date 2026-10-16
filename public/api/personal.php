@@ -147,5 +147,5 @@ switch ($action) {
         break;
 
     default:
-        json_fail('Unknown action', 400);
+        json_fail('Hành động không hợp lệ.', 404);
 }
