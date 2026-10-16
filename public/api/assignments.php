@@ -179,6 +179,24 @@ switch ($action) {
         }
         recompute_member_primary($memberId);
 
+        $target = db_one('SELECT full_name FROM members WHERE id=?', [$memberId]);
+        log_action('tao', 'org', 'Phân công ' . $role . ' cho ' . ($target['full_name'] ?? ("#" . $memberId)),
+                   $note ?: 'từ ' . $fromDate,
+            [
+                'before' => null,
+                'after'  => [
+                    'member_id' => $memberId,
+                    'role_code' => $role,
+                    'block_id'  => $blockId,
+                    'class_id'  => $classId,
+                    'is_primary' => (int) $isPrimary,
+                    'from_date' => $fromDate,
+                ],
+                'target_type'  => 'assignment',
+                'target_id'    => $newId,
+                'target_label' => ($target['full_name'] ?? ("#" . $memberId)) . ' / ' . $role,
+            ]);
+
         json_out(['ok' => true, 'id' => $newId, 'isPrimary' => (bool) $isPrimary]);
         break;
 
@@ -222,6 +240,30 @@ switch ($action) {
         }
         recompute_member_primary((int) $row['member_id']);
 
+        $target = db_one('SELECT full_name FROM members WHERE id=?', [(int) $row['member_id']]);
+        $oldTo  = $row['to_date'];
+        $moi = [
+            'to_date' => date('Y-m-d'),
+            'is_primary' => (int) ($row['is_primary'] ? 0 : $row['is_primary']),
+        ];
+        $diff = diff_arrays(
+            [
+                'to_date'    => $oldTo,
+                'is_primary' => (int) $row['is_primary'],
+            ],
+            $moi,
+            ['to_date', 'is_primary']
+        );
+        log_action('sua', 'org', 'Kết thúc phân công ' . $row['role_code'] . ' của ' . ($target['full_name'] ?? ('#' . $row['member_id'])),
+                   $row['note'] ?? '',
+            [
+                'before' => $diff['before'],
+                'after'  => $diff['after'],
+                'target_type'  => 'assignment',
+                'target_id'    => $assignmentId,
+                'target_label' => ($target['full_name'] ?? ('#' . $row['member_id'])) . ' / ' . $row['role_code'],
+            ]);
+
         json_out(['ok' => true]);
         break;
 
@@ -234,7 +276,7 @@ switch ($action) {
         $assignmentId = (int) ($in['assignmentId'] ?? 0);
         if (!$assignmentId) json_fail('Thiếu assignmentId.');
 
-        $row = db_one('SELECT member_id, block_id, class_id, to_date FROM member_assignments WHERE id = ?', [$assignmentId]);
+        $row = db_one('SELECT * FROM member_assignments WHERE id = ?', [$assignmentId]);
         if (!$row) json_fail('Không tìm thấy phân công.');
         if ($row['to_date'] !== null) json_fail('Phân công đã kết thúc, không đặt làm chính được.');
         if (!can_manage_assignment_scope($meEditor, $row['block_id'] ? (int) $row['block_id'] : null,
@@ -243,6 +285,18 @@ switch ($action) {
 
         enforce_single_primary((int) $row['member_id'], $assignmentId);
         recompute_member_primary((int) $row['member_id']);
+
+        $target = db_one('SELECT full_name FROM members WHERE id=?', [(int) $row['member_id']]);
+        log_action('sua', 'org', 'Đặt làm chính: ' . $row['role_code'] . ' của ' . ($target['full_name'] ?? ('#' . $row['member_id'])),
+                   '',
+            [
+                'before' => ['is_primary' => (int) $row['is_primary']],
+                'after'  => ['is_primary' => 1],
+                'target_type'  => 'assignment',
+                'target_id'    => $assignmentId,
+                'target_label' => ($target['full_name'] ?? ('#' . $row['member_id'])) . ' / ' . $row['role_code'],
+            ]);
+
         json_out(['ok' => true]);
         break;
 
@@ -263,6 +317,24 @@ switch ($action) {
             json_fail('Bạn không có quyền xóa phân công này.', 403);
 
         db_run('DELETE FROM member_assignments WHERE id = ?', [$assignmentId]);
+        $target = db_one('SELECT full_name FROM members WHERE id=?', [(int) $row['member_id']]);
+        log_action('xoa', 'org', 'Xoá phân công ' . $row['role_code'] . ' của ' . ($target['full_name'] ?? ('#' . $row['member_id'])),
+                   '',
+            [
+                'before' => [
+                    'member_id' => (int) $row['member_id'],
+                    'role_code' => $row['role_code'],
+                    'block_id'  => $row['block_id'] !== null ? (int) $row['block_id'] : null,
+                    'class_id'  => $row['class_id'] !== null ? (int) $row['class_id'] : null,
+                    'is_primary' => (int) $row['is_primary'],
+                    'from_date' => $row['from_date'],
+                    'to_date'   => $row['to_date'],
+                ],
+                'after'        => null,
+                'target_type'  => 'assignment',
+                'target_id'    => $assignmentId,
+                'target_label' => ($target['full_name'] ?? ('#' . $row['member_id'])) . ' / ' . $row['role_code'],
+            ]);
         json_out(['ok' => true]);
         break;
 

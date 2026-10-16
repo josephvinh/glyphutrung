@@ -97,7 +97,14 @@ switch ($action) {
         $_SESSION['member_id'] = (int) $m['id'];
 
         db_run('UPDATE members SET last_login_at = NOW() WHERE id = ?', [$m['id']]);
-        log_action('tao', 'auth', 'Đăng nhập hệ thống', $m['phone']);
+        log_action('tao', 'auth', 'Đăng nhập hệ thống', $m['phone'],
+            [
+                'before' => ['last_login_at' => $m['last_login_at']],
+                'after'  => ['last_login_at' => date('Y-m-d H:i:s')],
+                'target_type'  => 'member',
+                'target_id'    => (int) $m['id'],
+                'target_label' => $m['full_name'],
+            ]);
 
         // Trả kèm CSRF token (sinh SAU session_regenerate_id nên gắn với phiên
         // mới): màn đổi mật khẩu bắt buộc chưa qua page_bootstrap() nên không có
@@ -135,7 +142,14 @@ switch ($action) {
 
         db_run('UPDATE members SET password_hash = ?, must_change_pw = 0 WHERE id = ?',
                [password_hash_upgrade($new), $me['id']]);
-        log_action('sua', 'auth', 'Đổi mật khẩu', '');
+        log_action('sua', 'auth', 'Đổi mật khẩu', '',
+            [
+                'before' => ['must_change_pw' => 1],
+                'after'  => ['must_change_pw' => 0],
+                'target_type'  => 'member',
+                'target_id'    => (int) $me['id'],
+                'target_label' => $me['full_name'],
+            ]);
 
         json_out(['ok' => true]);
 
