@@ -115,6 +115,9 @@ switch ($action) {
         if (empty($in['member_id']) || empty($in['year_label'])) {
             json_fail('Thiếu thông tin bắt buộc.', 400);
         }
+        if (!preg_match('/^\d{4}-\d{4}$/', (string) $in['year_label'])) {
+            json_fail('Năm học phải có dạng YYYY-YYYY (ví dụ 2024-2025).', 400);
+        }
         try {
             PersonalService::saveServiceHistory(
                 (int) $in['member_id'],
