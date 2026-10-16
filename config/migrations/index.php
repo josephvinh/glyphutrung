@@ -105,9 +105,27 @@ function run_migration(string $file): bool
             }
         }
 
+        $benign = ['duplicate column name', 'already exists', 'duplicate key name',
+                   'duplicate foreign key', 'duplicate check constraint'];
         foreach ($statements as $s) {
-            if (!empty(trim($s))) {
+            if (empty(trim($s))) continue;
+            // Whitelist theo LOẠI CÂU LỆNH: chỉ chấp nhận lỗi "đã có" khi câu
+            // lệnh là DDL (CREATE/ALTER/DROP). INSERT/UPDATE/DELETE: KHÔNG nuốt
+            // lỗi nào — để lỗi lên rõ ràng (luật cứng #5: không nuốt lỗi dữ liệu
+            // quan trọng).
+            $stmtTrim = ltrim($s);
+            $isDdl = preg_match('/^(CREATE|ALTER|DROP)\s+/i', $stmtTrim) === 1;
+            try {
                 db_run($s);
+            } catch (Throwable $e) {
+                $msg = strtolower($e->getMessage());
+                $isBenign = false;
+                if ($isDdl) {
+                    foreach ($benign as $b) {
+                        if (str_contains($msg, $b)) { $isBenign = true; break; }
+                    }
+                }
+                if (!$isBenign) throw $e;
             }
         }
 

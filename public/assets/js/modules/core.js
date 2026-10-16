@@ -102,9 +102,16 @@ window.TNTT.core = {
     primaryAssignment: window.TNTT.boot?.primaryAssignment || null,
 
     // Đổi tên thành initCore để tránh trùng với shell.init (#121)
-    initCore() {
+    async initCore() {
         if (typeof this.initOfflineAttendance === 'function') {
             this.initOfflineAttendance();
+        }
+        // Load rules điểm số (tuỳ chỉnh)
+        if (window.TNTT?.scores?.initScoreRules) {
+            window.TNTT.scores.initScoreRules();
+        }
+        if (window.TNTT?.scores?.initAttendanceConfig) {
+            window.TNTT.scores.initAttendanceConfig();
         }
     },
 
@@ -1094,6 +1101,10 @@ window.TNTT.core = {
 
     get isAdmin() {
         return this.user.role === 'admin';
+    },
+
+    get isBdh() {
+        return this.user.role === 'bdh' || this.user.role === 'admin';
     },
 
     // Danh xưng thực tế của đoàn: chỉ Giáo Lý Viên / Dự Bị. Các vai điều hành
