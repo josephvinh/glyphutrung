@@ -512,3 +512,53 @@ function responsible_class_ids(array $me): ?array
     }
     return array_values(array_unique(array_map('intval', $ids)));
 }
+
+/* ============================================================
+   DIFF TRƯỚC / SAU CHO log_action()
+
+   Dùng khi muốn ghi nhật ký kiểu "sửa X từ A → B":
+   1. SELECT trước (before) — snapshot đầy đủ các cột cần theo dõi.
+   2. UPDATE.
+   3. SELECT sau (after) — cùng tập cột đó.
+   4. Gọi diff_arrays($before, $after) → trả về ['before' => chỉ-trường-đổi,
+                                                'after'  => chỉ-trường-đổi]
+      rồi truyền vào log_action(... , ['before' => ..., 'after' => ...]).
+   Hàm so sánh JSON để khử chênh lệch kiểu (int 1 vs string "1") và bỏ qua
+   thứ tự key; danh sách cột theo dõi ($keys) chống lộ field nhạy cảm
+   (password_hash, token) nếu lỡ SELECT * trước.
+   ============================================================ */
+function diff_arrays(array $before, array $after, ?array $keys = null): array
+{
+    if ($keys === null) {
+        $keys = array_unique(array_merge(array_keys($before), array_keys($after)));
+    }
+    $changed = [];
+    foreach ($keys as $k) {
+        $k = (string) $k;
+        $b = array_key_exists($k, $before) ? $before[$k] : null;
+        $a = array_key_exists($k, $after)  ? $after[$k]  : null;
+        $inBefore = array_key_exists($k, $before);
+        $inAfter  = array_key_exists($k, $after);
+        // So sánh bằng JSON để chuẩn hoá int/string/float và mảng kết hợp.
+        if (json_encode($b, JSON_UNESCAPED_UNICODE) === json_encode($a, JSON_UNESCAPED_UNICODE)) {
+            continue; // giống nhau
+        }
+        // Trường chỉ có ở 'before' (xoá) — chỉ ghi vào before, KHÔNG ghi vào after.
+        // Trường chỉ có ở 'after'  (thêm) — ghi cả hai với before = null.
+        if ($inAfter) {
+            $changed[$k] = $a;
+        }
+    }
+    $beforeOut = [];
+    foreach (array_keys($changed) as $k) {
+        $beforeOut[$k] = array_key_exists($k, $before) ? $before[$k] : null;
+    }
+    // Trường chỉ có ở 'before' (xoá) — ghi vào before để thấy giá trị cũ.
+    foreach ($keys as $k) {
+        $k = (string) $k;
+        if (array_key_exists($k, $before) && !array_key_exists($k, $after)) {
+            $beforeOut[$k] = $before[$k];
+        }
+    }
+    return ['before' => $beforeOut, 'after' => $changed];
+}
