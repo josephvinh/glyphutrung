@@ -73,12 +73,16 @@ CREATE TABLE IF NOT EXISTS classes (
     sort_order    TINYINT     NOT NULL DEFAULT 1,
     next_class_id INT         NULL COMMENT 'lớp kế tiếp khi lên lớp',
     is_final      TINYINT(1)  NOT NULL DEFAULT 0 COMMENT '1 = lớp cuối, lên lớp là ra trường',
+    shift         ENUM('sang','chieu') NULL COMMENT 'Ca học: NULL=không phân biệt, sang=buổi sáng, chieu=buổi chiều',
     CONSTRAINT fk_class_block FOREIGN KEY (block_id) REFERENCES blocks(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Khóa ngoại tự tham chiếu phải thêm sau khi bảng đã tồn tại
 ALTER TABLE classes ADD CONSTRAINT fk_class_next
     FOREIGN KEY (next_class_id) REFERENCES classes(id) ON DELETE SET NULL;
+
+-- Index cho cột shift (filter lớp sáng/chiều — xem migration 031)
+ALTER TABLE classes ADD INDEX idx_class_shift (shift);
 
 -- =====================================================================
 --  3. VAI TRÒ & CHỨC DANH
@@ -115,6 +119,7 @@ CREATE TABLE IF NOT EXISTS members (
     password_hash  VARCHAR(255) NOT NULL,
     role_code      VARCHAR(24)  NOT NULL,
     title_id       INT          NULL,
+    glv_year       INT          NULL COMMENT 'Năm lên Giáo Lý Viên (yyyy)',
     block_id       INT          NULL,
     class_id       INT          NULL,
     status         ENUM('chờ duyệt','đang phục vụ','tạm nghỉ','đã nghỉ') NOT NULL DEFAULT 'đang phục vụ',
@@ -161,6 +166,40 @@ CREATE TABLE IF NOT EXISTS member_assignments (
     INDEX idx_assign_class  (class_id, to_date),
     INDEX idx_assign_block  (block_id, to_date),
     INDEX idx_assign_role   (role_code, to_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =====================================================================
+--  4b. LỊCH SỬ PHỤC VỤ (added 2026-10-25 — organization-personal-modules, Task 1.1)
+--  Mỗi năm học mỗi nhân sự có thể đảm nhiều vai trò ở nhiều khối/lớp.
+--  member_assignments ở trên là phân công HIỆN TẠI; bảng này là LỊCH SỬ
+--  qua từng năm (year_label). is_auto = 1: hệ thống tự ghi từ phân công;
+--  is_auto = 0: GLV tự nhập tay (cho các năm trước). UNIQUE(member_id,
+--  year_label) chống trùng một năm một người.
+-- =====================================================================
+CREATE TABLE IF NOT EXISTS member_service_history (
+    id              INT AUTO_INCREMENT PRIMARY KEY,
+    member_id       INT          NULL     COMMENT 'FK members.id, ON DELETE SET NULL — giữ lịch sử khi xoá thành viên',
+    member_holy_name VARCHAR(64)  NULL     COMMENT 'Snapshot: tên thánh tại thời điểm ghi dòng',
+    member_full_name VARCHAR(128) NULL     COMMENT 'Snapshot: họ tên tại thời điểm ghi dòng',
+    year_label      VARCHAR(20)  NOT NULL COMMENT 'VD: 2024-2025',
+    role_code       VARCHAR(24)  NULL     COMMENT 'Vai trò trong năm đó',
+    role_label      VARCHAR(64)  NULL     COMMENT 'Snapshot: nhãn vai (denormalize từ roles.label)',
+    block_id        INT          NULL     COMMENT 'Khối được phân công',
+    class_id        INT          NULL     COMMENT 'Lớp được phân công',
+    is_auto         TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '1=tự động tạo, 0=nhập tay',
+    note            VARCHAR(255) NULL     COMMENT 'Ghi chú thêm',
+    created_at      TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    created_by      INT          NULL     COMMENT 'Ai tạo',
+
+    UNIQUE KEY uk_member_year (member_id, year_label),
+    INDEX idx_history_member (member_id),
+    INDEX idx_history_year (year_label),
+    INDEX idx_history_auto (is_auto),
+    CONSTRAINT fk_msh_member   FOREIGN KEY (member_id)  REFERENCES members(id) ON DELETE SET NULL,
+    CONSTRAINT fk_msh_block    FOREIGN KEY (block_id)   REFERENCES blocks(id)  ON DELETE SET NULL,
+    CONSTRAINT fk_msh_class    FOREIGN KEY (class_id)   REFERENCES classes(id) ON DELETE SET NULL,
+    CONSTRAINT fk_msh_role     FOREIGN KEY (role_code)  REFERENCES roles(code)  ON DELETE RESTRICT,
+    CONSTRAINT fk_msh_creator  FOREIGN KEY (created_by) REFERENCES members(id)  ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================================================
