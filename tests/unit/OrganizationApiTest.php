@@ -415,12 +415,60 @@ class OrganizationApiTest extends TestCase
     //  vẫn chờ PR8 để bật test này)
     // ------------------------------------------------------------------
 
+    // ------------------------------------------------------------------
+    //  T4.1: data shift expose — verify _bootstrap_page.php gửi
+    //  `shift` của từng lớp xuống window.TNTT.boot.classes, để
+    //  module_students dropdown shiftSuffix dùng được.
+    // ------------------------------------------------------------------
+
     public function testBootstrapShift_AppearsInClasses(): void
     {
-        $this->markTestSkipped(
-            'Cần PR8: data.php chưa expose classShift. Khi PR8 đổi '
-            . 'data.php + _bootstrap_page.php để gửi shift xuống '
-            . 'frontend, bỏ skip này và chạy thật.'
-        );
+        // Tạo 1 khối + 1 lớp có shift='sang' (nếu chưa có khối/lớp nào).
+        // Không xoá ở tearDown vì nếu test khác cũng cần lớp — chỉ dọn
+        // những dòng do test này tạo.
+        $blockId = (int) (db_one("SELECT id FROM blocks ORDER BY id LIMIT 1")['id'] ?? 0);
+        $classId = 0;
+        $className = 'BootstrapShiftTest_' . substr((string) mt_rand(), 0, 6);
+        $madeClass = false;
+        if ($blockId === 0) {
+            $blockId = (int) db_insert("INSERT INTO blocks (name, sort_order) VALUES (?, 99)", ['TestBs']);
+        }
+        $existing = db_one('SELECT id FROM classes WHERE name = ?', [$className]);
+        if ($existing) {
+            $classId = (int) $existing['id'];
+        } else {
+            $classId = (int) db_insert(
+                "INSERT INTO classes (block_id, name, shift, sort_order) VALUES (?, ?, 'sang', 99)",
+                [$blockId, $className]
+            );
+            $madeClass = true;
+        }
+        self::assertGreaterThan(0, $classId, 'phải có class id để test');
+
+        try {
+            // Mở trang index.php qua máy chủ tích hợp, parse window.TNTT_BOOT
+            $r = $this->http($this->who['admin']['id'], 'GET', '/index.php', null, false);
+            self::assertSame(200, $r['code'],
+                "GET /index.php phải 200, được {$r['code']}: {$r['raw']}");
+
+            // Tìm block window.TNTT_BOOT = {...} (mọi thứ nằm trong 1 <script>)
+            self::assertStringContainsString('window.TNTT_BOOT', (string) $r['raw'],
+                'trang phải có window.TNTT_BOOT');
+
+            // _bootstrap_page.php render qua json_encode — JSON format chuẩn,
+            // không có space giữa key:value. Match entry chứa tên lớp vừa tạo
+            // + shift:"sang".
+            $pattern = '/\{[^{}]*"name":"' . preg_quote($className, '/')
+                     . '"[^{}]*"shift":"sang"[^{}]*\}/';
+            self::assertSame(
+                1,
+                preg_match($pattern, (string) $r['raw']),
+                'payload classes phải có lớp vừa tạo với shift="sang"'
+            );
+        } finally {
+            if ($madeClass) {
+                db_run('DELETE FROM classes WHERE id = ?', [$classId]);
+            }
+        }
     }
 }
