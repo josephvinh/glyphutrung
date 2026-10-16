@@ -16,6 +16,8 @@
  *                               mình; muốn đổi phải nhờ BĐH)
  *   - saveServiceHistory     : org.edit
  *   - deleteServiceHistory   : org.edit
+ *   - changeMemberStatus     : org.edit (chỉ BĐH/Quản trị, có bảo vệ admin
+ *                               và bắt buộc ghi chú khi rời "đang phục vụ")
  *
  * Ghi chú: tất cả thao tác GHI đều đi qua require_write() (POST + CSRF +
  * rate-limit) theo AGENT_RULES.md rule 6.
@@ -141,6 +143,40 @@ switch ($action) {
                 (string) $in['year_label']
             );
             json_ok(['ok' => true]);
+        } catch (Exception $e) {
+            json_fail($e->getMessage(), 400);
+        }
+        break;
+
+    // ==================== TRẠNG THÁI THÀNH VIÊN ====================
+    case 'changeMemberStatus':
+        require_write();
+        if (empty($in['member_id']) || empty($in['status'])) {
+            json_fail('Thiếu thông tin bắt buộc.', 400);
+        }
+        $targetId = (int) $in['member_id'];
+        // Không cho BĐH đổi trạng thái tài khoản Quản trị.
+        $target = db_one('SELECT id, role_code FROM members WHERE id = ?', [$targetId]);
+        if (!$target) {
+            json_fail('Không tìm thấy thành viên.', 404);
+        }
+        if ($target['role_code'] === 'admin') {
+            json_fail('Không thể thay đổi trạng thái tài khoản Quản trị.', 400);
+        }
+        // Bắt buộc ghi chú khi rời "đang phục vụ" — lý do tạm nghỉ/nghỉ
+        // hẳn cần lưu lại để truy vết.
+        $note = isset($in['note']) ? (string) $in['note'] : null;
+        if (in_array($in['status'], ['tạm nghỉ', 'đã nghỉ'], true)
+            && ($note === null || trim($note) === '')) {
+            json_fail('Vui lòng nhập ghi chú khi thay đổi trạng thái.', 400);
+        }
+        try {
+            $result = PersonalService::changeMemberStatus(
+                $targetId,
+                (string) $in['status'],
+                $note
+            );
+            json_ok($result);
         } catch (Exception $e) {
             json_fail($e->getMessage(), 400);
         }
