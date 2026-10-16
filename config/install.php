@@ -168,9 +168,12 @@ $migrations = [
     "ALTER TABLE members ADD COLUMN glv_year INT NULL",
     "CREATE TABLE IF NOT EXISTS member_service_history (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        member_id INT NOT NULL,
+        member_id INT NULL,
+        member_holy_name VARCHAR(64) NULL,
+        member_full_name VARCHAR(128) NULL,
         year_label VARCHAR(20) NOT NULL,
         role_code VARCHAR(24) NULL,
+        role_label VARCHAR(64) NULL,
         block_id INT NULL,
         class_id INT NULL,
         is_auto TINYINT(1) NOT NULL DEFAULT 0,
@@ -180,8 +183,18 @@ $migrations = [
         UNIQUE KEY uk_member_year (member_id, year_label),
         INDEX idx_history_member (member_id),
         INDEX idx_history_year (year_label),
-        INDEX idx_history_auto (is_auto)
+        INDEX idx_history_auto (is_auto),
+        CONSTRAINT fk_msh_member   FOREIGN KEY (member_id)  REFERENCES members(id) ON DELETE SET NULL,
+        CONSTRAINT fk_msh_block    FOREIGN KEY (block_id)   REFERENCES blocks(id)  ON DELETE SET NULL,
+        CONSTRAINT fk_msh_class    FOREIGN KEY (class_id)   REFERENCES classes(id) ON DELETE SET NULL,
+        CONSTRAINT fk_msh_role     FOREIGN KEY (role_code)  REFERENCES roles(code)  ON DELETE RESTRICT,
+        CONSTRAINT fk_msh_creator  FOREIGN KEY (created_by) REFERENCES members(id)  ON DELETE SET NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+    // Vòng 3: bổ sung 3 cột snapshot cho CSDL cũ (idempotent nhờ catch ở dưới)
+    "ALTER TABLE member_service_history ADD COLUMN member_holy_name VARCHAR(64) NULL",
+    "ALTER TABLE member_service_history ADD COLUMN member_full_name VARCHAR(128) NULL",
+    "ALTER TABLE member_service_history ADD COLUMN role_label VARCHAR(64) NULL",
+    "ALTER TABLE member_service_history MODIFY COLUMN member_id INT NULL",
 ];
 // PR-4: Notification Center - chạy migration 030 (tạo push_notifications + cột notification_id)
 $migration030 = __DIR__ . '/migrations/030_push_notifications.sql';
