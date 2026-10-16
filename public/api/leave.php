@@ -71,8 +71,21 @@ switch ($action) {
                          VALUES (?,?,?,?,?,?)',
                         [$yid, $studentId, $programId, $date, $reason, $me['id']]);
 
+        $label = $st['full_name'] . ' · ' . $prog['name'] . ' · ' . $date;
         log_action('tao', 'leave', 'Nộp đơn xin phép cho ' . $st['full_name'],
-                   $prog['name'] . ' · ' . $date);
+                   $prog['name'] . ' · ' . $date,
+                   [
+                       'before' => null,
+                       'after'  => [
+                           'status'       => 'chờ duyệt',
+                           'reason'       => $reason,
+                           'session_date' => $date,
+                           'program_id'   => $programId,
+                       ],
+                       'target_type'  => 'leave_request',
+                       'target_id'    => $id,
+                       'target_label' => $label,
+                   ]);
 
         // Báo cho những người duyệt được đơn này: Ban Điều Hành, Quản trị,
         // và Trưởng khối của khối em đó.
@@ -115,14 +128,42 @@ switch ($action) {
         if ($action === 'approve') {
             db_run("UPDATE leave_requests SET status='đã duyệt', approved_by=?, approved_at=NOW(), reject_reason=NULL
                      WHERE id=?", [$me['id'], $id]);
+            $label = $req['full_name'] . ' · ' . $req['session_date'];
             log_action('duyet', 'leave', 'Duyệt đơn phép của ' . $req['full_name'],
-                       $req['session_date'] . ' · ' . $req['reason']);
+                       $req['session_date'] . ' · ' . $req['reason'],
+                       [
+                           'before' => [
+                               'status'       => 'chờ duyệt',
+                               'reject_reason'=> null,
+                           ],
+                           'after'  => [
+                               'status'       => 'đã duyệt',
+                               'reject_reason'=> null,
+                           ],
+                           'target_type'  => 'leave_request',
+                           'target_id'    => $id,
+                           'target_label' => $label,
+                       ]);
         } else {
             $why = trim((string) ($in['reason'] ?? ''));
             if ($why === '') json_fail('Vui lòng ghi lý do từ chối để GLV biết mà giải thích với phụ huynh.');
             db_run("UPDATE leave_requests SET status='từ chối', approved_by=?, approved_at=NOW(), reject_reason=?
                      WHERE id=?", [$me['id'], $why, $id]);
-            log_action('tuchoi', 'leave', 'Từ chối đơn phép của ' . $req['full_name'], $why);
+            $label = $req['full_name'] . ' · ' . $req['session_date'];
+            log_action('tuchoi', 'leave', 'Từ chối đơn phép của ' . $req['full_name'], $why,
+                       [
+                           'before' => [
+                               'status'       => 'chờ duyệt',
+                               'reject_reason'=> null,
+                           ],
+                           'after'  => [
+                               'status'       => 'từ chối',
+                               'reject_reason'=> $why,
+                           ],
+                           'target_type'  => 'leave_request',
+                           'target_id'    => $id,
+                           'target_label' => $label,
+                       ]);
         }
 
         // Báo lại cho người đã nộp đơn biết kết quả
