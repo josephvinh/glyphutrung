@@ -72,6 +72,18 @@ class PersonalService
             throw new Exception('Thiếu năm học cho dòng lịch sử.');
         }
 
+        // Backend phải validate (defense in depth — frontend cũng check ở
+        // personal.js nhưng API có thể bị gọi từ nơi khác).
+        if (!preg_match('/^\d{4}-\d{4}$/', $yearLabel)) {
+            throw new Exception('Năm học phải có dạng YYYY-YYYY (ví dụ 2024-2025).');
+        }
+        // Bắt buộc năm sau = năm trước + 1 (ví dụ 2024-2025) để khớp
+        // định dạng lưu ở school_years; tránh người dùng nhập "2024-2030".
+        $parts = explode('-', $yearLabel);
+        if ((int) $parts[1] !== (int) $parts[0] + 1) {
+            throw new Exception('Năm học phải có dạng YYYY-(YYYY+1), ví dụ 2024-2025.');
+        }
+
         // Vòng 3: validate FK trước khi INSERT — bảo vệ dữ liệu khỏi
         // role_code/block_id/class_id ảo (FK đã SET NULL nên DB không
         // chặn, nhưng record sẽ mồ côi — UI hiển thị "?" khó hiểu).
@@ -165,7 +177,39 @@ class PersonalService
             );
 
             if ($glvYear !== null) {
-                // Dọn dòng tự sinh cũ trước khi tái dựng.
+                // Bảo toàn dữ liệu nhập tay: nếu trong dải năm [N..hiện tại] đã
+                // có dòng is_auto = 0, BÁO LỖI và KHÔNG đụng đến members.glv_year
+                // cũng như các dòng lịch sử — user phải xoá tay trước rồi chạy lại.
+                // Dùng niên khoá hiện tại (is_current=1) thay vì date('Y') để
+                // tháng 1-8 không sinh dòng cho năm học chưa bắt đầu.
+                $currentSchoolYear = self::currentSchoolYear();
+                $currentYear = $currentSchoolYear
+                    ? (int) explode(' - ', $currentSchoolYear['name'])[0]
+                    : (int) date('Y');
+
+                $conflicts = db_all(
+                    "SELECT year_label FROM member_service_history
+                      WHERE member_id = ?
+                        AND is_auto = 0
+                        AND year_label BETWEEN ? AND ?
+                      ORDER BY year_label",
+                    [
+                        $memberId,
+                        self::yearLabelFromYear($glvYear),
+                        self::yearLabelFromYear($currentYear),
+                    ]
+                );
+                if (!empty($conflicts)) {
+                    $labels = array_column($conflicts, 'year_label');
+                    throw new Exception(
+                        'Không thể tái dựng: các năm sau đã có dòng nhập tay '
+                        . '(cần xóa trước khi đặt năm GLV): '
+                        . implode(', ', $labels) . '.'
+                    );
+                }
+
+                // Không có xung đột → dọn dòng tự sinh cũ rồi tái dựng dải
+                // [glvYear..currentYear] với is_auto = 1.
                 db_run(
                     "DELETE FROM member_service_history
                       WHERE member_id = ? AND is_auto = 1",

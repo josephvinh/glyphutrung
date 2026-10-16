@@ -17,10 +17,9 @@
  *
  * Hồ sơ cá nhân (module 'org'):
  *   GET  api/org.php?action=getServiceHistory[&member_id=N]  lịch sử phục vụ (mặc định của $me)
- *   POST api/org.php?action=saveServiceHistory   { member_id, year_label, role_code?, block_id?, class_id?, note? }
- *   POST api/org.php?action=deleteServiceHistory { member_id, year_label }
- *   POST api/org.php?action=updateGlvYear        { member_id, glv_year|null }
- *   POST api/org.php?action=changeMemberStatus   { member_id, status, note? }
+ *   POST 4 case ghi (saveServiceHistory/deleteServiceHistory/updateGlvYear/changeMemberStatus)
+ *   ĐÃ CHUYỂN sang api/personal.php từ vòng 2 review — gọi ở đây sẽ trả
+ *   410 Gone để frontend cũ phát hiện và cập nhật URL.
  *
  * member_assignments là nguồn thật của "ai phụ trách chỗ nào"; các cột
  * members.role_code/block_id/class_id chỉ là bản dẫn xuất, luôn tính lại bằng
@@ -296,100 +295,24 @@ switch ($action) {
         break;
 
     case 'saveServiceHistory':
-        require_write();
-        require_permission('org', 'edit');
-        if (empty($in['member_id']) || empty($in['year_label'])) {
-            json_fail('Thiếu thông tin bắt buộc', 400);
-        }
-        try {
-            PersonalService::saveServiceHistory(
-                (int) $in['member_id'],
-                $in,
-                (int) $me['id']
-            );
-            Cache::flush();
-            json_ok(['ok' => true]);
-        } catch (Exception $e) {
-            json_fail($e->getMessage(), 400);
-        }
+        // Vòng 3: chuyển sang api/personal.php — nơi duy nhất còn 4 case ghi
+        // của module Tổ chức & Cá nhân (getProfile + 3 write). Trả 410 để
+        // frontend cũ phát hiện và cập nhật URL.
+        json_fail('Action đã chuyển sang api/personal.php — endpoint cũ không còn dùng.', 410);
         break;
 
     case 'deleteServiceHistory':
-        require_write();
-        require_permission('org', 'edit');
-        try {
-            PersonalService::deleteServiceHistory(
-                (int) ($in['member_id'] ?? 0),
-                (string) ($in['year_label'] ?? '')
-            );
-            Cache::flush();
-            json_ok(['ok' => true]);
-        } catch (Exception $e) {
-            json_fail($e->getMessage(), 400);
-        }
+        json_fail('Action đã chuyển sang api/personal.php — endpoint cũ không còn dùng.', 410);
         break;
 
     // ================== HỒ SƠ CÁ NHÂN · NĂM LÊN GLV ===============
     case 'updateGlvYear':
-        require_write();
-        require_permission('org', 'edit');
-        if (empty($in['member_id'])) {
-            json_fail('Thiếu member_id', 400);
-        }
-        // Validate glv_year nếu được cung cấp (không phải null = xoá).
-        $glvYear = null;
-        if (array_key_exists('glv_year', $in) && $in['glv_year'] !== null) {
-            $inputYear = (int) $in['glv_year'];
-            if ($inputYear < 1900 || $inputYear > (int) date('Y')) {
-                json_fail('Năm không hợp lệ', 400);
-            }
-            $glvYear = $inputYear;
-        }
-        try {
-            $result = PersonalService::updateGlvYear(
-                (int) $in['member_id'],
-                $glvYear,
-                (int) $me['id']
-            );
-            Cache::flush();
-            json_ok($result);
-        } catch (Exception $e) {
-            json_fail($e->getMessage(), 400);
-        }
+        json_fail('Action đã chuyển sang api/personal.php — endpoint cũ không còn dùng.', 410);
         break;
 
     // ================== HỒ SƠ CÁ NHÂN · TRẠNG THÁI =================
     case 'changeMemberStatus':
-        require_write();
-        require_permission('org', 'edit');
-        if (empty($in['member_id']) || empty($in['status'])) {
-            json_fail('Thiếu thông tin bắt buộc', 400);
-        }
-        $targetId = (int) $in['member_id'];
-        // Không cho BĐH đổi trạng thái tài khoản Quản trị.
-        $target = db_one('SELECT id, role_code FROM members WHERE id=?', [$targetId]);
-        if (!$target) json_fail('Không tìm thấy thành viên.', 404);
-        if ($target['role_code'] === 'admin') {
-            json_fail('Không thể thay đổi trạng thái tài khoản Quản trị.');
-        }
-        // Bắt buộc ghi chú khi rời trạng thái "đang phục vụ" — lý do tạm
-        // nghỉ/nghỉ hẳn cần được lưu lại để truy vết sau này.
-        $note = isset($in['note']) ? (string) $in['note'] : null;
-        if (in_array($in['status'], ['tạm nghỉ', 'đã nghỉ'], true)
-            && ($note === null || trim($note) === '')) {
-            json_fail('Vui lòng nhập ghi chú khi thay đổi trạng thái', 400);
-        }
-        try {
-            $result = PersonalService::changeMemberStatus(
-                $targetId,
-                (string) $in['status'],
-                $note
-            );
-            Cache::flush();
-            json_ok($result);
-        } catch (Exception $e) {
-            json_fail($e->getMessage(), 400);
-        }
+        json_fail('Action đã chuyển sang api/personal.php — endpoint cũ không còn dùng.', 410);
         break;
 
     // -------------------------------------------------------------
