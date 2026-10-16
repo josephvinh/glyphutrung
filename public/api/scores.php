@@ -40,10 +40,29 @@ if (!can_access_class($me, 'scores', (int) $enr['class_id'], 'edit')) {
     json_fail('Bạn không phụ trách lớp của em này.', 403);
 }
 
+// Snapshot điểm cũ (nếu có) để log diff. scores.id không cần — log theo
+// (term_id, student_id, type_code) vốn là khóa duy nhất của bảng.
+$cu = db_one('SELECT value FROM scores WHERE term_id=? AND student_id=? AND type_code=?',
+             [$termId, $studentId, $type]);
+$st = db_one('SELECT full_name FROM students WHERE id = ?', [$studentId]);
+$tenEm = $st['full_name'] ?? ('em #' . $studentId);
+
 // Ô trống = xoá điểm
 if ($raw === '') {
     db_run('DELETE FROM scores WHERE term_id=? AND student_id=? AND type_code=?',
            [$termId, $studentId, $type]);
+    if ($cu) {
+        $label = $tenEm . ' · ' . $type . ' · kỳ ' . $termId;
+        log_action('xoa', 'scores', 'Xoá điểm ' . $type . ' của ' . $tenEm,
+                   $label,
+                   [
+                       'before' => ['value' => (float) $cu['value']],
+                       'after'  => null,
+                       'target_type'  => 'student',
+                       'target_id'    => $studentId,
+                       'target_label' => $label,
+                   ]);
+    }
     Cache::flush();
     json_out(['ok' => true, 'removed' => true]);
 }
@@ -58,6 +77,23 @@ db_run('INSERT INTO scores (term_id, student_id, type_code, value, updated_by)
         VALUES (?,?,?,?,?)
         ON DUPLICATE KEY UPDATE value = VALUES(value), updated_by = VALUES(updated_by)',
     [$termId, $studentId, $type, $value, $me['id']]);
+
+// Chỉ ghi log khi điểm THỰC SỰ đổi (set lại cùng giá trị thì bỏ qua để
+// tránh nhiễu nhật ký)
+$cuVal = $cu ? (float) $cu['value'] : null;
+if ($cuVal !== $value) {
+    $label = $tenEm . ' · ' . $type . ' · kỳ ' . $termId;
+    $moTa = $cu ? ('Sửa điểm ' . $type . ' của ' . $tenEm)
+                : ('Chấm điểm ' . $type . ' cho ' . $tenEm);
+    log_action($cu ? 'sua' : 'tao', 'scores', $moTa, $label,
+               [
+                   'before' => $cu ? ['value' => $cuVal] : null,
+                   'after'  => ['value' => $value],
+                   'target_type'  => 'student',
+                   'target_id'    => $studentId,
+                   'target_label' => $label,
+               ]);
+}
 
 Cache::flush();
 json_out(['ok' => true, 'removed' => false, 'value' => $value]);
