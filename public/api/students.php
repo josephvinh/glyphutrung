@@ -212,14 +212,43 @@ switch ($action) {
 
         db()->beginTransaction();
         try {
+            // Snapshot trước khi sửa (chỉ khi sửa; thêm mới thì before = []).
+            // Giới hạn cột theo dõi để chống lộ các cột nhạy cảm (vd nếu sau
+            // này bảng students có thêm cột mật khẩu/QR secret).
+            $tracked = ['holy_name','full_name','gender','birth_date','address',
+                        'father_name','father_phone','mother_name','mother_phone'];
+            $before = [];
+            if (empty($in['isNew']) && $existing) {
+                $before = db_one(
+                    'SELECT holy_name, full_name, gender, birth_date, address,
+                            father_name, father_phone, mother_name, mother_phone
+                       FROM students WHERE id = ?',
+                    [(int) $existing['id']]
+                ) ?: [];
+            }
             $sid = upsert_student($s, $yid, $classId, $existing ? (int) $existing['id'] : null);
+            // Snapshot sau khi ghi (cùng tập cột với before).
+            $after = db_one(
+                'SELECT holy_name, full_name, gender, birth_date, address,
+                        father_name, father_phone, mother_name, mother_phone
+                   FROM students WHERE id = ?',
+                [$sid]
+            ) ?: [];
+            $diff = diff_arrays($before, $after, $tracked);
             db()->commit();
         } catch (Throwable $e) {
             db()->rollBack();
             json_fail(safe_error($e, 'Không lưu được: '), 500);
         }
 
-        log_action('sua', 'students', 'Sửa hồ sơ ' . $s['name'], $s['code'] . ' · ' . $s['className']);
+        log_action('sua', 'students', 'Sửa hồ sơ ' . $s['name'], $s['code'] . ' · ' . $s['className'],
+            [
+                'before' => $diff['before'],
+                'after'  => $diff['after'],
+                'target_type'  => 'student',
+                'target_id'    => $sid,
+                'target_label' => $s['name'] . ' · ' . $s['code'],
+            ]);
         Cache::flush();
         json_out(['ok' => true, 'id' => $sid]);
         break;
@@ -468,6 +497,16 @@ switch ($action) {
 
         db()->beginTransaction();
         try {
+            // Snapshot lớp hiện tại của từng em để log diff.
+            $ph = implode(',', array_fill(0, count($validIds), '?'));
+            $beforeRows = db_all(
+                "SELECT student_id, class_id FROM enrollments
+                  WHERE year_id = ? AND student_id IN ($ph)",
+                array_merge([$yid], $validIds)
+            );
+            $beforeMap = [];
+            foreach ($beforeRows as $r) $beforeMap[(int) $r['student_id']] = (int) $r['class_id'];
+
             $ph = implode(',', array_fill(0, count($validIds), '(?, ?, ?, ?)'));
             $params = [];
             foreach ($validIds as $sid) {
@@ -487,7 +526,27 @@ switch ($action) {
             json_fail(safe_error($e, 'Chuyển lớp thất bại: '), 500);
         }
 
-        log_action('chuyen', 'students', 'Bulk chuyển ' . count($validIds) . ' em sang lớp ' . $targetClass);
+        // Ghi 1 dòng log cho mỗi em đổi lớp — diff rõ ràng từng em. Em đã ở
+        // đúng lớp đích rồi thì không phát sinh log (tránh nhiễu).
+        $classNames = [];
+        $oldClassIds = [];
+        foreach ($validIds as $sid) {
+            $beforeClass = $beforeMap[$sid] ?? null;
+            if ($beforeClass === $targetClassId) continue;
+            $oldClassIds[$beforeClass] = true;
+            $student = db_one('SELECT code, full_name FROM students WHERE id = ?', [$sid]);
+            if (!$student) continue;
+            $label = ($student['full_name'] ?? '') . ' · ' . ($student['code'] ?? '');
+            log_action('chuyen', 'students', 'Chuyển ' . ($student['full_name'] ?? '') . ' sang lớp ' . $targetClass,
+                $label,
+                [
+                    'before' => ['class_id' => $beforeClass],
+                    'after'  => ['class_id' => $targetClassId],
+                    'target_type'  => 'student',
+                    'target_id'    => $sid,
+                    'target_label' => $label,
+                ]);
+        }
         Cache::flush();
         json_out(['ok' => true, 'moved' => count($validIds)]);
         break;
@@ -538,8 +597,20 @@ switch ($action) {
 
         db()->beginTransaction();
         try {
-            // Xóa hẳn em; điểm danh, điểm, nhận xét... của em xóa theo (ON DELETE CASCADE).
+            // Snapshot trước khi xoá (chỉ cột an toàn — bỏ SĐT phụ huynh cho
+            // gọn log; SĐT đã có log 'tao'/'sua' trước đó nên xoá không cần
+            // tái ghi toàn bộ PII).
             $ph = implode(',', array_fill(0, count($validIds), '?'));
+            $snapshots = db_all(
+                "SELECT s.id, s.code, s.full_name, e.class_id FROM students s
+                   LEFT JOIN enrollments e ON e.student_id = s.id AND e.year_id = ?
+                  WHERE s.id IN ($ph)",
+                array_merge([$yid], $validIds)
+            );
+            $snapMap = [];
+            foreach ($snapshots as $r) $snapMap[(int) $r['id']] = $r;
+
+            // Xóa hẳn em; điểm danh, điểm, nhận xét... của em xóa theo (ON DELETE CASCADE).
             // Kiểm tra lại "chưa có niên khoá khác" ngay trong câu xóa để không lệch nếu
             // vừa có ghi danh mới chen vào giữa lúc kiểm tra và lúc xóa.
             db_run("DELETE FROM students WHERE id IN ($ph)
@@ -553,7 +624,24 @@ switch ($action) {
             json_fail(safe_error($e, 'Xóa không thành công: '), 500);
         }
 
-        log_action('xoa', 'students', 'Bulk xóa ' . count($validIds) . ' em');
+        // Ghi 1 dòng log cho mỗi em bị xoá thật. Diff = bản ghi trước → null.
+        foreach ($validIds as $sid) {
+            $s = $snapMap[$sid] ?? null;
+            if (!$s) continue;
+            $label = ($s['full_name'] ?? '') . ' · ' . ($s['code'] ?? '');
+            log_action('xoa', 'students', 'Xoá hồ sơ ' . ($s['full_name'] ?? ''),
+                ($s['code'] ?? '') . ' · lớp ' . ($s['class_id'] ?? '?'),
+                [
+                    'before' => [
+                        'code'      => $s['code'] ?? null,
+                        'full_name' => $s['full_name'] ?? null,
+                    ],
+                    'after'      => null,
+                    'target_type'  => 'student',
+                    'target_id'    => $sid,
+                    'target_label' => $label,
+                ]);
+        }
         Cache::flush();
         json_out(['ok' => true, 'deleted' => count($validIds), 'kept' => $hasHistory]);
         break;
