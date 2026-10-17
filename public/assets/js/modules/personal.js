@@ -38,8 +38,10 @@ window.TNTT.personal = {
     busyHistory: false,
     historyForm: { yearLabel: '', roleCode: 'glv', blockId: null, classId: null },
 
-    // Danh sách 5 năm học gần nhất (dropdown chọn năm)
-    get historyYearOptions() {
+    // Danh sách 5 năm học gần nhất (dropdown chọn năm) — mảng phẳng
+    // (không dùng getter vì Alpine x-for cần mảng reactive, không phải
+    // getter trả về mảng mới mỗi lần — gây lỗi khi re-eval).
+    historyYearOptions: (() => {
         const now = window.TNTT.vn.now();
         const currentStart = now.month >= 8 ? now.year : now.year - 1;
         const years = [];
@@ -48,12 +50,14 @@ window.TNTT.personal = {
             years.push(y + '-' + (y + 1));
         }
         return years;
-    },
+    })(),
 
-    // Lọc lớp theo blockId
+    // Lọc lớp theo blockId — Alpine gọi method này trong x-for;
+    // đảm bảo window.TNTT_BOOT đã sẵn sàng (page_bootstrap chạy trước Alpine init).
     classesByBlock(blockId) {
         if (!blockId) return [];
-        return (window.TNTT_BOOT?.classes || []).filter(c => c.blockId === blockId);
+        const all = window.TNTT_BOOT?.classes || [];
+        return all.filter(c => c.blockId === blockId);
     },
 
     // ---------- LIFECYCLE ----------
