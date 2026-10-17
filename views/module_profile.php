@@ -501,8 +501,12 @@
                x-text="editingHistoryYear ? 'Sửa dòng ' + editingHistoryYear : 'Thêm dòng mới'"></p>
             <div>
                 <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1">Năm học</label>
-                <input type="text" placeholder="VD: 2024-2025" x-model="historyForm.yearLabel"
-                       class="w-full bg-white border border-slate-200 rounded-field px-3 py-2 text-sm font-semibold text-slate-800 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30">
+                <select x-model="historyForm.yearLabel" class="w-full bg-white border border-slate-200 rounded-field px-3 py-2 text-sm font-semibold text-slate-800">
+                    <option value="">— Chọn năm học —</option>
+                    <template x-for="y in historyYearOptions" :key="y">
+                        <option :value="y" x-text="y"></option>
+                    </template>
+                </select>
             </div>
             <div>
                 <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1">Vai trò</label>
@@ -516,8 +520,24 @@
                 </select>
             </div>
             <div>
-                <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1">Ghi chú</label>
-                <input type="text" x-model="historyForm.note" class="w-full bg-white border border-slate-200 rounded-field px-3 py-2 text-sm text-slate-800">
+                <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1">Khối</label>
+                <select x-model="historyForm.blockId" @change="historyForm.classId = null"
+                        class="w-full bg-white border border-slate-200 rounded-field px-3 py-2 text-sm font-semibold text-slate-800">
+                    <option :value="null">— Chọn khối —</option>
+                    <template x-for="b in blocks" :key="b.id">
+                        <option :value="b.id" x-text="b.name"></option>
+                    </template>
+                </select>
+            </div>
+            <div>
+                <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1">Lớp</label>
+                <select x-model="historyForm.classId" :disabled="!historyForm.blockId"
+                        class="w-full bg-white border border-slate-200 rounded-field px-3 py-2 text-sm font-semibold text-slate-800 disabled:opacity-50">
+                    <option :value="null">— Chọn lớp —</option>
+                    <template x-for="c in classesByBlock(historyForm.blockId)" :key="c.id">
+                        <option :value="c.id" x-text="c.name + (c.shift === 'sang' ? ' (Sáng)' : c.shift === 'chieu' ? ' (Chiều)' : '')"></option>
+                    </template>
+                </select>
             </div>
             <div class="flex gap-2">
                 <button @click="saveHistoryEntry()" :disabled="busyHistory" type="button"
