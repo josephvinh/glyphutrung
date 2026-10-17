@@ -532,7 +532,7 @@
             <div>
                 <label class="block text-micro font-bold text-slate-500 uppercase tracking-wide mb-1">Lớp</label>
                 <select x-model="historyForm.classId" :disabled="!historyForm.blockId"
-                        class="w-full bg-white border border-slate-200 rounded-field px-3 py-2 text-sm font-semibold text-slate-800 disabled:opacity-50 disabled:bg-slate-50">
+                        class="w-full bg-white border border-slate-200 rounded-field px-3 py-2 text-sm font-semibold text-slate-800 disabled:opacity-50">
                     <option :value="null">— Chọn lớp —</option>
                     <template x-for="c in classesByBlock(historyForm.blockId)" :key="c.id">
                         <option :value="c.id" x-text="c.name + (c.shift === 'sang' ? ' (Sáng)' : c.shift === 'chieu' ? ' (Chiều)' : '')"></option>
