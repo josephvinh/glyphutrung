@@ -63,28 +63,10 @@ if ($action === 'set') {
         json_fail('Bài số ' . $examNum . ' vượt quá số bài tối đa (' . $typeRow['max_exams'] . ') của đầu điểm này.');
     }
 
-    // Snapshot điểm cũ (nếu có) để log diff.
-    $cu = db_one('SELECT value FROM scores WHERE term_id=? AND student_id=? AND type_code=? AND exam_num=?',
-                 [$termId, $studentId, $type, $examNum]);
-    $st = db_one('SELECT full_name FROM students WHERE id = ?', [$studentId]);
-    $tenEm = $st['full_name'] ?? ('em #' . $studentId);
-
     // Ô trống = xoá điểm
     if ($raw === '') {
         db_run('DELETE FROM scores WHERE term_id=? AND student_id=? AND type_code=? AND exam_num=?',
             [$termId, $studentId, $type, $examNum]);
-        if ($cu) {
-            $label = $tenEm . ' · ' . $type . ' · bài ' . $examNum . ' · kỳ ' . $termId;
-            log_action('xoa', 'scores', 'Xoá điểm ' . $type . ' của ' . $tenEm,
-                       $label,
-                       [
-                           'before' => ['value' => (float) $cu['value']],
-                           'after'  => null,
-                           'target_type'  => 'student',
-                           'target_id'    => $studentId,
-                           'target_label' => $label,
-                       ]);
-        }
         Cache::flush();
         json_out(['ok' => true, 'removed' => true]);
     }
@@ -99,22 +81,6 @@ if ($action === 'set') {
             VALUES (?,?,?,?,?,?)
             ON DUPLICATE KEY UPDATE value = VALUES(value), updated_by = VALUES(updated_by)',
         [$termId, $studentId, $type, $examNum, $value, $me['id']]);
-
-    // Chỉ ghi log khi điểm THỰC SỰ đổi (set lại cùng giá trị thì bỏ qua).
-    $cuVal = $cu ? (float) $cu['value'] : null;
-    if ($cuVal !== $value) {
-        $label = $tenEm . ' · ' . $type . ' · bài ' . $examNum . ' · kỳ ' . $termId;
-        $moTa = $cu ? ('Sửa điểm ' . $type . ' của ' . $tenEm)
-                    : ('Chấm điểm ' . $type . ' cho ' . $tenEm);
-        log_action($cu ? 'sua' : 'tao', 'scores', $moTa, $label,
-                   [
-                       'before' => $cu ? ['value' => $cuVal] : null,
-                       'after'  => ['value' => $value],
-                       'target_type'  => 'student',
-                       'target_id'    => $studentId,
-                       'target_label' => $label,
-                   ]);
-    }
 
     Cache::flush();
     json_out(['ok' => true, 'removed' => false, 'value' => $value]);
@@ -145,12 +111,6 @@ if ($action === 'delete_exam') {
         json_fail('Bài số ' . $examNum . ' vượt quá số bài tối đa (' . $typeRow['max_exams'] . ').');
     }
 
-    // Snapshot dòng sắp xoá để log diff.
-    $cuRow = db_one('SELECT value FROM scores WHERE term_id=? AND student_id=? AND type_code=? AND exam_num=?',
-                    [$termId, $studentId, $type, $examNum]);
-    $stDel = db_one('SELECT full_name FROM students WHERE id = ?', [$studentId]);
-    $tenEmDel = $stDel['full_name'] ?? ('em #' . $studentId);
-
     // Bọc transaction để lỗi giữa DELETE và renumber UPDATE không làm lệch số bài.
     $pdo = db();
     $pdo->beginTransaction();
@@ -164,19 +124,6 @@ if ($action === 'delete_exam') {
     } catch (Throwable $e) {
         $pdo->rollBack();
         throw $e;
-    }
-
-    if ($cuRow) {
-        $label = $tenEmDel . ' · ' . $type . ' · bài ' . $examNum . ' · kỳ ' . $termId;
-        log_action('xoa', 'scores', 'Xoá điểm ' . $type . ' của ' . $tenEmDel,
-                   $label,
-                   [
-                       'before' => ['value' => (float) $cuRow['value']],
-                       'after'  => null,
-                       'target_type'  => 'student',
-                       'target_id'    => $studentId,
-                       'target_label' => $label,
-                   ]);
     }
 
     Cache::flush();
