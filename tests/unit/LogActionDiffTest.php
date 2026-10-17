@@ -28,6 +28,8 @@ class LogActionDiffTest extends TestCase
 {
     private int $adminId = 0;
     private string $adminName = '';
+    private ?string $oldIp = null;
+    private ?string $oldUa = null;
 
     protected function setUp(): void
     {
@@ -41,6 +43,10 @@ class LogActionDiffTest extends TestCase
         }
         $_SESSION = ['member_id' => $this->adminId];
 
+        // Lưu IP/UA gốc để restore sau khi test_ip_and_ua_persisted chỉnh.
+        $this->oldIp = $_SERVER['REMOTE_ADDR'] ?? null;
+        $this->oldUa = $_SERVER['HTTP_USER_AGENT'] ?? null;
+
         // Wipe rows created by this test (chỉ dòng target_id LIKE 'TEST_%')
         db_run("DELETE FROM activity_logs WHERE target_label LIKE 'TEST_diff_%'");
     }
@@ -48,6 +54,15 @@ class LogActionDiffTest extends TestCase
     protected function tearDown(): void
     {
         db_run("DELETE FROM activity_logs WHERE target_label LIKE 'TEST_diff_%'");
+
+        // Khôi phục IP/UA (test_ip_and_ua_persisted đã ghi đè) để không
+        // ảnh hưởng test khác cùng chạy trong cùng process (vd LogActionTest
+        // cũng giả định NULL khi chữ ký 4-đối-số).
+        if ($this->oldIp === null) unset($_SERVER['REMOTE_ADDR']);
+        else $_SERVER['REMOTE_ADDR'] = $this->oldIp;
+        if ($this->oldUa === null) unset($_SERVER['HTTP_USER_AGENT']);
+        else $_SERVER['HTTP_USER_AGENT'] = $this->oldUa;
+
         $_SESSION = [];
     }
 
