@@ -1,0 +1,13 @@
+-- ============================================================
+-- Migration 032: Dọn index thừa idx_sc_term_student
+--
+-- 🟡 4 review vòng 2 PR #285: index idx_sc_term_student (term_id,
+-- student_id) đã được bao phủ bởi uq_score (term_id, student_id,
+-- type_code, exam_num) — bỏ để tiết kiệm ghi, INSERT/UPDATE nhanh hơn.
+-- Cũng vì lý do tương tự idx_sc_student_term (student_id, term_id)
+-- CŨNG dư (uq_score cũng có prefix (student_id, term_id, ...)).
+-- Tuy nhiên idx_sc_student_term có thể do schema cũ cần cho truy vấn
+-- khác, KHÔNG bỏ ở migration này — chỉ dọn idx_sc_term_student sinh
+-- ra từ migration 031.
+-- ============================================================
+ALTER TABLE scores DROP INDEX IF EXISTS idx_sc_term_student;

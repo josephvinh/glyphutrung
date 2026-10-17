@@ -113,6 +113,12 @@ switch ($action) {
                         VALUES (?,?,?,?,1), (?,?,?,?,2)',
                        [$yid, 'Học kỳ I',  $start,   $mid,
                         $yid, 'Học kỳ II', $midNext, $end]);
+
+                // term_programs KHÔNG seed ở đây — endpoint chuyên cần dùng
+                // LEFT JOIN với COALESCE(is_active, 1), lọc theo year_id của
+                // từng học kỳ. Seed ở đây trước đây gắn chương trình niên
+                // khoá cũ vào niên khoá mới (mục 🔴 2 review vòng 5).
+
                 return $yid;
             });
         } catch (\Throwable $e) {

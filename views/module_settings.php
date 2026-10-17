@@ -40,6 +40,18 @@
                       class="min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white text-micro font-black flex items-center justify-center"
                       x-text="maintenanceCount"></span>
             </button>
+            <!-- Quy tắc Điểm — chỉ Admin/BĐH -->
+            <button x-show="isAdmin || isBdh" style="display: none;" @click="settingsTab = 'scoreRules'" type="button"
+                    class="shrink-0 whitespace-nowrap px-4 py-2.5 sm:flex-1 rounded-2xl font-bold text-micro transition-colors flex items-center justify-center gap-1.5"
+                    :class="settingsTab === 'scoreRules' ? 'bg-blue-600 text-white shadow-md shadow-blue-200' : 'text-slate-500'">
+                <i data-lucide="graduation-cap" class="w-4 h-4"></i> Điểm
+            </button>
+            <!-- Quy tắc Chuyên cần — chỉ Admin/BĐH -->
+            <button x-show="isAdmin || isBdh" style="display: none;" @click="settingsTab = 'attendanceRules'" type="button"
+                    class="shrink-0 whitespace-nowrap px-4 py-2.5 sm:flex-1 rounded-2xl font-bold text-micro transition-colors flex items-center justify-center gap-1.5"
+                    :class="settingsTab === 'attendanceRules' ? 'bg-blue-600 text-white shadow-md shadow-blue-200' : 'text-slate-500'">
+                <i data-lucide="calendar-check" class="w-4 h-4"></i> Chuyên cần
+            </button>
         </div>
 
         <!-- THẺ: CÁ NHÂN (ai cũng thấy) -->
@@ -367,7 +379,15 @@
             </div>
         </div>
 
+        <!-- QUY TẮC ĐIỂM HỌC TẬP -->
+        <div x-show="settingsTab === 'scoreRules'" style="display: none;">
+            <?php include __DIR__ . '/settings_score_rules.php'; ?>
+        </div>
 
+        <!-- QUY TẮC CHUYÊN CẦN -->
+        <div x-show="settingsTab === 'attendanceRules'" style="display: none;">
+            <?php include __DIR__ . '/settings_attendance_rules.php'; ?>
+        </div>
 
     </div>
 

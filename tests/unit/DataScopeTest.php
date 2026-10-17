@@ -388,9 +388,20 @@ class DataScopeTest extends TestCase
 
     public function test_can_view_logs_is_admin_only(): void
     {
+        // Sau PR3 (Nâng cấp Nhật ký Hoạt động): admin + BĐH xem tất cả;
+        // mọi vai trò có tài khoản nội bộ (có id) cũng được xem (scope
+        // thu hẹp bằng log_scope_where). Vai "không id" / null / rỗng → false.
         self::assertTrue(can_view_logs(['role_code' => 'admin']));
-        foreach (['bdh', 'truong_khoi', 'glv_chu_nhiem', 'glv', 'du_bi', 'thu_thu'] as $r) {
-            self::assertFalse(can_view_logs(['role_code' => $r]), "$r không được xem nhật ký");
+        self::assertTrue(can_view_logs(['role_code' => 'bdh']));
+        foreach (['truong_khoi', 'glv_chu_nhiem', 'glv', 'du_bi', 'thu_thu'] as $r) {
+            self::assertTrue(
+                can_view_logs(['role_code' => $r, 'id' => 100 + crc32($r) % 1000]),
+                "$r có id nội bộ thì xem được (scope thu hẹp bằng log_scope_where)"
+            );
+            self::assertFalse(
+                can_view_logs(['role_code' => $r]),
+                "$r không có id → không xem được"
+            );
         }
         self::assertFalse(can_view_logs(null));
         self::assertFalse(can_view_logs([]));
@@ -586,7 +597,10 @@ class DataScopeTest extends TestCase
         $users = $this->makeRoleUsers();
         $this->seedChildren();
         $d = $this->data($users['thuthu'], 'all');
-        foreach (['scores', 'leaveRequests', 'reports', 'members', 'logs', 'attendances'] as $k) {
+        // Sau PR3: thu_thu có id nội bộ → can_view_logs=true, nhưng scope chỉ
+        // là `actor_id = meId`; chỉ thấy log do mình tạo (đăng nhập). Không
+        // thấy dữ liệu lớp nào khác.
+        foreach (['scores', 'leaveRequests', 'reports', 'members', 'attendances'] as $k) {
             self::assertSame([], $d[$k], "thu_thu: $k phải là []");
         }
     }
@@ -757,7 +771,10 @@ class DataScopeTest extends TestCase
 
     public function test_logs_only_for_admin_and_empty_for_everyone_else(): void
     {
-        // SCOPE-03.
+        // SCOPE-03. Sau PR3: admin + bdh thấy tất cả; các vai khác có id nội bộ
+        // CHỈ thấy log do mình tạo (scope `actor_id = meId`). Test này chỉ assert
+        // rằng người KHÔNG phải admin thì KHÔNG thấy dòng log 'p1test' do P1 Test
+        // (actor_id NULL) tạo — đó là phạm vi quan trọng cần đảm bảo.
         $what = 'P1T-LOG-' . random_int(100000, 999999);
         db_run("INSERT INTO activity_logs (actor_id, actor_name, action, module, what) VALUES (NULL, 'P1 Test', 'sua', 'p1test', ?)", [$what]);
         $this->madeLogWhats[] = $what;
@@ -771,8 +788,13 @@ class DataScopeTest extends TestCase
         self::assertCount(min(50, $total), $adminLogs, 'admin nhận min(50, COUNT) dòng');
 
         foreach ($users as $name => $u) {
-            if ($name === 'admin') continue;
-            self::assertSame([], $this->data($u, 'all')['logs'], "$name không phải Quản trị → logs phải là []");
+            // admin + bdh: thấy tất cả (theo PR3) — bỏ qua assert cho họ.
+            if ($name === 'admin' || $name === 'bdh') continue;
+            $logs = $this->data($u, 'all')['logs'];
+            foreach ($logs as $l) {
+                self::assertNotSame($what, $l['what'],
+                    "$name không được thấy log do P1 Test (actor_id NULL) tạo");
+            }
         }
     }
 }

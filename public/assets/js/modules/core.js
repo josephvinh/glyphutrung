@@ -102,9 +102,16 @@ window.TNTT.core = {
     primaryAssignment: window.TNTT.boot?.primaryAssignment || null,
 
     // Đổi tên thành initCore để tránh trùng với shell.init (#121)
-    initCore() {
+    async initCore() {
         if (typeof this.initOfflineAttendance === 'function') {
             this.initOfflineAttendance();
+        }
+        // Load rules điểm số (tuỳ chỉnh)
+        if (window.TNTT?.scores?.initScoreRules) {
+            window.TNTT.scores.initScoreRules();
+        }
+        if (window.TNTT?.scores?.initAttendanceConfig) {
+            window.TNTT.scores.initAttendanceConfig();
         }
     },
 
@@ -132,8 +139,9 @@ window.TNTT.core = {
      * Nếu response có error.code (format mới), throw ApiError.
      * Nếu response.ok === false, trả về object với ok: false.
      * Luôn parse JSON và trả về {ok, data} ở format cũ để tương thích ngược.
+     * Mặc định POST; truyền method='GET' cho action đọc (không cần CSRF).
      */
-    async api(file, action, body) {
+    async api(file, action, body, method = 'POST') {
         try {
             const headers = { 'Content-Type': 'application/json' };
             // Gửi CSRF token nếu có trong session
@@ -141,9 +149,9 @@ window.TNTT.core = {
                 headers['X-CSRF-TOKEN'] = window.TNTT.csrfToken;
             }
             const res = await fetch('api/' + file + '.php?action=' + action, {
-                method: 'POST',
+                method,
                 headers,
-                body: JSON.stringify(body || {})
+                body: method === 'GET' ? undefined : JSON.stringify(body || {})
             });
 
             // Parse JSON response
@@ -1218,6 +1226,10 @@ window.TNTT.core = {
         return r === 'admin' || r === 'bdh';
     },
 
+    get isBdh() {
+        return this.user.role === 'bdh' || this.user.role === 'admin';
+    },
+
     // Danh xưng thực tế của đoàn: chỉ Giáo Lý Viên / Dự Bị. Các vai điều hành
     // (BĐH, Trưởng khối, Chủ nhiệm) VẪN là Giáo Lý Viên — đó là NHIỆM VỤ, không
     // phải danh xưng. Dùng ở chỗ giới thiệu bản thân cho đúng đời thực.
@@ -1306,6 +1318,16 @@ window.TNTT.core = {
     blocks: ['Khai Tâm', 'Rước Lễ', 'Thêm Sức', 'Bao Đồng'],
 
     classes: [],   // máy chủ nạp qua loadData()
+
+    // Nhãn rút gọn ca học để gắn vào tên lớp ở các màn (điểm danh, danh sách,
+    // bxh…). Đặt trong core.js để MỌI module dùng chung qua `this.shiftSuffix()`.
+    // Vòng 3: bỏ 'toi' — GĐGL chỉ học ban ngày (Sáng/Chiều), không có ca Tối;
+    // nếu sau này cần ca Tối thì thêm lại.
+    shiftSuffix(shift) {
+        if (shift === 'sang')  return ' (Sáng)';
+        if (shift === 'chieu') return ' (Chiều)';
+        return '';
+    },
 
     programClasses: {},   // programId -> [classId,...] (rỗng = toàn đoàn)
 

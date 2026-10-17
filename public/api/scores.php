@@ -2,98 +2,183 @@
 /**
  * ĐIỂM SỐ
  *
- *   POST api/scores.php?action=set { studentId, termId, type, value }
+ *   POST api/scores.php?action=set           { studentId, termId, type, exam_num, value }
+ *   POST api/scores.php?action=delete_exam   { studentId, termId, type, examNum }
  *
- * value là chuỗi rỗng nghĩa là XOÁ điểm, không phải chấm 0 — đúng như
- * quy tắc đã chốt ở giao diện. Nếu coi ô trống là 0 thì em chưa kiểm
- * tra sẽ bị kéo tụt điểm trung bình oan.
+ * value là chuỗi rỗng nghĩa là XOÁ điểm, không phải chấm 0.
  */
 
 require __DIR__ . '/_bootstrap.php';
 
-require_write();  // hành động ghi: bắt buộc POST + CSRF
-$me   = require_permission('scores', 'edit');
-$year = current_year();
-if (!$year) json_fail('Chưa có niên khoá nào đang mở.', 409);
-if ($year['status'] === 'đã khóa') json_fail('Niên khoá đã khoá sổ, không sửa điểm được.', 409);
+$action = $_GET['action'] ?? 'set';
 
-$in        = json_input();
-$studentId = (int) ($in['studentId'] ?? 0);
-$termId    = (int) ($in['termId'] ?? 0);
-$type      = (string) ($in['type'] ?? '');
-$raw       = trim((string) ($in['value'] ?? ''));
+// ============================================================
+// SHARED VALIDATION
+// ============================================================
+function validate_score_access(array $me, int $studentId, int $termId): array {
+    $year = current_year();
+    if (!$year) json_fail('Chưa có niên khoá nào đang mở.', 409);
+    if ($year['status'] === 'đã khóa') json_fail('Niên khoá đã khoá sổ, không sửa điểm được.', 409);
 
-if (!$studentId || !$termId || $type === '') json_fail('Thiếu thông tin em, học kỳ hoặc đầu điểm.');
+    if (!db_one('SELECT id FROM terms WHERE id=? AND year_id=?', [$termId, $year['id']])) {
+        json_fail('Học kỳ không thuộc niên khoá đang mở.', 409);
+    }
 
-// Học kỳ phải thuộc niên khoá đang mở
-if (!db_one('SELECT id FROM terms WHERE id=? AND year_id=?', [$termId, $year['id']])) {
-    json_fail('Học kỳ không thuộc niên khoá đang mở.', 409);
-}
-if (!db_one('SELECT code FROM score_types WHERE code=?', [$type])) {
-    json_fail('Đầu điểm không hợp lệ.');
-}
-$enr = db_one('SELECT class_id FROM enrollments WHERE year_id=? AND student_id=?', [$year['id'], $studentId]);
-if (!$enr) {
-    json_fail('Em này không có trong danh sách năm nay.', 404);
-}
-if (!can_access_class($me, 'scores', (int) $enr['class_id'], 'edit')) {
-    json_fail('Bạn không phụ trách lớp của em này.', 403);
+    $enr = db_one('SELECT class_id FROM enrollments WHERE year_id=? AND student_id=?',
+        [$year['id'], $studentId]);
+    if (!$enr) json_fail('Em này không có trong danh sách năm nay.', 404);
+
+    if (!can_access_class($me, 'scores', (int) $enr['class_id'], 'edit')) {
+        json_fail('Bạn không phụ trách lớp của em này.', 403);
+    }
+
+    return $year;
 }
 
-// Snapshot điểm cũ (nếu có) để log diff. scores.id không cần — log theo
-// (term_id, student_id, type_code) vốn là khóa duy nhất của bảng.
-$cu = db_one('SELECT value FROM scores WHERE term_id=? AND student_id=? AND type_code=?',
-             [$termId, $studentId, $type]);
-$st = db_one('SELECT full_name FROM students WHERE id = ?', [$studentId]);
-$tenEm = $st['full_name'] ?? ('em #' . $studentId);
+// ============================================================
+// ACTION: set — lưu 1 điểm (hỗ trợ exam_num)
+// ============================================================
+if ($action === 'set') {
+    require_write();
+    $me = require_permission('scores', 'edit');
 
-// Ô trống = xoá điểm
-if ($raw === '') {
-    db_run('DELETE FROM scores WHERE term_id=? AND student_id=? AND type_code=?',
-           [$termId, $studentId, $type]);
-    if ($cu) {
-        $label = $tenEm . ' · ' . $type . ' · kỳ ' . $termId;
-        log_action('xoa', 'scores', 'Xoá điểm ' . $type . ' của ' . $tenEm,
+    $in = json_input();
+    $studentId = (int) ($in['studentId'] ?? 0);
+    $termId    = (int) ($in['termId'] ?? 0);
+    $type      = (string) ($in['type'] ?? '');
+    $examNum   = max(1, (int) ($in['exam_num'] ?? 1));
+    $raw       = trim((string) ($in['value'] ?? ''));
+
+    if (!$studentId || !$termId || $type === '') {
+        json_fail('Thiếu thông tin em, học kỳ hoặc đầu điểm.');
+    }
+
+    $year = validate_score_access($me, $studentId, $termId);
+
+    if (!db_one('SELECT code FROM score_types WHERE code=?', [$type])) {
+        json_fail('Đầu điểm không hợp lệ.');
+    }
+    $typeRow = db_one('SELECT max_exams FROM score_types WHERE code=?', [$type]);
+    if ($examNum < 1 || $examNum > (int) $typeRow['max_exams']) {
+        json_fail('Bài số ' . $examNum . ' vượt quá số bài tối đa (' . $typeRow['max_exams'] . ') của đầu điểm này.');
+    }
+
+    // Snapshot điểm cũ (nếu có) để log diff.
+    $cu = db_one('SELECT value FROM scores WHERE term_id=? AND student_id=? AND type_code=? AND exam_num=?',
+                 [$termId, $studentId, $type, $examNum]);
+    $st = db_one('SELECT full_name FROM students WHERE id = ?', [$studentId]);
+    $tenEm = $st['full_name'] ?? ('em #' . $studentId);
+
+    // Ô trống = xoá điểm
+    if ($raw === '') {
+        db_run('DELETE FROM scores WHERE term_id=? AND student_id=? AND type_code=? AND exam_num=?',
+            [$termId, $studentId, $type, $examNum]);
+        if ($cu) {
+            $label = $tenEm . ' · ' . $type . ' · bài ' . $examNum . ' · kỳ ' . $termId;
+            log_action('xoa', 'scores', 'Xoá điểm ' . $type . ' của ' . $tenEm,
+                       $label,
+                       [
+                           'before' => ['value' => (float) $cu['value']],
+                           'after'  => null,
+                           'target_type'  => 'student',
+                           'target_id'    => $studentId,
+                           'target_label' => $label,
+                       ]);
+        }
+        Cache::flush();
+        json_out(['ok' => true, 'removed' => true]);
+    }
+
+    $value = (float) str_replace(',', '.', $raw);
+    if (!is_numeric(str_replace(',', '.', $raw)) || $value < 0 || $value > 10) {
+        json_fail('Điểm phải là số từ 0 đến 10.');
+    }
+    $value = round($value, 1);
+
+    db_run('INSERT INTO scores (term_id, student_id, type_code, exam_num, value, updated_by)
+            VALUES (?,?,?,?,?,?)
+            ON DUPLICATE KEY UPDATE value = VALUES(value), updated_by = VALUES(updated_by)',
+        [$termId, $studentId, $type, $examNum, $value, $me['id']]);
+
+    // Chỉ ghi log khi điểm THỰC SỰ đổi (set lại cùng giá trị thì bỏ qua).
+    $cuVal = $cu ? (float) $cu['value'] : null;
+    if ($cuVal !== $value) {
+        $label = $tenEm . ' · ' . $type . ' · bài ' . $examNum . ' · kỳ ' . $termId;
+        $moTa = $cu ? ('Sửa điểm ' . $type . ' của ' . $tenEm)
+                    : ('Chấm điểm ' . $type . ' cho ' . $tenEm);
+        log_action($cu ? 'sua' : 'tao', 'scores', $moTa, $label,
+                   [
+                       'before' => $cu ? ['value' => $cuVal] : null,
+                       'after'  => ['value' => $value],
+                       'target_type'  => 'student',
+                       'target_id'    => $studentId,
+                       'target_label' => $label,
+                   ]);
+    }
+
+    Cache::flush();
+    json_out(['ok' => true, 'removed' => false, 'value' => $value]);
+}
+
+// ============================================================
+// ACTION: delete_exam — xoá 1 bài & renumber
+// ============================================================
+if ($action === 'delete_exam') {
+    require_write();
+    $me = require_permission('scores', 'edit');
+
+    $in = json_input();
+    $studentId = (int) ($in['studentId'] ?? 0);
+    $termId    = (int) ($in['termId'] ?? 0);
+    $type      = (string) ($in['type'] ?? '');
+    $examNum   = (int) ($in['examNum'] ?? 0);
+
+    if (!$studentId || !$termId || !$type || !$examNum) {
+        json_fail('Thiếu thông tin.');
+    }
+
+    $year = validate_score_access($me, $studentId, $termId);
+
+    $typeRow = db_one('SELECT max_exams FROM score_types WHERE code=?', [$type]);
+    if (!$typeRow) json_fail('Đầu điểm không hợp lệ.', 404);
+    if ($examNum < 1 || $examNum > (int) $typeRow['max_exams']) {
+        json_fail('Bài số ' . $examNum . ' vượt quá số bài tối đa (' . $typeRow['max_exams'] . ').');
+    }
+
+    // Snapshot dòng sắp xoá để log diff.
+    $cuRow = db_one('SELECT value FROM scores WHERE term_id=? AND student_id=? AND type_code=? AND exam_num=?',
+                    [$termId, $studentId, $type, $examNum]);
+    $stDel = db_one('SELECT full_name FROM students WHERE id = ?', [$studentId]);
+    $tenEmDel = $stDel['full_name'] ?? ('em #' . $studentId);
+
+    // Bọc transaction để lỗi giữa DELETE và renumber UPDATE không làm lệch số bài.
+    $pdo = db();
+    $pdo->beginTransaction();
+    try {
+        db_run('DELETE FROM scores WHERE term_id=? AND student_id=? AND type_code=? AND exam_num=?',
+            [$termId, $studentId, $type, $examNum]);
+        db_run('UPDATE scores SET exam_num = exam_num - 1
+                WHERE term_id=? AND student_id=? AND type_code=? AND exam_num > ?',
+            [$termId, $studentId, $type, $examNum]);
+        $pdo->commit();
+    } catch (Throwable $e) {
+        $pdo->rollBack();
+        throw $e;
+    }
+
+    if ($cuRow) {
+        $label = $tenEmDel . ' · ' . $type . ' · bài ' . $examNum . ' · kỳ ' . $termId;
+        log_action('xoa', 'scores', 'Xoá điểm ' . $type . ' của ' . $tenEmDel,
                    $label,
                    [
-                       'before' => ['value' => (float) $cu['value']],
+                       'before' => ['value' => (float) $cuRow['value']],
                        'after'  => null,
                        'target_type'  => 'student',
                        'target_id'    => $studentId,
                        'target_label' => $label,
                    ]);
     }
+
     Cache::flush();
-    json_out(['ok' => true, 'removed' => true]);
+    json_out(['ok' => true, 'renumbered' => true]);
 }
-
-$value = (float) str_replace(',', '.', $raw);
-if (!is_numeric(str_replace(',', '.', $raw)) || $value < 0 || $value > 10) {
-    json_fail('Điểm phải là số từ 0 đến 10.');
-}
-$value = round($value, 1);
-
-db_run('INSERT INTO scores (term_id, student_id, type_code, value, updated_by)
-        VALUES (?,?,?,?,?)
-        ON DUPLICATE KEY UPDATE value = VALUES(value), updated_by = VALUES(updated_by)',
-    [$termId, $studentId, $type, $value, $me['id']]);
-
-// Chỉ ghi log khi điểm THỰC SỰ đổi (set lại cùng giá trị thì bỏ qua để
-// tránh nhiễu nhật ký)
-$cuVal = $cu ? (float) $cu['value'] : null;
-if ($cuVal !== $value) {
-    $label = $tenEm . ' · ' . $type . ' · kỳ ' . $termId;
-    $moTa = $cu ? ('Sửa điểm ' . $type . ' của ' . $tenEm)
-                : ('Chấm điểm ' . $type . ' cho ' . $tenEm);
-    log_action($cu ? 'sua' : 'tao', 'scores', $moTa, $label,
-               [
-                   'before' => $cu ? ['value' => $cuVal] : null,
-                   'after'  => ['value' => $value],
-                   'target_type'  => 'student',
-                   'target_id'    => $studentId,
-                   'target_label' => $label,
-               ]);
-}
-
-Cache::flush();
-json_out(['ok' => true, 'removed' => false, 'value' => $value]);
