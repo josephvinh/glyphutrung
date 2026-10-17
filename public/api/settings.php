@@ -127,25 +127,42 @@ switch ($action) {
     // -------------------------------------------------------------
     case 'clearLogs':
         require_write();
-        // Lọc theo khoảng ngày (tùy chọn): chỉ xoá log TRONG khoảng,
-        // giúp dọn dẹp từng đợt thay vì xoá sạch một lần. from/to dạng
-        // YYYY-MM-DD, không truyền thì xoá TẤT CẢ (giữ tương thích cũ).
-        $where = [];
-        $params = [];
-        if (!empty($in['from'])) {
-            $from = date('Y-m-d 00:00:00', strtotime((string) $in['from']));
-            if ($from) { $where[] = 'logged_at >= ?'; $params[] = $from; }
+        // Bắt buộc phải có from và to để tránh xoá nhầm toàn bộ.
+        // Giới hạn tối đa 5.000 dòng/lần.
+        $inFrom = trim((string) ($in['from'] ?? ''));
+        $inTo   = trim((string) ($in['to'] ?? ''));
+
+        if ($inFrom === '' || $inTo === '') {
+            json_fail('Phải truyền cả "from" và "to" (YYYY-MM-DD) để xoá log. Ví dụ: {"from":"2024-01-01","to":"2024-06-30"}', 400);
         }
-        if (!empty($in['to'])) {
-            $to = date('Y-m-d 23:59:59', strtotime((string) $in['to']));
-            if ($to) { $where[] = 'logged_at <= ?'; $params[] = $to; }
+
+        // Validate ngày bằng DateTime::createFromFormat (không dùng strtotime vì lỗi silent)
+        $fromObj = \DateTime::createFromFormat('Y-m-d', $inFrom);
+        $toObj   = \DateTime::createFromFormat('Y-m-d', $inTo);
+
+        if (!$fromObj || $fromObj->format('Y-m-d') !== $inFrom) {
+            json_fail('Ngày "from" không hợp lệ. Dùng định dạng YYYY-MM-DD.', 400);
         }
-        $whereSql = $where ? ' WHERE ' . implode(' AND ', $where) : '';
-        $deleted = (int) (db_one("SELECT COUNT(*) n FROM activity_logs$whereSql", $params)['n'] ?? 0);
-        db_run("DELETE FROM activity_logs$whereSql", $params);
-        $mota = $deleted . ' dòng' . (($in['from'] ?? '') || ($in['to'] ?? '')
-            ? ' (' . ($in['from'] ?? '…') . ' → ' . ($in['to'] ?? '…') . ')'
-            : '');
+        if (!$toObj || $toObj->format('Y-m-d') !== $inTo) {
+            json_fail('Ngày "to" không hợp lệ. Dùng định dạng YYYY-MM-DD.', 400);
+        }
+
+        $from = $fromObj->format('Y-m-d 00:00:00');
+        $to   = $toObj->format('Y-m-d 23:59:59');
+
+        // Giới hạn 5000 dòng/lần
+        $deleted = (int) (db_one(
+            "SELECT COUNT(*) n FROM activity_logs WHERE logged_at >= ? AND logged_at <= ?",
+            [$from, $to]
+        )['n'] ?? 0);
+
+        if ($deleted > 5000) {
+            json_fail("Quá nhiều dòng ($deleted). Vui lòng thu hẹp khoảng ngày (tối đa 5.000 dòng/lần).", 400);
+        }
+
+        db_run("DELETE FROM activity_logs WHERE logged_at >= ? AND logged_at <= ?", [$from, $to]);
+
+        $mota = $deleted . ' dòng (' . $inFrom . ' → ' . $inTo . ')';
         log_action('xoa', 'settings', 'Xóa nhật ký thao tác', $mota,
             [
                 'before' => ['deleted_rows' => $deleted],

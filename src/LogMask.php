@@ -51,4 +51,17 @@ class LogMask
         if (strlen($s) < 7) return '***';
         return substr($s, 0, 4) . '***' . substr($s, -3);
     }
+
+    /**
+     * Mask SĐT trong một string đơn lẻ (dùng cho what/detail không parse được JSON).
+     * Tìm chuỗi 9-12 số liên tiếp và mask chúng.
+     */
+    public static function maskString(string $s): string
+    {
+        return preg_replace_callback(
+            '/\b(\d{9,12})\b/',
+            fn(array $m) => self::maskValue($m[1]),
+            $s
+        ) ?? $s;
+    }
 }

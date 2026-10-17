@@ -6,19 +6,26 @@
  *      &actor=...&module=...&action=...&from=YYYY-MM-DD&to=YYYY-MM-DD
  *
  * Phân quyền: giống logs.php (admin / BĐH / GLV theo phạm vi).
+ * Chỉ admin/BĐH thấy IP/user_agent.
  *
- * Mask BẮT BUỘC trong cột before/after:
+ * Mask BẮT BUỘC trong mọi cột (what, detail, before, after):
  *  - key 'parent_phone' / 'phone' / 'father_phone' / 'mother_phone' / 'sdt'
  *    → thay bằng '0901***567' (giữ 4 đầu + 3 cuối).
  *  - Áp dụng cả diff lồng nhau (recursive).
- *  - Áp dụng cả giá trị KHÔNG nằm trong diff (nếu nằm ở cột riêng).
+ *  - Áp dụng cả chuỗi 9-12 số liên tiếp (không nằm trong key).
+ *
+ * Cột mới: 'Trước' (before), 'Sau' (after) — đã mask SĐT.
  *
  * Sau khi stream thành công: ghi 1 dòng log (module='logs_export').
  */
 require __DIR__ . '/_bootstrap.php';
+require dirname(__DIR__, 1) . '/src/LogMask.php';
 
 $me = require_login();
 if (!can_view_logs($me)) json_fail('Không có quyền xem nhật ký.', 403);
+
+// admin/BĐH thấy ip/user_agent; vai khác không thấy
+$isAdminOrBdh = in_array($me['role_code'] ?? '', ['admin', 'bdh'], true);
 
 $format = strtolower((string) ($_GET['format'] ?? 'xlsx'));
 if (!in_array($format, ['xlsx', 'csv'], true)) {
@@ -42,12 +49,22 @@ if (!empty($_GET['actor'])) {
     $params[] = '%' . (string) $_GET['actor'] . '%';
 }
 if (!empty($_GET['from'])) {
-    $from = date('Y-m-d 00:00:00', strtotime((string) $_GET['from']));
-    if ($from) { $where[] = 'logged_at >= ?'; $params[] = $from; }
+    $fromInput = (string) $_GET['from'];
+    $fromObj = \DateTime::createFromFormat('Y-m-d', $fromInput);
+    if ($fromObj && $fromObj->format('Y-m-d') === $fromInput) {
+        $from = $fromObj->format('Y-m-d 00:00:00');
+        $where[] = 'logged_at >= ?';
+        $params[] = $from;
+    }
 }
 if (!empty($_GET['to'])) {
-    $to = date('Y-m-d 23:59:59', strtotime((string) $_GET['to']));
-    if ($to) { $where[] = 'logged_at <= ?'; $params[] = $to; }
+    $toInput = (string) $_GET['to'];
+    $toObj = \DateTime::createFromFormat('Y-m-d', $toInput);
+    if ($toObj && $toObj->format('Y-m-d') === $toInput) {
+        $to = $toObj->format('Y-m-d 23:59:59');
+        $where[] = 'logged_at <= ?';
+        $params[] = $to;
+    }
 }
 
 $whereClause = ' WHERE ' . implode(' AND ', $where);
@@ -64,8 +81,13 @@ $rows = db_all(
     $params
 );
 
-// ---- Mask SĐT (recursive trong cả diff_json) -------------------------
+// ---- Mask SĐT (recursive trong cả diff_json, what, detail) ------------
 foreach ($rows as &$r) {
+    // Mask what/detail
+    $r['what'] = \TNTT\LogMask::maskString($r['what'] ?? '');
+    $r['detail'] = \TNTT\LogMask::maskString($r['detail'] ?? '');
+
+    // Mask diff before/after
     if (!empty($r['diff_json'])) {
         $diff = json_decode($r['diff_json'], true);
         if (is_array($diff)) {
@@ -85,10 +107,31 @@ $tmpFile  = sys_get_temp_dir() . '/' . $baseName . '.' . $format;
 // Tạo rows cho export (mỗi dòng = 1 log)
 $headers = [
     'ID', 'Thời gian', 'Người thực hiện', 'Hành động', 'Module',
-    'Mô tả', 'Chi tiết', 'Đối tượng', 'IP', 'Trình duyệt',
+    'Mô tả', 'Chi tiết', 'Đối tượng', 'Trước', 'Sau', 'IP', 'Trình duyệt',
 ];
+
+/**
+ * Format diff array thành string để hiển thị trong Excel.
+ * Ví dụ: ["name" => "A", "score" => 5] → "name: A | score: 5"
+ */
+function formatDiffForExport(mixed $diff): string
+{
+    if (!is_array($diff)) return '';
+    $parts = [];
+    foreach ($diff as $k => $v) {
+        if (is_array($v)) {
+            $parts[] = $k . ': ' . formatDiffForExport($v);
+        } else {
+            $parts[] = $k . ': ' . (string) $v;
+        }
+    }
+    return implode(' | ', $parts);
+}
+
 $exportRows = [];
 foreach ($rows as $r) {
+    $diff = !empty($r['diff_json']) ? json_decode($r['diff_json'], true) : null;
+
     $exportRows[] = [
         (int) $r['id'],
         $r['logged_at'],
@@ -98,8 +141,11 @@ foreach ($rows as $r) {
         $r['what'],
         $r['detail'] ?? '',
         !empty($r['target_label']) ? $r['target_label'] : '',
-        $r['ip'] ?? '',
-        $r['user_agent'] ?? '',
+        formatDiffForExport($diff['before'] ?? null),
+        formatDiffForExport($diff['after'] ?? null),
+        // Chỉ admin/BĐH thấy IP/UA
+        $isAdminOrBdh ? ($r['ip'] ?? '') : '',
+        $isAdminOrBdh ? ($r['user_agent'] ?? '') : '',
     ];
 }
 

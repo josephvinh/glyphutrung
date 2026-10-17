@@ -6,17 +6,23 @@
  *      &actor=...&module=...&action=...&from=YYYY-MM-DD&to=YYYY-MM-DD
  *
  * Phân quyền (xem can_view_logs() + log_scope_where_with_params() trong _common.php):
- *  - admin / BĐH: thấy tất cả.
- *  - Vai khác: chỉ thấy log do mình tạo + log về lớp mình chủ nhiệm.
+ *  - admin / BĐH: thấy tất cả (kể cả ip, user_agent).
+ *  - Vai khác: chỉ thấy log do mình tạo + log về lớp mình chủ nhiệm;
+ *    KHÔNG thấy ip/user_agent (bảo mật).
  *
+ * Security: what/detail luôn mask SĐT (dùng cho audit).
  * Response thêm các trường mới (so với bản cũ): ip, user_agent, target_*,
  * diff (parse từ diff_json — null với log cũ chưa có diff).
  */
 require __DIR__ . '/_bootstrap.php';
+require dirname(__DIR__, 1) . '/src/LogMask.php';
 
 $me = require_login();
 
 if (!can_view_logs($me)) json_fail('Không có quyền xem nhật ký.', 403);
+
+// admin/BĐH thấy ip/user_agent; vai khác không thấy
+$isAdminOrBdh = in_array($me['role_code'] ?? '', ['admin', 'bdh'], true);
 
 // Pagination
 $page  = max(1, (int) ($_GET['page']  ?? 1));
@@ -44,12 +50,22 @@ if (!empty($_GET['actor'])) {
     $params[] = '%' . (string) $_GET['actor'] . '%';
 }
 if (!empty($_GET['from'])) {
-    $from = date('Y-m-d 00:00:00', strtotime((string) $_GET['from']));
-    if ($from) { $where[] = 'logged_at >= ?'; $params[] = $from; }
+    $fromInput = (string) $_GET['from'];
+    $fromObj = \DateTime::createFromFormat('Y-m-d', $fromInput);
+    if ($fromObj && $fromObj->format('Y-m-d') === $fromInput) {
+        $from = $fromObj->format('Y-m-d 00:00:00');
+        $where[] = 'logged_at >= ?';
+        $params[] = $from;
+    }
 }
 if (!empty($_GET['to'])) {
-    $to = date('Y-m-d 23:59:59', strtotime((string) $_GET['to']));
-    if ($to) { $where[] = 'logged_at <= ?'; $params[] = $to; }
+    $toInput = (string) $_GET['to'];
+    $toObj = \DateTime::createFromFormat('Y-m-d', $toInput);
+    if ($toObj && $toObj->format('Y-m-d') === $toInput) {
+        $to = $toObj->format('Y-m-d 23:59:59');
+        $where[] = 'logged_at <= ?';
+        $params[] = $to;
+    }
 }
 
 $whereSql = ' WHERE ' . implode(' AND ', $where);
@@ -67,7 +83,23 @@ $rows = db_all(
     array_merge($params, [$limit, $offset])
 );
 
-$logs = array_map(function (array $l): array {
+$logs = array_map(function (array $l) use ($isAdminOrBdh): array {
+    // Mask SĐT trong what/detail (bảo mật - không lộ SĐT phụ huynh)
+    $what = \TNTT\LogMask::maskString($l['what'] ?? '');
+    $detail = \TNTT\LogMask::maskString($l['detail'] ?? '');
+
+    // Parse diff và mask SĐT trong before/after
+    $diff = null;
+    if (!empty($l['diff_json'])) {
+        $diffRaw = json_decode($l['diff_json'], true);
+        if (is_array($diffRaw)) {
+            $diff = [
+                'before' => \TNTT\LogMask::phoneRecursive($diffRaw['before'] ?? null),
+                'after'  => \TNTT\LogMask::phoneRecursive($diffRaw['after'] ?? null),
+            ];
+        }
+    }
+
     return [
         'id'           => (int) $l['id'],
         'at'           => substr($l['logged_at'], 0, 16),
@@ -75,16 +107,15 @@ $logs = array_map(function (array $l): array {
         'actor'        => $l['actor_name'],
         'action'       => $l['action'],
         'module'       => $l['module'],
-        'what'         => $l['what'],
-        'detail'       => $l['detail'] ?? '',
-        'ip'           => $l['ip'] ?? null,
-        'user_agent'   => $l['user_agent'] ?? null,
+        'what'         => $what,
+        'detail'       => $detail,
+        // Chỉ admin/BĐH thấy ip/user_agent
+        'ip'           => $isAdminOrBdh ? ($l['ip'] ?? null) : null,
+        'user_agent'   => $isAdminOrBdh ? ($l['user_agent'] ?? null) : null,
         'target_type'  => $l['target_type'] ?? null,
         'target_id'    => isset($l['target_id']) ? (int) $l['target_id'] : null,
         'target_label' => $l['target_label'] ?? null,
-        'diff'         => !empty($l['diff_json'])
-            ? json_decode($l['diff_json'], true)
-            : null,
+        'diff'         => $diff,
     ];
 }, $rows);
 

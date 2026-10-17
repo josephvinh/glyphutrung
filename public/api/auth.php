@@ -96,11 +96,18 @@ switch ($action) {
         session_regenerate_id(true);
         $_SESSION['member_id'] = (int) $m['id'];
 
+        // Đọc last_login_at TRƯỚC KHI cập nhật (giá trị "before" thực tế)
+        $beforeLoginAt = $m['last_login_at'];
+
         db_run('UPDATE members SET last_login_at = NOW() WHERE id = ?', [$m['id']]);
+
+        // Đọc lại last_login_at SAU KHI cập nhật để có giá trị "after" chính xác từ DB
+        $afterLoginAt = db_one('SELECT last_login_at FROM members WHERE id = ?', [$m['id']])['last_login_at'] ?? date('Y-m-d H:i:s');
+
         log_action('tao', 'auth', 'Đăng nhập hệ thống', $m['phone'],
             [
-                'before' => ['last_login_at' => $m['last_login_at']],
-                'after'  => ['last_login_at' => date('Y-m-d H:i:s')],
+                'before' => ['last_login_at' => $beforeLoginAt],
+                'after'  => ['last_login_at' => $afterLoginAt],
                 'target_type'  => 'member',
                 'target_id'    => (int) $m['id'],
                 'target_label' => $m['full_name'],
@@ -140,11 +147,15 @@ switch ($action) {
         }
         if ($current === $new) json_fail('Mật khẩu mới phải khác mật khẩu cũ.');
 
+        // Đọc giá trị TRƯỚC KHI cập nhật (giá trị "before" thực tế)
+        $beforeMustChangePw = (int) ($me['must_change_pw'] ?? 0);
+
         db_run('UPDATE members SET password_hash = ?, must_change_pw = 0 WHERE id = ?',
                [password_hash_upgrade($new), $me['id']]);
+
         log_action('sua', 'auth', 'Đổi mật khẩu', '',
             [
-                'before' => ['must_change_pw' => 1],
+                'before' => ['must_change_pw' => $beforeMustChangePw],
                 'after'  => ['must_change_pw' => 0],
                 'target_type'  => 'member',
                 'target_id'    => (int) $me['id'],
