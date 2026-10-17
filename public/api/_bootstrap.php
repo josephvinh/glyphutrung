@@ -43,6 +43,8 @@ require_once ROOT_PATH . '/src/ExceptionHandler.php';
 // hàm enforce_*_limit khác). Nạp ở đây để mọi endpoint api/ đều có sẵn —
 // trước đây thiếu require này nên data.php gọi hàm chưa định nghĩa → 500.
 require_once ROOT_PATH . '/src/RateLimiter.php';
+require_once ROOT_PATH . '/src/XlsxExport.php';
+require_once ROOT_PATH . '/src/LogMask.php';
 
 TNTT\Logger::bootstrap();
 $exceptionHandler = new TNTT\ExceptionHandler(TNTT\Logger::getInstance(), $debugMode);
@@ -202,13 +204,58 @@ function current_year(): ?array
     return $year;
 }
 
-/** Ghi nhật ký thao tác */
-function log_action(string $action, string $module, string $what, string $detail = ''): void
-{
+/**
+ * Ghi nhật ký thao tác.
+ *
+ * Chữ ký tương thích ngược với 66 chỗ gọi hiện tại (3-4 tham số). Tham số thứ 5
+ * $opts optional — khi truyền sẽ ghi thêm IP, user_agent, target_* và diff_json.
+ *
+ * Cấu trúc $opts:
+ *   - 'before'       (array) snapshot trước — ghi vào diff_json.before
+ *   - 'after'        (array) snapshot sau  — ghi vào diff_json.after
+ *   - 'target_type'  (string) 'student' | 'class' | 'member' | ...
+ *   - 'target_id'    (int) ID đối tượng
+ *   - 'target_label' (string) nhãn người-đọc "Nguyễn Văn A · Chiên 2"
+ *
+ * Chỉ ghi diff khi có 'before' HOẶC 'after' (tiết kiệm dung lượng). IP và
+ * user_agent LUÔN ghi (lấy từ $_SERVER).
+ */
+function log_action(
+    string $action,
+    string $module,
+    string $what,
+    string $detail = '',
+    array  $opts = []
+): void {
     $me = current_member();
-    db_run('INSERT INTO activity_logs (actor_id, actor_name, action, module, what, detail)
-            VALUES (?,?,?,?,?,?)',
-        [$me['id'] ?? null, $me['full_name'] ?? 'Hệ thống', $action, $module, $what, $detail]);
+
+    $diff = null;
+    if (isset($opts['before']) || isset($opts['after'])) {
+        $diff = json_encode(
+            ['before' => $opts['before'] ?? null, 'after' => $opts['after'] ?? null],
+            JSON_UNESCAPED_UNICODE | JSON_PARTIAL_OUTPUT_ON_ERROR
+        );
+    }
+
+    $ip = $_SERVER['REMOTE_ADDR'] ?? null;
+    $ua = isset($_SERVER['HTTP_USER_AGENT'])
+        ? substr($_SERVER['HTTP_USER_AGENT'], 0, 255)
+        : null;
+
+    db_run('INSERT INTO activity_logs
+        (actor_id, actor_name, action, module, what, detail,
+         ip, user_agent, target_type, target_id, target_label, diff_json)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
+        [
+            $me['id'] ?? null,
+            $me['full_name'] ?? 'Hệ thống',
+            $action, $module, $what, $detail,
+            $ip, $ua,
+            $opts['target_type'] ?? null,
+            $opts['target_id'] ?? null,
+            $opts['target_label'] ?? null,
+            $diff,
+        ]);
 }
 
 /* ================================================================
@@ -539,6 +586,17 @@ function scan_class_ids(array $me): ?array
     $ph = implode(',', array_fill(0, count($blockIds), '?'));
     return array_map('intval', array_column(
         db_all("SELECT id FROM classes WHERE block_id IN ($ph)", $blockIds), 'id'));
+}
+
+/**
+ * Helper gọi nhanh TNTT\XlsxExport::write() cho endpoint xuất file.
+ * @param array<int,string> $headers
+ * @param array<int,array<int,mixed>> $rows
+ * @param array{sheet_name?:string,date_columns?:array<int,int>,bold_header?:bool} $opts
+ */
+function xlsx_export(string $path, array $headers, array $rows, array $opts = []): void
+{
+    \TNTT\XlsxExport::write($path, $headers, $rows, $opts);
 }
 
 /* ============================================================================

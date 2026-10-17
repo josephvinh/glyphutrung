@@ -98,17 +98,61 @@ switch ($action) {
         $vals = [$name, $type, $status, $countFA, $countEm, $start, $cutoffVal, $absentVal,
                  $dow, $daysCsv, $eventDate, $allowQr, $color, $icon, $sortOrd, $effFrom, $effTo, $autoClose];
 
+        // Các cột chính ghi vào log diff (key trùng tên cột DB).
+        $tracked = ['name', 'type', 'status', 'count_for_attendance', 'count_for_emulation',
+                    'start_time', 'cutoff_time', 'absent_time', 'day_of_week', 'days_of_week',
+                    'event_date', 'allow_qr', 'color', 'icon', 'sort_order',
+                    'effective_from', 'effective_to', 'auto_close_after_event'];
+        $moi = [
+            'name' => $name,
+            'type' => $type,
+            'status' => $status,
+            'count_for_attendance' => $countFA,
+            'count_for_emulation' => $countEm,
+            'start_time' => $start,
+            'cutoff_time' => $cutoffVal,
+            'absent_time' => $absentVal,
+            'day_of_week' => $dow,
+            'days_of_week' => $daysCsv,
+            'event_date' => $eventDate,
+            'allow_qr' => $allowQr,
+            'color' => $color,
+            'icon' => $icon,
+            'sort_order' => $sortOrd,
+            'effective_from' => $effFrom,
+            'effective_to' => $effTo,
+            'auto_close_after_event' => $autoClose,
+        ];
+
         if ($id > 0) {
-            if (!db_one('SELECT id FROM programs WHERE id=? AND year_id=?', [$id, $yid])) {
-                json_fail('Không tìm thấy chương trình.', 404);
-            }
+            $cu = db_one('SELECT name, type, status, count_for_attendance, count_for_emulation,
+                                 start_time, cutoff_time, absent_time, day_of_week, days_of_week,
+                                 event_date, allow_qr, color, icon, sort_order,
+                                 effective_from, effective_to, auto_close_after_event
+                            FROM programs WHERE id=? AND year_id=?', [$id, $yid]);
+            if (!$cu) json_fail('Không tìm thấy chương trình.', 404);
             db_run("UPDATE programs SET $cols WHERE id=? AND year_id=?", array_merge($vals, [$id, $yid]));
+            $diff = diff_arrays($cu, $moi, $tracked);
             log_action('sua', 'programs', 'Sửa chương trình ' . $name,
-                       $start . ($cutoffVal ? ' – ' . $cutoffVal : ''));
+                       $start . ($cutoffVal ? ' – ' . $cutoffVal : ''),
+                [
+                    'before' => $diff['before'],
+                    'after'  => $diff['after'],
+                    'target_type'  => 'program',
+                    'target_id'    => $id,
+                    'target_label' => $name,
+                ]);
         } else {
             $id = db_insert("INSERT INTO programs SET year_id=?, $cols", array_merge([$yid], $vals));
             log_action('tao', 'programs', 'Tạo chương trình ' . $name,
-                       $start . ($cutoffVal ? ' – ' . $cutoffVal : ''));
+                       $start . ($cutoffVal ? ' – ' . $cutoffVal : ''),
+                [
+                    'before' => null,
+                    'after'  => $moi,
+                    'target_type'  => 'program',
+                    'target_id'    => $id,
+                    'target_label' => $name,
+                ]);
         }
 
         // Đồng bộ lớp gắn: xoá hết rồi chèn lại theo lựa chọn (rỗng = toàn đoàn)
@@ -132,7 +176,11 @@ switch ($action) {
         require_permission('programs', 'edit');
 
         $id   = (int) ($in['id'] ?? 0);
-        $prog = db_one('SELECT name FROM programs WHERE id=? AND year_id=?', [$id, $yid]);
+        $prog = db_one('SELECT name, type, status, count_for_attendance, count_for_emulation,
+                               start_time, cutoff_time, absent_time, day_of_week, days_of_week,
+                               event_date, allow_qr, color, icon, sort_order,
+                               effective_from, effective_to, auto_close_after_event
+                          FROM programs WHERE id=? AND year_id=?', [$id, $yid]);
         if (!$prog) json_fail('Không tìm thấy chương trình.', 404);
 
         // Đã có điểm danh gắn với chương trình này thì KHÔNG xoá (mất dữ liệu
@@ -142,7 +190,33 @@ switch ($action) {
         }
 
         db_run('DELETE FROM programs WHERE id=? AND year_id=?', [$id, $yid]);
-        log_action('xoa', 'programs', 'Xóa chương trình ' . $prog['name'], '');
+        log_action('xoa', 'programs', 'Xóa chương trình ' . $prog['name'], '',
+            [
+                'before' => [
+                    'name' => $prog['name'],
+                    'type' => $prog['type'],
+                    'status' => $prog['status'],
+                    'count_for_attendance' => (int) $prog['count_for_attendance'],
+                    'count_for_emulation' => (int) $prog['count_for_emulation'],
+                    'start_time' => $prog['start_time'],
+                    'cutoff_time' => $prog['cutoff_time'],
+                    'absent_time' => $prog['absent_time'],
+                    'day_of_week' => $prog['day_of_week'] !== null ? (int) $prog['day_of_week'] : null,
+                    'days_of_week' => $prog['days_of_week'],
+                    'event_date' => $prog['event_date'],
+                    'allow_qr' => (int) $prog['allow_qr'],
+                    'color' => $prog['color'],
+                    'icon' => $prog['icon'],
+                    'sort_order' => (int) $prog['sort_order'],
+                    'effective_from' => $prog['effective_from'],
+                    'effective_to' => $prog['effective_to'],
+                    'auto_close_after_event' => (int) $prog['auto_close_after_event'],
+                ],
+                'after'        => null,
+                'target_type'  => 'program',
+                'target_id'    => $id,
+                'target_label' => $prog['name'],
+            ]);
 
         Cache::flush();
         json_out(['ok' => true]);

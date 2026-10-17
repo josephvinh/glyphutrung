@@ -125,7 +125,20 @@ switch ($action) {
             json_fail(safe_error($e, 'Không tạo được niên khoá: '), 500);
         }
 
-        log_action('tao', 'settings', 'Tạo niên khoá ' . $name, $start . ' → ' . $end);
+        log_action('tao', 'settings', 'Tạo niên khoá ' . $name, $start . ' → ' . $end,
+            [
+                'before' => null,
+                'after'  => [
+                    'name' => $name,
+                    'start_date' => $start,
+                    'end_date' => $end,
+                    'is_current' => 0,
+                    'status' => 'đang mở',
+                ],
+                'target_type'  => 'school_year',
+                'target_id'    => $yearId,
+                'target_label' => $name,
+            ]);
         json_out(['ok' => true, 'id' => $yearId]);
 
     // -------------------------------------------------------------
@@ -222,8 +235,28 @@ switch ($action) {
             json_fail(safe_error($e, 'Không sửa được niên khoá: '), 500);
         }
 
+        $diff = diff_arrays(
+            [
+                'name' => $y['name'],
+                'start_date' => $y['start_date'],
+                'end_date' => $y['end_date'],
+            ],
+            [
+                'name' => $name,
+                'start_date' => $start,
+                'end_date' => $end,
+            ],
+            ['name', 'start_date', 'end_date']
+        );
         log_action('sua', 'settings', 'Sửa niên khoá ' . $name,
-                   $y['start_date'] . ' → ' . $y['end_date'] . '  thành  ' . $start . ' → ' . $end);
+                   $y['start_date'] . ' → ' . $y['end_date'] . '  thành  ' . $start . ' → ' . $end,
+            [
+                'before' => $diff['before'],
+                'after'  => $diff['after'],
+                'target_type'  => 'school_year',
+                'target_id'    => $id,
+                'target_label' => $name,
+            ]);
 
         json_out(['ok' => true, 'termsAdjusted' => $daChinh]);
 
@@ -245,7 +278,14 @@ switch ($action) {
             json_fail('Không đổi được niên khoá đang dùng.', 500);
         }
 
-        log_action('sua', 'settings', 'Chuyển sang niên khoá ' . $y['name'], '');
+        log_action('sua', 'settings', 'Chuyển sang niên khoá ' . $y['name'], '',
+            [
+                'before' => ['is_current' => (int) $y['is_current']],
+                'after'  => ['is_current' => 1],
+                'target_type'  => 'school_year',
+                'target_id'    => $id,
+                'target_label' => $y['name'],
+            ]);
         json_out(['ok' => true]);
 
     // -------------------------------------------------------------
@@ -259,7 +299,14 @@ switch ($action) {
         }
 
         db_run("UPDATE school_years SET status = 'đã khóa' WHERE id = ?", [$id]);
-        log_action('sua', 'settings', 'Khoá sổ niên khoá ' . $y['name'], 'dữ liệu năm này chuyển sang chỉ đọc');
+        log_action('sua', 'settings', 'Khoá sổ niên khoá ' . $y['name'], 'dữ liệu năm này chuyển sang chỉ đọc',
+            [
+                'before' => ['status' => $y['status']],
+                'after'  => ['status' => 'đã khóa'],
+                'target_type'  => 'school_year',
+                'target_id'    => $id,
+                'target_label' => $y['name'],
+            ]);
         json_out(['ok' => true]);
 
     // -------------------------------------------------------------
@@ -270,7 +317,14 @@ switch ($action) {
         if (!$y) json_fail('Không tìm thấy niên khoá.', 404);
 
         db_run("UPDATE school_years SET status = 'đang mở' WHERE id = ?", [$id]);
-        log_action('sua', 'settings', 'Mở lại niên khoá ' . $y['name'], '');
+        log_action('sua', 'settings', 'Mở lại niên khoá ' . $y['name'], '',
+            [
+                'before' => ['status' => $y['status']],
+                'after'  => ['status' => 'đang mở'],
+                'target_type'  => 'school_year',
+                'target_id'    => $id,
+                'target_label' => $y['name'],
+            ]);
         json_out(['ok' => true]);
 
     // -------------------------------------------------------------

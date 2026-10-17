@@ -73,11 +73,18 @@ class OrgService
                 return ['ok' => false, 'error' => 'Bạn không có quyền tạo khối mới.', 'code' => 403];
             }
             $max = db_one('SELECT COALESCE(MAX(sort_order),0) n FROM blocks');
-            db_insert('INSERT INTO blocks (name, sort_order) VALUES (?,?)', [$name, $max['n'] + 1]);
-            log_action('tao', 'org', 'Thêm khối ' . $name, '');
+            $bid = db_insert('INSERT INTO blocks (name, sort_order) VALUES (?,?)', [$name, $max['n'] + 1]);
+            log_action('tao', 'org', 'Thêm khối ' . $name, '',
+                [
+                    'before' => null,
+                    'after'  => ['name' => $name, 'sort_order' => (int) $max['n'] + 1],
+                    'target_type'  => 'block',
+                    'target_id'    => $bid,
+                    'target_label' => $name,
+                ]);
         } elseif ($old !== $name) {
             // Đổi tên
-            $b = db_one('SELECT id FROM blocks WHERE name = ?', [$old]);
+            $b = db_one('SELECT id, name FROM blocks WHERE name = ?', [$old]);
             if (!$b) {
                 return ['ok' => false, 'error' => 'Không tìm thấy khối "' . $old . '".', 'code' => 404];
             }
@@ -85,7 +92,14 @@ class OrgService
                 return ['ok' => false, 'error' => 'Bạn không có quyền sửa khối "' . $old . '".', 'code' => 403];
             }
             db_run('UPDATE blocks SET name=? WHERE name=?', [$name, $old]);
-            log_action('sua', 'org', 'Đổi tên khối ' . $old . ' thành ' . $name, '');
+            log_action('sua', 'org', 'Đổi tên khối ' . $old . ' thành ' . $name, '',
+                [
+                    'before' => ['name' => $b['name']],
+                    'after'  => ['name' => $name],
+                    'target_type'  => 'block',
+                    'target_id'    => (int) $b['id'],
+                    'target_label' => $name,
+                ]);
         }
 
         Cache::flush();
@@ -100,7 +114,7 @@ class OrgService
         require_write();
 
         $name = $this->in('name');
-        $b = db_one('SELECT id FROM blocks WHERE name=?', [$name]);
+        $b = db_one('SELECT id, name FROM blocks WHERE name=?', [$name]);
         if (!$b) {
             return ['ok' => false, 'error' => 'Không tìm thấy khối.', 'code' => 404];
         }
@@ -124,7 +138,14 @@ class OrgService
         foreach ($heads as $mid) {
             recompute_member_primary((int) $mid);
         }
-        log_action('xoa', 'org', 'Xóa khối ' . $name, '');
+        log_action('xoa', 'org', 'Xóa khối ' . $name, '',
+            [
+                'before' => ['name' => $b['name']],
+                'after'  => null,
+                'target_type'  => 'block',
+                'target_id'    => (int) $b['id'],
+                'target_label' => $b['name'],
+            ]);
         Cache::flush();
         return ['ok' => true];
     }
@@ -183,10 +204,18 @@ class OrgService
         }
 
         if ($old === '') {
-            db_insert('INSERT INTO classes (name, block_id, sort_order) VALUES (?,?,?)',
+            $cid = db_insert('INSERT INTO classes (name, block_id, sort_order) VALUES (?,?,?)',
                       [$name, $b['id'], 1]);
-            log_action('tao', 'org', 'Thêm lớp ' . $name, 'khối ' . $block);
+            log_action('tao', 'org', 'Thêm lớp ' . $name, 'khối ' . $block,
+                [
+                    'before' => null,
+                    'after'  => ['name' => $name, 'block_id' => (int) $b['id']],
+                    'target_type'  => 'class',
+                    'target_id'    => $cid,
+                    'target_label' => $name,
+                ]);
         } else {
+            $cu = db_one('SELECT name, block_id FROM classes WHERE id=?', [$oldCls['id']]);
             db_run('UPDATE classes SET name=?, block_id=? WHERE name=?', [$name, $b['id'], $old]);
             if ((int) $oldCls['block_id'] !== (int) $b['id']) {
                 // Đổi khối: phân công đang hiệu lực + cột khối hiển thị của người
@@ -195,7 +224,20 @@ class OrgService
                        [$b['id'], $oldCls['id']]);
                 db_run('UPDATE members SET block_id=? WHERE class_id=?', [$b['id'], $oldCls['id']]);
             }
-            log_action('sua', 'org', 'Sửa lớp ' . $old, 'thành ' . $name . ' · khối ' . $block);
+            log_action('sua', 'org', 'Sửa lớp ' . $old, 'thành ' . $name . ' · khối ' . $block,
+                [
+                    'before' => [
+                        'name' => $cu['name'],
+                        'block_id' => (int) $cu['block_id'],
+                    ],
+                    'after'  => [
+                        'name' => $name,
+                        'block_id' => (int) $b['id'],
+                    ],
+                    'target_type'  => 'class',
+                    'target_id'    => (int) $oldCls['id'],
+                    'target_label' => $name,
+                ]);
         }
 
         // Sơ đồ lên lớp: CHỈ đổi khi client gửi nextClass. Form sửa tên/khối lớp
@@ -226,7 +268,7 @@ class OrgService
         require_write();
 
         $name = $this->in('name');
-        $cls = db_one('SELECT id FROM classes WHERE name=?', [$name]);
+        $cls = db_one('SELECT id, name, block_id FROM classes WHERE name=?', [$name]);
         if (!$cls) {
             return ['ok' => false, 'error' => 'Không tìm thấy lớp.', 'code' => 404];
         }
@@ -261,7 +303,17 @@ class OrgService
             }
             throw $e;
         }
-        log_action('xoa', 'org', 'Xóa lớp ' . $name, '');
+        log_action('xoa', 'org', 'Xóa lớp ' . $name, '',
+            [
+                'before' => [
+                    'name' => $cls['name'],
+                    'block_id' => (int) $cls['block_id'],
+                ],
+                'after'        => null,
+                'target_type'  => 'class',
+                'target_id'    => (int) $cls['id'],
+                'target_label' => $cls['name'],
+            ]);
         Cache::flush();
         return ['ok' => true];
     }

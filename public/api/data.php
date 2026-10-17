@@ -597,17 +597,34 @@ $members = array_map(function ($m) use ($staffLv, $assignmentsByMember) {
 // Nhật ký — 50 dòng gần nhất (đủ xem, nhẹ bandwidth). CHỈ người được xem
 // nhật ký (= quyền màn Cài đặt, can_view_logs); người khác nhận [] (#78).
 // ---------------------------------------------------------------
-// TODO: Chuyển sang API riêng có pagination khi có màn xem nhật ký
-$logs = !can_view_logs($me) ? [] : array_map(fn($l) => [
-    'id'     => (int) $l['id'],
-    'at'     => substr($l['logged_at'], 0, 16),
-    'ts'     => strtotime($l['logged_at']) * 1000,
-    'actor'  => $l['actor_name'],
-    'action' => $l['action'],
-    'module' => $l['module'],
-    'what'   => $l['what'],
-    'detail' => $l['detail'] ?? '',
-], db_all('SELECT * FROM activity_logs ORDER BY id DESC LIMIT 50'));
+// Phạm vi theo vai (admin/BĐH thấy hết, GLV chỉ thấy log của mình + lớp mình).
+$logs = [];
+if (can_view_logs($me)) {
+    [$scopeWhere, $scopeParams] = log_scope_where_with_params($me);
+    $rows = db_all(
+        "SELECT * FROM activity_logs WHERE $scopeWhere ORDER BY id DESC LIMIT 50",
+        $scopeParams
+    );
+    $logs = array_map(function (array $l): array {
+        return [
+            'id'           => (int) $l['id'],
+            'at'           => substr($l['logged_at'], 0, 16),
+            'ts'           => strtotime($l['logged_at']) * 1000,
+            'actor'        => $l['actor_name'],
+            'action'       => $l['action'],
+            'module'       => $l['module'],
+            'what'         => $l['what'],
+            'detail'       => $l['detail'] ?? '',
+            'ip'           => $l['ip'] ?? null,
+            'target_type'  => $l['target_type'] ?? null,
+            'target_id'    => isset($l['target_id']) ? (int) $l['target_id'] : null,
+            'target_label' => $l['target_label'] ?? null,
+            'diff'         => !empty($l['diff_json'])
+                ? json_decode($l['diff_json'], true)
+                : null,
+        ];
+    }, $rows);
+}
 
 // ---------------------------------------------------------------
 // Lịch cá nhân — CHỈ ghi chú của chính người đang đăng nhập (riêng tư)

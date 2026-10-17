@@ -110,7 +110,113 @@ function can_see_admin(?array $me): bool
  */
 function can_view_logs(?array $me): bool
 {
-    return ($me['role_code'] ?? '') === 'admin';
+    if (!$me) return false;
+    // Admin + BĐH xem tất cả; mọi vai có tài khoản nội bộ (có id) đều xem
+    // được log của mình (scope thu hẹp bằng log_scope_where bên dưới).
+    $r = $me['role_code'] ?? '';
+    if (in_array($r, ['admin', 'bdh'], true)) return true;
+    return !empty($me['id']);
+}
+
+/**
+ * Trả về mệnh đề WHERE giới hạn log theo phạm vi của người dùng.
+ *  - admin / BĐH: 1=1 (thấy tất cả)
+ *  - Khác: thấy log do mình tạo HOẶC log có target_type='student' mà
+ *    target_id (student.id) thuộc lớp mình CHỦ NHIỆM (assignment role_code
+ *    = 'glv_chu_nhiem', to_date IS NULL) trong năm học hiện hành.
+ *
+ * Lưu ý:
+ *  - KHÔNG nhận user-input; chỉ dùng $me['id'] đã qua require_login.
+ *  - Không dùng cột homeroom_teacher_id ở classes (Ruling 11) — bảng
+ *    classes không có cột đó. Dùng member_assignments.
+ *  - Nếu không phải glv_chu_nhiem (vai glv/du_bị/thu_thư) thì chỉ thấy
+ *    log do mình tạo.
+ */
+function log_scope_where(?array $me): string
+{
+    if (!$me) return '0=1';
+    $r = $me['role_code'] ?? '';
+    if (in_array($r, ['admin', 'bdh'], true)) return '1=1';
+
+    $meId = (int) ($me['id'] ?? 0);
+    if ($meId <= 0) return '0=1';
+
+    // Có vai glv_chu_nhiem với class_id active?
+    $classes = db_all(
+        "SELECT DISTINCT class_id FROM member_assignments
+          WHERE member_id = ? AND role_code = 'glv_chu_nhiem'
+            AND to_date IS NULL AND class_id IS NOT NULL",
+        [$meId]
+    );
+    $classIds = array_column($classes, 'class_id');
+    $classIds = array_map('intval', $classIds);
+
+    if (!$classIds) {
+        // Không chủ nhiệm lớp nào → chỉ thấy log do mình tạo.
+        return "actor_id = $meId";
+    }
+
+    $year = current_year();
+    $yearId = (int) ($year['id'] ?? 0);
+
+    $ph = implode(',', array_fill(0, count($classIds), '?'));
+
+    return "(
+        actor_id = $meId
+        OR (target_type = 'student' AND target_id IN (
+            SELECT s.id FROM students s
+            JOIN enrollments e ON e.student_id = s.id
+            WHERE e.class_id IN ($ph)
+              AND e.year_id = $yearId
+              AND s.hidden_at IS NULL
+        ))
+    )";
+}
+
+/**
+ * Biến thể an toàn của log_scope_where() khi cần truyền qua PDO: trả về
+ * cả mệnh đề WHERE VÀ mảng params tương ứng (cho placeholder `?` của IN).
+ * Dùng ở những nơi gọi db_all/db_one/db_run trực tiếp.
+ *
+ * @return array{0:string,1:array} [whereClause, params]
+ */
+function log_scope_where_with_params(?array $me): array
+{
+    if (!$me) return ['0=1', []];
+    $r = $me['role_code'] ?? '';
+    if (in_array($r, ['admin', 'bdh'], true)) return ['1=1', []];
+
+    $meId = (int) ($me['id'] ?? 0);
+    if ($meId <= 0) return ['0=1', []];
+
+    $classes = db_all(
+        "SELECT DISTINCT class_id FROM member_assignments
+          WHERE member_id = ? AND role_code = 'glv_chu_nhiem'
+            AND to_date IS NULL AND class_id IS NOT NULL",
+        [$meId]
+    );
+    $classIds = array_map('intval', array_column($classes, 'class_id'));
+
+    if (!$classIds) {
+        return ["actor_id = $meId", []];
+    }
+
+    $year = current_year();
+    $yearId = (int) ($year['id'] ?? 0);
+
+    $ph = implode(',', array_fill(0, count($classIds), '?'));
+
+    $where = "(
+        actor_id = $meId
+        OR (target_type = 'student' AND target_id IN (
+            SELECT s.id FROM students s
+            JOIN enrollments e ON e.student_id = s.id
+            WHERE e.class_id IN ($ph)
+              AND e.year_id = $yearId
+              AND s.hidden_at IS NULL
+        ))
+    )";
+    return [$where, $classIds];
 }
 
 /* ============================================================================
@@ -461,4 +567,54 @@ function responsible_class_ids(array $me): ?array
         $ids = array_merge($ids, $scopeIds);
     }
     return array_values(array_unique(array_map('intval', $ids)));
+}
+
+/* ============================================================
+   DIFF TRƯỚC / SAU CHO log_action()
+
+   Dùng khi muốn ghi nhật ký kiểu "sửa X từ A → B":
+   1. SELECT trước (before) — snapshot đầy đủ các cột cần theo dõi.
+   2. UPDATE.
+   3. SELECT sau (after) — cùng tập cột đó.
+   4. Gọi diff_arrays($before, $after) → trả về ['before' => chỉ-trường-đổi,
+                                                'after'  => chỉ-trường-đổi]
+      rồi truyền vào log_action(... , ['before' => ..., 'after' => ...]).
+   Hàm so sánh JSON để khử chênh lệch kiểu (int 1 vs string "1") và bỏ qua
+   thứ tự key; danh sách cột theo dõi ($keys) chống lộ field nhạy cảm
+   (password_hash, token) nếu lỡ SELECT * trước.
+   ============================================================ */
+function diff_arrays(array $before, array $after, ?array $keys = null): array
+{
+    if ($keys === null) {
+        $keys = array_unique(array_merge(array_keys($before), array_keys($after)));
+    }
+    $changed = [];
+    foreach ($keys as $k) {
+        $k = (string) $k;
+        $b = array_key_exists($k, $before) ? $before[$k] : null;
+        $a = array_key_exists($k, $after)  ? $after[$k]  : null;
+        $inBefore = array_key_exists($k, $before);
+        $inAfter  = array_key_exists($k, $after);
+        // So sánh bằng JSON để chuẩn hoá int/string/float và mảng kết hợp.
+        if (json_encode($b, JSON_UNESCAPED_UNICODE) === json_encode($a, JSON_UNESCAPED_UNICODE)) {
+            continue; // giống nhau
+        }
+        // Trường chỉ có ở 'before' (xoá) — chỉ ghi vào before, KHÔNG ghi vào after.
+        // Trường chỉ có ở 'after'  (thêm) — ghi cả hai với before = null.
+        if ($inAfter) {
+            $changed[$k] = $a;
+        }
+    }
+    $beforeOut = [];
+    foreach (array_keys($changed) as $k) {
+        $beforeOut[$k] = array_key_exists($k, $before) ? $before[$k] : null;
+    }
+    // Trường chỉ có ở 'before' (xoá) — ghi vào before để thấy giá trị cũ.
+    foreach ($keys as $k) {
+        $k = (string) $k;
+        if (array_key_exists($k, $before) && !array_key_exists($k, $after)) {
+            $beforeOut[$k] = $before[$k];
+        }
+    }
+    return ['before' => $beforeOut, 'after' => $changed];
 }

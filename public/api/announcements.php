@@ -123,7 +123,10 @@ switch ($action) {
         }
 
         if ($id) {
-            $old = db_one('SELECT id, title, status, audience_type, audience_block, audience_class, created_by, level, published_at FROM announcements WHERE id=? AND year_id=?', [$id, $yid]);
+            $old = db_one('SELECT id, title, body, level, status, audience_type, audience_block,
+                                  audience_class, created_by, published_at, expires_at,
+                                  is_meeting, meeting_at, meeting_place, year_id
+                             FROM announcements WHERE id=? AND year_id=?', [$id, $yid]);
             if (!$old) json_fail('Không tìm thấy thông báo.', 404);
             if (!can_edit_announcement($me, $old)) json_fail('Bạn chỉ sửa được thông báo của khối mình.', 403);
 
@@ -137,7 +140,43 @@ switch ($action) {
                      WHERE id=?',
                 [$title, $body, $level, $aType, $blockId, $classId, $stt, $pub, $exp,
                  $isMeeting, $meetAt, $meetPlace, $id]);
-            log_action('sua', 'announcements', 'Sửa ' . ($isMeeting ? 'buổi họp' : 'thông báo') . ' "' . $title . '"', $stt);
+            $moi = [
+                'title' => $title,
+                'body' => $body,
+                'level' => $level,
+                'audience_type' => $aType,
+                'audience_block' => $blockId,
+                'audience_class' => $classId,
+                'status' => $stt,
+                'expires_at' => $exp,
+                'is_meeting' => $isMeeting,
+                'meeting_at' => $meetAt,
+                'meeting_place' => $meetPlace,
+            ];
+            $cuSnap = [
+                'title' => $old['title'],
+                'body' => $old['body'],
+                'level' => $old['level'],
+                'audience_type' => $old['audience_type'],
+                'audience_block' => $old['audience_block'] !== null ? (int) $old['audience_block'] : null,
+                'audience_class' => $old['audience_class'] !== null ? (int) $old['audience_class'] : null,
+                'status' => $old['status'],
+                'expires_at' => $old['expires_at'],
+                'is_meeting' => (int) $old['is_meeting'],
+                'meeting_at' => $old['meeting_at'],
+                'meeting_place' => $old['meeting_place'],
+            ];
+            $diff = diff_arrays($cuSnap, $moi,
+                ['title', 'body', 'level', 'audience_type', 'audience_block', 'audience_class',
+                 'status', 'expires_at', 'is_meeting', 'meeting_at', 'meeting_place']);
+            log_action('sua', 'announcements', 'Sửa ' . ($isMeeting ? 'buổi họp' : 'thông báo') . ' "' . $title . '"', $stt,
+                [
+                    'before' => $diff['before'],
+                    'after'  => $diff['after'],
+                    'target_type'  => 'announcement',
+                    'target_id'    => $id,
+                    'target_label' => $title,
+                ]);
         } else {
             $pub = $stt === 'đã phát' ? date('Y-m-d H:i:s') : null;
             $id = db_insert('INSERT INTO announcements (year_id, title, body, level, audience_type,
@@ -147,7 +186,26 @@ switch ($action) {
                 [$yid, $title, $body, $level, $aType, $blockId, $classId, $stt, $pub, $exp, $me['id'],
                  $isMeeting, $meetAt, $meetPlace]);
             log_action('tao', 'announcements', ($stt === 'đã phát' ? 'Phát' : 'Lưu nháp')
-                       . ' thông báo "' . $title . '"', $aType);
+                       . ' thông báo "' . $title . '"', $aType,
+                [
+                    'before' => null,
+                    'after'  => [
+                        'title' => $title,
+                        'body' => $body,
+                        'level' => $level,
+                        'audience_type' => $aType,
+                        'audience_block' => $blockId,
+                        'audience_class' => $classId,
+                        'status' => $stt,
+                        'expires_at' => $exp,
+                        'is_meeting' => $isMeeting,
+                        'meeting_at' => $meetAt,
+                        'meeting_place' => $meetPlace,
+                    ],
+                    'target_type'  => 'announcement',
+                    'target_id'    => $id,
+                    'target_label' => $title,
+                ]);
         }
 
         // Chỉ rung chuông khi thông báo thật sự lên sóng: tạo mới đã phát,
@@ -173,11 +231,25 @@ switch ($action) {
 
         if ($a['status'] === 'đã phát') {
             db_run("UPDATE announcements SET status='nháp', published_at=NULL WHERE id=?", [$a['id']]);
-            log_action('sua', 'announcements', 'Thu hồi thông báo "' . $a['title'] . '"', 'về bản nháp');
+            log_action('sua', 'announcements', 'Thu hồi thông báo "' . $a['title'] . '"', 'về bản nháp',
+                [
+                    'before' => ['status' => 'đã phát'],
+                    'after'  => ['status' => 'nháp'],
+                    'target_type'  => 'announcement',
+                    'target_id'    => (int) $a['id'],
+                    'target_label' => $a['title'],
+                ]);
             json_out(['ok' => true, 'status' => 'nháp', 'publishedAt' => '']);
         }
         db_run("UPDATE announcements SET status='đã phát', published_at=NOW() WHERE id=?", [$a['id']]);
-        log_action('tao', 'announcements', 'Phát thông báo "' . $a['title'] . '"', $a['audience_type']);
+        log_action('tao', 'announcements', 'Phát thông báo "' . $a['title'] . '"', $a['audience_type'],
+            [
+                'before' => ['status' => $a['status']],
+                'after'  => ['status' => 'đã phát'],
+                'target_type'  => 'announcement',
+                'target_id'    => (int) $a['id'],
+                'target_label' => $a['title'],
+            ]);
         bao_thong_bao_moi((int) $a['id'], $a['title'], $a['level'], $a['audience_type'],
                           $a['audience_block'] !== null ? (int) $a['audience_block'] : null,
                           $a['audience_class'] !== null ? (int) $a['audience_class'] : null,
@@ -189,12 +261,31 @@ switch ($action) {
     case 'delete':
         require_write();
         $me = require_permission('announcements', 'edit');
-        $a  = db_one('SELECT id, title, status, audience_type, audience_block, audience_class, created_by, level, published_at FROM announcements WHERE id=? AND year_id=?', [(int) ($in['id'] ?? 0), $yid]);
+        $a  = db_one('SELECT id, title, body, level, status, audience_type, audience_block,
+                            audience_class, created_by, published_at, expires_at,
+                            is_meeting, meeting_at, meeting_place
+                       FROM announcements WHERE id=? AND year_id=?', [(int) ($in['id'] ?? 0), $yid]);
         if (!$a) json_fail('Không tìm thấy thông báo.', 404);
         if (!can_edit_announcement($me, $a)) json_fail('Bạn chỉ xóa được thông báo của khối mình.', 403);
 
         db_run('DELETE FROM announcements WHERE id=?', [$a['id']]);
-        log_action('xoa', 'announcements', 'Xóa thông báo "' . $a['title'] . '"', '');
+        log_action('xoa', 'announcements', 'Xóa thông báo "' . $a['title'] . '"', '',
+            [
+                'before' => [
+                    'title' => $a['title'],
+                    'body' => $a['body'],
+                    'level' => $a['level'],
+                    'audience_type' => $a['audience_type'],
+                    'audience_block' => $a['audience_block'] !== null ? (int) $a['audience_block'] : null,
+                    'audience_class' => $a['audience_class'] !== null ? (int) $a['audience_class'] : null,
+                    'status' => $a['status'],
+                    'is_meeting' => (int) $a['is_meeting'],
+                ],
+                'after'        => null,
+                'target_type'  => 'announcement',
+                'target_id'    => (int) $a['id'],
+                'target_label' => $a['title'],
+            ]);
         Cache::flush();
         json_out(['ok' => true]);
 

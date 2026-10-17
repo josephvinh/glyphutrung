@@ -287,10 +287,32 @@ if ($action === 'scan') {
         foreach ($hopleIds as $sid) recalc_stamps_safe($sid, $year['id']);
     }
 
-    // Một dòng nhật ký cho cả lô, không phải 500 dòng
+    // Một dòng nhật ký cho mỗi em vừa được ghi — diff before=null → after={status,...}
+    // để modal Nhật ký hiển thị được bảng Trường/Cũ/Mới. Trước đây chỉ 1 dòng
+    // tổng "Quét QR N em" → modal không có dữ liệu để so sánh.
     if ($them > 0) {
-        log_action('diemdanh', 'attendance', 'Quét QR ' . $them . ' em',
-                   $prog['name'] . ' · ' . $date . ' · ' . $status);
+        // Index các em theo id để tra nhanh khi ghi log per-row
+        $emsById = [];
+        foreach ($ems as $e) $emsById[(int) $e['id']] = $e;
+        foreach ($hopleIds as $sid) {
+            $em = $emsById[$sid] ?? null;
+            if (!$em) continue;
+            $label = $em['full_name'] . ' · ' . $em['code'];
+            log_action('diemdanh', 'attendance', 'Quét QR ' . $em['full_name'],
+                       $prog['name'] . ' · ' . $date . ' · ' . $status,
+                       [
+                           'before' => null,
+                           'after'  => [
+                               'status'       => $status,
+                               'method'       => 'qr',
+                               'session_date' => $date,
+                               'program_id'   => $programId,
+                           ],
+                           'target_type'  => 'student',
+                           'target_id'    => $sid,
+                           'target_label' => $label,
+                       ]);
+        }
     }
 
     // Chỉ đổi mốc ĐIỂM DANH (không đổi mốc chung): máy khác chỉ nạp lại phần điểm danh.
@@ -379,9 +401,24 @@ if ($action === 'mark') {
         json_fail(safe_error($e, 'Ghi điểm danh thất bại: '), 500);
     }
 
-    if ($added && $status === 'đi trễ') {
+    if ($added) {
+        $label = $st['full_name'] . ' · ' . $date;
         log_action('diemdanh', 'attendance', 'Ghi điểm danh cho ' . $st['full_name'],
-                   $prog['name'] . ' · ' . $date . ' · ' . $status);
+                   $prog['name'] . ' · ' . $date . ' · ' . $status,
+                   [
+                       'before' => null,
+                       'after'  => [
+                           'status'         => $status,
+                           'method'         => $method,
+                           'scanned_at'     => $clampedAt,
+                           'offline_marked' => $offlineMarked,
+                           'session_date'   => $date,
+                           'program_id'     => $programId,
+                       ],
+                       'target_type'  => 'student',
+                       'target_id'    => $studentId,
+                       'target_label' => $label,
+                   ]);
     }
 
     if (program_earns_stamps($prog)) {
@@ -416,7 +453,7 @@ if ($action === 'unmark') {
         json_fail('Bạn không phụ trách lớp của em ' . $st['full_name'] . '.', 403);
     }
 
-    $existing = db_one('SELECT id FROM attendances WHERE program_id=? AND session_date=? AND student_id=?',
+    $existing = db_one('SELECT id, status, method, scanned_at, offline_marked FROM attendances WHERE program_id=? AND session_date=? AND student_id=?',
                        [$programId, $date, $studentId]);
     if (!$existing) {
         // Không có bản ghi → coi như đã gỡ, idempotent
@@ -425,8 +462,21 @@ if ($action === 'unmark') {
 
     db_run('DELETE FROM attendances WHERE id = ?', [$existing['id']]);
     if ($pastCutoff) {
+        $label = $st['full_name'] . ' · ' . $date;
         log_action('diemdanh', 'attendance', 'Gỡ điểm danh của ' . $st['full_name'],
-                   $prog['name'] . ' · ' . $date . ' · ' . $existing['status']);
+                   $prog['name'] . ' · ' . $date . ' · ' . $existing['status'],
+                   [
+                       'before' => [
+                           'status'         => $existing['status'],
+                           'method'         => $existing['method'] ?? null,
+                           'scanned_at'     => $existing['scanned_at'] ?? null,
+                           'offline_marked' => (int) ($existing['offline_marked'] ?? 0),
+                       ],
+                       'after'      => null,
+                       'target_type'  => 'student',
+                       'target_id'    => $studentId,
+                       'target_label' => $label,
+                   ]);
     }
     if (program_earns_stamps($prog)) {
         recalc_stamps_safe($studentId, $year['id']);
@@ -483,8 +533,16 @@ if ($action === 'set_status') {
     $att = null;
     if ($doi) {
         db_run('UPDATE attendances SET status = ? WHERE id = ?', [$moi, $cu['id']]);
+        $label = $st['full_name'] . ' · ' . $date;
         log_action('diemdanh', 'attendance', 'Sửa trạng thái điểm danh của ' . $st['full_name'],
-                   $prog['name'] . ' · ' . $date . ' · ' . $cu['status'] . ' → ' . $moi);
+                   $prog['name'] . ' · ' . $date . ' · ' . $cu['status'] . ' → ' . $moi,
+                   [
+                       'before' => ['status' => $cu['status']],
+                       'after'  => ['status' => $moi],
+                       'target_type'  => 'student',
+                       'target_id'    => $studentId,
+                       'target_label' => $label,
+                   ]);
         // Mốc thưởng chuỗi của Sổ Mộc phân biệt có mặt / đi trễ -> tính lại.
         if (program_earns_stamps($prog)) {
             recalc_stamps_safe($studentId, $year['id']);
@@ -505,8 +563,21 @@ $existing = db_one('SELECT * FROM attendances WHERE program_id=? AND session_dat
 if ($existing) {
     db_run('DELETE FROM attendances WHERE id = ?', [$existing['id']]);
     if ($pastCutoff) {
+        $label = $st['full_name'] . ' · ' . $date;
         log_action('diemdanh', 'attendance', 'Gỡ điểm danh của ' . $st['full_name'],
-                   $prog['name'] . ' · ' . $date . ' · đang là ' . $existing['status']);
+                   $prog['name'] . ' · ' . $date . ' · đang là ' . $existing['status'],
+                   [
+                       'before' => [
+                           'status'         => $existing['status'],
+                           'method'         => $existing['method'] ?? null,
+                           'scanned_at'     => $existing['scanned_at'] ?? null,
+                           'offline_marked' => (int) ($existing['offline_marked'] ?? 0),
+                       ],
+                       'after'      => null,
+                       'target_type'  => 'student',
+                       'target_id'    => $studentId,
+                       'target_label' => $label,
+                   ]);
     }
     // Sổ Mộc: gỡ điểm danh của buổi có tính Mộc là thao tác HOÀN Mộc lại.
     if (program_earns_stamps($prog)) {
@@ -553,9 +624,22 @@ try {
     json_fail(safe_error($e, 'Ghi điểm danh thất bại: '), 500);
 }
 
-if ($added && $status === 'đi trễ') {
+if ($added) {
+    $label = $st['full_name'] . ' · ' . $date;
     log_action('diemdanh', 'attendance', 'Ghi điểm danh cho ' . $st['full_name'],
-               $prog['name'] . ' · ' . $date . ' · ' . $status);
+               $prog['name'] . ' · ' . $date . ' · ' . $status,
+               [
+                   'before' => null,
+                   'after'  => [
+                       'status'       => $status,
+                       'method'       => 'tay',
+                       'session_date' => $date,
+                       'program_id'   => $programId,
+                   ],
+                   'target_type'  => 'student',
+                   'target_id'    => $studentId,
+                   'target_label' => $label,
+               ]);
 }
 
 // Sổ Mộc: buổi có tính Mộc thì ghi điểm danh xong phải tính lại ví/chuỗi.

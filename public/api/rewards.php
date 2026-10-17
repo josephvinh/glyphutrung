@@ -80,7 +80,19 @@ switch ($action) {
 
         log_action('doi_qua', 'rewards',
                    'Đổi quà cho ' . $student['fullName'] . ' (' . $student['code'] . ')',
-                   '-' . $r['total'] . ' Mộc · đơn #' . $r['orderId']);
+                   '-' . $r['total'] . ' Mộc · đơn #' . $r['orderId'],
+                   [
+                       'before' => null,
+                       'after'  => [
+                           'order_id' => $r['orderId'],
+                           'total'    => $r['total'],
+                           'status'   => 'đã giao',
+                           'method'   => 'tại quầy',
+                       ],
+                       'target_type'  => 'gift_order',
+                       'target_id'    => $r['orderId'],
+                       'target_label' => 'Đơn #' . $r['orderId'] . ' · ' . $student['fullName'],
+                   ]);
 
         Cache::flush();   // tồn kho quà đổi -> danh mục nạp lại thấy ngay
         json_out([
@@ -150,12 +162,25 @@ switch ($action) {
         }
 
         // Log RIÊNG cho nhánh override để truy vết ai đã bỏ qua mật mã (SPEC §6bis).
+        $label = 'Đơn #' . $r['orderId'] . ' · -' . $r['total'] . ' Mộc';
+        $diffOpts = [
+            'before' => [
+                'order_id' => $r['orderId'],
+                'status'   => 'chờ lấy',
+            ],
+            'after'  => [
+                'order_id' => $r['orderId'],
+                'status'   => 'đã giao',
+                'override' => $override,
+            ],
+            'target_type'  => 'gift_order',
+            'target_id'    => $r['orderId'],
+            'target_label' => $label,
+        ];
         if ($override) {
-            log_action('doi-qua', 'rewards', 'Giao đơn (override mật mã)',
-                       'Đơn #' . $r['orderId'] . ' · -' . $r['total'] . ' Mộc');
+            log_action('doi-qua', 'rewards', 'Giao đơn (override mật mã)', $label, $diffOpts);
         } else {
-            log_action('doi-qua', 'rewards', 'Giao đơn đặt trước',
-                       'Đơn #' . $r['orderId'] . ' · -' . $r['total'] . ' Mộc');
+            log_action('doi-qua', 'rewards', 'Giao đơn đặt trước', $label, $diffOpts);
         }
 
         // Trả số dư khả dụng mới nhất của em nhận đơn.
@@ -195,7 +220,21 @@ switch ($action) {
         }
 
         log_action('doi-qua', 'rewards', 'Hủy đơn đặt trước (Thủ thư)',
-                   'Đơn #' . $r['orderId'] . ' · +' . $r['total'] . ' Mộc hoàn lại');
+                   'Đơn #' . $r['orderId'] . ' · +' . $r['total'] . ' Mộc hoàn lại',
+                   [
+                       'before' => [
+                           'order_id' => $r['orderId'],
+                           'status'   => 'chờ lấy',
+                       ],
+                       'after'  => [
+                           'order_id' => $r['orderId'],
+                           'status'   => 'đã hủy',
+                           'refund'   => $r['total'],
+                       ],
+                       'target_type'  => 'gift_order',
+                       'target_id'    => $r['orderId'],
+                       'target_label' => 'Đơn #' . $r['orderId'],
+                   ]);
 
         Cache::flush();   // hoàn tồn -> danh mục quà nạp lại thấy ngay
         json_out(['ok' => true, 'orderId' => $r['orderId'], 'total' => $r['total']]);

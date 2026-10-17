@@ -253,7 +253,38 @@ class StaffService
                 );
             }
 
-            log_action('sua', 'staff', 'Sửa nhân sự: ' . $name, $role);
+            // Snapshot dữ liệu hiện tại để so sánh; với đơn-vai dùng $cu đầy đủ
+            // (SELECT trước UPDATE), với kiêm nhiệm giữ hẹp hơn (chỉ danh tính
+            // — block/class là dẫn xuất từ phân công, ghi ở Khối & Lớp).
+            $cu = db_one('SELECT holy_name, full_name, phone, role_code, title_id, block_id, class_id FROM members WHERE id=?', [$id]);
+            $moi = [
+                'holy_name' => $holyName,
+                'full_name' => $name,
+                'phone' => $phone,
+                'role_code' => $hasAssignments ? $old['role_code'] : $role,
+                'title_id' => $titleId !== null ? (int) $titleId : null,
+                'block_id' => $hasAssignments ? null : ($blockId !== null ? (int) $blockId : null),
+                'class_id' => $hasAssignments ? null : ($classId !== null ? (int) $classId : null),
+            ];
+            $cuSnap = [
+                'holy_name' => $cu['holy_name'],
+                'full_name' => $cu['full_name'],
+                'phone' => $cu['phone'],
+                'role_code' => $cu['role_code'],
+                'title_id' => $cu['title_id'] !== null ? (int) $cu['title_id'] : null,
+                'block_id' => $cu['block_id'] !== null ? (int) $cu['block_id'] : null,
+                'class_id' => $cu['class_id'] !== null ? (int) $cu['class_id'] : null,
+            ];
+            $diff = diff_arrays($cuSnap, $moi,
+                ['holy_name', 'full_name', 'phone', 'role_code', 'title_id', 'block_id', 'class_id']);
+            log_action('sua', 'staff', 'Sửa nhân sự: ' . $name, $role,
+                [
+                    'before' => $diff['before'],
+                    'after'  => $diff['after'],
+                    'target_type'  => 'member',
+                    'target_id'    => $id,
+                    'target_label' => $name,
+                ]);
         }
 
         Cache::flush();
@@ -272,7 +303,7 @@ class StaffService
             return ['ok' => false, 'error' => 'Thiếu ID thành viên.'];
         }
 
-        $m = db_one('SELECT id, role_code, full_name FROM members WHERE id=?', [$id]);
+        $m = db_one('SELECT id, role_code, full_name, holy_name, phone, status FROM members WHERE id=?', [$id]);
         if (!$m) {
             return ['ok' => false, 'error' => 'Không tìm thấy thành viên.', 'code' => 404];
         }
@@ -286,7 +317,20 @@ class StaffService
         // Xóa thành viên
         db_run('DELETE FROM members WHERE id=?', [$id]);
 
-        log_action('xoa', 'staff', 'Xóa nhân sự: ' . $m['full_name'], '');
+        log_action('xoa', 'staff', 'Xóa nhân sự: ' . $m['full_name'], '',
+            [
+                'before' => [
+                    'holy_name' => $m['holy_name'],
+                    'full_name' => $m['full_name'],
+                    'phone' => $m['phone'],
+                    'role_code' => $m['role_code'],
+                    'status' => $m['status'],
+                ],
+                'after'        => null,
+                'target_type'  => 'member',
+                'target_id'    => $id,
+                'target_label' => $m['full_name'],
+            ]);
         Cache::flush();
 
         return ['ok' => true];

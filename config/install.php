@@ -160,6 +160,16 @@ $migrations = [
     // Offline attendance: ghi mốc quét thật từ client
     "ALTER TABLE attendances ADD COLUMN scanned_at DATETIME NULL",
     "ALTER TABLE attendances ADD COLUMN offline_marked TINYINT(1) NOT NULL DEFAULT 0",
+    // PR-1: Activity Log upgrade - thêm cột cho diff + IP + target (xem migrations/010)
+    "ALTER TABLE activity_logs
+        ADD COLUMN IF NOT EXISTS ip VARCHAR(45) NULL AFTER detail,
+        ADD COLUMN IF NOT EXISTS user_agent VARCHAR(255) NULL AFTER ip,
+        ADD COLUMN IF NOT EXISTS target_type VARCHAR(32) NULL AFTER user_agent,
+        ADD COLUMN IF NOT EXISTS target_id BIGINT NULL AFTER target_type,
+        ADD COLUMN IF NOT EXISTS target_label VARCHAR(255) NULL AFTER target_id,
+        ADD COLUMN IF NOT EXISTS diff_json JSON NULL AFTER target_label",
+    "CREATE INDEX IF NOT EXISTS idx_log_module_time ON activity_logs (module, logged_at)",
+    "CREATE INDEX IF NOT EXISTS idx_log_action_time ON activity_logs (action, logged_at)",
     // Organization & Personal Modules — cột + bảng (migration 031).
     // schema.sql đã có các cột/bảng này cho CSDL mới; các lệnh dưới đây chỉ
     // phục vụ CSDL cũ chạy lại install.php (trùng cột / bảng thì bỏ qua).

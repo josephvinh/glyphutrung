@@ -119,6 +119,22 @@ switch ($action) {
 
         Cache::flush(); // giữ tồn -> danh mục quà nạp lại thấy ngay
 
+        log_action('doi_qua', 'rewards',
+                   'Đặt đơn đổi quà (cổng công khai) ' . $code,
+                   '-' . $r['total'] . ' Mộc · đơn #' . $r['orderId'],
+            [
+                'before' => null,
+                'after'  => [
+                    'order_id' => $r['orderId'],
+                    'total'    => $r['total'],
+                    'status'   => 'chờ lấy',
+                    'method'   => 'online',
+                ],
+                'target_type'  => 'gift_order',
+                'target_id'    => $r['orderId'],
+                'target_label' => 'Đơn #' . $r['orderId'] . ' · mã ' . $code,
+            ]);
+
         json_out([
             'ok'        => true,
             'orderId'   => $r['orderId'],
@@ -153,6 +169,25 @@ switch ($action) {
         }
 
         Cache::flush(); // hoàn tồn -> danh mục quà nạp lại thấy ngay
+
+        log_action('doi-qua', 'rewards',
+                   'Hủy đơn đổi quà (cổng công khai) ' . $code,
+                   '+' . $r['total'] . ' Mộc hoàn lại · đơn #' . $r['orderId'],
+            [
+                'before' => [
+                    'order_id' => $r['orderId'],
+                    'status'   => 'chờ lấy',
+                ],
+                'after'  => [
+                    'order_id' => $r['orderId'],
+                    'status'   => 'đã hủy',
+                    'refund'   => $r['total'],
+                    'method'   => 'online',
+                ],
+                'target_type'  => 'gift_order',
+                'target_id'    => $r['orderId'],
+                'target_label' => 'Đơn #' . $r['orderId'] . ' · mã ' . $code,
+            ]);
 
         json_out(['ok' => true, 'orderId' => $r['orderId'], 'total' => $r['total']]);
 

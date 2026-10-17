@@ -144,7 +144,14 @@ switch ($action) {
             json_fail(safe_error($e, 'Không duyệt được: '), 500);
         }
 
-        log_action('duyet', 'org', 'Duyệt tài khoản ' . $m['full_name'], $role);
+        log_action('duyet', 'org', 'Duyệt tài khoản ' . $m['full_name'], $role,
+            [
+                'before' => ['status' => $m['status']],
+                'after'  => ['status' => 'đang phục vụ', 'role_code' => $role],
+                'target_type'  => 'member',
+                'target_id'    => $id,
+                'target_label' => $m['full_name'],
+            ]);
         Cache::flush();
         json_out(['ok' => true]);
 
@@ -157,7 +164,18 @@ switch ($action) {
         if ($m['status'] !== 'chờ duyệt') json_fail('Chỉ từ chối được tài khoản đang chờ duyệt.');
 
         db_run('DELETE FROM members WHERE id=?', [$id]);
-        log_action('tuchoi', 'org', 'Từ chối đăng ký của ' . $m['full_name'], $m['phone']);
+        log_action('tuchoi', 'org', 'Từ chối đăng ký của ' . $m['full_name'], $m['phone'],
+            [
+                'before' => [
+                    'full_name' => $m['full_name'],
+                    'phone' => $m['phone'],
+                    'status' => $m['status'],
+                ],
+                'after'        => null,
+                'target_type'  => 'member',
+                'target_id'    => $id,
+                'target_label' => $m['full_name'],
+            ]);
         Cache::flush();
         json_out(['ok' => true]);
 
@@ -179,7 +197,14 @@ switch ($action) {
                [password_hash($temp, PASSWORD_DEFAULT), $id]);
 
         log_action('sua', 'org', 'Cấp lại mật khẩu cho ' . $m['full_name'],
-                   'lần đăng nhập sau buộc đổi');
+                   'lần đăng nhập sau buộc đổi',
+            [
+                'before' => ['must_change_pw' => 0],
+                'after'  => ['must_change_pw' => 1],
+                'target_type'  => 'member',
+                'target_id'    => $id,
+                'target_label' => $m['full_name'],
+            ]);
         json_out(['ok' => true, 'password' => $temp, 'phone' => $m['phone'],
                   'name' => $m['full_name']]);
 
@@ -267,7 +292,19 @@ switch ($action) {
                 $affected[] = $memberId;
 
                 log_action('sua', 'org', 'Phân công ' . ($isClass ? 'chủ nhiệm lớp' : 'trưởng khối'),
-                           $m['full_name']);
+                           $m['full_name'],
+                    [
+                        'before' => null,
+                        'after'  => [
+                            'role_code' => $roleCode,
+                            'class_id' => $isClass ? (int) $target['id'] : null,
+                            'block_id' => $isClass ? (int) $target['block_id'] : (int) $target['id'],
+                            'member_id' => $memberId,
+                        ],
+                        'target_type'  => $isClass ? 'class_head' : 'block_head',
+                        'target_id'    => (int) $target['id'],
+                        'target_label' => $m['full_name'],
+                    ]);
             }
 
             // Vai gốc + khối/lớp hiển thị là bản dẫn xuất — tính lại cho mọi

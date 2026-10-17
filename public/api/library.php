@@ -109,15 +109,33 @@ switch ($action) {
         // quyền duyệt phải tự bấm duyệt bài của mình, trong khi bài viết sổ
         // tay thì không — cùng một người, hai luật khác nhau.
         $status = $canEdit ? 'da_duyet' : 'cho_duyet';
-        db_run('INSERT INTO library_items
+        $newId  = db_insert('INSERT INTO library_items
                   (title, description, category_id, stored_name, original_name,
                    mime_type, size_bytes, status, uploaded_by, approved_by, created_at, approved_at)
                 VALUES (?,?,?,?,?,?,?,?,?,?,NOW(),' . ($canEdit ? 'NOW()' : 'NULL') . ')',
                [$title, $desc, $catId, $stored, library_clean_original((string) $file['name']),
                 $v['mime'], (int) $file['size'], $status, $me['id'], $canEdit ? $me['id'] : null]);
-        log_action('tao', 'thu_vien', 'Đăng tài liệu: ' . $title);
+        $moi = [
+            'title' => $title,
+            'description' => $desc,
+            'category_id' => $catId,
+            'status' => $status,
+            'item_type' => 'file',
+            'stored_name' => $stored,
+            'original_name' => library_clean_original((string) $file['name']),
+            'mime_type' => $v['mime'],
+            'size_bytes' => (int) $file['size'],
+        ];
+        log_action('tao', 'thu_vien', 'Đăng tài liệu: ' . $title, '',
+            [
+                'before' => null,
+                'after'  => $moi,
+                'target_type'  => 'library_item',
+                'target_id'    => $newId,
+                'target_label' => $title,
+            ]);
         Cache::flush();   // số mục chờ duyệt đổi -> chấm đỏ trên icon của BĐH cập nhật ngay
-        json_out(['ok' => true, 'autoApproved' => $canEdit]);
+        json_out(['ok' => true, 'id' => $newId, 'autoApproved' => $canEdit]);
 
     // Sửa MỘT MỤC đã đăng: đổi tiêu đề/mô tả/chủ đề, và với mục 'file' thì
     // có thể THAY TỆP. Người đăng sửa được mục của mình; edit sửa được mọi mục.
@@ -166,7 +184,41 @@ switch ($action) {
         $args[] = $id;
         db_run('UPDATE library_items SET ' . $set . ' WHERE id=?', $args);
         if ($oldStored) @unlink(library_storage_dir() . '/' . $oldStored);
-        log_action('sua', 'thu_vien', 'Sửa mục thư viện: ' . $title);
+        $moi = [
+            'title' => $title,
+            'description' => $desc,
+            'category_id' => $catId,
+            'status' => $status,
+            'item_type' => $it['item_type'],
+            'stored_name' => isset($stored) ? $stored : $it['stored_name'],
+            'original_name' => isset($stored) ? library_clean_original((string) $file['name']) : $it['original_name'],
+            'mime_type' => isset($stored) ? $v['mime'] : $it['mime_type'],
+            'size_bytes' => isset($stored) ? (int) $file['size'] : (int) $it['size_bytes'],
+        ];
+        $diff = diff_arrays(
+            [
+                'title' => $it['title'],
+                'description' => $it['description'],
+                'category_id' => $it['category_id'] !== null ? (int) $it['category_id'] : null,
+                'status' => $it['status'],
+                'item_type' => $it['item_type'],
+                'stored_name' => $it['stored_name'],
+                'original_name' => $it['original_name'],
+                'mime_type' => $it['mime_type'],
+                'size_bytes' => (int) $it['size_bytes'],
+            ],
+            $moi,
+            ['title', 'description', 'category_id', 'status', 'stored_name',
+             'original_name', 'mime_type', 'size_bytes']
+        );
+        log_action('sua', 'thu_vien', 'Sửa mục thư viện: ' . $title, '',
+            [
+                'before' => $diff['before'],
+                'after'  => $diff['after'],
+                'target_type'  => 'library_item',
+                'target_id'    => $id,
+                'target_label' => $title,
+            ]);
         Cache::flush();
         json_out(['ok' => true, 'autoApproved' => $canEdit]);
 
@@ -192,18 +244,59 @@ switch ($action) {
             $status = $canEdit ? $it['status'] : 'cho_duyet';
             db_run('UPDATE library_items SET title=?, description=?, body=?, category_id=?, status=? WHERE id=?',
                    [$title, $desc, $body, $catId, $status, $id]);
-            log_action('sua', 'thu_vien', 'Sửa bài sổ tay: ' . $title);
+            $moi = [
+                'title' => $title,
+                'description' => $desc,
+                'body' => $body,
+                'category_id' => $catId,
+                'status' => $status,
+                'item_type' => 'article',
+            ];
+            $diff = diff_arrays(
+                [
+                    'title' => $it['title'],
+                    'description' => $it['description'],
+                    'body' => $it['body'],
+                    'category_id' => $it['category_id'] !== null ? (int) $it['category_id'] : null,
+                    'status' => $it['status'],
+                    'item_type' => $it['item_type'],
+                ],
+                $moi,
+                ['title', 'description', 'body', 'category_id', 'status']
+            );
+            log_action('sua', 'thu_vien', 'Sửa bài sổ tay: ' . $title, '',
+                [
+                    'before' => $diff['before'],
+                    'after'  => $diff['after'],
+                    'target_type'  => 'library_item',
+                    'target_id'    => $id,
+                    'target_label' => $title,
+                ]);
         } else {
             // BĐH/Admin soạn sổ tay -> duyệt luôn; GLV thường -> chờ duyệt.
             $status = $canEdit ? 'da_duyet' : 'cho_duyet';
-            db_run('INSERT INTO library_items
+            $newId  = db_insert('INSERT INTO library_items
                       (title, item_type, description, body, category_id, status, uploaded_by, approved_by, created_at, approved_at)
                     VALUES (?, "article", ?, ?, ?, ?, ?, ?, NOW(), ' . ($canEdit ? 'NOW()' : 'NULL') . ')',
                    [$title, $desc, $body, $catId, $status, $me['id'], $canEdit ? $me['id'] : null]);
-            log_action('tao', 'thu_vien', 'Viết bài sổ tay: ' . $title);
+            log_action('tao', 'thu_vien', 'Viết bài sổ tay: ' . $title, '',
+                [
+                    'before' => null,
+                    'after'  => [
+                        'title' => $title,
+                        'description' => $desc,
+                        'body' => $body,
+                        'category_id' => $catId,
+                        'status' => $status,
+                        'item_type' => 'article',
+                    ],
+                    'target_type'  => 'library_item',
+                    'target_id'    => $newId,
+                    'target_label' => $title,
+                ]);
         }
         Cache::flush();
-        json_out(['ok' => true, 'autoApproved' => $canEdit]);
+        json_out(['ok' => true, 'id' => $newId ?? $id, 'autoApproved' => $canEdit]);
 
     case 'approve':
         require_write();
@@ -212,7 +305,14 @@ switch ($action) {
         if (!$it) json_fail('Không tìm thấy tài liệu.', 404);
         db_run('UPDATE library_items SET status="da_duyet", approved_by=?, approved_at=NOW(),
                        reject_reason=NULL WHERE id=?', [$me['id'], $it['id']]);
-        log_action('duyet', 'thu_vien', 'Duyệt tài liệu: ' . $it['title']);
+        log_action('duyet', 'thu_vien', 'Duyệt tài liệu: ' . $it['title'], '',
+            [
+                'before' => ['status' => $it['status']],
+                'after'  => ['status' => 'da_duyet'],
+                'target_type'  => 'library_item',
+                'target_id'    => (int) $it['id'],
+                'target_label' => $it['title'],
+            ]);
         Cache::flush();
         json_out(['ok' => true]);
 
@@ -222,10 +322,18 @@ switch ($action) {
         $it = db_one('SELECT * FROM library_items WHERE id = ?', [(int) ($in['id'] ?? 0)]);
         if (!$it) json_fail('Không tìm thấy tài liệu.', 404);
         if (!empty($it['stored_name'])) @unlink(library_storage_dir() . '/' . $it['stored_name']);   // xoá file khỏi host (bài viết không có file)
+        $reason = trim((string) ($in['reason'] ?? '')) ?: null;
         db_run('UPDATE library_items SET status="tu_choi", reject_reason=?, approved_by=?,
                        approved_at=NOW() WHERE id=?',
-               [trim((string) ($in['reason'] ?? '')) ?: null, $me['id'], $it['id']]);
-        log_action('sua', 'thu_vien', 'Từ chối tài liệu: ' . $it['title']);
+               [$reason, $me['id'], $it['id']]);
+        log_action('sua', 'thu_vien', 'Từ chối tài liệu: ' . $it['title'], '',
+            [
+                'before' => ['status' => $it['status']],
+                'after'  => ['status' => 'tu_choi', 'reject_reason' => $reason],
+                'target_type'  => 'library_item',
+                'target_id'    => (int) $it['id'],
+                'target_label' => $it['title'],
+            ]);
         json_out(['ok' => true]);
 
     case 'delete':
@@ -237,7 +345,20 @@ switch ($action) {
         }
         if (!empty($it['stored_name'])) @unlink(library_storage_dir() . '/' . $it['stored_name']);
         db_run('DELETE FROM library_items WHERE id = ?', [$it['id']]);
-        log_action('xoa', 'thu_vien', 'Gỡ tài liệu: ' . $it['title']);
+        log_action('xoa', 'thu_vien', 'Gỡ tài liệu: ' . $it['title'], '',
+            [
+                'before' => [
+                    'title' => $it['title'],
+                    'description' => $it['description'],
+                    'category_id' => $it['category_id'] !== null ? (int) $it['category_id'] : null,
+                    'status' => $it['status'],
+                    'item_type' => $it['item_type'],
+                ],
+                'after'        => null,
+                'target_type'  => 'library_item',
+                'target_id'    => (int) $it['id'],
+                'target_label' => $it['title'],
+            ]);
         json_out(['ok' => true]);
 
     case 'saveCategory':
@@ -245,18 +366,49 @@ switch ($action) {
         library_need_edit($canEdit);
         $name = trim((string) ($in['name'] ?? ''));
         if ($name === '') json_fail('Vui lòng nhập tên chủ đề.');
-        if ($id = (int) ($in['id'] ?? 0)) {
-            db_run('UPDATE library_categories SET name=? WHERE id=?', [$name, $id]);
+        if ($cid = (int) ($in['id'] ?? 0)) {
+            $cu = db_one('SELECT name, is_active FROM library_categories WHERE id=?', [$cid]);
+            if (!$cu) json_fail('Không tìm thấy chủ đề.', 404);
+            db_run('UPDATE library_categories SET name=? WHERE id=?', [$name, $cid]);
+            log_action('sua', 'thu_vien', 'Sửa chủ đề: ' . $name, '',
+                [
+                    'before' => ['name' => $cu['name']],
+                    'after'  => ['name' => $name],
+                    'target_type'  => 'library_category',
+                    'target_id'    => $cid,
+                    'target_label' => $name,
+                ]);
         } else {
             $next = (int) db_one('SELECT COALESCE(MAX(sort_order),0)+1 n FROM library_categories')['n'];
-            db_run('INSERT INTO library_categories (name, sort_order) VALUES (?,?)', [$name, $next]);
+            $newCid = db_insert('INSERT INTO library_categories (name, sort_order) VALUES (?,?)', [$name, $next]);
+            log_action('tao', 'thu_vien', 'Tạo chủ đề: ' . $name, '',
+                [
+                    'before' => null,
+                    'after'  => ['name' => $name, 'sort_order' => $next, 'is_active' => 1],
+                    'target_type'  => 'library_category',
+                    'target_id'    => $newCid,
+                    'target_label' => $name,
+                ]);
         }
         json_out(['ok' => true]);
 
     case 'toggleCategory':
         require_write();
         library_need_edit($canEdit);
-        db_run('UPDATE library_categories SET is_active = 1 - is_active WHERE id = ?', [(int) ($in['id'] ?? 0)]);
+        $cid = (int) ($in['id'] ?? 0);
+        $cu  = db_one('SELECT name, is_active FROM library_categories WHERE id=?', [$cid]);
+        if (!$cu) json_fail('Không tìm thấy chủ đề.', 404);
+        db_run('UPDATE library_categories SET is_active = 1 - is_active WHERE id = ?', [$cid]);
+        $newActive = ((int) $cu['is_active'] === 1) ? 0 : 1;
+        log_action('sua', 'thu_vien',
+            ($newActive ? 'Kích hoạt' : 'Ẩn') . ' chủ đề: ' . $cu['name'], '',
+            [
+                'before' => ['is_active' => (int) $cu['is_active']],
+                'after'  => ['is_active' => $newActive],
+                'target_type'  => 'library_category',
+                'target_id'    => $cid,
+                'target_label' => $cu['name'],
+            ]);
         json_out(['ok' => true]);
 }
 
