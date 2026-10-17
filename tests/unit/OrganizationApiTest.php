@@ -314,8 +314,9 @@ class OrganizationApiTest extends TestCase
     //  test + validation, không có các thay đổi backend đó)
     // ------------------------------------------------------------------
 
-    public function testBootstrapShift_AppearsInClasses(): void
-    {
-        $this->markTestSkipped('Đặt vào PR8 (UI shift) - phụ thuộc data.php + _bootstrap_page.php.');
-    }
+    // ------------------------------------------------------------------
+    //  testBootstrapShift_AppearsInClasses — bỏ khỏi PR #292.
+    //  Thuộc về PR #293 (feat UI shift) vì cần _bootstrap_page.php +
+    //  data.php expose `shift`. Sẽ thêm lại ở PR #293.
+    // ------------------------------------------------------------------
 }
