@@ -7,7 +7,8 @@
    tnttApp bởi app.js, nên từ template truy cập qua `this.xxx`
    chứ không phải qua component lồng.
 
-   Phân quyền: getProfile mở ở 'org.view' (xem của mình), 3 write
+   Phân quyền: getProfile mở ở 'org.view' (xem của mình), 4 write
+   (updateGlvYear, saveServiceHistory, deleteServiceHistory, changeMemberStatus)
    cần 'org.edit' (BĐH/Quản trị) — backend ở public/api/personal.php
    đã enforce; frontend chỉ ẩn nút nếu biết mình không có quyền
    (canManageOrg đã có sẵn ở core.js).
@@ -40,9 +41,7 @@ window.TNTT.personal = {
     // ---------- LIFECYCLE ----------
     // Gọi từ module_profile.php x-init="loadProfile()" khi mở tab Cá nhân.
     async loadProfile() {
-        const r = await fetch('api/personal.php?action=getProfile', {
-            headers: { 'X-CSRF-TOKEN': window.TNTT?.csrfToken || '' }
-        }).then(r => r.json()).catch(() => ({ ok: false }));
+        const r = await this.api('personal', 'getProfile', {}, 'GET');
         if (r && r.ok && r.data) {
             this.profile = r.data.member;
             this.serviceHistory = r.data.history || [];
