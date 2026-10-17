@@ -37,6 +37,25 @@ window.TNTT.personal = {
     historyForm: { yearLabel: '', roleCode: 'glv', note: '' },
     editingHistoryYear: null,    // null = thêm mới, 'YYYY-YYYY' = sửa
     busyHistory: false,
+    historyForm: { yearLabel: '', roleCode: 'glv', blockId: null, classId: null },
+
+    // Danh sách 5 năm học gần nhất (dropdown chọn năm)
+    get historyYearOptions() {
+        const now = window.TNTT.vn.now();
+        const currentStart = now.month >= 8 ? now.year : now.year - 1;
+        const years = [];
+        for (let i = 4; i >= 0; i--) {
+            const y = currentStart - i;
+            years.push(y + '-' + (y + 1));
+        }
+        return years;
+    },
+
+    // Lọc lớp theo blockId
+    classesByBlock(blockId) {
+        if (!blockId) return [];
+        return (window.TNTT_BOOT?.classes || []).filter(c => c.blockId === blockId);
+    },
 
     // ---------- LIFECYCLE ----------
     // Gọi từ module_profile.php x-init="loadProfile()" khi mở tab Cá nhân.
@@ -148,28 +167,48 @@ window.TNTT.personal = {
         // Gợi ý năm học kết thúc gần nhất
         const now = window.TNTT.vn.now();
         const y = now.month >= 8 ? now.year : now.year - 1;
-        this.historyForm = { yearLabel: y + '-' + (y + 1), roleCode: 'glv', note: '' };
+        this.historyForm = { yearLabel: y + '-' + (y + 1), roleCode: 'glv', blockId: null, classId: null };
     },
 
     async saveHistoryEntry() {
-        if (!this.profile) return;
+        if (!this.profile) {
+            window.TNTT.toast.error('Chưa tải được hồ sơ thành viên.');
+            return;
+        }
         const yearLabel = (this.historyForm.yearLabel || '').trim();
         if (!/^\d{4}-\d{4}$/.test(yearLabel)) {
-            window.TNTT.toast.warning('Năm học phải có dạng YYYY-YYYY (ví dụ 2024-2025).');
+            window.TNTT.toast.warning('Vui lòng chọn năm học.');
             return;
         }
         this.busyHistory = true;
-        const r = await this.save('personal', 'saveServiceHistory', {
+        console.debug('[personal] saveHistoryEntry payload', {
             member_id: this.profile.id,
             year_label: yearLabel,
             role_code: this.historyForm.roleCode,
-            note: this.historyForm.note || null
+            block_id: this.historyForm.blockId,
+            class_id: this.historyForm.classId
         });
-        this.busyHistory = false;
-        if (r.ok) {
-            window.TNTT.toast.success(this.editingHistoryYear ? 'Đã cập nhật dòng lịch sử.' : 'Đã thêm dòng lịch sử.');
-            this.editingHistoryYear = null;
-            await this.loadProfile();
+        try {
+            const r = await this.save('personal', 'saveServiceHistory', {
+                member_id: this.profile.id,
+                year_label: yearLabel,
+                role_code: this.historyForm.roleCode,
+                block_id: this.historyForm.blockId,
+                class_id: this.historyForm.classId
+            });
+            if (r && r.ok) {
+                window.TNTT.toast.success(this.editingHistoryYear ? 'Đã cập nhật dòng lịch sử.' : 'Đã thêm dòng lịch sử.');
+                this.editingHistoryYear = null;
+                this.historyForm = { yearLabel: '', roleCode: 'glv', blockId: null, classId: null };
+                await this.loadProfile();
+            } else {
+                window.TNTT.toast.error('Lưu thất bại: ' + (r?.error?.message || 'không rõ lỗi'));
+            }
+        } catch (e) {
+            console.error('[personal] saveHistoryEntry exception', e);
+            window.TNTT.toast.error('Lỗi khi lưu: ' + (e?.message || e));
+        } finally {
+            this.busyHistory = false;
         }
     },
 
@@ -188,6 +227,6 @@ window.TNTT.personal = {
 
     cancelHistoryForm() {
         this.editingHistoryYear = null;
-        this.historyForm = { yearLabel: '', roleCode: 'glv', note: '' };
+        this.historyForm = { yearLabel: '', roleCode: 'glv', blockId: null, classId: null };
     }
 };
