@@ -34,7 +34,6 @@ window.TNTT.personal = {
 
     // Modal: danh sách + sửa/xoá lịch sử
     showHistoryModal: false,
-    historyForm: { yearLabel: '', roleCode: 'glv', note: '' },
     editingHistoryYear: null,    // null = thêm mới, 'YYYY-YYYY' = sửa
     busyHistory: false,
     historyForm: { yearLabel: '', roleCode: 'glv', blockId: null, classId: null },
