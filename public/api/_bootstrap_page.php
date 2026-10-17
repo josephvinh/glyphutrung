@@ -99,19 +99,15 @@ function page_bootstrap(array $me): array
             db_all('SELECT code, label, level, scope, descr FROM roles ORDER BY level DESC'),
             fn($r) => !$hideAdmin || $r['code'] !== 'admin'   // ẩn vai admin (F9)
         ))),
-        'blocks'  => array_map(fn($b) => [
-            'id'   => (int) $b['id'],
-            'name' => $b['name'],
-        ], db_all('SELECT id, name FROM blocks ORDER BY sort_order')),
+        'blocks'  => array_column(db_all('SELECT name FROM blocks ORDER BY sort_order'), 'name'),
         'classes' => array_map(fn($c) => [
             'id'        => (int) $c['id'],
             'name'      => $c['name'],
             'block'     => $c['block_name'],
-            'blockId'   => (int) $c['block_id'],
             'shift'     => $c['shift'] ?? null,
             'nextClass' => $c['is_final'] ? 'RA_TRUONG' : ($c['next_name'] ?? ''),
         ], db_all(
-            'SELECT c.id, c.name, c.is_final, c.shift, c.block_id, b.name AS block_name, n.name AS next_name
+            'SELECT c.id, c.name, c.is_final, c.shift, b.name AS block_name, n.name AS next_name
                FROM classes c
                JOIN blocks b ON b.id = c.block_id
                LEFT JOIN classes n ON n.id = c.next_class_id
