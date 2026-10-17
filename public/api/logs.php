@@ -15,7 +15,6 @@
  * diff (parse từ diff_json — null với log cũ chưa có diff).
  */
 require __DIR__ . '/_bootstrap.php';
-require dirname(__DIR__, 1) . '/src/LogMask.php';
 
 $me = require_login();
 

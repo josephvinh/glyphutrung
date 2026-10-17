@@ -19,7 +19,6 @@
  * Sau khi stream thành công: ghi 1 dòng log (module='logs_export').
  */
 require __DIR__ . '/_bootstrap.php';
-require dirname(__DIR__, 1) . '/src/LogMask.php';
 
 $me = require_login();
 if (!can_view_logs($me)) json_fail('Không có quyền xem nhật ký.', 403);
